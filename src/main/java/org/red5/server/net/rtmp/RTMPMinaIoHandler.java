@@ -166,7 +166,7 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
 				if (state != RTMP.STATE_DISCONNECTING && state != RTMP.STATE_DISCONNECTED) {
 					conn.handleMessageReceived((Packet) message);
 				} else {
-					log.info("Ignoring received message on {} due to state: {}", sessionId, conn.getState().states[state]);
+					log.info("Ignoring received message on {} due to state: {}", sessionId, RTMP.states[state]);
 				}
 			} else {
 				log.warn("Connection was not found for {}", sessionId);

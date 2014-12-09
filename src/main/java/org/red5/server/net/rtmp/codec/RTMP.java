@@ -30,7 +30,7 @@ import org.red5.server.net.rtmp.message.Packet;
  */
 public class RTMP {
 
-	public String[] states = { "connect", "handshake", "connected", "error", "disconnecting", "disconnected" };
+	public static final String[] states = { "connect", "handshake", "connected", "error", "disconnecting", "disconnected" };
 
 	/**
 	 * Connect state
@@ -90,7 +90,7 @@ public class RTMP {
 	/**
 	 * Map for channels, keyed by channel id.
 	 */
-	private final ConcurrentMap<Integer, ChannelInfo> channels = new ConcurrentHashMap<Integer, ChannelInfo>(3, 0.9f, 1);
+	private final transient ConcurrentMap<Integer, ChannelInfo> channels = new ConcurrentHashMap<Integer, ChannelInfo>(3, 0.9f, 1);
 
 	/**
 	 * Read chunk size. Packets are read and written chunk-by-chunk.

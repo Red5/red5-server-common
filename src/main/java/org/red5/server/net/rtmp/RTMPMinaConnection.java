@@ -61,7 +61,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 	/**
 	 * MINA I/O session, connection between two end points
 	 */
-	private IoSession ioSession;
+	private transient IoSession ioSession;
 
 	/**
 	 * MBean object name used for de/registration purposes.
@@ -329,7 +329,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 						break;
 					}
 				} catch (InterruptedException e) {
-					log.warn("Interrupted while waiting for write lock. State: {}", state.states[state.getState()], e);
+					log.warn("Interrupted while waiting for write lock. State: {}", RTMP.states[state.getState()], e);
 					String exMsg = e.getMessage();
 					// if the exception cause is null break out of here to
 					// prevent looping until closed
@@ -361,7 +361,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 						break;
 					}
 				} catch (InterruptedException e) {
-					log.warn("Interrupted while waiting for write lock (writeRaw). State: {}", state.states[state.getState()], e);
+					log.warn("Interrupted while waiting for write lock (writeRaw). State: {}", RTMP.states[state.getState()], e);
 					String exMsg = e.getMessage();
 					// if the exception cause is null break out of here to
 					// prevent looping until closed

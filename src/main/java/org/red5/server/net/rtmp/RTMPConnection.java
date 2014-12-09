@@ -123,14 +123,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * 
 	 * @see org.red5.server.net.rtmp.Channel
 	 */
-	private ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(3, 0.9f, 1);
+	private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(3, 0.9f, 1);
 
 	/**
 	 * Client streams
 	 * 
 	 * @see org.red5.server.api.stream.IClientStream
 	 */
-	private ConcurrentMap<Integer, IClientStream> streams = new ConcurrentHashMap<Integer, IClientStream>(1, 0.9f, 1);
+	private transient ConcurrentMap<Integer, IClientStream> streams = new ConcurrentHashMap<Integer, IClientStream>(1, 0.9f, 1);
 
 	/**
 	 * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
@@ -145,14 +145,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Hash map that stores pending calls and ids as pairs.
 	 */
-	private ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(3, 0.75f, 1);
+	private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(3, 0.75f, 1);
 
 	/**
 	 * Deferred results set.
 	 * 
 	 * @see org.red5.server.net.rtmp.DeferredResult
 	 */
-	private CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<DeferredResult>();
+	private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<DeferredResult>();
 
 	/**
 	 * Last ping round trip time
@@ -172,7 +172,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * RTMP events handler
 	 */
-	protected IRTMPHandler handler;
+	protected transient IRTMPHandler handler;
 
 	/**
 	 * Ping interval in ms to detect dead clients.
@@ -202,7 +202,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Map for pending video packets and stream IDs.
 	 */
-	private ConcurrentMap<Integer, AtomicInteger> pendingVideos = new ConcurrentHashMap<Integer, AtomicInteger>(1, 0.9f, 1);
+	private transient ConcurrentMap<Integer, AtomicInteger> pendingVideos = new ConcurrentHashMap<Integer, AtomicInteger>(1, 0.9f, 1);
 
 	/**
 	 * Number of (NetStream) streams used.
@@ -212,7 +212,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Remembered stream buffer durations.
 	 */
-	private ConcurrentMap<Integer, Integer> streamBuffers = new ConcurrentHashMap<Integer, Integer>(1, 0.9f, 1);
+	private transient ConcurrentMap<Integer, Integer> streamBuffers = new ConcurrentHashMap<Integer, Integer>(1, 0.9f, 1);
 
 	/**
 	 * Maximum time in milliseconds to wait for a valid handshake.
@@ -235,13 +235,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	protected RTMP state = new RTMP();
 
 	// protection for the decoder when using multiple threads per connection
-	protected Semaphore decoderLock = new Semaphore(1, true);
+	protected transient Semaphore decoderLock = new Semaphore(1, true);
 
 	// protection for the encoder when using multiple threads per connection
-	protected Semaphore encoderLock = new Semaphore(1, true);
+	protected transient Semaphore encoderLock = new Semaphore(1, true);
 
 	// keeps track of the decode state
-	protected ThreadLocal<RTMPDecodeState> decoderState = new ThreadLocal<RTMPDecodeState>() {
+	protected transient ThreadLocal<RTMPDecodeState> decoderState = new ThreadLocal<RTMPDecodeState>() {
 
 		@Override
 		protected RTMPDecodeState initialValue() {
@@ -253,12 +253,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Scheduling service
 	 */
-	protected ThreadPoolTaskScheduler scheduler;
+	protected transient ThreadPoolTaskScheduler scheduler;
 
 	/**		
 	 * Thread pool for message handling.		
 	 */
-	protected ThreadPoolTaskExecutor executor;
+	protected transient ThreadPoolTaskExecutor executor;
 
 	/**
 	 * Keep-alive worker flag
@@ -328,8 +328,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	}
 
 	public void setStateCode(byte code) {
-		if (log.isTraceEnabled())
-			log.trace("setStateCode: {} - {}", code, state.states[code]);
+		if (log.isTraceEnabled()) {
+			log.trace("setStateCode: {} - {}", code, RTMP.states[code]);
+		}
 		state.setState(code);
 	}
 
@@ -767,7 +768,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 						return;
 					default:
 						if (log.isDebugEnabled())
-							log.debug("State: {}", state.states[s]);
+							log.debug("State: {}", RTMP.states[s]);
 						state.setState(RTMP.STATE_DISCONNECTING);
 				}
 			}
@@ -1293,12 +1294,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 				} catch (Exception e) {
 					log.info("Incoming message handling failed on session=[{}], messageType=[{}]", getSessionId(), message);
 					if (log.isDebugEnabled()) {
-						log.debug("Execution rejected on {} - {}", getSessionId(), state.states[getStateCode()]);
+						log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
 						log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
 					}
 				}
 			} else {
-				log.warn("Executor is null on {} state: {}", getSessionId(), state.states[getStateCode()]);
+				log.warn("Executor is null on {} state: {}", getSessionId(), RTMP.states[getStateCode()]);
 			}		
 		}
 	}
@@ -1507,9 +1508,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isDebugEnabled()) {
 			String id = getClient() != null ? getClient().getId() : null;
 			return String.format("%1$s %2$s:%3$s to %4$s client: %5$s session: %6$s state: %7$s", new Object[] { getClass().getSimpleName(), getRemoteAddress(), getRemotePort(), getHost(), id,
-					getSessionId(), getState().states[getStateCode()] });
+					getSessionId(), RTMP.states[getStateCode()] });
 		} else {
-			Object[] args = new Object[] { getClass().getSimpleName(), getRemoteAddress(), getReadBytes(), getWrittenBytes(), getSessionId(), getState().states[getStateCode()] };
+			Object[] args = new Object[] { getClass().getSimpleName(), getRemoteAddress(), getReadBytes(), getWrittenBytes(), getSessionId(), RTMP.states[getStateCode()] };
 			return String.format("%1$s from %2$s (in: %3$s out: %4$s) session: %5$s state: %6$s", args);
 		}
 	}
@@ -1579,7 +1580,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 							}
 						} else {
 							if (log.isDebugEnabled())
-								log.debug("No longer connected, clean up connection. Connection state: {}", state.states[state.getState()]);
+								log.debug("No longer connected, clean up connection. Connection state: {}", RTMP.states[state.getState()]);
 							onInactive();
 						}
 					} catch (Exception e) {
@@ -1606,7 +1607,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 				// check for connected state before disconnecting
 				if (state.getState() != RTMP.STATE_CONNECTED) {
 					// Client didn't send a valid handshake, disconnect
-					log.warn("Closing {}, due to long handshake. State: {}", getSessionId(), state.states[getStateCode()]);
+					log.warn("Closing {}, due to long handshake. State: {}", getSessionId(), RTMP.states[getStateCode()]);
 					onInactive();
 				}
 			} catch (InterruptedException e) {

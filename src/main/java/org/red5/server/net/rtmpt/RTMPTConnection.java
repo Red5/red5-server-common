@@ -75,7 +75,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
 	/**
 	 * Servlet that created this connection.
 	 */
-	private RTMPTServlet servlet;
+	private transient RTMPTServlet servlet;
 
 	/**
 	 * Timestamp of last data received on the connection
@@ -86,7 +86,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
 
 	private AtomicLong lastBytesWritten = new AtomicLong(0);
 
-	private IoSession ioSession;
+	private transient IoSession ioSession;
 
 	/** Constructs a new RTMPTConnection */
 	RTMPTConnection() {
@@ -116,7 +116,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
 	/** {@inheritDoc} */
 	@Override
 	public void close() {
-		log.debug("close {} state: {}", getSessionId(), state.states[state.getState()]);
+		log.debug("close {} state: {}", getSessionId(), RTMP.states[state.getState()]);
 		// ensure closing flag is set
 		if (!isClosing()) {
 			// flush by waiting x number of millis for the pending messages to be cleared

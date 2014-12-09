@@ -52,12 +52,12 @@ public abstract class BaseRTMPTConnection extends RTMPConnection {
 	/**
 	 * Protocol decoder
 	 */
-	private RTMPTProtocolDecoder decoder;
+	private transient RTMPTProtocolDecoder decoder;
 
 	/**
 	 * Protocol encoder
 	 */
-	private RTMPTProtocolEncoder encoder;
+	private transient RTMPTProtocolEncoder encoder;
 
 	/**
 	 * Closing flag
@@ -82,7 +82,7 @@ public abstract class BaseRTMPTConnection extends RTMPConnection {
 	/**
 	 * List of pending outgoing messages
 	 */
-	protected volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>();
+	protected transient volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>();
 
 	/**
 	 * Maximum incoming messages to process at a time per client

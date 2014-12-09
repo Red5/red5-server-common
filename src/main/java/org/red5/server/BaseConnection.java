@@ -116,12 +116,12 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	/**
 	 * Scope to which this connection belongs
 	 */
-	protected volatile Scope scope;
+	protected transient volatile Scope scope;
 
 	/**
 	 * Set of basic scopes. The scopes may be of shared object or broadcast stream type.
 	 */
-	protected CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
+	protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
 
 	/**
 	 * Is the connection closed?
@@ -131,15 +131,15 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	/**
 	 * Listeners
 	 */
-	protected CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
+	protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
 
 	/**
 	 * Used to protect mulit-threaded operations on write
 	 */
-	private final Semaphore writeLock = new Semaphore(1, true);
+	private final transient Semaphore writeLock = new Semaphore(1, true);
 
 	// Support for stream ids
-	private ThreadLocal<Integer> streamLocal = new ThreadLocal<Integer>();
+	private transient ThreadLocal<Integer> streamLocal = new ThreadLocal<Integer>();
 
 	/** {@inheritDoc} */
 	public int getStreamId() {
