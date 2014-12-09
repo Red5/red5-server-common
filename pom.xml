@@ -111,9 +111,7 @@
 						<link>http://docs.spring.io/spring/docs/4.0.x/javadoc-api</link>
 						<link>http://www.slf4j.org/api</link>
 						<link>http://logging.apache.org/log4j/1.2/apidocs</link>
-						<link>http://groovy.codehaus.org/api</link>
 						<link>http://tomcat.apache.org/tomcat-6.0-doc/api</link>
-						<link>http://ehcache.org/apidocs</link>
 					</links>
 					<tags>
 						<tag>

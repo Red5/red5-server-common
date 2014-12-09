@@ -37,7 +37,6 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.io.IStreamableFile;
 import org.red5.io.ITag;
 import org.red5.io.ITagWriter;
-import org.red5.io.flv.impl.Tag;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.service.IStreamableFileService;
 import org.red5.server.api.stream.IClientStream;
@@ -157,9 +156,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	private int percentage = 25;
 
 	/**
-	 * Whether or not to use a queue for delaying file writes. The queue is
-	 * useful for keeping Tag items in their expected order based on their time
-	 * stamp.
+	 * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on their time stamp.
 	 */
 	private boolean delayWrite = false;
 
@@ -250,11 +247,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 					if (log.isTraceEnabled()) {
 						log.trace("Stream data, body saved. Data type: {} class type: {}", dataType, msg.getClass().getName());
 					}
-					try {
-						queued = new QueuedData(timestamp, dataType, ((IStreamData) msg).duplicate());
-					} catch (ClassNotFoundException e) {
-						log.warn("Exception queueing stream data", e);
-					}
+					queued = new QueuedData(timestamp, dataType, (IStreamData) msg);
 				} else {
 					// XXX what type of message are we saving that has no body data??
 					if (log.isTraceEnabled()) {
@@ -360,8 +353,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	}
 
 	/**
-	 * Get the WriteFuture with a timeout based on the length of the slice to
-	 * write.
+	 * Get the WriteFuture with a timeout based on the length of the slice to write.
 	 * 
 	 * @param sliceLength
 	 * @return true if successful and false otherwise
@@ -408,25 +400,23 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	 */
 	public void onPipeConnectionEvent(PipeConnectionEvent event) {
 		switch (event.getType()) {
-		case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
-			if (event.getConsumer() == this) {
-				Map<String, Object> paramMap = event.getParamMap();
-				if (paramMap != null) {
-					mode = (String) paramMap.get("mode");
+			case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
+				if (event.getConsumer() == this) {
+					Map<String, Object> paramMap = event.getParamMap();
+					if (paramMap != null) {
+						mode = (String) paramMap.get("mode");
+					}
 				}
-			}
-			break;
-		case PipeConnectionEvent.CONSUMER_DISCONNECT:
-			if (event.getConsumer() != this) {
 				break;
-			}
-		case PipeConnectionEvent.PROVIDER_DISCONNECT:
-			// we only support one provider at a time so releasing when provider
-			// disconnects
-			// uninit();
-			break;
-		default:
-			break;
+			case PipeConnectionEvent.CONSUMER_DISCONNECT:
+				if (event.getConsumer() != this) {
+					break;
+				}
+			case PipeConnectionEvent.PROVIDER_DISCONNECT:
+				// we only support one provider at a time so releasing when provider disconnects uninit();
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -573,46 +563,41 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	 *            stream data
 	 */
 	private final void write(int timestamp, IRTMPEvent msg) {
+		// get data type
 		byte dataType = msg.getDataType();
 		log.debug("Write - timestamp: {} type: {}", timestamp, dataType);
-		// if the last message was a reset or we just started, use the header
-		// timer
-		if (startTimestamp == -1) {
-			startTimestamp = timestamp;
-			timestamp = 0;
-		} else {
-			timestamp -= startTimestamp;
-		}
-		// create a tag
-		ITag tag = new Tag();
-		tag.setDataType(dataType);
-		tag.setTimestamp(timestamp);
 		// get data bytes
-		IoBuffer data = ((IStreamData<?>) msg).getData().duplicate();
+		IoBuffer data = ((IStreamData<?>) msg).getData();
 		if (data != null) {
-			tag.setBodySize(data.limit());
-			tag.setBody(data);
-		}
-		// only allow blank tags if they are of audio type
-		if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
-			try {
-				if (timestamp >= 0) {
-					if (!writer.writeTag(tag)) {
-						log.warn("Tag was not written");
+			// if the last message was a reset or we just started, use the header timer
+			if (startTimestamp == -1) {
+				startTimestamp = timestamp;
+				timestamp = 0;
+			} else {
+				timestamp -= startTimestamp;
+			}
+			// create a tag
+			ITag tag = ImmutableTag.build(dataType, timestamp, data, 0);
+			// only allow blank tags if they are of audio type
+			if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
+				try {
+					if (timestamp >= 0) {
+						if (!writer.writeTag(tag)) {
+							log.warn("Tag was not written");
+						}
+					} else {
+						log.warn("Skipping message with negative timestamp.");
 					}
-				} else {
-					log.warn("Skipping message with negative timestamp.");
-				}
-			} catch (IOException e) {
-				log.error("Error writing tag", e);
-			} finally {
-				if (data != null) {
-					data.clear();
-					data.free();
+				} catch (IOException e) {
+					log.error("Error writing tag", e);
+				} finally {
+					if (data != null) {
+						data.clear();
+						data.free();
+					}
 				}
 			}
 		}
-		data = null;
 	}
 
 	/**
@@ -622,93 +607,74 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	 *            queued data for write
 	 */
 	private final void write(QueuedData queued) {
+		// get data type
+		byte dataType = queued.getDataType();
 		// get timestamp
 		int timestamp = queued.getTimestamp();
-		log.debug("Write - timestamp: {} type: {}", timestamp, queued.getDataType());
-		// if the last message was a reset or we just started, use the header
-		// timer
-		if (startTimestamp == -1) {
-			startTimestamp = timestamp;
-			timestamp = 0;
-		} else {
-			timestamp -= startTimestamp;
-		}
-		// get the type
-		byte dataType = queued.getDataType();
-		// create a tag
-		ITag tag = new Tag();
-		tag.setDataType(dataType);
-		tag.setTimestamp(timestamp);
+		log.debug("Write - timestamp: {} type: {}", timestamp, dataType);
 		// get queued
-		IoBuffer data = queued.getData();
-		if (data != null) {
-			tag.setBodySize(data.limit());
-			tag.setBody(data);
-		}
-		// only allow blank tags if they are of audio type
-		if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
-			try {
-				if (timestamp >= 0) {
-					if (!writer.writeTag(tag)) {
-						log.warn("Tag was not written");
-					}
+		ITag tag = queued.getData();
+		if (tag != null) {
+			// only allow blank tags if they are of audio type
+			if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
+				// if the last message was a reset or we just started, use the header timer
+				if (startTimestamp == -1) {
+					startTimestamp = timestamp;
+					timestamp = 0;
 				} else {
-					log.warn("Skipping message with negative timestamp.");
+					timestamp -= startTimestamp;
 				}
-			} catch (ClosedChannelException cce) {
-				// the channel we tried to write to is closed, we should not try
-				// again on that writer
-				log.error("The writer is no longer able to write to the file: {} writable: {}", file.getName(), file.canWrite());
-			} catch (IOException e) {
-				log.warn("Error writing tag", e);
-				if (e.getCause() instanceof ClosedChannelException) {
-					// the channel we tried to write to is closed, we should not
-					// try again on that writer
+				// update the timestamp
+				tag.setTimestamp(timestamp);
+				try {
+					if (timestamp >= 0) {
+						if (!writer.writeTag(tag)) {
+							log.warn("Tag was not written");
+						}
+					} else {
+						log.warn("Skipping message with negative timestamp.");
+					}
+				} catch (ClosedChannelException cce) {
+					// the channel we tried to write to is closed, we should not try
+					// again on that writer
 					log.error("The writer is no longer able to write to the file: {} writable: {}", file.getName(), file.canWrite());
-				}
-			} finally {
-				if (data != null) {
-					data.clear();
-					data.free();
+				} catch (IOException e) {
+					log.warn("Error writing tag", e);
+					if (e.getCause() instanceof ClosedChannelException) {
+						// the channel we tried to write to is closed, we should not
+						// try again on that writer
+						log.error("The writer is no longer able to write to the file: {} writable: {}", file.getName(), file.canWrite());
+					}
+				} finally {
+					queued.dispose();
 				}
 			}
 		}
-		data = null;
 	}
 
 	/**
-	 * Sets a video decoder configuration; some codecs require this, such as
-	 * AVC.
+	 * Sets a video decoder configuration; some codecs require this, such as AVC.
 	 * 
 	 * @param decoderConfig
 	 *            video codec configuration
 	 */
 	public void setVideoDecoderConfiguration(IRTMPEvent decoderConfig) {
-		videoConfigurationTag = new Tag();
-		videoConfigurationTag.setDataType(decoderConfig.getDataType());
-		videoConfigurationTag.setTimestamp(0);
 		if (decoderConfig instanceof IStreamData) {
 			IoBuffer data = ((IStreamData<?>) decoderConfig).getData().asReadOnlyBuffer();
-			videoConfigurationTag.setBodySize(data.limit());
-			videoConfigurationTag.setBody(data);
+			videoConfigurationTag = ImmutableTag.build(decoderConfig.getDataType(), 0, data, 0);
 		}
 	}
 
 	/**
-	 * Sets a audio decoder configuration; some codecs require this, such as
-	 * AAC.
+	 * Sets a audio decoder configuration; some codecs require this, such as AAC.
 	 * 
 	 * @param decoderConfig
 	 *            audio codec configuration
 	 */
 	public void setAudioDecoderConfiguration(IRTMPEvent decoderConfig) {
-		audioConfigurationTag = new Tag();
-		audioConfigurationTag.setDataType(decoderConfig.getDataType());
-		audioConfigurationTag.setTimestamp(0);
 		if (decoderConfig instanceof IStreamData) {
 			IoBuffer data = ((IStreamData<?>) decoderConfig).getData().asReadOnlyBuffer();
-			audioConfigurationTag.setBodySize(data.limit());
-			audioConfigurationTag.setBody(data);
+			audioConfigurationTag = ImmutableTag.build(decoderConfig.getDataType(), 0, data, 0);
 		}
 	}
 
@@ -740,8 +706,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	}
 
 	/**
-	 * Sets the threshold for the queue. When the threshold is met a worker is
-	 * spawned to empty the sorted queue to the writer.
+	 * Sets the threshold for the queue. When the threshold is met a worker is spawned to empty the sorted queue to the writer.
 	 * 
 	 * @param queueThreshold
 	 *            number of items to queue before spawning worker
@@ -797,8 +762,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	 * Sets the recording mode.
 	 * 
 	 * @param mode
-	 *            either "record" or "append" depending on the type of action to
-	 *            perform
+	 *            either "record" or "append" depending on the type of action to perform
 	 */
 	public void setMode(String mode) {
 		this.mode = mode;
@@ -809,50 +773,39 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	 */
 	private final static class QueuedData implements Comparable<QueuedData> {
 
-		final int timestamp;
-
-		final byte dataType;
-
-		boolean disposed;
-
-		@SuppressWarnings("rawtypes")
-		final IStreamData streamData;
+		ITag tag;
 
 		QueuedData(int timestamp, byte dataType) {
-			this.timestamp = timestamp;
-			this.dataType = dataType;
-			this.streamData = null;
+			this.tag = ImmutableTag.build(dataType, timestamp);
 		}
 
 		@SuppressWarnings("rawtypes")
 		QueuedData(int timestamp, byte dataType, IStreamData streamData) {
-			this.timestamp = timestamp;
-			this.dataType = dataType;
-			this.streamData = streamData;
+			this.tag = ImmutableTag.build(dataType, timestamp, streamData.getData());
 		}
 
 		public int getTimestamp() {
-			return timestamp;
+			return tag.getTimestamp();
 		}
 
 		public byte getDataType() {
-			return dataType;
+			return tag.getDataType();
 		}
 
-		public IoBuffer getData() {
-			return streamData.getData().asReadOnlyBuffer();
+		public ITag getData() {
+			return tag;
 		}
 
 		public boolean hasData() {
-			return disposed;
+			return tag != null;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + dataType;
-			result = prime * result + timestamp;
+			result = prime * result + tag.getDataType();
+			result = prime * result + tag.getTimestamp();
 			return result;
 		}
 
@@ -865,10 +818,10 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 				return false;
 			}
 			QueuedData other = (QueuedData) obj;
-			if (dataType != other.dataType) {
+			if (tag.getDataType() != other.getDataType()) {
 				return false;
 			}
-			if (timestamp != other.timestamp) {
+			if (tag.getTimestamp() != other.getTimestamp()) {
 				return false;
 			}
 			return true;
@@ -876,23 +829,16 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
 		@Override
 		public int compareTo(QueuedData other) {
-			if (timestamp > other.timestamp) {
+			if (tag.getTimestamp() > other.getTimestamp()) {
 				return 1;
-			} else if (timestamp < other.timestamp) {
+			} else if (tag.getTimestamp() < other.getTimestamp()) {
 				return -1;
 			}
 			return 0;
 		}
 
 		public void dispose() {
-			try {
-				final IoBuffer data = streamData.getData();
-				data.free();
-				data.buf().clear();
-			} catch (Exception e) {
-			} finally {
-				disposed = true;
-			}
+			tag = null;
 		}
 
 	}
