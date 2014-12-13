@@ -29,12 +29,8 @@ import org.red5.server.api.scope.IScope;
 /**
  * The connection object.
  * 
- * Each connection has an associated client and scope. Connections may be
- * persistent, polling, or transient. The aim of this interface is to provide
- * basic connection methods shared between different types of connections
- * 
- * Future subclasses: RTMPConnection, RemotingConnection, AJAXConnection,
- * HttpConnection, etc
+ * Each connection has an associated client and scope. Connections may be persistent, polling, or transient. 
+ * The aim of this interface is to provide basic connection methods shared between different types of connections.
  * 
  * @author The Red5 Project
  * @author Luke Hubbard (luke@codegent.com)

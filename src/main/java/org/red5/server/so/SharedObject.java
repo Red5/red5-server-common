@@ -119,12 +119,12 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Synchronization events
 	 */
-	protected volatile ConcurrentLinkedQueue<ISharedObjectEvent> syncEvents = new ConcurrentLinkedQueue<ISharedObjectEvent>();
+	protected transient volatile ConcurrentLinkedQueue<ISharedObjectEvent> syncEvents = new ConcurrentLinkedQueue<ISharedObjectEvent>();
 
 	/**
 	 * Listeners
 	 */
-	protected volatile CopyOnWriteArraySet<IEventListener> listeners = new CopyOnWriteArraySet<IEventListener>();
+	protected transient volatile CopyOnWriteArraySet<IEventListener> listeners = new CopyOnWriteArraySet<IEventListener>();
 
 	/**
 	 * Event listener, actually RTMP connection
@@ -144,7 +144,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Manages listener statistics.
 	 */
-	protected StatisticsCounter listenerStats = new StatisticsCounter();
+	protected transient StatisticsCounter listenerStats = new StatisticsCounter();
 
 	/**
 	 * Counts number of "change" events.

@@ -56,24 +56,24 @@ public class Client extends AttributeStore implements IClient {
 	protected static final String PERMISSIONS = IPersistable.TRANSIENT_PREFIX + "_red5_permissions";
 
 	/**
+	 * Client registry where Client is registered
+	 */
+	protected transient WeakReference<ClientRegistry> registry;
+	
+	/**
 	 * Connections this client is associated with.
 	 */
-	protected CopyOnWriteArraySet<IConnection> connections = new CopyOnWriteArraySet<IConnection>();
+	protected transient CopyOnWriteArraySet<IConnection> connections = new CopyOnWriteArraySet<IConnection>();
 
 	/**
 	 * Creation time as Timestamp
 	 */
-	protected long creationTime;
+	protected final long creationTime;
 
 	/**
 	 * Clients identifier
 	 */
-	protected String id;
-
-	/**
-	 * Client registry where Client is registered
-	 */
-	protected WeakReference<ClientRegistry> registry;
+	protected final String id;
 
 	/**
 	 * Whether or not the bandwidth has been checked.
@@ -81,8 +81,7 @@ public class Client extends AttributeStore implements IClient {
 	protected boolean bandwidthChecked;
 
 	/**
-	 * Creates client, sets creation time and registers it in ClientRegistry
-	 * DW: nope, does not currently register it in ClientRegistry!
+	 * Creates client, sets creation time and registers it in ClientRegistry.
 	 *
 	 * @param id             Client id
 	 * @param registry       ClientRegistry
@@ -90,12 +89,40 @@ public class Client extends AttributeStore implements IClient {
 	@ConstructorProperties({ "id", "registry" })
 	public Client(String id, ClientRegistry registry) {
 		super();
-		this.id = id;
+		if (id != null) {
+			this.id = id;
+		} else {
+			this.id = registry.nextId();
+		}
+		this.creationTime = System.currentTimeMillis();
 		// use a weak reference to prevent any hard-links to the registry
 		this.registry = new WeakReference<ClientRegistry>(registry);
-		this.creationTime = System.currentTimeMillis();
 	}
 
+	/**
+	 * Creates client, sets creation time and registers it in ClientRegistry.
+	 *
+	 * @param id             Client id
+	 * @param creationTime   Creation time
+	 * @param registry       ClientRegistry
+	 */
+	@ConstructorProperties({ "id", "creationTime", "registry" })
+	public Client(String id, Long creationTime, ClientRegistry registry) {
+		super();
+		if (id != null) {
+			this.id = id;
+		} else {
+			this.id = registry.nextId();
+		}
+		if (creationTime != null) {
+			this.creationTime = creationTime;
+		} else {
+			this.creationTime = System.currentTimeMillis();
+		}
+		// use a weak reference to prevent any hard-links to the registry
+		this.registry = new WeakReference<ClientRegistry>(registry);
+	}	
+	
 	/**
 	 *  Disconnects client from Red5 application
 	 */
@@ -150,15 +177,6 @@ public class Client extends AttributeStore implements IClient {
 	}
 
 	/**
-	 * Sets the time at which the client was created.
-	 * 
-	 * @param creationTime
-	 */
-	public void setCreationTime(long creationTime) {
-		this.creationTime = creationTime;
-	}
-
-	/**
 	 * Returns the time at which the client was created.
 	 * 
 	 * @return creation time
@@ -168,14 +186,8 @@ public class Client extends AttributeStore implements IClient {
 	}
 
 	/**
-	 * Sets the client id
-	 */
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	/**
-	 * Returns the client id
+	 * Returns the client id.
+	 * 
 	 * @return client id
 	 */
 	public String getId() {
@@ -218,11 +230,27 @@ public class Client extends AttributeStore implements IClient {
 	}
 
 	/**
+	 * Returns registration status of given connection.
+	 * 
+	 * @param conn
+	 * @return
+	 */
+	public boolean isRegistered(IConnection conn) {
+		return connections.contains(conn);
+	}
+	
+	/**
 	 * Associate connection with client
 	 * @param conn         Connection object
 	 */
 	protected void register(IConnection conn) {
-		log.debug("Registering connection for this client {}", id);
+		if (log.isDebugEnabled()) {
+    		if (conn == null) {
+    			log.debug("Register null connection, client id: {}", id);
+    		} else {
+    			log.debug("Register connection ({}:{}) client id: {}", conn.getRemoteAddress(), conn.getRemotePort(), id);
+    		}
+		}
 		if (conn != null) {
 			IScope scope = conn.getScope();
 			if (scope != null) {
@@ -250,6 +278,7 @@ public class Client extends AttributeStore implements IClient {
 	 * @param deleteIfNoConns Whether to delete this client if it no longer has any connections
 	 */
 	protected void unregister(IConnection conn, boolean deleteIfNoConns) {
+		log.debug("Unregister connection ({}:{}) client id: {}", conn.getRemoteAddress(), conn.getRemotePort(), id);
 		// remove connection from connected scopes list
 		connections.remove(conn);
 		// If client is not connected to any scope any longer then remove
@@ -321,8 +350,7 @@ public class Client extends AttributeStore implements IClient {
 		Client instance = null;
 		if (cd.containsKey("id")) {
 			String id = (String) cd.get("id");
-			instance = new Client(id, null);
-			instance.setCreationTime((Long) cd.get("creationTime"));
+			instance = new Client(id, (Long) cd.get("creationTime"), null);
 			instance.setAttribute(PERMISSIONS, cd.get(PERMISSIONS));
 		}
 		if (cd.containsKey("attributes")) {

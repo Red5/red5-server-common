@@ -69,7 +69,7 @@ public abstract class AbstractStream implements IStream {
 	/**
 	 * Lock for protecting critical sections
 	 */
-	protected final Semaphore lock = new Semaphore(1, true);
+	protected final transient Semaphore lock = new Semaphore(1, true);
 	
     /**
      *  Return stream name

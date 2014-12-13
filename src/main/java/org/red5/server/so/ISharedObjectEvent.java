@@ -65,4 +65,5 @@ public interface ISharedObjectEvent {
 	 * @return the value of the event
 	 */
 	public Object getValue();
+	
 }

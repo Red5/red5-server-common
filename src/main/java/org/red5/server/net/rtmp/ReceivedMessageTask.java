@@ -12,7 +12,7 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 
 	private final static Logger log = LoggerFactory.getLogger(ReceivedMessageTask.class);
 	
-	private RTMPConnection conn;
+	private final RTMPConnection conn;
 	
 	private final IRTMPHandler handler;
 

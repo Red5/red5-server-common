@@ -130,7 +130,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	/**
 	 * Output endpoint that providers use
 	 */
-	protected IMessageOutput connMsgOut;
+	protected transient IMessageOutput connMsgOut;
 
 	/** 
 	 * Stores timestamp of first packet
@@ -140,7 +140,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	/**
 	 * Pipe for live streaming
 	 */
-	protected IPipe livePipe;
+	protected transient IPipe livePipe;
 
 	/**
 	 * Stream published name
@@ -160,17 +160,17 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	/**
 	 * Stores statistics about subscribers.
 	 */
-	private StatisticsCounter subscriberStats = new StatisticsCounter();
+	private transient StatisticsCounter subscriberStats = new StatisticsCounter();
 
 	/** 
 	 * Listeners to get notified about received packets.
 	 */
-	protected Set<IStreamListener> listeners = new CopyOnWriteArraySet<IStreamListener>();
+	protected transient Set<IStreamListener> listeners = new CopyOnWriteArraySet<IStreamListener>();
 
 	/**
 	 * Recording listener
 	 */
-	private WeakReference<IRecordingListener> recordingListener;
+	private transient WeakReference<IRecordingListener> recordingListener;
 
 	protected long latestTimeStamp = -1;
 

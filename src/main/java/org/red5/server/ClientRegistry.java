@@ -35,6 +35,8 @@ import org.red5.server.api.IClientRegistry;
 import org.red5.server.exception.ClientNotFoundException;
 import org.red5.server.exception.ClientRejectedException;
 import org.red5.server.jmx.mxbeans.ClientRegistryMXBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 /**
@@ -44,6 +46,8 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  */
 @ManagedResource(objectName="org.red5.server:type=ClientRegistry,name=default", description="ClientRegistry")
 public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
+	
+	private Logger log = LoggerFactory.getLogger(ClientRegistry.class);
 	
 	/**
 	 * Clients map
@@ -89,19 +93,11 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
 	 * Add the client to the registry
 	 */
 	private void addClient(String id, IClient client) {
-		//check to see if the id already exists first
+		// check to see if the id already exists first
 		if (!hasClient(id)) {
 			clients.put(id, client);
 		} else {
-			// DW the Client object is meant to be unifying connections from a remote user. But currently the only case we
-			// specify this currently is when we use a remoting session. So we actually just create an arbitrary id, which means
-			// RTMP connections from same user are not combined.
-			//get the next available client id
-			String newId = nextId();
-			//update the client
-			client.setId(newId);
-			//add the client to the list
-			addClient(newId, client);
+			log.debug("Client id: {} already registered", id);
 		}
 	}
 
@@ -140,7 +136,7 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
 	@SuppressWarnings("unchecked")
 	protected Collection<IClient> getClients() {
 		if (!hasClients()) {
-			// Avoid creating new Collection object if no clients exist.
+			// avoid creating new Collection object if no clients exist.
 			return Collections.EMPTY_SET;
 		}
 		return Collections.unmodifiableCollection(clients.values());
@@ -192,11 +188,15 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
 	 * @return         Next client id
 	 */
 	public String nextId() {
-		//when we reach max int, reset to zero
-		if (nextId.get() == Integer.MAX_VALUE) {
-			nextId.set(0);
-		}
-		return String.format("%s", nextId.getAndIncrement());
+		String id = "-1";
+		do {
+			// when we reach max int, reset to zero
+			if (nextId.get() == Integer.MAX_VALUE) {
+				nextId.set(0);
+			}
+			id = String.format("%d", nextId.getAndIncrement());
+		} while (hasClient(id));
+		return id;
 	}
 
 	/**
@@ -204,7 +204,7 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
 	 * @return        Previous client id
 	 */
 	public String previousId() {
-		return String.format("%s", nextId.get());
+		return String.format("%d", nextId.get());
 	}
 
 	/**

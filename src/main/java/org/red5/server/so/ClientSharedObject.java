@@ -56,17 +56,17 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
 	/**
 	 * Synchronization lock
 	 */
-	private final ReentrantLock lock = new ReentrantLock();
+	private final transient ReentrantLock lock = new ReentrantLock();
 
 	/**
 	 * Set of listeners
 	 */
-	private Set<ISharedObjectListener> listeners = new CopyOnWriteArraySet<ISharedObjectListener>();
+	private transient CopyOnWriteArraySet<ISharedObjectListener> listeners = new CopyOnWriteArraySet<ISharedObjectListener>();
 
 	/**
 	 * Set of event handlers
 	 */
-	private ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<String, Object>(1, 0.9f, 1);
+	private transient ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<String, Object>(1, 0.9f, 1);
 
 	/**
 	 * Create new client SO with

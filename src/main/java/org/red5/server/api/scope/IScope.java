@@ -43,6 +43,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  * 
  * @author The Red5 Project
  * @author Luke Hubbard (luke@codegent.com)
+ * @author Paul Gregoire (mondain@gmail.com)
  */
 public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHandlerProvider {
 

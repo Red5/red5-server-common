@@ -92,41 +92,6 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	private static final int UNSET = -1;
 
 	/**
-	 * Auto-start flag
-	 */
-	private boolean autoStart = true;
-
-	/**
-	 * Child scopes
-	 */
-	private final ConcurrentScopeSet children;
-
-	/**
-	 * Connected clients map
-	 */
-	private final CopyOnWriteArraySet<IClient> clients;
-
-	/**
-	 * Storage for scope attributes
-	 */
-	protected final AttributeStore attributes = new AttributeStore();
-
-	/**
-	 * Statistics about connections to the scope.
-	 */
-	protected final StatisticsCounter connectionStats = new StatisticsCounter();
-
-	/**
-	 * Statistics about sub-scopes.
-	 */
-	protected final StatisticsCounter subscopeStats = new StatisticsCounter();
-
-	/**
-	 * Scope context
-	 */
-	private IContext context;
-
-	/**
 	 * Timestamp the scope was created.
 	 */
 	private long creationTime;
@@ -142,20 +107,55 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	private boolean enabled = true;
 
 	/**
-	 * Scope handler
-	 */
-	private IScopeHandler handler;
-
-	/**
 	 * Whether scope is running
 	 */
 	private boolean running;
 
 	/**
+	 * Auto-start flag
+	 */
+	private boolean autoStart = true;
+
+	/**
+	 * Scope context
+	 */
+	private transient IContext context;
+
+	/**
+	 * Scope handler
+	 */
+	private transient IScopeHandler handler;
+
+	/**
 	 * Registered service handlers for this scope. The map is created on-demand
 	 * only if it's accessed for writing.
 	 */
-	private volatile ConcurrentMap<String, Object> serviceHandlers;
+	private transient volatile ConcurrentMap<String, Object> serviceHandlers;
+
+	/**
+	 * Child scopes
+	 */
+	private final transient ConcurrentScopeSet children;
+
+	/**
+	 * Connected clients map
+	 */
+	private final transient CopyOnWriteArraySet<IClient> clients;
+
+	/**
+	 * Statistics about connections to the scope.
+	 */
+	protected final transient StatisticsCounter connectionStats = new StatisticsCounter();
+
+	/**
+	 * Statistics about sub-scopes.
+	 */
+	protected final transient StatisticsCounter subscopeStats = new StatisticsCounter();
+
+	/**
+	 * Storage for scope attributes
+	 */
+	protected final AttributeStore attributes = new AttributeStore();
 
 	/**
 	 * Mbean object name.
@@ -1440,6 +1440,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Builder pattern
 	 */
 	public final static class Builder {
+		
 		private IScope parent;
 
 		private ScopeType type;

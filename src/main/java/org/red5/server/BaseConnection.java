@@ -156,10 +156,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	 */
 	@ConstructorProperties(value = { "persistent" })
 	public BaseConnection() {
-		log.debug("New BaseConnection");
-		this.type = PERSISTENT;
-		this.sessionId = RandomStringUtils.randomAlphanumeric(13).toUpperCase();
-		log.debug("Generated session id: {}", sessionId);
+		this(PERSISTENT);
 	}
 
 	/**
@@ -201,6 +198,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 		this.path = path;
 		this.sessionId = sessionId;
 		this.params = params;
+		log.debug("Generated session id: {}", sessionId);
 	}
 
 	/** {@inheritDoc} */
@@ -226,13 +224,15 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	 */
 	public void initialize(IClient client) {
 		log.debug("initialize - client: {}", client);
-		if (this.client != null && this.client instanceof Client) {
+		if (this.client != null && this.client instanceof Client && !this.client.equals(client)) {
 			// unregister old client
+			log.trace("Unregistering previous client: {}", this.client);
 			((Client) this.client).unregister(this, false);
 		}
 		this.client = client;
-		if (this.client instanceof Client) {
+		if (this.client instanceof Client && !((Client) this.client).isRegistered(this)) {
 			// register new client
+			log.trace("Registering client: {}", this.client);
 			((Client) this.client).register(this);
 		}
 	}
@@ -317,7 +317,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	 * @return       true if connection is bound to scope, false otherwise
 	 */
 	public boolean isConnected() {
-		log.debug("Connected: {}", (scope != null));
+		//log.debug("Connected: {}", (scope != null));
 		return scope != null;
 	}
 	

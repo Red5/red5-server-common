@@ -1170,8 +1170,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Increases number of read messages by one. Updates number of bytes read.
 	 */
 	public void messageReceived() {
-		if (log.isTraceEnabled())
+		if (log.isTraceEnabled()) {
 			log.trace("messageReceived");
+		}
 		readMessages.incrementAndGet();
 		// trigger generation of BytesRead messages
 		updateBytesRead();
@@ -1226,8 +1227,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 */
 	@SuppressWarnings("unchecked")
 	public void handleMessageReceived(Packet message) {
-		if (log.isTraceEnabled())
+		if (log.isTraceEnabled()) {
 			log.trace("handleMessageReceived - {}", sessionId);
+		}
 		final byte dataType = message.getHeader().getDataType();
 		// route these types outside the executor
 		switch(dataType) {
@@ -1268,22 +1270,25 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 					ListenableFuture<Boolean> future = (ListenableFuture<Boolean>) executor.submitListenable(new ListenableFutureTask<Boolean>(task));
 					currentQueueSize.incrementAndGet();
 					future.addCallback(new ListenableFutureCallback<Boolean>() {
+						
 						private int getProcessingTime() {
-							return (int) ((System.nanoTime() - startTime)/1000);
+							return (int) ((System.nanoTime() - startTime) / 1000);
 						}
 						
 						public void onFailure(Throwable t) {
-							currentQueueSize.decrementAndGet();
-							
-							if (log.isWarnEnabled())
+							currentQueueSize.decrementAndGet();							
+							if (log.isWarnEnabled()) {
 								log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, getMessageType(sentMessage), getProcessingTime(), packetNumber);
+							}
 						}
 
 						public void onSuccess(Boolean success) {
 							currentQueueSize.decrementAndGet();
-							if (log.isDebugEnabled())
+							if (log.isDebugEnabled()) {
 								log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, getMessageType(sentMessage), getProcessingTime(), packetNumber);
+							}
 						}
+						
 					});
 				} catch (TaskRejectedException tre) {
 					Throwable[] suppressed = tre.getSuppressed();
@@ -1358,8 +1363,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		try {
 			// get the channel for so updates
 			Channel channel = getChannel((byte) 3);
-			if (log.isTraceEnabled())
+			if (log.isTraceEnabled()) {
 				log.trace("Send to channel: {}", channel);
+			}
 			channel.write(syncMessage);
 		} catch (Exception e) {
 			log.warn("Exception sending shared object", e);
@@ -1369,8 +1375,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/** {@inheritDoc} */
 	public void ping() {
 		long newPingTime = System.currentTimeMillis();
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Send Ping: session=[{}], currentTime=[{}], lastPingTime=[{}]", new Object[] { getSessionId(), newPingTime, lastPingSentOn.get() });
+		}
 		if (lastPingSentOn.get() == 0) {
 			lastPongReceivedOn.set(newPingTime);
 		}
@@ -1391,12 +1398,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	public void pingReceived(Ping pong) {
 		long now = System.currentTimeMillis();
 		long previousPingValue = (int) (lastPingSentOn.get() & 0xffffffff);
-		if (log.isDebugEnabled())
+		if (log.isDebugEnabled()) {
 			log.debug("Pong Rx: session=[{}] at {} with value {}, previous received at {}", new Object[] { getSessionId(), now, pong.getValue2(), previousPingValue });
+		}
 		if (pong.getValue2() == previousPingValue) {
 			lastPingRoundTripTime.set((int) (now & 0xffffffff) - pong.getValue2());
-			if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) {
 				log.debug("Ping response session=[{}], RTT=[{} ms]", new Object[] { getSessionId(), lastPingRoundTripTime.get() });
+			}
 		} else {
 			int pingRtt = (int) (now & 0xffffffff) - pong.getValue2();
 			log.info("Pong delayed: session=[{}], ping response took [{} ms] to arrive. Connection may be congested.", new Object[] { getSessionId(), pingRtt });

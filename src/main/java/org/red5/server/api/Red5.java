@@ -122,7 +122,15 @@ public final class Red5 {
 	 * @param connection     Thread local connection
 	 */
 	public static void setConnectionLocal(IConnection connection) {
-		log.debug("Set connection: {} with thread: {}", (connection != null ? connection.getSessionId() : null), Thread.currentThread().getName());
+		if (log.isDebugEnabled()) {
+    		log.debug("Set connection: {} with thread: {}", (connection != null ? connection.getSessionId() : null), Thread.currentThread().getName());
+    		try {
+    	        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+    	        StackTraceElement stackTraceElement = stackTraceElements[2];
+    	        log.debug("Caller: {}.{} #{}", stackTraceElement.getClassName(), stackTraceElement.getMethodName(), stackTraceElement.getLineNumber());
+            } catch (Exception e) {
+            }
+		}
 		if (connection != null) {
 			connThreadLocal.set(new WeakReference<IConnection>(connection));
 			IScope scope = connection.getScope();
@@ -144,10 +152,11 @@ public final class Red5 {
 	 * @return Connection object
 	 */
 	public static IConnection getConnectionLocal() {
-		log.debug("Get connection on thread: {}", Thread.currentThread().getName());
 		WeakReference<IConnection> ref = connThreadLocal.get();
 		if (ref != null) {
-			return ref.get();
+			IConnection connection = ref.get();
+			log.debug("Get connection: {} on thread: {}", (connection != null ? connection.getSessionId() : null), Thread.currentThread().getName());
+			return connection;
 		} else {
 			return null;
 		}

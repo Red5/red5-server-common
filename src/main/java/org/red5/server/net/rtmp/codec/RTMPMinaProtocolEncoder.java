@@ -50,9 +50,13 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 		log.trace("Session id: {}", sessionId);
 		RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);		
 		if (conn != null) {
+			RTMPConnection prev = null;
 			// look for and compare the connection local; set it from the session
 			if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
 				log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
+				// keep track of conn we're replacing
+				prev = (RTMPConnection) Red5.getConnectionLocal();
+				// replace conn with the one from the session id lookup
 				Red5.setConnectionLocal(conn);
 			}
 			final Semaphore lock = conn.getEncoderLock();
@@ -70,36 +74,21 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 						log.trace("Writing output data");
 						out.write(buf);
 					} else {
-						/*
-						LinkedList<IoBuffer> chunks = Chunker.chunk(buf, requestedWriteChunkSize, targetChunkSize);
-						log.trace("Writing output data in {} chunks", chunks.size());
-						for (IoBuffer chunk : chunks) {
-							out.write(chunk);
-						}
-						chunks.clear();
-						chunks = null;
-						*/
 						int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
 						log.trace("Wrote {} chunks", sentChunks);
 					}
 				} else {
 					log.trace("Response buffer was null after encoding");
 				}
-				//			WriteFuture future = out.flush();
-				//			if (future != null) {
-				//				future.addListener(new IoFutureListener<WriteFuture>() {
-				//					@Override
-				//					public void operationComplete(WriteFuture future) {
-				//						//log.debug("Buffer freed");
-				//						buf.free();
-				//					}
-				//				});
-				//			}
 			} catch (Exception ex) {
 				log.error("Exception during encode", ex);
 			} finally {
 				log.trace("Encoder lock releasing.. {}", conn.getSessionId());
 				lock.release();
+			}
+			// set connection local back to previous value
+			if (prev != null) {
+				Red5.setConnectionLocal(prev);
 			}
 		} else {
 			log.debug("Connection is no longer available for encoding, may have been closed already");

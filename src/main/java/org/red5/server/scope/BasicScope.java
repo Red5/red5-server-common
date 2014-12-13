@@ -46,6 +46,11 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
 	protected static Logger log = LoggerFactory.getLogger(BasicScope.class);
 
 	/**
+	 * Scheduled job name for keep alive check
+	 */
+	private String keepAliveJobName;
+
+	/**
 	 * Parent scope. Scopes can be nested.
 	 *
 	 * @see org.red5.server.api.scope.IScope
@@ -97,12 +102,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
 	/**
 	 * List of event listeners
 	 */
-	protected CopyOnWriteArraySet<IEventListener> listeners;
-
-	/**
-	 * Scheduled job name for keep alive check
-	 */
-	private String keepAliveJobName;
+	protected transient CopyOnWriteArraySet<IEventListener> listeners;
 
 	/**
 	 * Creates unnamed scope

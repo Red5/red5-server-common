@@ -61,22 +61,22 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	/**
 	 * Lock to synchronize shared object updates from multiple threads
 	 */
-	private final ReentrantLock lock = new ReentrantLock();
+	private final transient ReentrantLock lock = new ReentrantLock();
 
 	/**
 	 * Server-side listeners
 	 */
-	private CopyOnWriteArraySet<ISharedObjectListener> serverListeners = new CopyOnWriteArraySet<ISharedObjectListener>();
+	private transient CopyOnWriteArraySet<ISharedObjectListener> serverListeners = new CopyOnWriteArraySet<ISharedObjectListener>();
 
 	/**
 	 * Event handlers
 	 */
-	private ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<String, Object>(1, 0.9f, 1);
+	private transient ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<String, Object>(1, 0.9f, 1);
 
 	/**
 	 * Security handlers
 	 */
-	private CopyOnWriteArraySet<ISharedObjectSecurity> securityHandlers = new CopyOnWriteArraySet<ISharedObjectSecurity>();
+	private transient CopyOnWriteArraySet<ISharedObjectSecurity> securityHandlers = new CopyOnWriteArraySet<ISharedObjectSecurity>();
 
 	/**
 	 * Scoped shared object
