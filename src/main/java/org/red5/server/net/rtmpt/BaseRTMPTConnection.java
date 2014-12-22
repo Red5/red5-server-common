@@ -80,9 +80,9 @@ public abstract class BaseRTMPTConnection extends RTMPConnection {
 	private volatile IoBuffer buffer;
 
 	/**
-	 * List of pending outgoing messages
+	 * List of pending outgoing messages. Default size is 8192.
 	 */
-	protected transient volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>();
+	protected transient volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>(8192);
 
 	/**
 	 * Maximum incoming messages to process at a time per client
@@ -117,7 +117,9 @@ public abstract class BaseRTMPTConnection extends RTMPConnection {
 	public void close() {
 		closing = true;
 		if (pendingOutMessages.size() > 0) {
-			log.trace("Clearing pending messages out: {}", pendingOutMessages.size());
+			if (log.isTraceEnabled()) {
+				log.trace("Clearing pending messages out: {}", pendingOutMessages.size());
+			}
 			pendingOutMessages.clear();
 		}
 		// clean up buffer
@@ -180,7 +182,9 @@ public abstract class BaseRTMPTConnection extends RTMPConnection {
 			// connection is being closed, don't decode any new packets
 			return Collections.EMPTY_LIST;
 		}
-		log.trace("Current bytes read at decode: {}", data.limit());
+		if (log.isTraceEnabled()) {
+			log.trace("Current bytes read at decode: {}", data.limit());
+		}
 		buffer.put(data);
 		buffer.flip();
 		return decoder.decodeBuffer(this, buffer);

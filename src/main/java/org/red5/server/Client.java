@@ -233,7 +233,7 @@ public class Client extends AttributeStore implements IClient {
 	 * Returns registration status of given connection.
 	 * 
 	 * @param conn
-	 * @return
+	 * @return true if registered and false otherwise
 	 */
 	public boolean isRegistered(IConnection conn) {
 		return connections.contains(conn);
