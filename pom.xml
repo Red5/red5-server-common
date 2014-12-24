@@ -63,6 +63,18 @@
         <bc.version>1.51</bc.version>
         <junit.version>4.12</junit.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>sonatype-snapshots</id>
+            <name>Sonatype Snapshots</name>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+        <repository>
+            <id>sonatype-releases</id>
+            <name>Sonatype Releases</name>
+            <url>http://oss.sonatype.org/content/repositories/releases</url>
+        </repository> 
+    </repositories>
     <build>
         <defaultGoal>install</defaultGoal>
         <resources>
