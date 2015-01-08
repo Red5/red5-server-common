@@ -106,9 +106,8 @@ public abstract class AbstractPipe implements IPipe {
 			fireProviderConnectionEvent(provider, PipeConnectionEvent.PROVIDER_DISCONNECT, null);
 			listeners.remove(provider);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -121,9 +120,8 @@ public abstract class AbstractPipe implements IPipe {
 			fireConsumerConnectionEvent(consumer, PipeConnectionEvent.CONSUMER_DISCONNECT, null);
 			listeners.remove(consumer);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -274,7 +272,7 @@ public abstract class AbstractPipe implements IPipe {
 	 * Close the pipe
 	 */
 	public void close() {
-		//clean up collections
+		// clean up collections
 		if (consumers != null) {
 			consumers.clear();
 			consumers = null;

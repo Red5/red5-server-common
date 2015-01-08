@@ -25,21 +25,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A simple in-memory version of push-push pipe. It is triggered by an active provider to push messages
- * through it to an event-driven consumer.
+ * A simple in-memory version of push-push pipe. It is triggered by an active provider to push messages through it to an event-driven consumer.
  * 
- * @author The Red5 Project
  * @author Steven Gong (steven.gong@gmail.com)
+ * @author Paul Gregoire (mondain@gmail.com)
  */
 public class InMemoryPushPushPipe extends AbstractPipe {
 
 	private static final Logger log = LoggerFactory.getLogger(InMemoryPushPushPipe.class);
 
+	public InMemoryPushPushPipe() {
+		super();
+	}
+
+	public InMemoryPushPushPipe(IPipeConnectionListener listener) {
+		this();
+		addPipeConnectionListener(listener);
+	}
+	
 	/** {@inheritDoc} */
 	@Override
 	public boolean subscribe(IConsumer consumer, Map<String, Object> paramMap) {
 		if (consumer instanceof IPushableConsumer) {
 			boolean success = super.subscribe(consumer, paramMap);
+			if (log.isDebugEnabled()) {
+				log.debug("Consumer subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), consumer, paramMap });
+			}
 			if (success) {
 				fireConsumerConnectionEvent(consumer, PipeConnectionEvent.CONSUMER_CONNECT_PUSH, paramMap);
 			}
@@ -53,6 +64,9 @@ public class InMemoryPushPushPipe extends AbstractPipe {
 	@Override
 	public boolean subscribe(IProvider provider, Map<String, Object> paramMap) {
 		boolean success = super.subscribe(provider, paramMap);
+		if (log.isDebugEnabled()) {
+			log.debug("Provider subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), provider, paramMap });
+		}
 		if (success) {
 			fireProviderConnectionEvent(provider, PipeConnectionEvent.PROVIDER_CONNECT_PUSH, paramMap);
 		}
@@ -75,13 +89,16 @@ public class InMemoryPushPushPipe extends AbstractPipe {
 	 * @param message the message to be pushed to consumers.
 	 */
 	public void pushMessage(IMessage message) throws IOException {
+		if (log.isDebugEnabled()) {
+			log.debug("pushMessage: {}", message);
+			log.debug("pushMessage - consumers: {}", consumers.size());
+		}
 		for (IConsumer consumer : consumers) {
 			try {
 				IPushableConsumer pcon = (IPushableConsumer) consumer;
 				pcon.pushMessage(this, message);
 			} catch (Throwable t) {
 				if (t instanceof IOException) {
-					// Pass this along
 					throw (IOException) t;
 				}
 				log.error("Exception when pushing message to consumer", t);

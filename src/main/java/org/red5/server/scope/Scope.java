@@ -1091,7 +1091,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 			if (handler != null) {
 				log.debug("Scope {} has a handler {}", this.getName(), handler);
 			} else {
-				log.debug("Scope {} has no handler", this);
+				log.debug("{} has no handler, adding parent handler", this);
 				handler = parent.getHandler();
 			}
 			try {
@@ -1100,11 +1100,11 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 					result = handler.start(this);
 				} else {
 					// always start scopes without handlers
-					log.debug("Scope {} has no handler of its own, allowing start", this);
+					log.debug("{} has no handler of its own, allowing start", this);
 					result = true;
 				}
 			} catch (Throwable e) {
-				log.error("Could not start scope {} {}", this, e);
+				log.error("Could not start scope {}", this, e);
 			} finally {
 				// post notification
 				((Server) getServer()).notifyScopeCreated(this);

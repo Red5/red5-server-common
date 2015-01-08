@@ -77,7 +77,7 @@ import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 
 /**
- * A play engine for playing an IPlayItem.
+ * A play engine for playing a IPlayItem.
  * 
  * @author The Red5 Project
  * @author Steven Gong
@@ -534,10 +534,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 				log.debug("Codec info: {}", codecInfo);
 				if (codecInfo instanceof StreamCodecInfo) {
 					StreamCodecInfo info = (StreamCodecInfo) codecInfo;
+					// handle video codec with configuration
 					IVideoStreamCodec videoCodec = info.getVideoCodec();
 					log.debug("Video codec: {}", videoCodec);
 					if (videoCodec != null) {
-						//check for decoder configuration to send
+						// check for decoder configuration to send
 						IoBuffer config = videoCodec.getDecoderConfiguration();
 						if (config != null) {
 							log.debug("Decoder configuration is available for {}", videoCodec.getName());
@@ -546,13 +547,13 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 							log.trace("Configuration ts: {}", conf.getTimestamp());
 							RTMPMessage confMsg = RTMPMessage.build(conf);
 							try {
-								log.debug("Pushing decoder configuration");
+								log.debug("Pushing video decoder configuration");
 								msgOut.pushMessage(confMsg);
 							} finally {
 								conf.release();
 							}
 						}
-						//check for a keyframe to send
+						// check for a keyframe to send
 						IoBuffer keyFrame = videoCodec.getKeyframe();
 						if (keyFrame != null) {
 							log.debug("Keyframe is available");
@@ -568,9 +569,9 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 							}
 						}
 					} else {
-						log.debug("Could not initialize stream output, videoCodec is null");
+						log.debug("No video decoder configuration available");
 					}
-					// SplitmediaLabs - begin AAC fix
+					// handle audio codec with configuration
 					IAudioStreamCodec audioCodec = info.getAudioCodec();
 					log.debug("Audio codec: {}", audioCodec);
 					if (audioCodec != null) {
@@ -583,14 +584,14 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 							log.trace("Configuration ts: {}", conf.getTimestamp());
 							RTMPMessage confMsg = RTMPMessage.build(conf);
 							try {
-								log.debug("Pushing decoder configuration");
+								log.debug("Pushing audio decoder configuration");
 								msgOut.pushMessage(confMsg);
 							} finally {
 								conf.release();
 							}
 						}
 					} else {
-						log.debug("No decoder configuration available, audioCodec is null");
+						log.debug("No audio decoder configuration available");
 					}
 				}
 			}			
