@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessage {
 
 	private static Logger log = LoggerFactory.getLogger(SharedObjectMessage.class);
-	
+
 	private static final long serialVersionUID = -8128704039659990049L;
 
 	/**
@@ -52,35 +52,41 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
 	/**
 	 * SO version, used for synchronization purposes
 	 */
-	private int version;
+	private volatile int version;
 
 	/**
 	 * Whether SO persistent
 	 */
 	private boolean persistent;
-	
+
 	public SharedObjectMessage() {
 	}
 
 	/**
 	 * Creates Shared Object event with given name, version and persistence flag
 	 * 
-	 * @param name Event name
-	 * @param version SO version
-	 * @param persistent SO persistence flag
+	 * @param name
+	 *            Event name
+	 * @param version
+	 *            SO version
+	 * @param persistent
+	 *            SO persistence flag
 	 */
 	public SharedObjectMessage(String name, int version, boolean persistent) {
 		this(null, name, version, persistent);
 	}
 
 	/**
-	 * Creates Shared Object event with given listener, name, SO version and
-	 * persistence flag
+	 * Creates Shared Object event with given listener, name, SO version and persistence flag
 	 * 
-	 * @param source Event listener
-	 * @param name Event name
-	 * @param version SO version
-	 * @param persistent SO persistence flag
+	 * @param source
+	 *            Event listener
+	 * @param name
+	 *            Event name
+	 * @param version
+	 *            SO version
+	 * @param persistent
+	 *            SO persistence flag
 	 */
 	public SharedObjectMessage(IEventListener source, String name, int version, boolean persistent) {
 		super(Type.SHARED_OBJECT, source);
@@ -96,7 +102,7 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
 		version = 0;
 		events.clear();
 	}
-	
+
 	/** {@inheritDoc} */
 	@Override
 	public byte getDataType() {
@@ -147,7 +153,7 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
 	protected void setPersistent(boolean persistent) {
 		this.persistent = persistent;
 	}
-	
+
 	/** {@inheritDoc} */
 	public void addEvent(ISharedObjectEvent event) {
 		events.add(event);
@@ -171,7 +177,7 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
 		SharedObjectEvent event = new SharedObjectEvent(type, key, value);
 		if (!events.contains(event)) {
 			return events.add(event);
-		} 
+		}
 		return false;
 	}
 

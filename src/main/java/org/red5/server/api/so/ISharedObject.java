@@ -27,7 +27,6 @@ import org.red5.server.api.statistics.ISharedObjectStatistics;
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
  */
-
 public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedObjectSecurityService {
 
 	/**
@@ -60,5 +59,12 @@ public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedOb
 	 * @return statistics
 	 */
 	public ISharedObjectStatistics getStatistics();
+	
+	/**
+	 * Sets a "dirty" flag to indicate that the attributes have been modified.
+	 * 
+	 * @param dirty
+	 */
+	public void setDirty(boolean dirty);
 
 }

@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Special scope for shared objects
  */
-public class SharedObjectScope extends BasicScope implements ISharedObject,	StatusCodes {
+public class SharedObjectScope extends BasicScope implements ISharedObject, StatusCodes {
 
 	private Logger log = LoggerFactory.getLogger(SharedObjectScope.class);
 
@@ -94,8 +94,7 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	private String lingerJobName;
 
 	/**
-	 * Creates shared object with given parent scope, name, persistence flag
-	 * state and store object
+	 * Creates shared object with given parent scope, name, persistence flag state and store object
 	 * 
 	 * @param parent
 	 *            Parent scope
@@ -115,8 +114,7 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 		}
 		log.trace("Path+name: {}/{}", path, name);
 		// Load SO
-		so = (SharedObject) store.load(ScopeType.SHARED_OBJECT + path + '/'
-				+ name);
+		so = (SharedObject) store.load(ScopeType.SHARED_OBJECT + path + '/' + name);
 		// Create if it doesn't exist
 		if (so == null) {
 			so = new SharedObject(name, path, persistent, store);
@@ -172,13 +170,19 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 
 	/** {@inheritDoc} */
 	public void beginUpdate() {
-		// Make sure only one thread can update the SO
+		if (log.isTraceEnabled()) {
+			log.trace("beginUpdate - locked: {} owner: {}", lock.isLocked(), lock.isHeldByCurrentThread());
+		}
+		// make sure only one thread can update the SO
 		lock.lock();
 		so.beginUpdate();
 	}
 
 	/** {@inheritDoc} */
 	public void beginUpdate(IEventListener listener) {
+		if (log.isTraceEnabled()) {
+			log.trace("beginUpdate with listener - locked: {} owner: {} listener: {}", lock.isLocked(), lock.isHeldByCurrentThread(), listener);
+		}
 		// Make sure only one thread can update the SO
 		lock.lock();
 		// start updates
@@ -187,6 +191,9 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 
 	/** {@inheritDoc} */
 	public void endUpdate() {
+		if (log.isTraceEnabled()) {
+			log.trace("endUpdate - locked: {} owner: {}", lock.isLocked(), lock.isHeldByCurrentThread());
+		}
 		// end update of SO
 		try {
 			so.endUpdate();
@@ -563,8 +570,7 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	}
 
 	/**
-	 * Call handlers and check if sending a message to the clients connected to
-	 * the SO is allowed.
+	 * Call handlers and check if sending a message to the clients connected to the SO is allowed.
 	 * 
 	 * @param message
 	 *            message
@@ -595,8 +601,7 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	/** {@inheritDoc} */
 	@Override
 	public void dispatchEvent(IEvent e) {
-		if (e instanceof ISharedObjectMessage
-				|| e.getType() == IEvent.Type.SHARED_OBJECT) {
+		if (e instanceof ISharedObjectMessage || e.getType() == IEvent.Type.SHARED_OBJECT) {
 			ISharedObjectMessage msg = (ISharedObjectMessage) e;
 			if (msg.hasSource()) {
 				beginUpdate(msg.getSource());
@@ -607,58 +612,56 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 				for (ISharedObjectEvent event : msg.getEvents()) {
 					final String key = event.getKey();
 					switch (event.getType()) {
-					case SERVER_CONNECT:
-						if (!isConnectionAllowed()) {
-							so.returnError(SO_NO_READ_ACCESS);
-						} else if (msg.hasSource()) {
-							IEventListener source = msg.getSource();
-							if (source instanceof BaseConnection) {
-								((BaseConnection) source)
-										.registerBasicScope(this);
-							} else {
-								addEventListener(source);
+						case SERVER_CONNECT:
+							if (!isConnectionAllowed()) {
+								so.returnError(SO_NO_READ_ACCESS);
+							} else if (msg.hasSource()) {
+								IEventListener source = msg.getSource();
+								if (source instanceof BaseConnection) {
+									((BaseConnection) source).registerBasicScope(this);
+								} else {
+									addEventListener(source);
+								}
 							}
-						}
-						break;
-					case SERVER_DISCONNECT:
-						if (msg.hasSource()) {
-							IEventListener source = msg.getSource();
-							if (source instanceof BaseConnection) {
-								((BaseConnection) source)
-										.unregisterBasicScope(this);
-							} else {
-								removeEventListener(source);
+							break;
+						case SERVER_DISCONNECT:
+							if (msg.hasSource()) {
+								IEventListener source = msg.getSource();
+								if (source instanceof BaseConnection) {
+									((BaseConnection) source).unregisterBasicScope(this);
+								} else {
+									removeEventListener(source);
+								}
 							}
-						}
-						break;
-					case SERVER_SET_ATTRIBUTE:
-						final Object value = event.getValue();
-						if (!isWriteAllowed(key, value)) {
-							so.returnAttributeValue(key);
-							so.returnError(SO_NO_WRITE_ACCESS);
-						} else {
-							setAttribute(key, value);
-						}
-						break;
-					case SERVER_DELETE_ATTRIBUTE:
-						if (!isDeleteAllowed(key)) {
-							so.returnAttributeValue(key);
-							so.returnError(SO_NO_WRITE_ACCESS);
-						} else {
-							removeAttribute(key);
-						}
-						break;
-					case SERVER_SEND_MESSAGE:
-						final List<?> arguments = (List<?>) event.getValue();
-						// Ignore request silently if not allowed
-						if (isSendAllowed(key, arguments)) {
-							sendMessage(key, arguments);
-						} else {
-							log.debug("Send is not allowed for {}", key);
-						}
-						break;
-					default:
-						log.warn("Unknown SO event: {}", event.getType());
+							break;
+						case SERVER_SET_ATTRIBUTE:
+							final Object value = event.getValue();
+							if (!isWriteAllowed(key, value)) {
+								so.returnAttributeValue(key);
+								so.returnError(SO_NO_WRITE_ACCESS);
+							} else {
+								setAttribute(key, value);
+							}
+							break;
+						case SERVER_DELETE_ATTRIBUTE:
+							if (!isDeleteAllowed(key)) {
+								so.returnAttributeValue(key);
+								so.returnError(SO_NO_WRITE_ACCESS);
+							} else {
+								removeAttribute(key);
+							}
+							break;
+						case SERVER_SEND_MESSAGE:
+							final List<?> arguments = (List<?>) event.getValue();
+							// Ignore request silently if not allowed
+							if (isSendAllowed(key, arguments)) {
+								sendMessage(key, arguments);
+							} else {
+								log.debug("Send is not allowed for {}", key);
+							}
+							break;
+						default:
+							log.warn("Unknown SO event: {}", event.getType());
 					}
 				}
 			} catch (Exception ex) {
@@ -787,16 +790,14 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	}
 
 	/**
-	 * Locks the shared object instance. Prevents any changes to this object by
-	 * clients until the SharedObject.unlock() method is called.
+	 * Locks the shared object instance. Prevents any changes to this object by clients until the SharedObject.unlock() method is called.
 	 */
 	public void lock() {
 		lock.lock();
 	}
 
 	/**
-	 * Unlocks a shared object instance that was locked with
-	 * SharedObject.lock().
+	 * Unlocks a shared object instance that was locked with SharedObject.lock().
 	 */
 	public void unlock() {
 		lock.unlock();
@@ -859,5 +860,10 @@ public class SharedObjectScope extends BasicScope implements ISharedObject,	Stat
 	public ISharedObjectStatistics getStatistics() {
 		return so;
 	}
+	
+	/** {@inheritDoc} */
+    public void setDirty(boolean dirty) {
+    	so.setDirty(dirty);
+    }
 
 }

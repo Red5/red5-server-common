@@ -52,7 +52,9 @@ public class AttributeStore implements ICastingAttributeStore {
 
 	/**
 	 * Creates attribute store with initial values. Object is not associated with a persistence storage.
-	 * @param values map
+	 * 
+	 * @param values
+	 *            map
 	 */
 	public AttributeStore(Map<String, Object> values) {
 		setAttributes(values);
@@ -60,7 +62,9 @@ public class AttributeStore implements ICastingAttributeStore {
 
 	/**
 	 * Creates attribute store with initial values. Object is not associated with a persistence storage.
-	 * @param values map
+	 * 
+	 * @param values
+	 *            map
 	 */
 	public AttributeStore(IAttributeStore values) {
 		setAttributes(values);
@@ -69,7 +73,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Filter <code>null</code> keys and values from given map.
 	 * 
-	 * @param values		the map to filter
+	 * @param values
+	 *            the map to filter
 	 * @return filtered map
 	 */
 	protected Map<String, Object> filterNull(Map<String, Object> values) {
@@ -109,7 +114,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Return the value for a given attribute.
 	 *
-	 * @param name the name of the attribute to get
+	 * @param name
+	 *            the name of the attribute to get
 	 * @return the attribute value or null if the attribute doesn't exist
 	 */
 	public Object getAttribute(String name) {
@@ -122,9 +128,10 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Return the value for a given attribute and set it if it doesn't exist.
 	 *
-	 * @param name         the name of the attribute to get
-	 * @param defaultValue the value of the attribute to set if the attribute doesn't
-	 *                     exist
+	 * @param name
+	 *            the name of the attribute to get
+	 * @param defaultValue
+	 *            the value of the attribute to set if the attribute doesn't exist
 	 * @return the attribute value
 	 */
 	public Object getAttribute(String name, Object defaultValue) {
@@ -134,7 +141,7 @@ public class AttributeStore implements ICastingAttributeStore {
 		if (defaultValue == null) {
 			throw new NullPointerException("the default value may not be null");
 		}
-		Object result = attributes.putIfAbsent(name, defaultValue);
+		Object result = attributes.put(name, defaultValue);
 		// if no previous value result will be null
 		if (result == null) {
 			// use the default value
@@ -146,7 +153,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Check the object has an attribute.
 	 *
-	 * @param name the name of the attribute to check
+	 * @param name
+	 *            the name of the attribute to check
 	 * @return true if the attribute exists otherwise false
 	 */
 	public boolean hasAttribute(String name) {
@@ -159,17 +167,23 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Set an attribute on this object.
 	 *
-	 * @param name  the name of the attribute to change
-	 * @param value the new value of the attribute
+	 * @param name
+	 *            the name of the attribute to change
+	 * @param value
+	 *            the new value of the attribute
 	 * @return true if the attribute value was added or changed, otherwise false
 	 */
 	public boolean setAttribute(final String name, final Object value) {
 		boolean result = false;
 		if (name != null && value != null) {
+			// get previous value
+			final Object previous = attributes.get(name);
+			if (log.isTraceEnabled()) {
+				log.trace("setAttribute\nprevious: {}\nnew: {}", previous, value);
+			}
 			// update with new value
-			final Object previous = attributes.put(name, value);
-			// previous will be null if the attribute didn't exist
-			// if it did already exist it will equal the previous value
+			attributes.put(name, value);
+			// previous will be null if the attribute didn't exist and if it does it will equal the previous value
 			if (previous != null) {
 				// if the value is a collection, check the elements for modification
 				if (value instanceof Collection) {
@@ -177,8 +191,7 @@ public class AttributeStore implements ICastingAttributeStore {
 					Collection<?> newCollection = (Collection<?>) value;
 					for (Object newCollectionEntry : newCollection) {
 						int freq = Collections.frequency(prevCollection, newCollectionEntry);
-						// first element that does not exist in the previous collection will
-						// trigger the modified result
+						// first element that does not exist in the previous collection will trigger the modified result
 						if (freq == 0) {
 							result = true;
 							break;
@@ -208,6 +221,9 @@ public class AttributeStore implements ICastingAttributeStore {
 				} else {
 					// whether or not the new incoming value is "equal" to the previous value
 					result = !value.equals(previous);
+					if (log.isTraceEnabled()) {
+						log.trace("Equality check - modified: {} -> {} = {}", result, value, previous);
+					}
 				}
 			} else {
 				result = true;
@@ -231,7 +247,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Remove an attribute.
 	 *
-	 * @param name the name of the attribute to remove
+	 * @param name
+	 *            the name of the attribute to remove
 	 * @return true if the attribute was found and removed otherwise false
 	 */
 	public boolean removeAttribute(String name) {
@@ -252,11 +269,12 @@ public class AttributeStore implements ICastingAttributeStore {
 	public int size() {
 		return attributes != null ? attributes.size() : 0;
 	}
-	
+
 	/**
 	 * Get Boolean attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Boolean getBoolAttribute(String name) {
@@ -266,7 +284,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Byte attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Byte getByteAttribute(String name) {
@@ -276,7 +295,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Double attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Double getDoubleAttribute(String name) {
@@ -286,7 +306,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Integer attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Integer getIntAttribute(String name) {
@@ -296,7 +317,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get List attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public List<?> getListAttribute(String name) {
@@ -306,7 +328,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get boolean attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Long getLongAttribute(String name) {
@@ -316,7 +339,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Long attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Map<?, ?> getMapAttribute(String name) {
@@ -326,7 +350,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Set attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Set<?> getSetAttribute(String name) {
@@ -336,7 +361,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get Short attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public Short getShortAttribute(String name) {
@@ -346,7 +372,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Get String attribute by name
 	 *
-	 * @param name Attribute name
+	 * @param name
+	 *            Attribute name
 	 * @return Attribute
 	 */
 	public String getStringAttribute(String name) {
@@ -356,7 +383,8 @@ public class AttributeStore implements ICastingAttributeStore {
 	/**
 	 * Allows for reconstruction via CompositeData.
 	 * 
-	 * @param cd composite data
+	 * @param cd
+	 *            composite data
 	 * @return AttributeStore class instance
 	 */
 	@SuppressWarnings("unchecked")
@@ -388,37 +416,49 @@ public class AttributeStore implements ICastingAttributeStore {
 
 		@Override
 		public V get(Object key) {
-			log.trace("get key: {}", key);
+			if (log.isTraceEnabled()) {
+				log.trace("get key: {}", key);
+			}
 			return super.get(key);
 		}
 
 		@Override
 		public V put(K key, V value) {
-			log.trace("put key: {} value: {}", key, value);
+			if (log.isTraceEnabled()) {
+				log.trace("put key: {} value: {}", key, value);
+			}
 			return super.put(key, value);
 		}
 
 		@Override
 		public V putIfAbsent(K key, V value) {
-			log.trace("putIfAbsent key: {} value: {}", key, value);
+			if (log.isTraceEnabled()) {
+				log.trace("putIfAbsent key: {} value: {}", key, value);
+			}
 			return super.putIfAbsent(key, value);
 		}
 
 		@Override
 		public void putAll(Map<? extends K, ? extends V> m) {
-			log.trace("putAll map: {}", m);
+			if (log.isTraceEnabled()) {
+				log.trace("putAll map: {}", m);
+			}
 			super.putAll(m);
 		}
 
 		@Override
 		public boolean replace(K key, V oldValue, V newValue) {
-			log.trace("replace key: {} old value: {} new value: {}", new Object[] { key, oldValue, newValue });
+			if (log.isTraceEnabled()) {
+				log.trace("replace key: {} old value: {} new value: {}", new Object[] { key, oldValue, newValue });
+			}
 			return super.replace(key, oldValue, newValue);
 		}
 
 		@Override
 		public V replace(K key, V value) {
-			log.trace("replace key: {} value: {}", key, value);
+			if (log.isTraceEnabled()) {
+				log.trace("replace key: {} value: {}", key, value);
+			}
 			return super.replace(key, value);
 		}
 
