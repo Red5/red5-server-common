@@ -1043,14 +1043,19 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * @param name Scope name
 	 */
 	@Override
-	public void setName(String name) {
+	public final void setName(String name) {
 		log.debug("Set name: {}", name);
-		if (oName != null) {
-			unregisterJMX();
-		}
-		this.name = name;
-		if (StringUtils.isNotBlank(name)) {
+		if (this.name == null && StringUtils.isNotBlank(name)) {
+    		// reset of the name is no longer allowed
+    		this.name = name;
+    		// unregister from jmx
+    		if (oName != null) {
+    			unregisterJMX();
+    		}
+    		// register
 			registerJMX();
+		} else {
+			log.info("Scope {} name reset to: {} disallowed", this.name, name);
 		}
 	}
 
