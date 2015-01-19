@@ -1404,10 +1404,17 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 		 * @return true if a matching scope is found, false otherwise
 		 */
 		public boolean hasName(String name) {
-			for (IBasicScope child : keySet()) {
-				if (name.equals(child.getName())) {
-					return true;
-				}
+			if (log.isDebugEnabled()) {
+				log.debug("hasName: {}", name);
+			}
+			if (name != null) {
+    			for (IBasicScope child : keySet()) {
+    				if (name.equals(child.getName())) {
+    					return true;
+    				}
+    			}
+			} else {
+				log.info("Invalid scope name, null is not allowed");
 			}
 			return false;
 		}
