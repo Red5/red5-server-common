@@ -66,7 +66,7 @@ public final class Red5 {
 	/**
 	 * Server version with revision
 	 */
-	public static final String VERSION = "Red5 Server 1.0.5-SNAPSHOT";
+	public static final String VERSION = "Red5 Server 1.0.5-RELEASE";
 
 	/**
 	 * Server version for fmsVer requests 
@@ -76,7 +76,7 @@ public final class Red5 {
 	/**
 	 * Server capabilities
 	 */
-	public static final Integer CAPABILITIES = Integer.valueOf(33); // was 31
+	public static final Integer CAPABILITIES = Integer.valueOf(33);
 
 	/**
 	 * Data version for NetStatusEvents
