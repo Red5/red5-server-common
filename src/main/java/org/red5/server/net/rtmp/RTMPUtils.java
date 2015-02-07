@@ -239,7 +239,7 @@ public class RTMPUtils implements Constants {
      * 
      * @param a First time stamp
      * @param b Second time stamp
-     * @return -1 if a < b, 1 if a > b, or 0 if a == b
+     * @return -1 if a &lt; b, 1 if a &gt; b, or 0 if a == b
      */
     public static int compareTimestamps(final int a, final int b) {
     	long diff = diffTimestamps(a, b);

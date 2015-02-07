@@ -36,7 +36,7 @@ public interface IServiceInvoker {
 	 * 			the call to invoke
 	 * @param scope
 	 * 			the scope to search for a handler
-	 * @return <code>true</code> if the call was performed, otherwise <code>false</code>
+	 * @return <pre>true</pre> if the call was performed, otherwise <pre>false</pre>
 	 */
 	boolean invoke(IServiceCall call, IScope scope);
 
@@ -47,7 +47,7 @@ public interface IServiceInvoker {
 	 * 			the call to invoke
 	 * @param service
 	 * 			the service to use
-	 * @return <code>true</code> if the call was performed, otherwise <code>false</code>
+	 * @return <pre>true</pre> if the call was performed, otherwise <pre>false</pre>
 	 */
 	boolean invoke(IServiceCall call, Object service);
 

@@ -113,14 +113,18 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 
 	/**
 	 * Setter for baseTolerance
-	 * */
+	 * 
+	 * @param baseTolerance base tolerance
+	 */
 	public void setBaseTolerance(long baseTolerance) {
 		encoder.setBaseTolerance(baseTolerance);
 	}
 
 	/**
 	 * Setter for dropLiveFuture
-	 * */
+	 * 
+	 * @param dropLiveFuture drop live future
+	 */
 	public void setDropLiveFuture(boolean dropLiveFuture) {
 		encoder.setDropLiveFuture(dropLiveFuture);
 	}

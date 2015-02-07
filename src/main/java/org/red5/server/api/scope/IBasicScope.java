@@ -34,15 +34,15 @@ public interface IBasicScope extends ICoreObject, IEventObservable {
 	 * Does this scope have a parent? You can think of scopes as of tree items
 	 * where scope may have a parent and children (child).
 	 * 
-	 * @return <code>true</code> if this scope has a parent, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if this scope has a parent, otherwise
+	 *         <pre>false</pre>
 	 */
 	public boolean hasParent();
 
 	/**
 	 * Get this scopes parent.
 	 * 
-	 * @return parent scope, or <code>null</code> if this scope doesn't have a
+	 * @return parent scope, or <pre>null</pre> if this scope doesn't have a
 	 *         parent
 	 */
 	public IScope getParent();
@@ -57,7 +57,7 @@ public interface IBasicScope extends ICoreObject, IEventObservable {
 	public int getDepth();
 
 	/**
-	 * Get the name of this scope. Eg. <code>someroom</code>.
+	 * Get the name of this scope. Eg. <pre>someroom</pre>.
 	 * 
 	 * @return the name
 	 */
@@ -70,7 +70,7 @@ public interface IBasicScope extends ICoreObject, IEventObservable {
 	public IPersistenceStore getStore();
 	
 	/**
-	 * Get the full absolute path. Eg. <code>host/myapp/someroom</code>.
+	 * Get the full absolute path. Eg. <pre>host/myapp/someroom</pre>.
 	 * 
 	 * @return Absolute scope path
 	 */

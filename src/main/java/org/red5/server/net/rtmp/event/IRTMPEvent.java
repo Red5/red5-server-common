@@ -76,7 +76,7 @@ public interface IRTMPEvent extends IEvent {
 	/**
      * Setter for source type
      *
-     * @param sourceType 
+     * @param sourceType source type
      */
     public void setSourceType(byte sourceType);
         

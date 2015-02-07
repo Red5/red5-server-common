@@ -237,7 +237,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
 	/**
 	 * Set the servlet that created the connection.
 	 * 
-	 * @param servlet
+	 * @param servlet rtmp servlet
 	 */
 	protected void setServlet(RTMPTServlet servlet) {
 		this.servlet = servlet;
@@ -305,7 +305,9 @@ public class RTMPTConnection extends BaseRTMPTConnection {
 
 	/**
 	 * Get the timestamp of last data received
-	 * */
+	 * 
+	 * @return time when last data received
+	 */
 	public Long getLastDataReceived() {
 		return tsLastDataReceived;
 	}

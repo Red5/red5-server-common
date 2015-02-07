@@ -63,11 +63,11 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 
 /**
  * The scope object.
- * <p>
+ * <br>
  * A stateful object shared between a group of clients connected to the same context path. Scopes are arranged in a hierarchical way,
  * so a scope always has a parent unless its a "global" scope. If a client is connected to a scope then they are also connected to its
- * parent scope. The scope object is used to access resources, shared object, streams, etc.</p>
- * <p>
+ * parent scope. The scope object is used to access resources, shared object, streams, etc.
+ * <br>
  * Scope layout:
  * <pre>
  *  /Global scope - Contains application scopes
@@ -76,7 +76,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  *              /Shared object scope - Contains shared object
  *              /Broadcast stream scope - Contains a broadcast stream
  * </pre>
- * </p>
+ * 
  * @author The Red5 Project
  * @author Paul Gregoire (mondain@gmail.com)
  * @author Nathan Smith (nathgs@gmail.com)
@@ -179,7 +179,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Creates scope using a Builder
 	 * 
-	 * @param builder
+	 * @param builder Builder
 	 */
 	@ConstructorProperties({ "builder" })
 	public Scope(Builder builder) {
@@ -192,8 +192,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Add child scope to this scope
 	 * 
 	 * @param scope Child scope
-	 * @return <code>true</code> on success (if scope has handler and it
-	 *         accepts child scope addition), <code>false</code> otherwise
+	 * @return <pre>true</pre> on success (if scope has handler and it
+	 *         accepts child scope addition), <pre>false</pre> otherwise
 	 */
 	public boolean addChildScope(IBasicScope scope) {
 		log.debug("Add child: {}", scope);
@@ -229,7 +229,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Connect to scope
 	 * 
 	 * @param conn Connection object
-	 * @return <code>true</code> on success, <code>false</code> otherwise
+	 * @return <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean connect(IConnection conn) {
 		return connect(conn, null);
@@ -243,7 +243,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * 
 	 * @param conn Connection object
 	 * @param params Parameters passed with connection
-	 * @return <code>true</code> on success, <code>false</code> otherwise
+	 * @return <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean connect(IConnection conn, Object[] params) {
 		log.debug("Connect - scope: {} connection: {}", this, conn);
@@ -297,7 +297,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Create child scope of room type, with the given name.
 	 * 
 	 * @param name child scope name
-	 * @return <code>true</code> on success, <code>false</code> otherwise
+	 * @return <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean createChildScope(String name) {
 		// quick lookup by name
@@ -313,7 +313,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Destroys scope
 	 * 
-	 * @throws Exception 
+	 * @throws Exception on error
 	 */
 	public void destroy() throws Exception {
 		log.debug("Destroy scope");
@@ -444,7 +444,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Return the broadcast scope for a given name
 	 * 
-	 * @param name
+	 * @param name name
 	 * @return broadcast scope or null if not found
 	 */
 	public IBroadcastScope getBroadcastScope(String name) {
@@ -800,7 +800,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Handles event. To be implemented in subclasses.
 	 * 
 	 * @param event Event to handle
-	 * @return <code>true</code> on success, <code>false</code> otherwise
+	 * @return <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	@Override
 	public boolean handleEvent(IEvent event) {
@@ -811,8 +811,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * Check whether scope has child scope with given name
 	 * 
 	 * @param name Child scope name
-	 * @return <code>true</code> if scope has child node with given name,
-	 *         <code>false</code> otherwise
+	 * @return <pre>true</pre> if scope has child node with given name,
+	 *         <pre>false</pre> otherwise
 	 */
 	public boolean hasChildScope(String name) {
 		log.debug("Has child scope? {} in {}", name, this);
@@ -824,8 +824,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	 * 
 	 * @param type Child scope type
 	 * @param name Child scope name
-	 * @return <code>true</code> if scope has child node with given name and
-	 *         type, <code>false</code> otherwise
+	 * @return <pre>true</pre> if scope has child node with given name and
+	 *         type, <pre>false</pre> otherwise
 	 */
 	public boolean hasChildScope(ScopeType type, String name) {
 		log.debug("Has child scope? {} in {}", name, this);
@@ -835,7 +835,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Check if scope has a context
 	 * 
-	 * @return <code>true</code> if scope has context, <code>false</code>
+	 * @return <pre>true</pre> if scope has context, <pre>false</pre>
 	 *         otherwise
 	 */
 	public boolean hasContext() {
@@ -845,8 +845,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Check if scope or it's parent has handler
 	 * 
-	 * @return <code>true</code> if scope or it's parent scope has a handler,
-	 *         <code>false</code> otherwise
+	 * @return <pre>true</pre> if scope or it's parent scope has a handler,
+	 *         <pre>false</pre> otherwise
 	 */
 	public boolean hasHandler() {
 		return (handler != null || (hasParent() && getParent().hasHandler()));
@@ -855,7 +855,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Check if scope has parent scope
 	 * 
-	 * @return <code>true</code> if scope has parent scope, <code>false</code>
+	 * @return <pre>true</pre> if scope has parent scope, <pre>false</pre>
 	 *         otherwise`
 	 */
 	@Override
@@ -864,7 +864,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	}
 
 	/**
-	 * Initialization actions, start if autostart is set to <code>true</code>
+	 * Initialization actions, start if autostart is set to <pre>true</pre>
 	 */
 	public void init() {
 		log.debug("Init scope: {} parent: {}", name, parent);
@@ -910,7 +910,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Check if scope is enabled
 	 * 
-	 * @return <code>true</code> if scope is enabled, <code>false</code>
+	 * @return <pre>true</pre> if scope is enabled, <pre>false</pre>
 	 *         otherwise
 	 */
 	public boolean isEnabled() {
@@ -927,8 +927,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Check if scope is in running state
 	 * 
-	 * @return <code>true</code> if scope is in running state,
-	 *         <code>false</code> otherwise
+	 * @return <pre>true</pre> if scope is in running state,
+	 *         <pre>false</pre> otherwise
 	 */
 	public boolean isRunning() {
 		return running;
@@ -1085,8 +1085,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
 	/**
 	 * Starts scope
 	 * 
-	 * @return <code>true</code> if scope has handler and it's start method
-	 *         returned true, <code>false</code> otherwise
+	 * @return <pre>true</pre> if scope has handler and it's start method
+	 *         returned true, <pre>false</pre> otherwise
 	 */
 	public boolean start() {
 		log.debug("Start scope");

@@ -46,7 +46,7 @@ public interface ISharedObjectEvent {
 	 * <li>the attribute name to delete for DELETE_ATTRIBUTE</li>
 	 * <li>the handler name to call for SEND_MESSAGE</li>
 	 * </ul>
-	 * In all other cases the key is <code>null</code>.
+	 * In all other cases the key is <pre>null</pre>.
 	 * 
 	 * @return the key of the event
 	 */
@@ -60,7 +60,7 @@ public interface ISharedObjectEvent {
 	 * <li>the attribute value to set for SET_ATTRIBUTE</li>
 	 * <li>a list of parameters to pass to the handler for SEND_MESSAGE</li>
 	 * </ul>
-	 * In all other cases the value is <code>null</code>.
+	 * In all other cases the value is <pre>null</pre>.
 	 * 
 	 * @return the value of the event
 	 */

@@ -25,19 +25,17 @@ import java.util.Set;
  * 
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
- *
  */
 public interface IServiceHandlerProvider {
 
 	/**
-	 * Register an object that provides methods which can be called from a
-	 * client.
-	 * 
-	 * <p>
-	 * Example:<br>
-	 * If you registered a handler with the name "<code>one.two</code>" that
-	 * provides a method "<code>callMe</code>", you can call a method
-	 * "<code>one.two.callMe</code>" from the client.</p>
+	 * Register an object that provides methods which can be called from a client.
+	 * <br>
+	 * Example:
+	 * <br>
+	 * If you registered a handler with the name "<pre>one.two</pre>" that
+	 * provides a method "<pre>callMe</pre>", you can call a method
+	 * "<pre>one.two.callMe</pre>" from the client.
 	 * 
 	 * @param name the name of the handler
 	 * @param handler the handler object

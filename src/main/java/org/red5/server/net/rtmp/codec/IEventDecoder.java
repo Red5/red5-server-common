@@ -73,8 +73,8 @@ public interface IEventDecoder {
 	/**
 	 * Decode a Notify.
 	 * 
-	 * @param encoding 
-	 * @param in
+	 * @param encoding encoding
+	 * @param in input buffer
 	 * @return decoded notify result
 	 */
 	public abstract Notify decodeNotify(Encoding encoding, IoBuffer in);
@@ -82,7 +82,7 @@ public interface IEventDecoder {
 	/**
 	 * Decodes invocation event.
 	 * 
-	 * @param encoding 
+	 * @param encoding encoding 
 	 * @param in                     Byte buffer to decode
 	 * @return                       Invoke event
 	 */

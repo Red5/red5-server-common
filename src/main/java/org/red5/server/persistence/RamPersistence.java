@@ -39,7 +39,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  */
 public class RamPersistence implements IPersistenceStore {
 
-	/** This is used in the id for objects that have a name of <code>null</code> **/
+	/** This is used in the id for objects that have a name of <pre>null</pre> **/
 	protected static final String PERSISTENCE_NO_NAME = "__null__";
 
 	/**
@@ -69,9 +69,11 @@ public class RamPersistence implements IPersistenceStore {
 	}
 
 	/**
-	 * Get resource name from path
-	 * @param id                   Object ID. The format of the object id is <type>/<path>/<objectName>.
-	 * @return                     Resource name
+	 * Get resource name from path.
+	 * The format of the object id is <pre>type/path/objectName</pre>
+	 * 
+	 * @param id object id 
+	 * @return resource name
 	 */
 	protected String getObjectName(String id) {
 		// The format of the object id is <type>/<path>/<objectName>
@@ -83,10 +85,12 @@ public class RamPersistence implements IPersistenceStore {
 	}
 
 	/**
-	 * Get object path for given id and name
-	 * @param id                   Object ID. The format of the object id is <type>/<path>/<objectName>
-	 * @param name                 Object name
-	 * @return                     Resource path
+	 * Get object path for given id and name.
+	 * The format of the object id is <pre>type/path/objectName</pre>
+	 * 
+	 * @param id object id 
+	 * @param name object name
+	 * @return resource path
 	 */
 	protected String getObjectPath(String id, String name) {
 		// The format of the object id is <type>/<path>/<objectName>

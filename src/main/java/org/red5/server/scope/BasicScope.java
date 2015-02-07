@@ -303,9 +303,9 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
 	}
 
 	/**
-	 * Equality is based on the scope's name and type
+	 * Equality is based on the scope's name and type.
 	 * 
-	 * @param obj
+	 * @param obj object
 	 */
 	public boolean equals(Object obj) {
 		if (this == obj) {

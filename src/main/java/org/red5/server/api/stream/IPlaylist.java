@@ -79,7 +79,7 @@ public interface IPlaylist {
 	 * Check if the playlist has more items after the currently
 	 * playing one.
 	 * 
-	 * @return <code>true</code> if more items are available, <code>false</code> otherwise
+	 * @return <pre>true</pre> if more items are available, <pre>false</pre> otherwise
 	 */
 	boolean hasMoreItems();
 	
@@ -103,7 +103,7 @@ public interface IPlaylist {
 	/**
 	 * Whether items are randomly played.
 	 * 
-	 * @return         <code>true</code> if shuffle is on for this list, <code>false</code> otherwise
+	 * @return         <pre>true</pre> if shuffle is on for this list, <pre>false</pre> otherwise
 	 */
 	boolean isRandom();
 
@@ -117,7 +117,7 @@ public interface IPlaylist {
 	/**
 	 * Whether rewind the list.
 	 * 
-	 * @return         <code>true</code> if playlist is rewind on end, <code>false</code> otherwise
+	 * @return         <pre>true</pre> if playlist is rewind on end, <pre>false</pre> otherwise
 	 */
 	boolean isRewind();
 
@@ -131,7 +131,7 @@ public interface IPlaylist {
 	/**
 	 * Whether repeat playing an item.
 	 * 
-	 * @return        <code>true</code> if repeat mode is on for this playlist, <code>false</code> otherwise
+	 * @return        <pre>true</pre> if repeat mode is on for this playlist, <pre>false</pre> otherwise
 	 */
 	boolean isRepeat();
 

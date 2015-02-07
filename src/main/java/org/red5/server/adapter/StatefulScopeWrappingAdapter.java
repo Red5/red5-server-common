@@ -81,7 +81,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 	/**
 	 * Adds a list of plug-in descriptors
 	 * 
-	 * @param plugins
+	 * @param plugins plugins
 	 */
 	public void setPlugins(List<PluginDescriptor> plugins) {
 		this.plugins = plugins;
@@ -169,7 +169,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 	/**
 	 * Creates child scope
 	 * @param name        Child scope name
-	 * @return            <code>true</code> on success, <code>false</code> otherwise
+	 * @return            <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean createChildScope(String name) {
 		if (!scope.hasChildScope(name)) {
@@ -208,7 +208,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 	/**
 	 * Returns all connections in the scope
 	 *
-	 * @return  Connections
+	 * @return collection of a set of connections
 	 */
 	@SuppressWarnings("deprecation")
 	public Collection<Set<IConnection>> getConnections() {
@@ -218,8 +218,8 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 	/**
 	 * Returns all connections for a given client
 	 *
-	 * @param client
-	 * @return  Connections
+	 * @param client client
+	 * @return set of connections
 	 */
 	@SuppressWarnings("deprecation")
 	public Set<IConnection> lookupConnections(IClient client) {
@@ -274,7 +274,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 	/**
 	 * Whether this scope has a child scope with given name
 	 * @param name       Child scope name
-	 * @return           <code>true</code> if it does have it, <code>false</code> otherwise
+	 * @return           <pre>true</pre> if it does have it, <pre>false</pre> otherwise
 	 */
 	public boolean hasChildScope(String name) {
 		return scope.hasChildScope(name);
@@ -282,7 +282,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
 
 	/**
 	 * If this scope has a parent
-	 * @return            <code>true</code> if this scope has a parent scope, <code>false</code> otherwise
+	 * @return            <pre>true</pre> if this scope has a parent scope, <pre>false</pre> otherwise
 	 */
 	public boolean hasParent() {
 		return scope.hasParent();

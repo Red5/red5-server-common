@@ -80,7 +80,7 @@ public interface ISharedObjectMessage extends IRTMPEvent {
 	/**
      * Is empty?
      *
-     * @return  <code>true</code> if shared object is empty, <code>false</code> otherwise
+     * @return  <pre>true</pre> if shared object is empty, <pre>false</pre> otherwise
      */
     public boolean isEmpty();
 

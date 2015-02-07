@@ -45,8 +45,8 @@ public interface ISharedObjectService extends IScopeService {
 	 * @param scope the scope to create the shared object in
 	 * @param name the name of the shared object
 	 * @param persistent will the shared object be persistent
-	 * @return <code>true</code> if the shared object was created or already exists, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the shared object was created or already exists, otherwise
+	 *         <pre>false</pre>
 	 */
 	public boolean createSharedObject(IScope scope, String name, boolean persistent);
 
@@ -55,7 +55,7 @@ public interface ISharedObjectService extends IScopeService {
 	 * 
 	 * @param scope the scope to get the shared object from
 	 * @param name the name of the shared object
-	 * @return shared object, or <code>null</code> if not found
+	 * @return shared object, or <pre>null</pre> if not found
 	 */
 	public ISharedObject getSharedObject(IScope scope, String name);
 
@@ -74,8 +74,8 @@ public interface ISharedObjectService extends IScopeService {
 	 * 
 	 * @param scope the scope to check for the shared object
 	 * @param name the name of the shared object
-	 * @return <code>true</code> if the shared object exists, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the shared object exists, otherwise
+	 *         <pre>false</pre>
 	 */
 	public boolean hasSharedObject(IScope scope, String name);
 
@@ -93,14 +93,14 @@ public interface ISharedObjectService extends IScopeService {
 	 * instance.
 	 * </p>
 	 * <p>
-	 * The following values are possible for the soPath parameter: <br /> /
+	 * The following values are possible for the soPath parameter: <br> /
 	 * clears all local and persistent shared objects associated with the
-	 * instance. <br />
+	 * instance. <br>
 	 * /foo/bar clears the shared object /foo/bar; if bar is a directory name,
-	 * no shared objects are deleted. <br />
+	 * no shared objects are deleted. <br>
 	 * /foo/bar/* clears all shared objects stored under the instance directory
 	 * /foo/bar. The bar directory is also deleted if no persistent shared
-	 * objects are in use within this namespace. <br />
+	 * objects are in use within this namespace. <br>
 	 * /foo/bar/XX?? clears all shared objects that begin with XX, followed by
 	 * any two characters. If a directory name matches this specification, all
 	 * the shared objects within this directory are cleared.
@@ -112,7 +112,7 @@ public interface ISharedObjectService extends IScopeService {
 	 * object. If it is a persistent shared object, the persistent store is also
 	 * cleared.
 	 * </p>
-	 * <br />
+	 * <br>
 	 * 
 	 * @param scope the scope to check for the shared object
 	 * @param name the name of the shared object

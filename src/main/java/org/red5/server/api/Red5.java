@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  * This class uses a thread local, and will be setup by the service invoker.
  *  
  * The code below shows various uses. 
- * <br />
+ * <br>
  * <pre> 
  * IConnection conn = Red5.getConnectionLocal();
  * Red5 r5 = new Red5(); 

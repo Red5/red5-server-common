@@ -38,43 +38,43 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 	
 	/**
 	 * Can start flag.
-	 * <code>true</code> if scope is ready to be activated, <code>false</code> otherwise
+	 * <pre>true</pre> if scope is ready to be activated, <pre>false</pre> otherwise
 	 */
 	private boolean canStart = true;
 
 	/**
 	 * Can connect flag.
-	 * <code>true</code> if connections to scope are allowed, <code>false</code> otherwise
+	 * <pre>true</pre> if connections to scope are allowed, <pre>false</pre> otherwise
 	 */
 	private boolean canConnect;
 
 	/**
 	 * Can join flag.
-	 * <code>true</code> if scope may be joined by users, <code>false</code> otherwise
+	 * <pre>true</pre> if scope may be joined by users, <pre>false</pre> otherwise
 	 */
 	private boolean canJoin = true;
 
 	/**
 	 * Can call service flag.
-	 * <code>true</code> if remote service calls are allowed for the scope, <code>false</code> otherwise
+	 * <pre>true</pre> if remote service calls are allowed for the scope, <pre>false</pre> otherwise
 	 */
 	private boolean canCallService = true;
 
 	/**
-	 * Can add child scope flag. <code>true</code> if scope is allowed to add child scopes, <code>false</code> otherwise
+	 * Can add child scope flag. <pre>true</pre> if scope is allowed to add child scopes, <pre>false</pre> otherwise
 	 */
 	private boolean canAddChildScope = true;
 
 	/**
 	 * Can handle event flag.
-	 * <code>true</code> if events handling is allowed, <code>false</code> otherwise
+	 * <pre>true</pre> if events handling is allowed, <pre>false</pre> otherwise
 	 */
 	private boolean canHandleEvent = true;
 
 	/**
 	 * Setter for can start flag.
 	 *
-	 * @param canStart  <code>true</code> if scope is ready to be activated, <code>false</code> otherwise
+	 * @param canStart  <pre>true</pre> if scope is ready to be activated, <pre>false</pre> otherwise
 	 */
 	public void setCanStart(boolean canStart) {
 		this.canStart = canStart;
@@ -83,7 +83,7 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 	/**
 	 * Setter for can call service flag
 	 *
-	 * @param canCallService <code>true</code> if remote service calls are allowed for the scope, <code>false</code> otherwise
+	 * @param canCallService <pre>true</pre> if remote service calls are allowed for the scope, <pre>false</pre> otherwise
 	 */
 	public void setCanCallService(boolean canCallService) {
 		//log.trace("setCanCallService: {}", canCallService);
@@ -93,7 +93,7 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 	/**
 	 * Setter for can connect flag
 	 *
-	 * @param canConnect <code>true</code> if connections to scope are allowed, <code>false</code> otherwise
+	 * @param canConnect <pre>true</pre> if connections to scope are allowed, <pre>false</pre> otherwise
 	 */
 	public void setCanConnect(boolean canConnect) {
 		this.canConnect = canConnect;
@@ -102,7 +102,7 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 	/**
 	 * Setter for 'can join' flag
 	 *
-	 * @param canJoin <code>true</code> if scope may be joined by users, <code>false</code> otherwise
+	 * @param canJoin <pre>true</pre> if scope may be joined by users, <pre>false</pre> otherwise
 	 */
 	public void setJoin(boolean canJoin) {
 		this.canJoin = canJoin;
@@ -160,6 +160,7 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 
 	/**
 	 * Calls the checkBandwidth method on the current client.
+	 * 
 	 * @param o Object passed from Flash, not used at the moment 
 	 */
 	public void checkBandwidth(Object o) {
@@ -172,7 +173,9 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
 
 	/**
 	 * Calls the checkBandwidthUp method on the current client.
+	 * 
 	 * @param params Object passed from Flash
+	 * @return bandwidth results map
 	 */
 	public Map<String, Object> checkBandwidthUp(Object[] params) {
 		//Incoming object should be null

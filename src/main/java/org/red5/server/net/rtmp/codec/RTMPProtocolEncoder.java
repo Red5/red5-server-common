@@ -983,6 +983,8 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 
 	/**
 	 * Setter for dropLiveFuture
+	 * 
+	 * @param dropLiveFuture drop live data with future times
 	 */
 	public void setDropLiveFuture(boolean dropLiveFuture) {
 		this.dropLiveFuture = dropLiveFuture;

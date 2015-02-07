@@ -36,7 +36,7 @@ public interface IServiceResolver {
 	 * 
 	 * @param scope the scope to search in
 	 * @param serviceName the name of the service
-	 * @return the object implementing the service or <code>null</code> if
+	 * @return the object implementing the service or <pre>null</pre> if
 	 *         service doesn't exist
 	 */
 	public Object resolveService(IScope scope, String serviceName);

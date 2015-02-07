@@ -36,7 +36,7 @@ public interface IStreamPlaybackSecurity {
 	 * @param start Position to start playback from (in milliseconds).
 	 * @param length Duration to play (in milliseconds).
 	 * @param flushPlaylist Flush playlist?
-	 * @return <code>True</code> if playback is allowed, otherwise <code>False</code>
+	 * @return <pre>True</pre> if playback is allowed, otherwise <pre>False</pre>
 	 */
 	public boolean isPlaybackAllowed(IScope scope, String name, int start, int length, boolean flushPlaylist);
 

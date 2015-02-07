@@ -35,7 +35,7 @@ public interface ScopeMXBean {
 
 	/**
 	 * Check if scope is enabled
-	 * @return                  <code>true</code> if scope is enabled, <code>false</code> otherwise
+	 * @return                  <pre>true</pre> if scope is enabled, <pre>false</pre> otherwise
 	 */
 	public boolean getEnabled();
 
@@ -47,7 +47,7 @@ public interface ScopeMXBean {
 
 	/**
 	 * Check if scope is in running state
-	 * @return                   <code>true</code> if scope is in running state, <code>false</code> otherwise
+	 * @return                   <pre>true</pre> if scope is in running state, <pre>false</pre> otherwise
 	 */
 	public boolean getRunning();
 
@@ -58,13 +58,13 @@ public interface ScopeMXBean {
 	public void setAutoStart(boolean autoStart);
 
 	/**
-	 * Initialization actions, start if autostart is set to <code>true</code>
+	 * Initialization actions, start if autostart is set to <pre>true</pre>
 	 */
 	public void init();
 
 	/**
 	 * Starts scope
-	 * @return     <code>true</code> if scope has handler and it's start method returned true, <code>false</code> otherwise
+	 * @return     <pre>true</pre> if scope has handler and it's start method returned true, <pre>false</pre> otherwise
 	 */
 	public boolean start();
 
@@ -76,7 +76,7 @@ public interface ScopeMXBean {
 	/**
 	 * Destroys scope
 	 * 
-	 * @throws Exception 
+	 * @throws Exception on error
 	 */
 	public void destroy() throws Exception;
 
@@ -97,7 +97,7 @@ public interface ScopeMXBean {
 	/**
 	 * Check whether scope has child scope with given name
 	 * @param name               Child scope name
-	 * @return                   <code>true</code> if scope has child node with given name, <code>false</code> otherwise
+	 * @return                   <pre>true</pre> if scope has child node with given name, <pre>false</pre> otherwise
 	 */
 	public boolean hasChildScope(String name);
 
@@ -105,13 +105,13 @@ public interface ScopeMXBean {
 	 * Check whether scope has child scope with given name and type
 	 * @param type               Child scope type
 	 * @param name               Child scope name
-	 * @return                   <code>true</code> if scope has child node with given name and type, <code>false</code> otherwise
+	 * @return                   <pre>true</pre> if scope has child node with given name and type, <pre>false</pre> otherwise
 	 */
 	public boolean hasChildScope(ScopeType type, String name);
 
 	/**
 	 * Check if scope has a context
-	 * @return                   <code>true</code> if scope has context, <code>false</code> otherwise
+	 * @return                   <pre>true</pre> if scope has context, <pre>false</pre> otherwise
 	 */
 	public boolean hasContext();
 
@@ -135,13 +135,13 @@ public interface ScopeMXBean {
 
 	/**
 	 * Check if scope or it's parent has handler
-	 * @return                     <code>true</code> if scope or it's parent scope has a handler, <code>false</code> otherwise
+	 * @return                     <pre>true</pre> if scope or it's parent scope has a handler, <pre>false</pre> otherwise
 	 */
 	public boolean hasHandler();
 
 	/**
 	 * Check if scope has parent scope
-	 * @return                      <code>true</code> if scope has parent scope, <code>false</code> otherwise`
+	 * @return                      <pre>true</pre> if scope has parent scope, <pre>false</pre> otherwise`
 	 */
 	public boolean hasParent();
 
@@ -160,7 +160,7 @@ public interface ScopeMXBean {
 	/**
 	 * Create child scope with given name
 	 * @param name           Child scope name
-	 * @return               <code>true</code> on success, <code>false</code> otherwise
+	 * @return               <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean createChildScope(String name);
 

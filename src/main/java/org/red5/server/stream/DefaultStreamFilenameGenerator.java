@@ -34,8 +34,8 @@ public class DefaultStreamFilenameGenerator implements IStreamFilenameGenerator 
 
     /**
      * Generate stream directory based on relative scope path. The base directory is
-     * <code>streams</code>, e.g. a scope <code>/application/one/two/</code> will
-     * generate a directory <code>/streams/one/two/</code> inside the application.
+     * <pre>streams</pre>, e.g. a scope <pre>/application/one/two/</pre> will
+     * generate a directory <pre>/streams/one/two/</pre> inside the application.
      * 
      * @param scope            Scope
      * @return                 Directory based on relative scope path
@@ -71,9 +71,9 @@ public class DefaultStreamFilenameGenerator implements IStreamFilenameGenerator 
 	}
 
     /**
-     * The default filenames are relative to the scope path, so always return <code>false</code>.
+     * The default filenames are relative to the scope path, so always return <pre>false</pre>.
      * 
-     * @return	always <code>false</code>
+     * @return	always <pre>false</pre>
      */
 	public boolean resolvesToAbsolutePath() {
 		return false;

@@ -536,7 +536,7 @@ public class FileUtil {
 	 * Reads all the bytes of a given file into an array. If the file size exceeds Integer.MAX_VALUE, it will
 	 * be truncated.
 	 * 
-	 * @param localSwfFile
+	 * @param localSwfFile swf file
 	 * @return file bytes
 	 */
 	public static byte[] readAsByteArray(File localSwfFile) {

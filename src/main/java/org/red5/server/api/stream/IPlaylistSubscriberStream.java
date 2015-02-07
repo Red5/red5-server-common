@@ -44,8 +44,8 @@ public interface IPlaylistSubscriberStream extends ISubscriberStream, IPlaylist 
 	/**
 	 * Replaces an item in the list with another item.
 	 * 
-	 * @param oldItem
-	 * @param newItem
+	 * @param oldItem old play item
+	 * @param newItem new play item
 	 * @return true if successful and false otherwise
 	 */
 	public boolean replace(IPlayItem oldItem, IPlayItem newItem);	

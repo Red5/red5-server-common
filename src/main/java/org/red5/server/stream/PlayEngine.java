@@ -135,7 +135,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	private int bufferCheckInterval = 0;
 
 	/**
-	 * Number of pending messages at which a <code>NetStream.Play.InsufficientBW</code>
+	 * Number of pending messages at which a <pre>NetStream.Play.InsufficientBW</pre>
 	 * message is generated for VOD streams.
 	 */
 	private int underrunTrigger = 10;
@@ -1564,7 +1564,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 * Check if sending the given message was enabled by the client.
 	 * 
 	 * @param message the message to check
-	 * @return <code>true</code> if the message should be sent, <code>false</code> otherwise (and the message is discarded)
+	 * @return <pre>true</pre> if the message should be sent, <pre>false</pre> otherwise (and the message is discarded)
 	 */
 	protected boolean checkSendMessageEnabled(RTMPMessage message) {
 		IRTMPEvent body = message.getBody();

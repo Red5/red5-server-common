@@ -36,7 +36,7 @@ public interface IClientRegistry {
 	 * Check if a client with a given id exists.
 	 * 
 	 * @param id the id of the client to check for
-	 * @return <code>true</code> if the client exists, <code>false</code> otherwise
+	 * @return <pre>true</pre> if the client exists, <pre>false</pre> otherwise
 	 */
 	public boolean hasClient(String id);
 
@@ -62,7 +62,7 @@ public interface IClientRegistry {
 	/**
 	 * Adds a client to the registry.
 	 * 
-	 * @param client
+	 * @param client client
 	 */
 	public void addClient(IClient client);
 

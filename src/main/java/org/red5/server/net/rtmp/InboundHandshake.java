@@ -245,7 +245,7 @@ public class InboundHandshake extends RTMPHandshake {
 	/**
 	 * Determines the validation scheme for given input.
 	 * 
-	 * @param input
+	 * @param input input buffer
 	 * @return true if client used a supported validation scheme, false if unsupported
 	 */
 	@Override

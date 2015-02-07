@@ -39,7 +39,7 @@ public interface IEvent {
 	
 	/**
 	 * Whether event has source (event listener(s))
-	 * @return	<code>true</code> if so, <code>false</code> otherwise
+	 * @return	<pre>true</pre> if so, <pre>false</pre> otherwise
 	 */
 	public boolean hasSource();
 	

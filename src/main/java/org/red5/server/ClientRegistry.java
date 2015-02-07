@@ -123,7 +123,7 @@ public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
 	/**
 	 * Check if client registry contains clients.
 	 *
-	 * @return             <code>True</code> if clients exist, otherwise <code>False</code>
+	 * @return             <pre>True</pre> if clients exist, otherwise <pre>False</pre>
 	 */
 	protected boolean hasClients() {
 		return !clients.isEmpty();

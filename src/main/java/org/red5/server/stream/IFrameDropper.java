@@ -47,8 +47,8 @@ public interface IFrameDropper {
 	 * 			the message to check
 	 * @param pending
 	 * 			the number of pending messages
-	 * @return <code>true</code> if the packet may be sent, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the packet may be sent, otherwise
+	 *         <pre>false</pre>
 	 */
 	boolean canSendPacket(RTMPMessage message, long pending);
 

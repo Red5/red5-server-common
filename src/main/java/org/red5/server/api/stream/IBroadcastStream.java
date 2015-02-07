@@ -56,7 +56,7 @@ public interface IBroadcastStream extends IStream {
 	/**
 	 * Get the filename the stream is being saved as.
 	 * 
-	 * @return	The filename relative to the scope or <code>null</code>
+	 * @return	The filename relative to the scope or <pre>null</pre>
 	 * 			if the stream is not being saved. 
 	 */
 	String getSaveFilename();
@@ -71,7 +71,7 @@ public interface IBroadcastStream extends IStream {
 
 	/**
 	 * Get stream publish name. Publish name is the value of the first parameter
-	 * had been passed to <code>NetStream.publish</code> on client side in
+	 * had been passed to <pre>NetStream.publish</pre> on client side in
 	 * SWF.
 	 * 
 	 * @return	Stream publish name	

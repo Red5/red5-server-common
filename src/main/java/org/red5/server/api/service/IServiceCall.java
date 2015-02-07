@@ -26,7 +26,7 @@ public interface IServiceCall {
 	/**
 	 * Whether call was successful or not
 	 * 
-	 * @return	<code>true</code> on success, <code>false</code> otherwise
+	 * @return	<pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public abstract boolean isSuccess();
 

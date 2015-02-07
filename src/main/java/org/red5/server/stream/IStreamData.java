@@ -30,7 +30,7 @@ public interface IStreamData<T> {
 	/**
      * Getter for property 'data'.
      *
-     * @return Value for property 'data'.
+     * @return Value for property 'data'
      */
     public IoBuffer getData();
     
@@ -38,8 +38,8 @@ public interface IStreamData<T> {
      * Creates a byte accurate copy.
      * 
      * @return duplicate of the current data item
-     * @throws IOException
-     * @throws ClassNotFoundException
+     * @throws IOException on error
+     * @throws ClassNotFoundException on class not found
      */
 	public IStreamData<T> duplicate() throws IOException, ClassNotFoundException;
 	

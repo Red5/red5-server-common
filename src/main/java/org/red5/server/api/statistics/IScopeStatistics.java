@@ -27,14 +27,14 @@ package org.red5.server.api.statistics;
 public interface IScopeStatistics extends IStatisticsBase {
 
 	/**
-	 * Get the name of this scope. Eg. <code>someroom</code>.
+	 * Get the name of this scope. Eg. <pre>someroom</pre>.
 	 * 
 	 * @return the name
 	 */
 	public String getName();
 
 	/**
-	 * Get the full absolute path. Eg. <code>host/myapp/someroom</code>.
+	 * Get the full absolute path. Eg. <pre>host/myapp/someroom</pre>.
 	 * 
 	 * @return Absolute scope path
 	 */

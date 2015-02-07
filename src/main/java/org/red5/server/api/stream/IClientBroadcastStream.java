@@ -45,7 +45,7 @@ public interface IClientBroadcastStream extends IClientStream, IBroadcastStream 
 	/**
 	 * Sets streaming parameters as supplied by the publishing application.
 	 * 
-	 * @param params
+	 * @param params parameter map
 	 */
 	public void setParameters(Map<String, String> params);
 	

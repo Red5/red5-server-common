@@ -96,8 +96,8 @@ public class RecordingListener implements IRecordingListener {
 	/**
 	 * Get the file we'd be recording to based on scope and given name.
 	 * 
-	 * @param scope
-	 * @param name
+	 * @param scope scope
+	 * @param name name
 	 * @return file
 	 */
 	public static File getRecordFile(IScope scope, String name) {

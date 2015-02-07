@@ -107,9 +107,9 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
 	/**
 	 * Create connection consumer without an RTMP connection. 
 	 * 
-	 * @param videoChannel
-	 * @param audioChannel
-	 * @param dataChannel
+	 * @param videoChannel video channel
+	 * @param audioChannel audio channel
+	 * @param dataChannel data channel
 	 */
 	public ConnectionConsumer(Channel videoChannel, Channel audioChannel, Channel dataChannel) {
 		this.video = videoChannel;

@@ -495,7 +495,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * 
 	 * @param channelId
 	 *            Channel id
-	 * @return <code>true</code> if channel is in use, <code>false</code> otherwise
+	 * @return <pre>true</pre> if channel is in use, <pre>false</pre> otherwise
 	 */
 	public boolean isChannelUsed(int channelId) {
 		return channels.get(channelId) != null;
@@ -571,7 +571,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Returns whether or not a given stream id is valid.
 	 * 
-	 * @param streamId
+	 * @param streamId stream id
 	 * @return true if its valid, false if its invalid
 	 */
 	public boolean isValidStreamId(int streamId) {
@@ -1256,7 +1256,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Handle the incoming message.
 	 * 
-	 * @param message
+	 * @param message message
 	 */
 	@SuppressWarnings("unchecked")
 	public void handleMessageReceived(Packet message) {
@@ -1381,12 +1381,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Send a shared object message.
 	 * 
-	 * @param name
-	 *            shared object name
-	 * @param currentVersion
-	 *            the current version
-	 * @param persistent
-	 * @param events
+	 * @param name shared object name
+	 * @param currentVersion the current version
+	 * @param persistent toggle
+	 * @param events shared object events
 	 */
 	public void sendSharedObjectMessage(String name, int currentVersion, boolean persistent, ConcurrentLinkedQueue<ISharedObjectEvent> events) {
 		// create a new sync message for every client to avoid concurrent access through multiple threads
@@ -1457,7 +1455,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Setter for ping interval.
 	 * 
 	 * @param pingInterval
-	 *            Interval in ms to ping clients. Set to <code>0</code> to disable ghost detection code.
+	 *            Interval in ms to ping clients. Set to <pre>0</pre> to disable ghost detection code.
 	 */
 	public void setPingInterval(int pingInterval) {
 		this.pingInterval = pingInterval;
@@ -1563,7 +1561,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
 	/**
 	 * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
-	 * */
+	 * 
+	 * @param executorQueueSizeToDropAudioPackets queue size
+	 */
 	public void setExecutorQueueSizeToDropAudioPackets(Integer executorQueueSizeToDropAudioPackets) {
 		this.executorQueueSizeToDropAudioPackets = executorQueueSizeToDropAudioPackets;
 	}

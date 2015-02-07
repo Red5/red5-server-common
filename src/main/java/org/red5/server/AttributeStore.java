@@ -71,7 +71,7 @@ public class AttributeStore implements ICastingAttributeStore {
 	}
 
 	/**
-	 * Filter <code>null</code> keys and values from given map.
+	 * Filter <pre>null</pre> keys and values from given map.
 	 * 
 	 * @param values
 	 *            the map to filter

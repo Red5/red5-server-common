@@ -61,8 +61,9 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
 	}
 
 	/**
-	 * Create aggregate data event with given data buffer
-	 * @param data            
+	 * Create aggregate data event with given data buffer.
+	 * 
+	 * @param data data      
 	 */
 	public Aggregate(IoBuffer data) {
 		super(Type.STREAM_DATA);
@@ -70,7 +71,8 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
 	}
 
 	/**
-	 * Create aggregate data event with given data buffer
+	 * Create aggregate data event with given data buffer.
+	 * 
 	 * @param data aggregate data
 	 * @param copy true to use a copy of the data or false to use reference
 	 */

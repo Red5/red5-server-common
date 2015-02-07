@@ -168,7 +168,7 @@ public class SimplePlayItem implements IPlayItem, Comparable<SimplePlayItem> {
 	/**
 	 * Builder for SimplePlayItem
 	 * 
-	 * @param name
+	 * @param name name
 	 * @return play item instance
 	 */
 	public static SimplePlayItem build(String name) {
@@ -179,9 +179,9 @@ public class SimplePlayItem implements IPlayItem, Comparable<SimplePlayItem> {
 	/**
 	 * Builder for SimplePlayItem
 	 * 
-	 * @param name
-	 * @param start
-	 * @param length
+	 * @param name name
+	 * @param start start
+	 * @param length length
 	 * @return play item instance
 	 */
 	public static SimplePlayItem build(String name, long start, long length) {

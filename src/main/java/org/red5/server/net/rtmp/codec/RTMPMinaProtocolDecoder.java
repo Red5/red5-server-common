@@ -93,14 +93,15 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
 	/**
 	 * Sets the RTMP protocol decoder.
 	 * 
-	 * @param decoder
+	 * @param decoder RTMP decoder
 	 */
 	public void setDecoder(RTMPProtocolDecoder decoder) {
 		this.decoder = decoder;
 	}
 
 	/**
-	 * Returns an RTMP decoder
+	 * Returns an RTMP decoder.
+	 * 
 	 * @return RTMP decoder
 	 */
 	public RTMPProtocolDecoder getDecoder() {

@@ -54,6 +54,7 @@ public interface IStreamAwareScopeHandler extends IScopeHandler {
 	/**
 	 * Notified when a broadcaster starts.
 	 * 
+	 * @param stream stream
 	 */
 	public void streamBroadcastStart(IBroadcastStream stream);
 

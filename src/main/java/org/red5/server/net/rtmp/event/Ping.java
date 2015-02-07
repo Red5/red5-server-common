@@ -176,7 +176,7 @@ public class Ping extends BaseEvent {
 	/**
 	 * Sets the events sub-type
 	 * 
-	 * @param eventType
+	 * @param eventType event type
 	 */
 	public void setEventType(short eventType) {
 		this.eventType = eventType;

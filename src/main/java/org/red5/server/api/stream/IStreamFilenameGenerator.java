@@ -62,10 +62,10 @@ public interface IStreamFilenameGenerator extends IScopeService {
 	 * True if returned filename is an absolute path, else relative to application.
 	 * 
 	 * If relative to application, you need to use
-	 * <code>scope.getContext().getResources(fileName)[0].getFile()</code> to resolve
+	 * <pre>scope.getContext().getResources(fileName)[0].getFile()</pre> to resolve
 	 * this to a file.
 	 * 
-	 * If absolute (ie returns true) simply use <code>new File(generateFilename(scope, name))</code>
+	 * If absolute (ie returns true) simply use <pre>new File(generateFilename(scope, name))</pre>
 	 * 
 	 * @return true if an absolute path; else false
 	 */

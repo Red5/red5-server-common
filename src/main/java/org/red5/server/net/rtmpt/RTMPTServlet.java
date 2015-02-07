@@ -110,7 +110,7 @@ public class RTMPTServlet extends HttpServlet {
 	 * 
 	 * @param message Message
 	 * @param resp Servlet response
-	 * @throws IOException 
+	 * @throws IOException on IO error
 	 */
 	protected void handleBadRequest(String message, HttpServletResponse resp) throws IOException {
 		log.debug("handleBadRequest {}", message);
@@ -556,7 +556,7 @@ public class RTMPTServlet extends HttpServlet {
 	/**
 	 * Removes a connection matching the given session id from the connection manager.
 	 * 
-	 * @param sessionId
+	 * @param sessionId session id
 	 */
 	protected void removeConnection(String sessionId) {
 		log.debug("Removing connection for session id: {}", sessionId);
@@ -589,7 +589,7 @@ public class RTMPTServlet extends HttpServlet {
 	/** 
 	 * Set the fcs/ident2 string
 	 * 
-	 * @param ident2
+	 * @param ident2 ident2 string
 	 */
 	public void setIdent2(String ident2) {
 		RTMPTServlet.ident2 = ident2;

@@ -29,7 +29,7 @@ import org.apache.mina.core.buffer.IoBuffer;
 public interface IStreamPacket {
 
 	/**
-	 * Type of this packet. This is one of the <code>TYPE_</code> constants.
+	 * Type of this packet. This is one of the <pre>TYPE_</pre> constants.
 	 * 
 	 * @return the type
 	 */

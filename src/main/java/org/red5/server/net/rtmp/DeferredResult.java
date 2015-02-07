@@ -83,7 +83,7 @@ public class DeferredResult {
 	/**
 	 * Check if the result has been sent to the client.
 	 * 
-	 * @return <code>true</code> if the result has been sent, otherwise <code>false</code> 
+	 * @return <pre>true</pre> if the result has been sent, otherwise <pre>false</pre> 
 	 */
 	public boolean wasSent() {
 		return resultSent;

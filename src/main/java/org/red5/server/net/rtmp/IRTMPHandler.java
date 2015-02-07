@@ -37,7 +37,7 @@ public interface IRTMPHandler {
 	 * 
 	 * @param conn Connection 
 	 * @param packet Packet containing an RTMP message
-	 * @throws Exception   
+	 * @throws Exception on exception
 	 */
 	public void messageReceived(RTMPConnection conn, Packet packet) throws Exception;
 

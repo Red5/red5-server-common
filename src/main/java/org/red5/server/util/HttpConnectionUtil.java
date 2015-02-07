@@ -96,9 +96,9 @@ public class HttpConnectionUtil {
 	/**
 	 * Logs details about the request error.
 	 * 
-	 * @param response
-	 * @throws IOException 
-	 * @throws ParseException 
+	 * @param response http response
+	 * @throws IOException on IO error
+	 * @throws ParseException on parse error
 	 */
 	public static void handleError(HttpResponse response) throws ParseException, IOException {
 		log.debug("{}", response.getStatusLine().toString());

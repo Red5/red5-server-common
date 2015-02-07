@@ -528,6 +528,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
 	/**
 	 * Write a slice of the queued items to the writer.
+	 * 
+	 * @param slice set of queued data
 	 */
 	public final void doWrites(QueuedData[] slice) {
 		// empty the queue
@@ -681,7 +683,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	/**
 	 * Sets the scope for this consumer.
 	 * 
-	 * @param scope
+	 * @param scope scope
 	 */
 	public void setScope(IScope scope) {
 		this.scope = scope;
@@ -690,7 +692,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 	/**
 	 * Sets the file we're writing to.
 	 * 
-	 * @param file
+	 * @param file file
 	 */
 	public void setFile(File file) {
 		this.file = file;

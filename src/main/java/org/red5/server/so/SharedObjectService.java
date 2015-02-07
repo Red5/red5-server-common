@@ -67,7 +67,7 @@ public class SharedObjectService implements ISharedObjectService {
 	/**
 	 * Pushes a task to the scheduler for single execution.
 	 * 
-	 * @param task
+	 * @param task runnable
 	 */
 	public static void submitTask(Runnable task) {
 		scheduler.execute(task);

@@ -49,17 +49,17 @@ public interface IPersistable {
 	public static final String TRANSIENT_PREFIX = "_transient";
 
 	/**
-	 * Returns <code>true</code> if the object is persistent,
-	 * <code>false</code> otherwise.
+	 * Returns <pre>true</pre> if the object is persistent,
+	 * <pre>false</pre> otherwise.
 	 * 
-	 * @return <code>true</code> if object is persistent, <code>false</code> otherwise
+	 * @return <pre>true</pre> if object is persistent, <pre>false</pre> otherwise
 	 */
 	public boolean isPersistent();
 
 	/**
 	 * Set the persistent flag of the object.
 	 * 
-	 * @param persistent <code>true</code> if object is persistent, <code>false</code> otherwise
+	 * @param persistent <pre>true</pre> if object is persistent, <pre>false</pre> otherwise
 	 */
 	public void setPersistent(boolean persistent);
 

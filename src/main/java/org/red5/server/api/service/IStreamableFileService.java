@@ -31,14 +31,14 @@ public interface IStreamableFileService {
 	/**
 	 * Sets the prefix.
 	 * 
-	 * @param prefix
+	 * @param prefix prefix
 	 */
 	public void setPrefix(String prefix);
 	
 	/**
      * Getter for prefix. Prefix is used in filename composition to fetch real file name.
      *
-     * @return  Prefix
+     * @return prefix
      */
     public String getPrefix();
 
@@ -46,7 +46,7 @@ public interface IStreamableFileService {
      * Sets the file extensions serviced. If there are more than one, they are separated
      * by commas.
      * 
-     * @param extension
+     * @param extension extension
      */
     public void setExtension(String extension);
     
@@ -68,8 +68,8 @@ public interface IStreamableFileService {
     /**
      * Check whether file can be used by file service, that is, it does exist and have valid extension
      * @param file            File object
-     * @return                <code>true</code> if file exist and has valid extension,
-     *                        <code>false</code> otherwise
+     * @return                <pre>true</pre> if file exist and has valid extension,
+     *                        <pre>false</pre> otherwise
      */
     public boolean canHandle(File file);
 

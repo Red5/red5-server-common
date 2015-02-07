@@ -476,7 +476,7 @@ public class SharedObjectScope extends BasicScope implements ISharedObject, Stat
 	}
 
 	/**
-	 * Return security handlers for this shared object or <code>null</code> if none are found.
+	 * Return security handlers for this shared object or <pre>null</pre> if none are found.
 	 * 
 	 * @return set of security handlers
 	 */

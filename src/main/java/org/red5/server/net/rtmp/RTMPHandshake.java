@@ -161,8 +161,8 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Calculates an HMAC SHA256 hash using a default key length.
 	 * 
-	 * @param input
-	 * @param key
+	 * @param input bytes
+	 * @param key key bytes
 	 * @return hmac hashed bytes
 	 */
 	public byte[] calculateHMAC_SHA256(byte[] input, byte[] key) {
@@ -179,9 +179,9 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Calculates an HMAC SHA256 hash using a set key length.
 	 * 
-	 * @param input
-	 * @param key
-	 * @param length
+	 * @param input bytes
+	 * @param key key bytes
+	 * @param length length
 	 * @return hmac hashed bytes
 	 */
 	public byte[] calculateHMAC_SHA256(byte[] input, byte[] key, int length) {
@@ -218,7 +218,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Returns the public key for a given key pair.
 	 * 
-	 * @param keyPair
+	 * @param keyPair key pair
 	 * @return public key
 	 */
 	protected static byte[] getPublicKey(KeyPair keyPair) {
@@ -243,8 +243,8 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Determines the validation scheme for given input.
 	 * 
-	 * @param otherPublicKeyBytes
-	 * @param agreement
+	 * @param otherPublicKeyBytes public key bytes
+	 * @param agreement key agreement
 	 * @return shared secret bytes if client used a supported validation scheme
 	 */
 	protected static byte[] getSharedSecret(byte[] otherPublicKeyBytes, KeyAgreement agreement) {
@@ -270,7 +270,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Determines the validation scheme for given input.
 	 * 
-	 * @param input
+	 * @param input input buffer
 	 * @return true if its a supported validation scheme, false if unsupported
 	 */
 	public abstract boolean validate(IoBuffer input);
@@ -278,7 +278,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Returns the DH offset from an array of bytes.
 	 * 
-	 * @param bytes
+	 * @param bytes bytes
 	 * @return DH offset
 	 */
 	protected int getDHOffset(byte[] bytes) {
@@ -298,6 +298,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Returns the DH byte offset.
 	 * 
+	 * @param bytes bytes 
 	 * @return dh offset
 	 */
 	protected int getDHOffset0(byte[] bytes) {
@@ -313,6 +314,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Returns the DH byte offset.
 	 * 
+	 * @param bytes bytes
 	 * @return dh offset
 	 */
 	protected int getDHOffset1(byte[] bytes) {
@@ -328,7 +330,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Returns the digest offset using current validation scheme.
 	 * 
-	 * @param pBuffer
+	 * @param pBuffer bytes
 	 * @return digest offset
 	 */
 	protected int getDigestOffset(byte[] pBuffer) {
@@ -385,6 +387,8 @@ public abstract class RTMPHandshake implements IHandshake {
 
 	/**
 	 * Creates the servers handshake bytes
+	 * 
+	 * @return handshake bytes
 	 */
 	public byte[] getHandshakeBytes() {
 		return handshakeBytes;
@@ -393,7 +397,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	/**
 	 * Sets the handshake type. Currently only two types are supported, plain and encrypted.
 	 * 
-	 * @param handshakeType
+	 * @param handshakeType handshake type
 	 */
 	public void setHandshakeType(byte handshakeType) {
 		log.trace("Setting handshake type: {}", handshakeType);
@@ -413,6 +417,8 @@ public abstract class RTMPHandshake implements IHandshake {
 	 * Gets the DH offset in the handshake bytes array based on validation scheme
 	 * Generates DH keypair
 	 * Adds public key to handshake bytes
+	 * 
+	 * @return cipher
 	 */
 	public Cipher getCipherOut() {
 		return cipherOut;
@@ -422,7 +428,7 @@ public abstract class RTMPHandshake implements IHandshake {
 	 * Returns the contained handshake bytes. These are just random bytes
 	 * if the player is using an non-versioned player.
 	 * 
-	 * @return handshake bytes
+	 * @return cipher
 	 */
 	public Cipher getCipherIn() {
 		return cipherIn;

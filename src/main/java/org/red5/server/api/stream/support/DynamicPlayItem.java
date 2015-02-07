@@ -124,6 +124,8 @@ public class DynamicPlayItem implements IPlayItem {
 
 	/**
 	 * Returns size in bytes
+	 * 
+	 * @return size
 	 */
 	public long getSize() {
 		return size;
@@ -172,9 +174,9 @@ public class DynamicPlayItem implements IPlayItem {
 	/**
 	 * Builder for DynamicPlayItem
 	 * 
-	 * @param name
-	 * @param start
-	 * @param length
+	 * @param name name
+	 * @param start start
+	 * @param length length
 	 * @return play item instance
 	 */
 	public static DynamicPlayItem build(String name, long start, long length) {
@@ -185,10 +187,10 @@ public class DynamicPlayItem implements IPlayItem {
 	/**
 	 * Builder for DynamicPlayItem
 	 * 
-	 * @param name
-	 * @param start
-	 * @param length
-	 * @param offset
+	 * @param name name
+	 * @param start start
+	 * @param length length
+	 * @param offset offset
 	 * @return play item instance
 	 */
 	public static DynamicPlayItem build(String name, long start, long length, double offset) {

@@ -177,7 +177,7 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 	/**
 	 * Adds a connection.
 	 * 
-	 * @param conn
+	 * @param conn connection
 	 */
 	public void setConnection(RTMPConnection conn) {
 		log.trace("Adding connection: {}", conn);
@@ -204,7 +204,7 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 	/**
 	 * Returns a connection for a given client id.
 	 * 
-	 * @param clientId
+	 * @param clientId client id
 	 * @return connection if found and null otherwise
 	 */
 	public RTMPConnection getConnection(int clientId) {
@@ -220,7 +220,7 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 	/**
 	 * Returns a connection for a given session id.
 	 * 
-	 * @param sessionId
+	 * @param sessionId session id
 	 * @return connection if found and null otherwise
 	 */
 	public RTMPConnection getConnectionBySessionId(String sessionId) {
@@ -284,9 +284,9 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 	/**
 	 * Creates a connection instance based on the supplied type.
 	 * 
-	 * @param cls
+	 * @param cls class
 	 * @return connection
-	 * @throws Exception
+	 * @throws Exception on error
 	 */
 	public RTMPConnection createConnectionInstance(Class<?> cls) throws Exception {
 		RTMPConnection conn = null;

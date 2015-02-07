@@ -889,8 +889,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	/**
 	 * Get the file we'd be recording to based on scope and given name.
 	 * 
-	 * @param scope
-	 * @param name
+	 * @param scope scope
+	 * @param name record name
 	 * @return file
 	 */
 	protected File getRecordFile(IScope scope, String name) {

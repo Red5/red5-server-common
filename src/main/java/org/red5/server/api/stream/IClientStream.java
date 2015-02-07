@@ -46,7 +46,7 @@ public interface IClientStream extends IStream {
 	/**
 	 * Get connection containing the stream.
 	 * 
-	 * @return the connection object or <code>null</code> if the connection is no longer active
+	 * @return the connection object or <pre>null</pre> if the connection is no longer active
 	 */
 	IStreamCapableConnection getConnection();
 

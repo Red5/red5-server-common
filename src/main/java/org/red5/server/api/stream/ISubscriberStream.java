@@ -74,14 +74,14 @@ public interface ISubscriberStream extends IClientStream {
 	/**
 	 * Should the stream send video to the client?
 	 * 
-	 * @param receive
+	 * @param receive toggle
 	 */
 	void receiveVideo(boolean receive);
 
 	/**
 	 * Should the stream send audio to the client?
 	 * 
-	 * @param receive
+	 * @param receive toggle
 	 */
 	void receiveAudio(boolean receive);
 	
@@ -110,7 +110,7 @@ public interface ISubscriberStream extends IClientStream {
 	/**
 	 * Schedule a job to be executed only once after a 10ms delay.
 	 * 
-	 * @param job
+	 * @param job scheduled job
 	 * @return jobName
 	 */
 	public String scheduleOnceJob(IScheduledJob job);
@@ -118,17 +118,17 @@ public interface ISubscriberStream extends IClientStream {
 	/**
 	 * Schedule a job to be executed regularly at the given interval.
 	 * 
-	 * @param job
-	 * @param interval
+	 * @param job scheduled job
+	 * @param interval interval
 	 * @return jobName
 	 */
 	public String scheduleWithFixedDelay(IScheduledJob job, int interval);
 
 	/**
 	 * Cancels a scheduled job by name.
-	 * 
-	 * @param pullAndPush
+	 *  
+	 * @param jobName job name
 	 */
-	public void cancelJob(String pullAndPush);
+	public void cancelJob(String jobName);
 	
 }
