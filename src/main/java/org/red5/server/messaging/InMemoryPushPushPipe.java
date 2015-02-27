@@ -21,6 +21,8 @@ package org.red5.server.messaging;
 import java.io.IOException;
 import java.util.Map;
 
+import org.red5.server.net.rtmp.event.IRTMPEvent;
+import org.red5.server.stream.message.RTMPMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
 		this();
 		addPipeConnectionListener(listener);
 	}
-	
+
 	/** {@inheritDoc} */
 	@Override
 	public boolean subscribe(IConsumer consumer, Map<String, Object> paramMap) {
@@ -86,7 +88,8 @@ public class InMemoryPushPushPipe extends AbstractPipe {
 	/**
 	 * Pushes a message out to all the PushableConsumers.
 	 * 
-	 * @param message the message to be pushed to consumers.
+	 * @param message the message to be pushed to consumers
+	 * @throws IOException
 	 */
 	public void pushMessage(IMessage message) throws IOException {
 		if (log.isDebugEnabled()) {
@@ -96,13 +99,23 @@ public class InMemoryPushPushPipe extends AbstractPipe {
 		for (IConsumer consumer : consumers) {
 			try {
 				IPushableConsumer pcon = (IPushableConsumer) consumer;
-				pcon.pushMessage(this, message);
+				if (message instanceof RTMPMessage) {
+					RTMPMessage rtmpMessage = (RTMPMessage) message;
+					IRTMPEvent body = rtmpMessage.getBody();
+					int time = body.getTimestamp();
+					pcon.pushMessage(this, message);
+					body.setTimestamp(time);
+				} else {
+					pcon.pushMessage(this, message);
+				}
 			} catch (Throwable t) {
 				if (t instanceof IOException) {
 					throw (IOException) t;
 				}
-				log.error("Exception when pushing message to consumer", t);
+				log.error("Exception pushing message to consumer", t);
 			}
+
 		}
 	}
+
 }
