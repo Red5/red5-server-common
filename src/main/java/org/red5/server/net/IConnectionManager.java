@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public interface IConnectionManager<T> {
 	/**
 	 * Returns a connection matching the given client id.
 	 * 
-	 * @param clientId
+	 * @param clientId client id
 	 * @return connection
 	 */	
 	T getConnection(int clientId);
@@ -33,14 +33,14 @@ public interface IConnectionManager<T> {
 	/**
 	 * Adds a connection.
 	 * 
-	 * @param conn
+	 * @param conn connection
 	 */
 	void setConnection(T conn);
 
 	/**
 	 * Returns a connection matching the given session id.
 	 * 
-	 * @param sessionId
+	 * @param sessionId session id
 	 * @return connection
 	 */	
 	T getConnectionBySessionId(String sessionId);
@@ -55,7 +55,7 @@ public interface IConnectionManager<T> {
 	/**
 	 * Creates a connection based on the given type class.
 	 * 
-	 * @param connCls
+	 * @param connCls class
 	 * @return connection
 	 */
 	T createConnection(Class<?> connCls);
@@ -63,8 +63,9 @@ public interface IConnectionManager<T> {
 	/**
 	 * Creates a connection of the type specified with associated session id.
 	 * 
-	 * @param connCls
-	 * @param sessionId
+	 * @param connCls class
+	 * @param sessionId session id
+	 * @return connection
 	 */	
 	T createConnection(Class<?> connCls, String sessionId);
 
@@ -72,7 +73,7 @@ public interface IConnectionManager<T> {
 	 * Removes a connection matching the client id specified. If found, the connection
 	 * will be returned.
 	 * 
-	 * @param clientId
+	 * @param clientId client id
 	 * @return connection
 	 */	
 	T removeConnection(int clientId);
@@ -80,13 +81,14 @@ public interface IConnectionManager<T> {
 	/**
 	 * Removes a connection by the given sessionId.
 	 * 
-	 * @param sessionId
+	 * @param sessionId session id
 	 * @return connection that was removed
 	 */
 	T removeConnection(String sessionId);
 
 	/**
 	 * Removes all the connections from the set.
+	 * 
 	 * @return connections
 	 */	
 	Collection<T> removeConnections();

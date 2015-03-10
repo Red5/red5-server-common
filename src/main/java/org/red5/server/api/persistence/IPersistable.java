@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,17 +49,17 @@ public interface IPersistable {
 	public static final String TRANSIENT_PREFIX = "_transient";
 
 	/**
-	 * Returns <code>true</code> if the object is persistent,
-	 * <code>false</code> otherwise.
+	 * Returns <pre>true</pre> if the object is persistent,
+	 * <pre>false</pre> otherwise.
 	 * 
-	 * @return <code>true</code> if object is persistent, <code>false</code> otherwise
+	 * @return <pre>true</pre> if object is persistent, <pre>false</pre> otherwise
 	 */
 	public boolean isPersistent();
 
 	/**
 	 * Set the persistent flag of the object.
 	 * 
-	 * @param persistent <code>true</code> if object is persistent, <code>false</code> otherwise
+	 * @param persistent <pre>true</pre> if object is persistent, <pre>false</pre> otherwise
 	 */
 	public void setPersistent(boolean persistent);
 

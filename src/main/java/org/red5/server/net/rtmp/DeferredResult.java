@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class DeferredResult {
 	/**
 	 * Check if the result has been sent to the client.
 	 * 
-	 * @return <code>true</code> if the result has been sent, otherwise <code>false</code> 
+	 * @return <pre>true</pre> if the result has been sent, otherwise <pre>false</pre> 
 	 */
 	public boolean wasSent() {
 		return resultSent;

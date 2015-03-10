@@ -6,7 +6,7 @@
     <name>Red5 :: Common server classes</name>
     <description>Classes common for multiple red5 projects</description>
     <groupId>org.red5</groupId>
-    <version>1.0.5-SNAPSHOT</version>
+    <version>1.0.5-RELEASE</version>
     <url>https://github.com/Red5/red5-server-common</url>
     <inceptionYear>2005</inceptionYear>
     <organization>
@@ -56,7 +56,7 @@
     </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <red5-io.version>1.0.5-SNAPSHOT</red5-io.version>
+        <red5-io.version>1.0.5-RELEASE</red5-io.version>
         <spring.version>4.0.8.RELEASE</spring.version>
         <mina.version>2.0.8</mina.version>
         <quartz.version>2.2.1</quartz.version>
@@ -115,6 +115,7 @@
                     <fork>true</fork>
                     <source>1.6</source>
                     <target>1.6</target>
+                    <executable>${maven.compiler.executable}</executable>
                 </configuration>
             </plugin>
             <plugin>

@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface IScopeHandler extends IEventHandler {
 	 * 
 	 * @param scope
 	 * 			the new scope object
-	 * @return <code>true</code> to allow, <code>false</code> to deny
+	 * @return <pre>true</pre> to allow, <pre>false</pre> to deny
 	 */
 	boolean start(IScope scope);
 
@@ -57,19 +57,19 @@ public interface IScopeHandler extends IEventHandler {
 
 	/**
 	 * Called just before every connection to a scope. You can pass additional
-	 * params from client using <code>NetConnection.connect</code> method (see
+	 * params from client using <pre>NetConnection.connect</pre> method (see
 	 * below).
 	 * 
 	 * @param conn
 	 * 			Connection object
 	 * @param params
 	 *            List of params passed from client via
-	 *            <code>NetConnection.connect</code> method. All parameters
-	 *            but the first one passed to <code>NetConnection.connect</code>
+	 *            <pre>NetConnection.connect</pre> method. All parameters
+	 *            but the first one passed to <pre>NetConnection.connect</pre>
 	 *            method are available as params array.
 	 * 
 	 * 
-	 * @return <code>true</code> to allow, <code>false</code> to deny
+	 * @return <pre>true</pre> to allow, <pre>false</pre> to deny
 	 * @param scope           Scope object
 	 */
 	boolean connect(IConnection conn, IScope scope, Object[] params);
@@ -89,7 +89,7 @@ public interface IScopeHandler extends IEventHandler {
 	 * 
 	 * @param scope
 	 * 			Scope that will be added
-	 * @return <code>true</code> to allow, <code>false</code> to deny
+	 * @return <pre>true</pre> to allow, <pre>false</pre> to deny
 	 */
 	boolean addChildScope(IBasicScope scope);
 
@@ -106,7 +106,7 @@ public interface IScopeHandler extends IEventHandler {
 	 * 
 	 * @param client
 	 * 			Client object
-	 * @return <code>true</code> to allow, <code>false</code> to deny
+	 * @return <pre>true</pre> to allow, <pre>false</pre> to deny
 	 *         connection
 	 * @param scope      Scope that is joined by client
 	 */
@@ -130,7 +130,7 @@ public interface IScopeHandler extends IEventHandler {
 	 * @param call
 	 * 			The call object.
 	 * 
-	 * @return <code>true</code> to allow, <code>false</code> to deny
+	 * @return <pre>true</pre> to allow, <pre>false</pre> to deny
 	 */
 	boolean serviceCall(IConnection conn, IServiceCall call);
 

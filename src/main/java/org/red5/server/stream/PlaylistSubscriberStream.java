@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 	protected int bufferCheckInterval = 0;
 
 	/**
-	 * Number of pending messages at which a <code>NetStream.Play.InsufficientBW</code>
+	 * Number of pending messages at which a <pre>NetStream.Play.InsufficientBW</pre>
 	 * message is generated for VOD streams.
 	 */
 	protected int underrunTrigger = 10;
@@ -141,7 +141,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 	}
 
 	/**
-	 * Set interval to check for buffer underruns. Set to <code>0</code> to
+	 * Set interval to check for buffer underruns. Set to <pre>0</pre> to
 	 * disable.
 	 * 
 	 * @param bufferCheckInterval interval in ms
@@ -152,7 +152,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
 	/**
 	 * Set maximum number of pending messages at which a
-	 * <code>NetStream.Play.InsufficientBW</code> message will be
+	 * <pre>NetStream.Play.InsufficientBW</pre> message will be
 	 * generated for VOD streams
 	 * 
 	 * @param underrunTrigger the maximum number of pending messages

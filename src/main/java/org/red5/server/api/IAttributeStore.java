@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,19 +81,16 @@ public interface IAttributeStore extends AttributeStoreMXBean {
 	/**
 	 * Return the value for a given attribute and set it if it doesn't exist.
 	 * 
-	 * <p>
 	 * This is a utility function that internally performs the following code:
-	 * <p>
-	 * <code>
-	 * if (!hasAttribute(name)) setAttribute(name, defaultValue);<br>
-	 * return getAttribute(name);<br>
-	 * </code>
-	 * </p>
-	 * </p>
+	 * <br>
+	 * <pre>
+	 * if (!hasAttribute(name)) 
+	 *     setAttribute(name, defaultValue);
+	 * return getAttribute(name);
+	 * </pre>
 	 * 
 	 * @param name the name of the attribute to get
-	 * @param defaultValue the value of the attribute to set if the attribute doesn't
-	 *            exist
+	 * @param defaultValue the value of the attribute to set if the attribute doesn't exist
 	 * @return the attribute value
 	 */
 	public Object getAttribute(String name, Object defaultValue);

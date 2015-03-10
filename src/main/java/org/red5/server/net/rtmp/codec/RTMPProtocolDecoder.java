@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	 * 		 1. null : the object could not be decoded, or some data was skipped, just continue
 	 *       2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
 	 *       3. Object : something was decoded, continue
-	 * @throws Exception on error
+	 * @throws ProtocolException on error
 	 */
 	public Object decode(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) throws ProtocolException {
 		if (log.isTraceEnabled()) {
@@ -666,9 +666,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	/**
 	 * Perform the actual decoding of the shared object contents.
 	 * 
-	 * @param so
-	 * @param in
-	 * @param input
+	 * @param so Shared object message
+	 * @param in input buffer
+	 * @param input input
 	 */
 	protected void doDecodeSharedObject(SharedObjectMessage so, IoBuffer in, Input input) {
 		// Parse request body
@@ -755,9 +755,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	/**
 	 * Decode a Notify.
 	 * 
-	 * @param encoding 
-	 * @param in
-	 * @param header
+	 * @param encoding encoding
+	 * @param in input buffer
+	 * @param header header
 	 * @return decoded notify result
 	 */
 	public Notify decodeNotify(Encoding encoding, IoBuffer in, Header header) {
@@ -931,7 +931,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	/**
 	 * Decodes stream meta data, to include onMetaData, onCuePoint, and onFI.
 	 * 
-	 * @param in
+	 * @param in input buffer
 	 * @return Notify
 	 */
 	@SuppressWarnings("unchecked")
@@ -1110,8 +1110,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	 * 
 	 * @param action
 	 *            Action to check
-	 * @return <code>true</code> if passed action is a reserved stream method,
-	 *         <code>false</code> otherwise
+	 * @return <pre>true</pre> if passed action is a reserved stream method,
+	 *         <pre>false</pre> otherwise
 	 */
 	private boolean isStreamCommand(String action) {
 		switch (StreamAction.getEnum(action)) {

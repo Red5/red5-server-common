@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,14 @@ package org.red5.server.api.statistics;
 public interface IScopeStatistics extends IStatisticsBase {
 
 	/**
-	 * Get the name of this scope. Eg. <code>someroom</code>.
+	 * Get the name of this scope. Eg. <pre>someroom</pre>.
 	 * 
 	 * @return the name
 	 */
 	public String getName();
 
 	/**
-	 * Get the full absolute path. Eg. <code>host/myapp/someroom</code>.
+	 * Get the full absolute path. Eg. <pre>host/myapp/someroom</pre>.
 	 * 
 	 * @return Absolute scope path
 	 */

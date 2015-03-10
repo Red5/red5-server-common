@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2012 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  * This class uses a thread local, and will be setup by the service invoker.
  *  
  * The code below shows various uses. 
- * <br />
+ * <br>
  * <pre> 
  * IConnection conn = Red5.getConnectionLocal();
  * Red5 r5 = new Red5(); 
@@ -66,7 +66,7 @@ public final class Red5 {
 	/**
 	 * Server version with revision
 	 */
-	public static final String VERSION = "Red5 Server 1.0.5-SNAPSHOT";
+	public static final String VERSION = "Red5 Server 1.0.5-RELEASE";
 
 	/**
 	 * Server version for fmsVer requests 
@@ -76,7 +76,7 @@ public final class Red5 {
 	/**
 	 * Server capabilities
 	 */
-	public static final Integer CAPABILITIES = Integer.valueOf(33); // was 31
+	public static final Integer CAPABILITIES = Integer.valueOf(33);
 
 	/**
 	 * Data version for NetStatusEvents

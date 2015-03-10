@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public interface IStreamPublishSecurity {
 	 * @param scope Scope the stream is about to be published in.
 	 * @param name Name of the stream to publish.
 	 * @param mode Publishing mode.
-	 * @return <code>True</code> if publishing is allowed, otherwise <code>False</code>
+	 * @return <pre>True</pre> if publishing is allowed, otherwise <pre>False</pre>
 	 */
 	public boolean isPublishAllowed(IScope scope, String name, String mode);
 

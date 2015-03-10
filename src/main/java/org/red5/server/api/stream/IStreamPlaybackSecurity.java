@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface IStreamPlaybackSecurity {
 	 * @param start Position to start playback from (in milliseconds).
 	 * @param length Duration to play (in milliseconds).
 	 * @param flushPlaylist Flush playlist?
-	 * @return <code>True</code> if playback is allowed, otherwise <code>False</code>
+	 * @return <pre>True</pre> if playback is allowed, otherwise <pre>False</pre>
 	 */
 	public boolean isPlaybackAllowed(IScope scope, String name, int start, int length, boolean flushPlaylist);
 

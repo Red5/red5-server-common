@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 
 	/**
 	 * Try to connect to the scope.
-     * @return              <code>true</code> on success, <code>false</code> otherwise
+     * @return              <pre>true</pre> on success, <pre>false</pre> otherwise
      * @param scope         Scope object
      */
 	public boolean connect(IScope scope);
@@ -90,17 +90,17 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 	/**
 	 * Try to connect to the scope with a list of connection parameters.
      * @param params        Connections parameters
-     * @return              <code>true</code> on success, <code>false</code> otherwise
+     * @return              <pre>true</pre> on success, <pre>false</pre> otherwise
      * @param scope         Scope object
      */
 	public boolean connect(IScope scope, Object[] params);
 
 	/**
 	 * Is the client connected to the scope. Result depends on connection type,
-     * <code>true</code> for persistent and polling connections, <code>false</code> for transient.
+     * <pre>true</pre> for persistent and polling connections, <pre>false</pre> for transient.
 	 * 
-	 * @return <code>true</code> if the connection is persistent or polling,
-	 *         otherwise <code>false</code>
+	 * @return <pre>true</pre> if the connection is persistent or polling,
+	 *         otherwise <pre>false</pre>
 	 */
 	public boolean isConnected();
 
@@ -120,7 +120,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 	/**
 	 * Sets the Client.
 	 * 
-	 * @param client
+	 * @param client client
 	 */
 	public void setClient(IClient client);
 	
@@ -171,7 +171,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 	public String getPath();
 
 	/**
-	 * Get the session id, this may be <code>null</code>.
+	 * Get the session id, this may be <pre>null</pre>.
 	 * 
 	 * @return                Session id
 	 */
@@ -259,21 +259,21 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 	/**
 	 * Sets the bandwidth using a mbit/s value.
 	 * 
-	 * @param mbits
+	 * @param mbits target
 	 */
 	public void setBandwidth(int mbits);
 	
 	/**
 	 * Adds a listener to this object
 	 * 
-	 * @param listener
+	 * @param listener connection listener
 	 */
 	public void addListener(IConnectionListener listener);
 	
 	/**
 	 * Removes the listener from this object
 	 * 
-	 * @param listener
+	 * @param listener connection listener
 	 */
 	public void removeListener(IConnectionListener listener);
 

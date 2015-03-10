@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class SimplePlayItem implements IPlayItem, Comparable<SimplePlayItem> {
 	/**
 	 * Builder for SimplePlayItem
 	 * 
-	 * @param name
+	 * @param name name
 	 * @return play item instance
 	 */
 	public static SimplePlayItem build(String name) {
@@ -179,9 +179,9 @@ public class SimplePlayItem implements IPlayItem, Comparable<SimplePlayItem> {
 	/**
 	 * Builder for SimplePlayItem
 	 * 
-	 * @param name
-	 * @param start
-	 * @param length
+	 * @param name name
+	 * @param start start
+	 * @param length length
 	 * @return play item instance
 	 */
 	public static SimplePlayItem build(String name, long start, long length) {

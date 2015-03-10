@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public interface ISharedObjectEvent {
 	 * <li>the attribute name to delete for DELETE_ATTRIBUTE</li>
 	 * <li>the handler name to call for SEND_MESSAGE</li>
 	 * </ul>
-	 * In all other cases the key is <code>null</code>.
+	 * In all other cases the key is <pre>null</pre>.
 	 * 
 	 * @return the key of the event
 	 */
@@ -60,7 +60,7 @@ public interface ISharedObjectEvent {
 	 * <li>the attribute value to set for SET_ATTRIBUTE</li>
 	 * <li>a list of parameters to pass to the handler for SEND_MESSAGE</li>
 	 * </ul>
-	 * In all other cases the value is <code>null</code>.
+	 * In all other cases the value is <pre>null</pre>.
 	 * 
 	 * @return the value of the event
 	 */

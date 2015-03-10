@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,10 @@ public interface IStreamFilenameGenerator extends IScopeService {
 	 * True if returned filename is an absolute path, else relative to application.
 	 * 
 	 * If relative to application, you need to use
-	 * <code>scope.getContext().getResources(fileName)[0].getFile()</code> to resolve
+	 * <pre>scope.getContext().getResources(fileName)[0].getFile()</pre> to resolve
 	 * this to a file.
 	 * 
-	 * If absolute (ie returns true) simply use <code>new File(generateFilename(scope, name))</code>
+	 * If absolute (ie returns true) simply use <pre>new File(generateFilename(scope, name))</pre>
 	 * 
 	 * @return true if an absolute path; else false
 	 */

@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface IClientRegistry {
 	 * Check if a client with a given id exists.
 	 * 
 	 * @param id the id of the client to check for
-	 * @return <code>true</code> if the client exists, <code>false</code> otherwise
+	 * @return <pre>true</pre> if the client exists, <pre>false</pre> otherwise
 	 */
 	public boolean hasClient(String id);
 
@@ -62,7 +62,7 @@ public interface IClientRegistry {
 	/**
 	 * Adds a client to the registry.
 	 * 
-	 * @param client
+	 * @param client client
 	 */
 	public void addClient(IClient client);
 

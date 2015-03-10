@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public abstract class AbstractPipe implements IPipe {
 	 *
 	 * @param consumer        Consumer
 	 * @param paramMap        Parameters passed with connection, used in concrete pipe implementations
-	 * @return                <code>true</code> if consumer was added, <code>false</code> otherwise
+	 * @return                <pre>true</pre> if consumer was added, <pre>false</pre> otherwise
 	 */
 	public boolean subscribe(IConsumer consumer, Map<String, Object> paramMap) {
 		// if consumer is listener object register it as listener
@@ -86,7 +86,7 @@ public abstract class AbstractPipe implements IPipe {
 	 *
 	 * @param provider        Provider
 	 * @param paramMap        Parameters passed with connection, used in concrete pipe implementations
-	 * @return                <code>true</code> if provider was added, <code>false</code> otherwise
+	 * @return                <pre>true</pre> if provider was added, <pre>false</pre> otherwise
 	 */
 	public boolean subscribe(IProvider provider, Map<String, Object> paramMap) {
 		// register event listener if given
@@ -99,7 +99,7 @@ public abstract class AbstractPipe implements IPipe {
 	/**
 	 * Disconnects provider from this pipe. Fires pipe connection event.
 	 * @param provider        Provider that should be removed
-	 * @return                 <code>true</code> on success, <code>false</code> otherwise
+	 * @return                 <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean unsubscribe(IProvider provider) {
 		if (providers.remove(provider)) {
@@ -113,7 +113,7 @@ public abstract class AbstractPipe implements IPipe {
 	/**
 	 * Disconnects consumer from this pipe. Fires pipe connection event.
 	 * @param   consumer       Consumer that should be removed
-	 * @return                 <code>true</code> on success, <code>false</code> otherwise
+	 * @return                 <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	public boolean unsubscribe(IConsumer consumer) {
 		if (consumers.remove(consumer)) {

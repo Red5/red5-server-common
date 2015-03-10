@@ -74,7 +74,7 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 	/**
 	 * Sets maximum handling time for an incoming message.
 	 * 
-	 * @param maxHandlingTimeout
+	 * @param maxHandlingTimeout maximum handling timeout
 	 */
 	public void setMaxHandlingTimeout(long maxHandlingTimeout) {
 		this.maxHandlingTime = maxHandlingTimeout;

@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,8 @@ public interface IEventDecoder {
 	/**
 	 * Decode a Notify.
 	 * 
-	 * @param encoding 
-	 * @param in
+	 * @param encoding encoding
+	 * @param in input buffer
 	 * @return decoded notify result
 	 */
 	public abstract Notify decodeNotify(Encoding encoding, IoBuffer in);
@@ -82,7 +82,7 @@ public interface IEventDecoder {
 	/**
 	 * Decodes invocation event.
 	 * 
-	 * @param encoding 
+	 * @param encoding encoding 
 	 * @param in                     Byte buffer to decode
 	 * @return                       Invoke event
 	 */

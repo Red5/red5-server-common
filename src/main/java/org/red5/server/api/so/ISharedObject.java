@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import org.red5.server.api.statistics.ISharedObjectStatistics;
 public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedObjectSecurityService {
 
 	/**
-	 * Prevent shared object from being released. Each call to <code>acquire</code>
-	 * must be paired with a call to <code>release</code> so the SO isn't held
+	 * Prevent shared object from being released. Each call to <pre>acquire</pre>
+	 * must be paired with a call to <pre>release</pre> so the SO isn't held
 	 * forever.
 	 * 
-	 * This method basically is a noop for persistent SOs as their data is stored
+	 * This method basically is a no-op for persistent SOs as their data is stored
 	 * and they can be released without losing their contents.
 	 */
 	public void acquire();
@@ -42,7 +42,7 @@ public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedOb
 	/**
 	 * Check if shared object currently is acquired.
 	 * 
-	 * @return <code>true</code> if the SO is acquired, otherwise <code>false</code>
+	 * @return <pre>true</pre> if the SO is acquired, otherwise <pre>false</pre>
 	 */
 	public boolean isAcquired();
 
@@ -63,7 +63,7 @@ public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedOb
 	/**
 	 * Sets a "dirty" flag to indicate that the attributes have been modified.
 	 * 
-	 * @param dirty
+	 * @param dirty if dirty / modified
 	 */
 	public void setDirty(boolean dirty);
 

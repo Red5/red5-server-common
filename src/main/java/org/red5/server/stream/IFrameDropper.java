@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public interface IFrameDropper {
 	 * 			the message to check
 	 * @param pending
 	 * 			the number of pending messages
-	 * @return <code>true</code> if the packet may be sent, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the packet may be sent, otherwise
+	 *         <pre>false</pre>
 	 */
 	boolean canSendPacket(RTMPMessage message, long pending);
 

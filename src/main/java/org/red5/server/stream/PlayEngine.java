@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	private int bufferCheckInterval = 0;
 
 	/**
-	 * Number of pending messages at which a <code>NetStream.Play.InsufficientBW</code>
+	 * Number of pending messages at which a <pre>NetStream.Play.InsufficientBW</pre>
 	 * message is generated for VOD streams.
 	 */
 	private int underrunTrigger = 10;
@@ -1564,7 +1564,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 * Check if sending the given message was enabled by the client.
 	 * 
 	 * @param message the message to check
-	 * @return <code>true</code> if the message should be sent, <code>false</code> otherwise (and the message is discarded)
+	 * @return <pre>true</pre> if the message should be sent, <pre>false</pre> otherwise (and the message is discarded)
 	 */
 	protected boolean checkSendMessageEnabled(RTMPMessage message) {
 		IRTMPEvent body = message.getBody();

@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class ScopeUtils {
 	 * Returns the application scope for specified scope. Application scope has
 	 * depth of 1 and has no parent.
 	 *
-	 * See <code>isApp</code> method for details.
+	 * See <pre>isApp</pre> method for details.
 	 *
 	 * @param from Scope to find application for
 	 * @return		Application scope.
@@ -126,8 +126,8 @@ public class ScopeUtils {
 	 *
 	 * @param from Scope
 	 * @param ancestor Scope to check
-	 * @return <code>true</code> if ancestor scope is really an ancestor of
-	 *         scope passed as from parameter, <code>false</code> otherwise.
+	 * @return <pre>true</pre> if ancestor scope is really an ancestor of
+	 *         scope passed as from parameter, <pre>false</pre> otherwise.
 	 */
 	public static boolean isAncestor(IBasicScope from, IBasicScope ancestor) {
 		IBasicScope current = from;
@@ -144,8 +144,8 @@ public class ScopeUtils {
 	 * Checks whether scope is root or not
 	 *
 	 * @param scope Scope to check
-	 * @return <code>true</code> if scope is root scope (top level scope),
-	 *         <code>false</code> otherwise.
+	 * @return <pre>true</pre> if scope is root scope (top level scope),
+	 *         <pre>false</pre> otherwise.
 	 */
 	public static boolean isRoot(IBasicScope scope) {
 		return !scope.hasParent();
@@ -160,8 +160,8 @@ public class ScopeUtils {
 	 * is room level as well (but with higher depth level)
 	 *
 	 * @param scope Scope to check
-	 * @return <code>true</code> if scope is the global scope,
-	 *         <code>false</code> otherwise.
+	 * @return <pre>true</pre> if scope is the global scope,
+	 *         <pre>false</pre> otherwise.
 	 */
 	public static boolean isGlobal(IBasicScope scope) {
 		return scope.getType().equals(ScopeType.GLOBAL);
@@ -172,8 +172,8 @@ public class ScopeUtils {
 	 * or not
 	 *
 	 * @param scope Scope to check
-	 * @return <code>true</code> if scope is an application scope,
-	 *         <code>false</code> otherwise.
+	 * @return <pre>true</pre> if scope is an application scope,
+	 *         <pre>false</pre> otherwise.
 	 */
 	public static boolean isApp(IBasicScope scope) {
 		return scope.getType().equals(ScopeType.APPLICATION);
@@ -184,7 +184,7 @@ public class ScopeUtils {
 	 * e.g. 3, 4, ...) or not
 	 *
 	 * @param scope Scope to check
-	 * @return <code>true</code> if scope is a room scope, <code>false</code>
+	 * @return <pre>true</pre> if scope is a room scope, <pre>false</pre>
 	 *         otherwise.
 	 */
 	public static boolean isRoom(IBasicScope scope) {

@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class RTMPDecodeState {
 	 * Checks whether remaining buffer size is greater or equal than buffer amount and so if it makes sense to start decoding.
 	 * 
 	 * @param remaining		Remaining buffer size
-	 * @return				<code>true</code> if there is data to decode, <code>false</code> otherwise
+	 * @return				<pre>true</pre> if there is data to decode, <pre>false</pre> otherwise
 	 */
 	public boolean canStartDecoding(int remaining) {
 		return remaining >= decoderBufferAmount;
@@ -104,7 +104,7 @@ public class RTMPDecodeState {
 	/**
 	 * Checks whether decoding is complete.
 	 *
-	 * @return	<code>true</code> if decoding has finished, <code>false</code> otherwise
+	 * @return	<pre>true</pre> if decoding has finished, <pre>false</pre> otherwise
 	 */
 	public boolean hasDecodedObject() {
 		return (decoderState == DECODER_OK);
@@ -113,7 +113,7 @@ public class RTMPDecodeState {
 	/**
 	 * Checks whether decoding process can be continued.
 	 *
-	 * @return	<code>true</code> if decoding can be continued, <code>false</code> otherwise
+	 * @return	<pre>true</pre> if decoding can be continued, <pre>false</pre> otherwise
 	 */
 	public boolean canContinueDecoding() {
 		return (decoderState != DECODER_BUFFER);

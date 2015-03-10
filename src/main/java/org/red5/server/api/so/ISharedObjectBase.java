@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,13 @@ import org.red5.server.api.event.IEventListener;
  * 
  * If you want to modify multiple attributes and notify the clients about all
  * changes at once, you can use code like this:
- * <p>
- * <code>
- * SharedObject.beginUpdate();<br />
- * SharedObject.setAttribute("One", '1');<br />
- * SharedObject.setAttribute("Two", '2');<br />
- * SharedObject.removeAttribute("Three");<br />
- * SharedObject.endUpdate();<br />
- * </code>
- * </p>
+ * <pre>
+ * SharedObject.beginUpdate();
+ * SharedObject.setAttribute("One", '1');
+ * SharedObject.setAttribute("Two", '2');
+ * SharedObject.removeAttribute("Three");
+ * SharedObject.endUpdate();
+ * </pre>
  * 
  * All changes between "beginUpdate" and "endUpdate" will be sent to the clients
  * using one notification event.
@@ -46,7 +44,6 @@ import org.red5.server.api.event.IEventListener;
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
  */
-
 public interface ISharedObjectBase extends ISharedObjectHandlerProvider, ICastingAttributeStore {
 
 	/**
@@ -58,15 +55,15 @@ public interface ISharedObjectBase extends ISharedObjectHandlerProvider, ICastin
 	public int getVersion();
 
 	/**
-	 * Check if the object has been created as persistent shared object by the
-	 * client.
+	 * Check if the object has been created as persistent shared object by the client.
 	 * 
 	 * @return true if the shared object is persistent, false otherwise
 	 */
 	public boolean isPersistent();
 
 	/**
-	 * Return a map containing all attributes of the shared object. <br />
+	 * Return a map containing all attributes of the shared object.
+	 * <br>
 	 * NOTE: The returned map will be read-only.
 	 * 
 	 * @return a map containing all attributes of the shared object
@@ -77,8 +74,7 @@ public interface ISharedObjectBase extends ISharedObjectHandlerProvider, ICastin
 	 * Send a message to a handler of the shared object.
 	 * 
 	 * @param handler the name of the handler to call
-	 * @param arguments a list of objects that should be passed as arguments to the
-	 *            handler
+	 * @param arguments a list of objects that should be passed as arguments to the handler
 	 */
 	public void sendMessage(String handler, List<?> arguments);
 

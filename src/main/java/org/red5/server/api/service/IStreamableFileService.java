@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ public interface IStreamableFileService {
 	/**
 	 * Sets the prefix.
 	 * 
-	 * @param prefix
+	 * @param prefix prefix
 	 */
 	public void setPrefix(String prefix);
 	
 	/**
      * Getter for prefix. Prefix is used in filename composition to fetch real file name.
      *
-     * @return  Prefix
+     * @return prefix
      */
     public String getPrefix();
 
@@ -46,7 +46,7 @@ public interface IStreamableFileService {
      * Sets the file extensions serviced. If there are more than one, they are separated
      * by commas.
      * 
-     * @param extension
+     * @param extension extension
      */
     public void setExtension(String extension);
     
@@ -68,8 +68,8 @@ public interface IStreamableFileService {
     /**
      * Check whether file can be used by file service, that is, it does exist and have valid extension
      * @param file            File object
-     * @return                <code>true</code> if file exist and has valid extension,
-     *                        <code>false</code> otherwise
+     * @return                <pre>true</pre> if file exist and has valid extension,
+     *                        <pre>false</pre> otherwise
      */
     public boolean canHandle(File file);
 

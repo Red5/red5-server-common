@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,7 @@ public class RTMPUtils implements Constants {
      * 
      * @param a First time stamp
      * @param b Second time stamp
-     * @return -1 if a < b, 1 if a > b, or 0 if a == b
+     * @return -1 if a &lt; b, 1 if a &gt; b, or 0 if a == b
      */
     public static int compareTimestamps(final int a, final int b) {
     	long diff = diffTimestamps(a, b);

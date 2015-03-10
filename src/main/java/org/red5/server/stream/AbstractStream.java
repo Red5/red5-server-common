@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,8 @@ public abstract class AbstractStream implements IStream {
 	protected final transient Semaphore lock = new Semaphore(1, true);
 	
     /**
-     *  Return stream name
+     *  Return stream name.
+	 * 
      *  @return     Stream name
      */
 	public String getName() {
@@ -80,7 +81,8 @@ public abstract class AbstractStream implements IStream {
 	}
 
     /**
-     * Return codec information
+     * Return codec information.
+	 * 
      * @return              Stream codec information
      */
     public IStreamCodecInfo getCodecInfo() {
@@ -97,7 +99,8 @@ public abstract class AbstractStream implements IStream {
 	}    
     
     /**
-     * Return scope
+     * Return scope.
+	 * 
      * @return         Scope
      */
     public IScope getScope() {
@@ -114,7 +117,8 @@ public abstract class AbstractStream implements IStream {
 	}
 
     /**
-     * Setter for name
+     * Setter for name.
+	 * 
      * @param name     Stream name
      */
 	public void setName(String name) {
@@ -122,7 +126,8 @@ public abstract class AbstractStream implements IStream {
 	}
 
     /**
-     * Setter for codec info
+     * Setter for codec info.
+	 * 
      * @param codecInfo     Codec info
      */
     public void setCodecInfo(IStreamCodecInfo codecInfo) {
@@ -130,7 +135,8 @@ public abstract class AbstractStream implements IStream {
 	}
 
     /**
-     * Setter for scope
+     * Setter for scope.
+	 * 
      * @param scope         Scope
      */
 	public void setScope(IScope scope) {
@@ -138,7 +144,8 @@ public abstract class AbstractStream implements IStream {
 	}
 
 	/**
-	 * Return stream state
+	 * Return stream state.
+	 * 
 	 * @return StreamState
 	 */
 	public StreamState getState() {
@@ -151,8 +158,9 @@ public abstract class AbstractStream implements IStream {
 	}
 
 	/**
-	 * Sets the stream state
-	 * @param state
+	 * Sets the stream state.
+	 * 
+	 * @param state stream state
 	 */
 	public void setState(StreamState state) {
 		if (!this.state.equals(state)) {
@@ -166,7 +174,8 @@ public abstract class AbstractStream implements IStream {
 	}	
 	
     /**
-     * Return stream aware scope handler or null if scope is null
+     * Return stream aware scope handler or null if scope is null.
+	 * 
      * @return      IStreamAwareScopeHandler implementation
      */
 	protected IStreamAwareScopeHandler getStreamAwareHandler() {

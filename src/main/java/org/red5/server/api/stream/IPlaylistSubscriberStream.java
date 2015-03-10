@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public interface IPlaylistSubscriberStream extends ISubscriberStream, IPlaylist 
 	/**
 	 * Replaces an item in the list with another item.
 	 * 
-	 * @param oldItem
-	 * @param newItem
+	 * @param oldItem old play item
+	 * @param newItem new play item
 	 * @return true if successful and false otherwise
 	 */
 	public boolean replace(IPlayItem oldItem, IPlayItem newItem);	

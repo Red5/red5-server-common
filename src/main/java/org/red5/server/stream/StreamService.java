@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,12 +379,12 @@ public class StreamService implements IStreamService {
 	/**
 	 * Dynamic streaming play method. This is a convenience method.
 	 * 
-	 * @param oldStreamName
-	 * @param start
-	 * @param transition
-	 * @param length
-	 * @param offset
-	 * @param streamName
+	 * @param oldStreamName old
+	 * @param start start pos
+	 * @param transition type of transition
+	 * @param length length to play
+	 * @param offset offset
+	 * @param streamName stream name
 	 */
 	public void play2(String oldStreamName, int start, String transition, int length, double offset, String streamName) {
 		Map<String, Object> playOptions = new HashMap<String, Object>();
@@ -399,7 +399,7 @@ public class StreamService implements IStreamService {
 	/**
 	 * Dynamic streaming play method. This is a convenience method.
 	 * 
-	 * @param params
+	 * @param params play parameters
 	 */
 	@SuppressWarnings("rawtypes")
 	public void play2(ObjectMap params) {
@@ -444,6 +444,8 @@ public class StreamService implements IStreamService {
 	   @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_actionscript.html">ActionScript guide to dynamic streaming</a>
 	   @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_advanced_pt1.html">Dynamic streaming in Flash Media Server - Part 1: Overview of the new capabilities</a>
 	   @see <a href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStreamPlayTransitions.html">NetStreamPlayTransitions</a>
+	   
+	   @param playOptions play options
 	 */
 	public void play2(Map<String, ?> playOptions) {
 		log.debug("play2 options: {}", playOptions.toString());
@@ -699,7 +701,7 @@ public class StreamService implements IStreamService {
 	}
 
 	/**
-	 * Send a <code>NetStream.Play.Failed</code> to the client.
+	 * Send a <pre>NetStream.Play.Failed</pre> to the client.
 	 * 
 	 * @param conn
 	 * @param errorCode
@@ -712,7 +714,7 @@ public class StreamService implements IStreamService {
 	}
 
 	/**
-	 * Send <code>NetStream.Status</code> to the client.
+	 * Send <pre>NetStream.Status</pre> to the client.
 	 * @param conn
 	 * @param statusCode see StatusCodes class
 	 * @param description
@@ -724,7 +726,7 @@ public class StreamService implements IStreamService {
 	}
 
 	/**
-	 * Send <code>NetStream.Status</code> to the client.
+	 * Send <pre>NetStream.Status</pre> to the client.
 	 *  
 	 * @param conn connection
 	 * @param statusCode NetStream status code

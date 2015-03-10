@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,8 @@ public class DefaultStreamFilenameGenerator implements IStreamFilenameGenerator 
 
     /**
      * Generate stream directory based on relative scope path. The base directory is
-     * <code>streams</code>, e.g. a scope <code>/application/one/two/</code> will
-     * generate a directory <code>/streams/one/two/</code> inside the application.
+     * <pre>streams</pre>, e.g. a scope <pre>/application/one/two/</pre> will
+     * generate a directory <pre>/streams/one/two/</pre> inside the application.
      * 
      * @param scope            Scope
      * @return                 Directory based on relative scope path
@@ -71,9 +71,9 @@ public class DefaultStreamFilenameGenerator implements IStreamFilenameGenerator 
 	}
 
     /**
-     * The default filenames are relative to the scope path, so always return <code>false</code>.
+     * The default filenames are relative to the scope path, so always return <pre>false</pre>.
      * 
-     * @return	always <code>false</code>
+     * @return	always <pre>false</pre>
      */
 	public boolean resolvesToAbsolutePath() {
 		return false;

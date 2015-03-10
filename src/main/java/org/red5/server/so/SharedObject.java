@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -405,7 +405,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Return an error message to the client.
 	 * 
-	 * @param message
+	 * @param message message
 	 */
 	protected void returnError(String message) {
 		ownerMessage.addEvent(Type.CLIENT_STATUS, "error", message);
@@ -414,7 +414,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Return an attribute value to the owner.
 	 * 
-	 * @param name
+	 * @param name name
 	 */
 	protected void returnAttributeValue(String name) {
 		ownerMessage.addEvent(Type.CLIENT_UPDATE_DATA, name, getAttribute(name));
@@ -507,7 +507,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	 * 
 	 * @param name
 	 *            Attribute
-	 * @return <code>true</code> if there's such an attribute and it was removed, <code>false</code> otherwise
+	 * @return <pre>true</pre> if there's such an attribute and it was removed, <pre>false</pre> otherwise
 	 */
 	@Override
 	public boolean removeAttribute(String name) {
@@ -723,7 +723,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Deletes all the attributes and sends a clear event to all listeners. The persistent data object is also removed from a persistent shared object.
 	 * 
-	 * @return <code>true</code> on success, <code>false</code> otherwise
+	 * @return <pre>true</pre> on success, <pre>false</pre> otherwise
 	 */
 	protected boolean clear() {
 		log.debug("clear");
@@ -749,7 +749,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	}
 
 	/**
-	 * Prevent shared object from being released. Each call to <code>acquire</code> must be paired with a call to <code>release</code> so the SO isn't held forever. This is only valid for non-persistent SOs.
+	 * Prevent shared object from being released. Each call to <pre>acquire</pre> must be paired with a call to <pre>release</pre> so the SO isn't held forever. This is only valid for non-persistent SOs.
 	 */
 	public void acquire() {
 		log.debug("acquire");
@@ -759,7 +759,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 	/**
 	 * Check if shared object currently is acquired.
 	 * 
-	 * @return <code>true</code> if the SO is acquired, otherwise <code>false</code>
+	 * @return <pre>true</pre> if the SO is acquired, otherwise <pre>false</pre>
 	 */
 	public boolean isAcquired() {
 		return acquireCount.get() > 0;

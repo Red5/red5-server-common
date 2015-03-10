@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,9 @@ public class HttpConnectionUtil {
 	/**
 	 * Logs details about the request error.
 	 * 
-	 * @param response
-	 * @throws IOException 
-	 * @throws ParseException 
+	 * @param response http response
+	 * @throws IOException on IO error
+	 * @throws ParseException on parse error
 	 */
 	public static void handleError(HttpResponse response) throws ParseException, IOException {
 		log.debug("{}", response.getStatusLine().toString());

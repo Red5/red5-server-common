@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public interface IServer {
 	 * 
 	 * @param hostName The name of the host
 	 * @param contextPath The path in the host
-	 * @return The found global scope or <code>null</code>
+	 * @return The found global scope or <pre>null</pre>
 	 */
 	public IGlobalScope lookupGlobal(String hostName, String contextPath);
 
@@ -68,8 +68,8 @@ public interface IServer {
 	 * @param hostName The name of the host to map
 	 * @param contextPath The path to map
 	 * @param globalName The name of the global scope to map to
-	 * @return <code>true</code> if the name was mapped, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the name was mapped, otherwise
+	 *         <pre>false</pre>
 	 */
 	public boolean addMapping(String hostName, String contextPath, String globalName);
 
@@ -78,8 +78,8 @@ public interface IServer {
 	 * 
 	 * @param hostName The name of the host to unmap
 	 * @param contextPath The path for this host to unmap
-	 * @return <code>true</code> if the global scope was unmapped, otherwise
-	 *         <code>false</code>
+	 * @return <pre>true</pre> if the global scope was unmapped, otherwise
+	 *         <pre>false</pre>
 	 */
 	public boolean removeMapping(String hostName, String contextPath);
 

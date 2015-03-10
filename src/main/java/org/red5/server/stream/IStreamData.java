@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public interface IStreamData<T> {
 	/**
      * Getter for property 'data'.
      *
-     * @return Value for property 'data'.
+     * @return Value for property 'data'
      */
     public IoBuffer getData();
     
@@ -38,8 +38,8 @@ public interface IStreamData<T> {
      * Creates a byte accurate copy.
      * 
      * @return duplicate of the current data item
-     * @throws IOException
-     * @throws ClassNotFoundException
+     * @throws IOException on error
+     * @throws ClassNotFoundException on class not found
      */
 	public IStreamData<T> duplicate() throws IOException, ClassNotFoundException;
 	

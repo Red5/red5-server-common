@@ -1,7 +1,7 @@
 /*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
+ * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2014 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2015 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,17 @@ import java.util.Set;
  * 
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
- *
  */
 public interface IServiceHandlerProvider {
 
 	/**
-	 * Register an object that provides methods which can be called from a
-	 * client.
-	 * 
-	 * <p>
-	 * Example:<br>
-	 * If you registered a handler with the name "<code>one.two</code>" that
-	 * provides a method "<code>callMe</code>", you can call a method
-	 * "<code>one.two.callMe</code>" from the client.</p>
+	 * Register an object that provides methods which can be called from a client.
+	 * <br>
+	 * Example:
+	 * <br>
+	 * If you registered a handler with the name "<pre>one.two</pre>" that
+	 * provides a method "<pre>callMe</pre>", you can call a method
+	 * "<pre>one.two.callMe</pre>" from the client.
 	 * 
 	 * @param name the name of the handler
 	 * @param handler the handler object
