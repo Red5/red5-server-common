@@ -107,7 +107,7 @@ public class RTMPEIoFilter extends IoFilterAdapter {
 			IoBuffer message = (IoBuffer) obj;
 			if (rtmp.getState() == RTMP.STATE_HANDSHAKE) {
 				// ensure there are enough bytes to skip
-				if (message.limit() > Constants.HANDSHAKE_SIZE) {
+				if (message.limit() >= Constants.HANDSHAKE_SIZE) {
     				//skip the first 1536
     				byte[] handshakeReply = new byte[Constants.HANDSHAKE_SIZE];
     				message.get(handshakeReply);
@@ -117,6 +117,10 @@ public class RTMPEIoFilter extends IoFilterAdapter {
 					log.warn("There may be a network issue on this RTMPE connection: {}", conn);
 					return;
 				}
+			}
+			// handle when C2 and message dont arrive at the same time
+			if (message.remaining() <= 0) {
+				return;
 			}
 			log.debug("Decrypting buffer: {}", message);
 			byte[] encrypted = new byte[message.remaining()];
