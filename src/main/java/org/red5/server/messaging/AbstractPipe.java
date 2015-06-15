@@ -72,12 +72,14 @@ public abstract class AbstractPipe implements IPipe {
 	 * @return                <pre>true</pre> if consumer was added, <pre>false</pre> otherwise
 	 */
 	public boolean subscribe(IConsumer consumer, Map<String, Object> paramMap) {
-		// if consumer is listener object register it as listener
-		if (consumer instanceof IPipeConnectionListener) {
+		// pipe is possibly used by dozens of threads at once (like many subscribers for one server stream)
+		boolean success = consumers.addIfAbsent(consumer);
+		// if consumer is listener object register it as listener and consumer has just been added
+		if (success && consumer instanceof IPipeConnectionListener) {
 			listeners.addIfAbsent((IPipeConnectionListener) consumer);
 		}
-		// pipe is possibly used by dozens of threads at once (like many subscribers for one server stream)
-		return consumers.addIfAbsent(consumer);
+
+		return success;
 	}
 
 	/**
@@ -89,11 +91,12 @@ public abstract class AbstractPipe implements IPipe {
 	 * @return                <pre>true</pre> if provider was added, <pre>false</pre> otherwise
 	 */
 	public boolean subscribe(IProvider provider, Map<String, Object> paramMap) {
-		// register event listener if given
-		if (provider instanceof IPipeConnectionListener) {
-			listeners.add((IPipeConnectionListener) provider);
+		boolean success = providers.addIfAbsent(provider);
+		// register event listener if given and just added
+		if (success && provider instanceof IPipeConnectionListener) {
+			listeners.addIfAbsent((IPipeConnectionListener) provider);
 		}
-		return providers.addIfAbsent(provider);
+		return success;
 	}
 
 	/**
