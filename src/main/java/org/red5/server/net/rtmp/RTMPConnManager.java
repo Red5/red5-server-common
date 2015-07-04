@@ -106,6 +106,9 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 						if (rtmpsState != null && rtmpsState.equals("SESSION_SECURED")) {
 							// don't allow more than 3 minutes
 							if (ioTime <= 180000L) {
+								if (log.isTraceEnabled()) {
+									log.trace("RTMPS secured session detected that is less than 3 minutes old, resetting I/O time");
+								}
 								ioTime = 0L;
 							}
 						}
