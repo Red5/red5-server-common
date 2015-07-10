@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -102,7 +103,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 	/** 
 	 * Scheduled job names
 	 */
-	protected Set<String> jobs = new HashSet<String>(1);
+	protected CopyOnWriteArraySet<String> jobs = new CopyOnWriteArraySet<String>();
 
 	/**
 	 * Interval in ms to check for buffer underruns in VOD streams.
