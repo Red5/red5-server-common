@@ -182,8 +182,9 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 	}
 
 	/**
-	 * Determine if this message should be dropped for lateness. Live publish data
-	 * does not come through this section, only outgoing data does.
+	 * Determine if this message should be dropped. 
+	 * If the traffic from server to client is congested, then drop LIVE
+	 * messages to help alleviate congestion.
 	 * 
 	 * - determine latency between server and client using ping
 	 * - ping timestamp is unsigned int (4 bytes) and is set from value on sender
@@ -197,15 +198,12 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 	 * @return true to drop; false to send
 	 */
 	protected boolean dropMessage(int channelId, IRTMPEvent message) {
-		boolean isLive = message.getSourceType() == Constants.SOURCE_TYPE_LIVE;
-		log.trace("Connection type: {}", (isLive ? "Live" : "VOD"));		
-		if (!isLive) {
+		boolean isLiveStream = message.getSourceType() == Constants.SOURCE_TYPE_LIVE;
+			
+		if (!isLiveStream) {
 			return false;
 		}		
-		//whether or not the packet will be dropped
-		boolean drop = false;
-		//whether or not the packet is video data
-		boolean isVideo = false;
+		
 		if (message instanceof Ping) {
 			final Ping pingMessage = (Ping) message;
 			if (pingMessage.getEventType() == Ping.STREAM_PLAYBUFFER_CLEAR) {
@@ -216,23 +214,31 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 			// never drop pings
 			return false;
 		}
+		
+		// whether or not the packet will be dropped
+		boolean drop = false;
 		// we only drop audio or video data
-		if ((isVideo = message instanceof VideoData) || message instanceof AudioData) {
+		boolean isDroppable = message instanceof VideoData || message instanceof AudioData;
+				
+		if (isDroppable) {
 			if (message.getTimestamp() == 0) {
 				// never drop initial packages, also this could be the first packet after
 				// MP4 seeking and therefore mess with the timestamp mapping
 				return false;
 			}
-			// get connection
+			
 			RTMPConnection conn = (RTMPConnection) Red5.getConnectionLocal();
-			log.trace("Connection: {}", conn);
-			// get state
+			
+			if (log.isDebugEnabled()) {
+				String sourceType = (isLiveStream ? "LIVE" : "VOD");
+				log.debug("Connection: {} connType={}", conn, sourceType);
+			}
+			
 			RTMP rtmp = conn.getState();
-			// determine working type
 			long timestamp = (message.getTimestamp() & 0xFFFFFFFFL);
 			LiveTimestampMapping mapping = rtmp.getLastTimestampMapping(channelId);
-			// just get the current time ONCE per packet
 			long now = System.currentTimeMillis();
+			
 			if (mapping == null || timestamp < mapping.getLastStreamTime()) {
 				log.trace("Resetting clock time ({}) to stream time ({})", now, timestamp);
 				// either first time through, or time stamps were reset
@@ -240,80 +246,106 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				rtmp.setLastTimestampMapping(channelId, mapping);
 			}
 			mapping.setLastStreamTime(timestamp);
+			
+			// Calculate when this message should have arrived. Take the time when the stream started, add
+			// the current message's timestamp and subtract the timestamp of the first message.
 			long clockTimeOfMessage = mapping.getClockStartTime() + timestamp - mapping.getStreamStartTime();
-			//determine tardiness / how late it is
-			long tardiness = clockTimeOfMessage - now;
-			//TDJ: EXPERIMENTAL dropping for LIVE packets in future (default false)
-			if (isLive && dropLiveFuture) {
-				tardiness = Math.abs(tardiness);
+			
+			// Determine how late this message is. This will tell us if the incoming path is congested.
+			long incomingLatency = clockTimeOfMessage - now;
+			
+			if (log.isDebugEnabled()) {
+				log.debug("incomingLatency={} clockTimeOfMessage={} getClockStartTime={} timestamp={} getStreamStartTime={} now={}", new Object[] {
+					incomingLatency, clockTimeOfMessage, mapping.getClockStartTime(), timestamp, mapping.getStreamStartTime(), now});
 			}
-			//subtract the ping time / latency from the tardiness value
-			if (conn != null) {
-				int lastPingTime = conn.getLastPingTime();
-				log.trace("Last ping time for connection: {} {} ms", conn.getId(), lastPingTime);
-				if (lastPingTime > 0) {
-					tardiness -= lastPingTime;
+			
+			//TDJ: EXPERIMENTAL dropping for LIVE packets in future (default false)
+			if (isLiveStream && dropLiveFuture) {
+				incomingLatency = Math.abs(incomingLatency);
+				if (log.isDebugEnabled()) {
+					log.debug("incomingLatency={} clockTimeOfMessage={} now={}", new Object[] { incomingLatency, clockTimeOfMessage, now});
 				}
-				//subtract the buffer time
-				int streamId = conn.getStreamIdForChannel(channelId);
-				IClientStream stream = conn.getStreamById(streamId);
-				if (stream != null) {
-					int clientBufferDuration = stream.getClientBufferDuration();
-					if (clientBufferDuration > 0) {
-						//two times the buffer duration seems to work best with vod
-						if (isLive) {
-							tardiness -= clientBufferDuration;
-						} else {
-							tardiness -= clientBufferDuration * 2;
-						}
+			}
+			
+			// NOTE:
+			// We could decide to drop the message here because it is very late due to incoming
+			// traffic congestion.
+			
+			// We need to calculate how long will this message reach the client. If the traffic is congested, we decide
+			// to drop the message.
+			long outgoingLatency = 0L;
+			
+			if (conn != null) {
+				// Determine the interval when the last ping was sent and when the pong was received. The
+				// duration will be the round-trip time (RTT) of the ping-pong message. If it is high then it
+				// means that there is congestion in the connection.
+				int lastPingPongInterval = conn.getLastPingSentAndLastPongReceivedInterval();
+				
+				if (lastPingPongInterval > 0) {
+					// The outgoingLatency is the ping RTT minus the incoming latency.
+					outgoingLatency = lastPingPongInterval - incomingLatency;
+					if (log.isDebugEnabled()) {
+						log.debug("outgoingLatency={} lastPingTime={}", new Object[] { outgoingLatency, lastPingPongInterval});
 					}
-					log.trace("Client buffer duration: {}", clientBufferDuration);
 				}
 			}
 
 			//TODO: how should we differ handling based on live or vod?
-
 			//TODO: if we are VOD do we "pause" the provider when we are consistently late?
 
 			if (log.isTraceEnabled()) {
-				log.trace("Packet timestamp: {}; tardiness: {}; now: {}; message clock time: {}, dropLiveFuture: {}", new Object[] { timestamp, tardiness, now, clockTimeOfMessage,
-					dropLiveFuture });
+				log.trace("Packet timestamp: {}; latency: {}; now: {}; message clock time: {}, dropLiveFuture: {}", 
+					new Object[] { timestamp, incomingLatency, now, clockTimeOfMessage, dropLiveFuture });
 			}
-			//anything coming in less than the base will be allowed to pass, it will not be
-			//dropped or manipulated
-			if (tardiness < baseTolerance) {
-				//frame is below lowest bounds, let it go
-			} else if (tardiness > highestTolerance) {
-				//frame is really late, drop it no matter what type
-				log.trace("Dropping late message: {}", message);
-				//if we're working with video, indicate that we will need a key frame to proceed
-				if (isVideo) {
+			
+			if (outgoingLatency < baseTolerance) {
+				// no traffic congestion in outgoing direction
+			} else if (outgoingLatency > highestTolerance) {
+				// traffic congestion in outgoing direction
+				if (log.isDebugEnabled()) {
+					log.debug("Outgoing direction congested. outgoingLatency={} highestTolerance={}", new Object[] { outgoingLatency, highestTolerance});
+				}
+				
+				if (isDroppable) {
 					mapping.setKeyFrameNeeded(true);
 				}
-				//drop it
+				
 				drop = true;
 			} else {
-				if (isVideo) {
+				if (isDroppable) {
 					VideoData video = (VideoData) message;
 					if (video.getFrameType() == FrameType.KEYFRAME) {
 						//if its a key frame the inter and disposible checks can be skipped
-						log.trace("Resuming stream with key frame; message: {}", message);
+						if (log.isDebugEnabled()) {
+							log.debug("Resuming stream with key frame; message: {}", message);
+						}
+						
 						mapping.setKeyFrameNeeded(false);
-					} else if (tardiness >= baseTolerance && tardiness < midTolerance) {
+					} else if (incomingLatency >= baseTolerance && incomingLatency < midTolerance) {
 						//drop disposable frames
 						if (video.getFrameType() == FrameType.DISPOSABLE_INTERFRAME) {
-							log.trace("Dropping disposible frame; message: {}", message);
+							if (log.isDebugEnabled()) {
+								log.debug("Dropping disposible frame; message: {}", message);
+							}
+							
 							drop = true;
 						}
-					} else if (tardiness >= midTolerance && tardiness <= highestTolerance) {
+					} else if (incomingLatency >= midTolerance && incomingLatency <= highestTolerance) {
 						//drop inter-frames and disposable frames
-						log.trace("Dropping disposible or inter frame; message: {}", message);
+						if (log.isDebugEnabled()) {
+							log.debug("Dropping disposible or inter frame; message: {}", message);
+						}
+						
 						drop = true;
 					}
 				}
 			}
 		}
-		log.trace("Message was{}dropped", (drop ? " " : " not "));
+		
+		if (log.isDebugEnabled() && drop) {
+			log.debug("Message was dropped");
+		}
+		
 		return drop;
 	}
 
