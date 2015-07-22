@@ -561,6 +561,7 @@ public class StreamService implements IStreamService {
 			// grab the streams name
 			name = name.substring(0, name.indexOf("?"));
 		}
+		log.debug("publish called with name {} and mode {}", name, mode);
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IScope scope = conn.getScope();
@@ -568,6 +569,7 @@ public class StreamService implements IStreamService {
 			int streamId = conn.getStreamId();
 			if (StringUtils.isEmpty(name)) {
 				sendNSFailed(streamConn, StatusCodes.NS_FAILED, "The stream name may not be empty.", name, streamId);
+				log.error("The stream name may not be empty.");
 				return;
 			}
 			IStreamSecurityService security = (IStreamSecurityService) ScopeUtils.getScopeService(scope, IStreamSecurityService.class);
@@ -576,6 +578,7 @@ public class StreamService implements IStreamService {
 				for (IStreamPublishSecurity handler : handlers) {
 					if (!handler.isPublishAllowed(scope, name, mode)) {
 						sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, "You are not allowed to publish the stream.", name, streamId);
+						log.error("You are not allowed to publish the stream {}", name);
 						return;
 					}
 				}
@@ -584,10 +587,12 @@ public class StreamService implements IStreamService {
 			if (bsScope != null && !bsScope.getProviders().isEmpty()) {
 				// another stream with that name is already published			
 				sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, name, name, streamId);
+				log.error("Bad name {}", name);
 				return;
 			}
 			IClientStream stream = streamConn.getStreamById(streamId);
 			if (stream != null && !(stream instanceof IClientBroadcastStream)) {
+				log.error("Stream not found or is not instance of IClientBroadcastStream, name: {}, streamId: {}", name, streamId);
 				return;
 			}
 			boolean created = false;
@@ -743,7 +748,7 @@ public class StreamService implements IStreamService {
 			s.setDetails(name);
 			s.setLevel(status);
 			// get the channel
-			Channel channel = ((RTMPConnection) conn).getChannel((byte) (4 + ((streamId - 1) * 5)));
+			Channel channel = ((RTMPConnection) conn).getChannel(4 + ((streamId - 1) * 5));
 			channel.sendStatus(s);
 		} else {
 			throw new RuntimeException("Connection is not RTMPConnection: " + conn);
