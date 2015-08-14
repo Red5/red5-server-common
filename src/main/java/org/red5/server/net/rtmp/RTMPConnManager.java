@@ -239,11 +239,10 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 		log.trace("Getting connection by session id: {}", sessionId);
 		if (connMap.containsKey(sessionId)) {
 			return connMap.get(sessionId);
-		} else {
-			log.warn("Connection not found for {}", sessionId);
-			if (log.isTraceEnabled()) {
-				log.trace("Connections ({}) {}", connMap.size(), connMap.values());
-			}
+		}
+		log.debug("Connection not found for {}", sessionId);
+		if (log.isTraceEnabled()) {
+			log.trace("Connections ({}) {}", connMap.size(), connMap.values());
 		}
 		return null;
 	}
