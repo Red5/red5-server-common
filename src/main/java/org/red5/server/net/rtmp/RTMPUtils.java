@@ -168,7 +168,7 @@ public class RTMPUtils implements Constants {
 	public static void encodeHeaderByte(IoBuffer out, byte headerSize, int channelId) {
 		if (channelId <= 63) {
 			out.put((byte) ((headerSize << 6) + channelId));
-		} else if (channelId <= 320) {
+		} else if (channelId <= 319) {
 			out.put((byte) (headerSize << 6));
 			out.put((byte) (channelId - 64));
 		} else {

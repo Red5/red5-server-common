@@ -1010,7 +1010,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 				event.setTimestamp(messageIn.getBody().getTimestamp());
 				break;
 		}
-		RTMPMessage messageOut = RTMPMessage.build(event);
+		
+		// Create the RTMP Message to send. Make sure to propagate the source type
+		// so that the connection can decide to drop packets if the connection
+		// is congested for LIVE streams.
+		RTMPMessage messageOut = RTMPMessage.build(event, messageIn.getBody().getSourceType());
 		//get the current timestamp from the message
 		int ts = messageOut.getBody().getTimestamp();
 		if (log.isTraceEnabled()) {

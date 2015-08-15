@@ -95,17 +95,29 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 					IoSession session = null;
 					if (conn instanceof RTMPMinaConnection) {
 						session = ((RTMPMinaConnection) conn).getIoSession();
+						// get io time
 						ioTime = System.currentTimeMillis() - session.getLastIoTime();
 						if (log.isTraceEnabled()) {
 							log.trace("Session - write queue: {} last io time: {} ms", session.getWriteRequestQueue().size(), ioTime);
 							log.trace("Managed session count: {}", session.getService().getManagedSessionCount());
+						}						
+						// check for rtmps native connection and allow more time
+						String rtmpsState = (String) session.getAttribute("rtmps.state");
+						if (rtmpsState != null && rtmpsState.equals("SESSION_SECURED")) {
+							// don't allow more than 3 minutes
+							if (ioTime <= 180000L) {
+								if (log.isTraceEnabled()) {
+									log.trace("RTMPS secured session detected that is less than 3 minutes old, resetting I/O time");
+								}
+								ioTime = 0L;
+							}
 						}
 					} else if (conn instanceof RTMPTConnection) {
 						ioTime = System.currentTimeMillis() - ((RTMPTConnection) conn).getLastDataReceived();			
 					}
 					// if exceeds max inactivity kill and clean up
 					if (ioTime >= conn.maxInactivity) {
-						log.warn("Connection {} has exceeded the max inactivity threshold", conn.getSessionId());
+						log.warn("Connection {} has exceeded the max inactivity threshold of {} ms", conn.getSessionId(), conn.maxInactivity);
 						if (session != null) {
 							if (log.isDebugEnabled()) {
 								log.debug("Prepared to clear write queue, if session is connected: {}; closing? {}", session.isConnected(), session.isClosing());
@@ -227,11 +239,10 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
 		log.trace("Getting connection by session id: {}", sessionId);
 		if (connMap.containsKey(sessionId)) {
 			return connMap.get(sessionId);
-		} else {
-			log.warn("Connection not found for {}", sessionId);
-			if (log.isTraceEnabled()) {
-				log.trace("Connections ({}) {}", connMap.size(), connMap.values());
-			}
+		}
+		log.debug("Connection not found for {}", sessionId);
+		if (log.isTraceEnabled()) {
+			log.trace("Connections ({}) {}", connMap.size(), connMap.values());
 		}
 		return null;
 	}

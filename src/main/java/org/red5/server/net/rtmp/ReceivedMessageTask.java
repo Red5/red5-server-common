@@ -1,5 +1,6 @@
 package org.red5.server.net.rtmp;
 
+import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -7,6 +8,8 @@ import org.red5.server.api.Red5;
 import org.red5.server.net.rtmp.message.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskRejectedException;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 public final class ReceivedMessageTask implements Callable<Boolean> {
 
@@ -21,11 +24,8 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 	private Packet message;
 
 	// flag representing handling status
-	private AtomicBoolean done = new AtomicBoolean(false);
+	private final AtomicBoolean done = new AtomicBoolean(false);
 
-	// deadlock guard instance
-	private DeadlockGuard guard;
-		
 	// maximum time allowed to process received message
 	private long maxHandlingTime = 500L;
 	
@@ -44,13 +44,19 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 		// set connection to thread local
 		Red5.setConnectionLocal(conn);
 		try {
-			//  // don't run the deadlock guard if timeout is <= 0
-			if (maxHandlingTime <= 0) {
-				// don't run the deadlock guard if we're in debug mode
-				if (!Red5.isDebug()) {
-					// run a deadlock guard so hanging tasks will be interrupted
-					guard = new DeadlockGuard();
-					new Thread(guard, String.format("DeadlockGuard#%s", sessionId)).start();
+			// don't run the deadlock guard if timeout is <= 0
+			if (maxHandlingTime > 0) {
+				// run a deadlock guard so hanging tasks will be interrupted
+				ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
+				if (deadlockGuard != null) {
+					try {
+						deadlockGuard.schedule(new DeadlockGuard(Thread.currentThread()),
+								new Date(System.currentTimeMillis() + maxHandlingTime));
+					} catch (TaskRejectedException e) {
+						log.warn("DeadlockGuard task is rejected for " + sessionId, e);
+					}
+				} else {
+					log.error("Deadlock guard is null for {}", sessionId);
 				}
 			}
 			// pass message to the handler
@@ -63,12 +69,8 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 			Red5.setConnectionLocal(null);
 			// set done / completed flag
 			done.set(true);
-			if (guard != null) {
-				// calls internal to the deadlock guard to join its thread from this executor task thread
-				guard.join();
-			}
 		}
-		return Boolean.valueOf(done.get());
+		return done.get();
 	}
 	
 	/**
@@ -86,20 +88,18 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 	private class DeadlockGuard implements Runnable {
 		
 		// executor task thread
-		private Thread taskThread;
-		
-		// deadlock guard thread
-		private Thread guardThread = null;
-
-		AtomicBoolean sleeping = new AtomicBoolean(false);
+		private final Thread taskThread;
 		
 		/**
 		 * Creates the deadlock guard to prevent a message task from taking too long to process.
 		 * @param thread
 		 */
-		DeadlockGuard() {
+		private DeadlockGuard(Thread taskThread) {
 			// executor thread ref
-			this.taskThread = Thread.currentThread();
+			this.taskThread = taskThread;
+			if (log.isTraceEnabled()) {
+				log.trace("DeadlockGuard is created for {}", sessionId);
+			}
 		}
 		
 		/**
@@ -107,47 +107,21 @@ public final class ReceivedMessageTask implements Callable<Boolean> {
 		 * If it elapsed, kill the other thread.
 		 * */
 		public void run() {
-			try {
-				this.guardThread = Thread.currentThread();
-				if (log.isDebugEnabled()) {
-					log.debug("Threads - task: {} guard: {}", taskThread.getName(), guardThread.getName());
-				}
-				sleeping.compareAndSet(false, true);
-				Thread.sleep(maxHandlingTime);
-			} catch (InterruptedException e) {
-				log.debug("Deadlock guard interrupted on {} during sleep", sessionId);	
-			} finally {
-				sleeping.set(false);
+			if (log.isTraceEnabled()) {
+				log.trace("DeadlockGuard is started for {}", sessionId);
 			}
 			// if the message task is not yet done interrupt
 			if (!done.get()) {
 				// if the task thread hasn't been interrupted check its live-ness
-				if (!taskThread.isInterrupted()) {
-					// if the task thread is alive, interrupt it
-					if (taskThread.isAlive()) {
-						log.warn("Interrupting unfinished active task on {}", sessionId);
-						taskThread.interrupt();
-					}				
+				// if the task thread is alive, interrupt it
+				if (!taskThread.isInterrupted() && taskThread.isAlive()) {
+					log.warn("Interrupting unfinished active task on {}", sessionId);
+					taskThread.interrupt();
 				} else {
 					log.debug("Unfinished active task on {} already interrupted", sessionId);					
 				}
 			}
 		}
-		
-		/**
-		 * Joins the deadlock guard thread.
-		 * It's called when the task finish before the maxHandlingTimeout
-		 */
-		public void join() {
-			// interrupt deadlock guard if sleeping
-			if (sleeping.get()) {
-				guardThread.interrupt();
-			}
-			// Wait only a 1/4 of the max handling time
-			// TDJ: Not really needed to wait guard die to release taskMessage processing
-			//guardThread.join(maxHandlingTimeout / 4);
-		}
-		
 	}
 	
 }

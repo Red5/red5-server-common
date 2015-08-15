@@ -21,16 +21,15 @@ package org.red5.server.net.rtmp;
 import java.beans.ConstructorProperties;
 import java.util.BitSet;
 import java.util.Collection;
-import java.util.List;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -261,6 +260,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	protected transient ThreadPoolTaskExecutor executor;
 
 	/**
+	 * Thread pool for guarding deadlocks.
+	 */
+	protected transient ThreadPoolTaskScheduler deadlockGuardScheduler;
+
+	/**
 	 * Keep-alive worker flag
 	 */
 	protected final AtomicBoolean running;
@@ -289,6 +293,16 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Keep track of current queue size
 	 * */
 	private AtomicInteger currentQueueSize = new AtomicInteger();
+
+	/**
+	 * Wait for handshake task.
+	 */
+	private ScheduledFuture<?> waitForHandshakeTask;
+	
+	/**
+	 * Keep alive task.
+	 */
+	private ScheduledFuture<?> keepAliveTask;
 
 	/**
 	 * Creates anonymous RTMP connection without scope.
@@ -376,13 +390,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Opens the connection.
 	 */
 	public void open() {
-		// add the session id to the prefix		
-		executor.setThreadNamePrefix(String.format("RTMPConnectionExecutor#%s-", sessionId));
-		//executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
-		//executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-		//executor.setAllowCoreThreadTimeOut(true);
-		executor.setDaemon(true);
-		executor.setWaitForTasksToCompleteOnShutdown(true);
 		if (log.isTraceEnabled()) {
 			// dump memory stats
 			log.trace("Memory at open - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
@@ -397,6 +404,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		try {
 			boolean success = super.connect(newScope, params);
 			if (success) {
+				stopWaitForHandshake();
 				// once the handshake has completed, start needed jobs start the ping / pong keep-alive
 				startRoundTripMeasurement();
 			} else {
@@ -408,6 +416,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		} catch (ClientRejectedException e) {
 			String reason = (String) e.getReason();
 			log.info("Client rejected, reason: " + ((reason != null) ? reason : "None"));
+			stopWaitForHandshake();
 			throw e;
 		}
 	}
@@ -419,30 +428,61 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isDebugEnabled()) {
 			log.debug("startWaitForHandshake - {}", sessionId);
 		}
-		// start the handshake waiter
-		scheduler.execute(new WaitForHandshakeTask());
+		// start the handshake checker after maxHandshakeTimeout milliseconds
+		try {
+			waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(),
+					new Date(System.currentTimeMillis() + maxHandshakeTimeout));
+		} catch (TaskRejectedException e) {
+			log.error("WaitForHandshake task was rejected for " + sessionId, e);
+		}
+	}
+
+	/**
+	 * Cancels wait for handshake task.
+	 */
+	private void stopWaitForHandshake() {
+		if (waitForHandshakeTask != null) {
+			boolean cancelled = waitForHandshakeTask.cancel(true);
+			if (cancelled) {
+				log.debug("waitForHandshake was cancelled for {}", sessionId);
+			}
+			waitForHandshakeTask = null;
+		}
 	}
 
 	/**
 	 * Starts measurement.
 	 */
-	public void startRoundTripMeasurement() {
+	private void startRoundTripMeasurement() {
 		if (scheduler != null) {
 			if (pingInterval > 0) {
 				if (log.isDebugEnabled()) {
 					log.debug("startRoundTripMeasurement - {}", sessionId);
 				}
 				try {
-					scheduler.scheduleAtFixedRate(new KeepAliveTask(), pingInterval);
+					keepAliveTask = scheduler.scheduleAtFixedRate(new KeepAliveTask(), pingInterval);
 					if (log.isDebugEnabled()) {
 						log.debug("Keep alive scheduled for: {}", sessionId);
 					}
 				} catch (Exception e) {
-					log.error("Error creating keep alive job", e);
+					log.error("Error creating keep alive job for: " + sessionId, e);
 				}
 			}
 		} else {
-			log.warn("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
+			log.error("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
+		}
+	}
+
+	/**
+	 * Stops measurement.
+	 */
+	private void stopRoundTripMeasurement() {
+		if (keepAliveTask != null) {
+			boolean cancelled = keepAliveTask.cancel(true);
+			if (cancelled) {
+				log.debug("Keep alive was cancelled for {}", sessionId);
+			}
+			keepAliveTask = null;
 		}
 	}
 
@@ -776,17 +816,21 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			if (log.isDebugEnabled()) {
 				log.debug("close: {}", sessionId);
 			}
+			stopWaitForHandshake();
+			stopRoundTripMeasurement();
 			// update our state
 			if (state != null) {
 				final byte s = getStateCode();
 				switch (s) {
 					case RTMP.STATE_DISCONNECTED:
-						if (log.isDebugEnabled())
+						if (log.isDebugEnabled()) {
 							log.debug("Already disconnected");
+						}
 						return;
 					default:
-						if (log.isDebugEnabled())
+						if (log.isDebugEnabled()) {
 							log.debug("State: {}", RTMP.states[s]);
+						}
 						state.setState(RTMP.STATE_DISCONNECTING);
 				}
 			}
@@ -796,8 +840,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 				for (Map.Entry<Integer, IClientStream> entry : streams.entrySet()) {
 					IClientStream stream = entry.getValue();
 					if (stream != null) {
-						if (log.isDebugEnabled())
+						if (log.isDebugEnabled()) {
 							log.debug("Closing stream: {}", stream.getStreamId());
+						}
 						streamService.deleteStream(this, stream.getStreamId());
 						usedStreams.decrementAndGet();
 					}
@@ -850,55 +895,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			} else {
 				if (log.isTraceEnabled()) {
 					log.trace("StreamBuffers collection was null");
-				}
-			}
-			if (scheduler != null) {
-				if (log.isDebugEnabled()) {
-					log.debug("Shutting down scheduler");
-				}
-				try {
-					ScheduledExecutorService exe = scheduler.getScheduledExecutor();
-					List<Runnable> runables = exe.shutdownNow();
-					if (log.isDebugEnabled()) {
-						log.debug("Scheduler - shutdown: {} queued: {}", exe.isShutdown(), runables.size());
-					}
-					if (scheduler != null) {
-						scheduler.shutdown();
-						scheduler = null;
-					} else {
-						return;
-					}
-				} catch (NullPointerException e) {
-					// this can happen in a multithreaded env, where close has been called from more than one spot
-					if (log.isDebugEnabled()) {
-						log.warn("Exception during scheduler shutdown", e);
-					}
-				} catch (Exception e) {
-					log.warn("Exception during scheduler shutdown", e);
-				}
-			}
-			if (executor != null) {
-				if (log.isDebugEnabled()) {
-					log.debug("Shutting down executor");
-				}
-				try {
-					ThreadPoolExecutor exe = executor.getThreadPoolExecutor();
-					List<Runnable> runables = exe.shutdownNow();
-					if (log.isDebugEnabled())
-						log.debug("Executor - shutdown: {} queued: {}", exe.isShutdown(), runables.size());
-					if (executor != null) {
-						executor.shutdown();
-						executor = null;
-					} else {
-						return;
-					}
-				} catch (NullPointerException e) {
-					// this can happen in a multithreaded env, where close has been called from more than one spot
-					if (log.isDebugEnabled()) {
-						log.warn("Exception during executor shutdown", e);
-					}
-				} catch (Exception e) {
-					log.warn("Exception during executor shutdown", e);
 				}
 			}
 			// drain permits
@@ -1297,13 +1293,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 						task.setMaxHandlingTimeout(maxHandlingTimeout);
 						packetSequence.incrementAndGet();
 						final Packet sentMessage = message;
-						final Long startTime = System.nanoTime();
+						final long startTime = System.currentTimeMillis();
 						ListenableFuture<Boolean> future = (ListenableFuture<Boolean>) executor.submitListenable(new ListenableFutureTask<Boolean>(task));
 						currentQueueSize.incrementAndGet();
 						future.addCallback(new ListenableFutureCallback<Boolean>() {
 
 							private int getProcessingTime() {
-								return (int) ((System.nanoTime() - startTime) / 1000);
+								return (int) (System.currentTimeMillis() - startTime);
 							}
 
 							public void onFailure(Throwable t) {
@@ -1446,6 +1442,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		lastPongReceivedOn.set(now);
 	}
 
+	/**
+	 * Difference between when the last ping was sent and when the last pong was received.
+	 * @return
+	 */
+	public int getLastPingSentAndLastPongReceivedInterval() {
+	       return (int) (lastPingSentOn.get() - lastPongReceivedOn.get());
+	}
+	
 	/** {@inheritDoc} */
 	public int getLastPingTime() {
 		return lastPingRoundTripTime.get();
@@ -1484,10 +1488,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 */
 	public void setScheduler(ThreadPoolTaskScheduler scheduler) {
 		this.scheduler = scheduler;
-		// set the prefix
-		this.scheduler.setThreadNamePrefix(String.format("RTMPConnectionExecutor#%d", System.currentTimeMillis()));
-		this.scheduler.setDaemon(true);
-		this.scheduler.setWaitForTasksToCompleteOnShutdown(true);
 	}
 
 	/**
@@ -1503,6 +1503,24 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
 	public void setExecutor(ThreadPoolTaskExecutor executor) {
 		this.executor = executor;
+	}
+
+	/**
+	 * Thread pool for guarding deadlocks
+	 *
+	 * @return the deadlockGuardScheduler
+	 */
+	public ThreadPoolTaskScheduler getDeadlockGuardScheduler() {
+		return deadlockGuardScheduler;
+	}
+
+	/**
+	 * Thread pool for guarding deadlocks
+	 * 
+	 * @param deadlockGuardScheduler the deadlockGuardScheduler to set
+	 */
+	public void setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler) {
+		this.deadlockGuardScheduler = deadlockGuardScheduler;
 	}
 
 	/**
@@ -1614,7 +1632,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 								long lastPingTime = lastPingSentOn.get();
 								long lastPongTime = lastPongReceivedOn.get();
 								if (lastPongTime > 0 && (lastPingTime - lastPongTime > maxInactivity) && (now - lastBytesReadTime > maxInactivity)) {
-									log.warn("Closing connection - inactivity timeout: session=[{}}, lastPongReceived=[{} ms ago], lastPingSent=[{} ms ago], lastDataRx=[{} ms ago]", new Object[] { getSessionId(), (lastPingTime - lastPongTime), (now - lastPingTime), (now - lastBytesReadTime) });
+									log.warn("Closing connection - inactivity timeout: session=[{}], lastPongReceived=[{} ms ago], lastPingSent=[{} ms ago], lastDataRx=[{} ms ago]", new Object[] { getSessionId(), (lastPingTime - lastPongTime), (now - lastPingTime), (now - lastBytesReadTime) });
 									// the following line deals with a very common support request
 									log.warn("Client on session=[{}] has not responded to our ping for [{} ms] and we haven't received data for [{} ms]", new Object[] { getSessionId(), (lastPingTime - lastPongTime), (now - lastBytesReadTime) });
 									onInactive();
@@ -1645,19 +1663,22 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 */
 	private class WaitForHandshakeTask implements Runnable {
 
+		public WaitForHandshakeTask() {
+			log.trace("Scheduler: {}", scheduler);
+			if (log.isTraceEnabled()) {
+				log.trace("WaitForHandshakeTask created for {}", getSessionId());
+			}
+		}
+
 		public void run() {
 			if (log.isTraceEnabled()) {
-				log.trace("Running handshake-wait for {}", getSessionId());
+				log.trace("WaitForHandshakeTask started for {}", getSessionId());
 			}
-			try {
-				Thread.sleep(maxHandshakeTimeout);
-				// check for connected state before disconnecting
-				if (state.getState() != RTMP.STATE_CONNECTED) {
-					// Client didn't send a valid handshake, disconnect
-					log.warn("Closing {}, due to long handshake. State: {}", getSessionId(), RTMP.states[getStateCode()]);
-					onInactive();
-				}
-			} catch (InterruptedException e) {
+			// check for connected state before disconnecting
+			if (state.getState() != RTMP.STATE_CONNECTED) {
+				// Client didn't send a valid handshake, disconnect
+				log.warn("Closing {}, due to long handshake. State: {}", getSessionId(), RTMP.states[getStateCode()]);
+				onInactive();
 			}
 		}
 
