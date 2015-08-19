@@ -743,6 +743,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		// add this pending seek operation to the list
 		pendingOperations.add(new SeekRunnable(position));
 		cancelDeferredStop();
+		ensurePullAndPushRunning();
 	}
 
 	/**
@@ -782,16 +783,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 				break;
 			case CLOSED:
 				clearWaitJobs();
-				if (deferredStop != null) {
-					subscriberStream.cancelJob(deferredStop);
-					deferredStop = null;
-				}
+				cancelDeferredStop();
+				break;
 			default:
 				throw new IllegalStateException(String.format("Cannot stop in current state: %s", subscriberStream.getState()));
-		}
-		// once we've stopped there's no need for the deferred job
-		if (deferredStop != null) {
-			subscriberStream.cancelJob(deferredStop);
 		}
 	}
 
@@ -1617,7 +1612,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 			subscriberStream.cancelJob(deferredStop);
 			deferredStop = null;
 		}
-		ensurePullAndPushRunning();
 	}
 
 	/**
