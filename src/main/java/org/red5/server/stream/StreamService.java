@@ -75,7 +75,9 @@ public class StreamService implements IStreamService {
 	public int createStream() {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
-			return ((IStreamCapableConnection) conn).reserveStreamId();
+			int streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+			log.trace("Stream created {} for {}", streamId, conn);
+			return streamId;
 		} else {
 			return -1;
 		}
@@ -289,6 +291,7 @@ public class StreamService implements IStreamService {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
 			int streamId = conn.getStreamId();
 			if (StringUtils.isEmpty(name)) {
+				log.warn("The stream name may not be empty");
 				sendNSFailed(streamConn, StatusCodes.NS_FAILED, "The stream name may not be empty.", name, streamId);
 				return;
 			}
@@ -297,6 +300,7 @@ public class StreamService implements IStreamService {
 				Set<IStreamPlaybackSecurity> handlers = security.getStreamPlaybackSecurity();
 				for (IStreamPlaybackSecurity handler : handlers) {
 					if (!handler.isPlaybackAllowed(scope, name, start, length, flushPlaylist)) {
+						log.warn("You are not allowed to play stream {}", name);
 						sendNSFailed(streamConn, StatusCodes.NS_FAILED, "You are not allowed to play the stream.", name, streamId);
 						return;
 					}
@@ -304,16 +308,24 @@ public class StreamService implements IStreamService {
 			}
 			boolean created = false;
 			IClientStream stream = streamConn.getStreamById(streamId);
+			log.trace("Stream: {} for streamId: {}", stream, streamId);
 			if (stream == null) {
-				if (streamId <= 0) {
-					streamId = streamConn.reserveStreamId();
+				try {
+					if (streamId <= 0) {
+						streamId = streamConn.reserveStreamId();
+					}
+					stream = streamConn.newPlaylistSubscriberStream(streamId);
+					log.trace("Created stream: {} for streamId: {}", stream, streamId);
+					stream.setBroadcastStreamPublishName(name);
+					stream.start();
+					created = true;
+				} catch (Exception e) {
+					log.warn("Unable to start playing stream " + name, e);
+					sendNSFailed(streamConn, StatusCodes.NS_FAILED, "Unable to start playing stream", name, streamId);
+					return;
 				}
-				stream = streamConn.newPlaylistSubscriberStream(streamId);
-				stream.setBroadcastStreamPublishName(name);
-				stream.start();
-				created = true;
 			}
-			if (stream != null && stream instanceof ISubscriberStream) {
+			if (stream instanceof ISubscriberStream) {
 				ISubscriberStream subscriberStream = (ISubscriberStream) stream;
 				IPlayItem item = simplePlayback.get() ? SimplePlayItem.build(name, start, length) : DynamicPlayItem.build(name, start, length);
 				if (subscriberStream instanceof IPlaylistSubscriberStream) {
@@ -337,6 +349,7 @@ public class StreamService implements IStreamService {
 						stream.close();
 						streamConn.deleteStreamById(streamId);
 					}
+					log.warn("Unable to play stream " + name, err);
 					sendNSFailed(streamConn, StatusCodes.NS_FAILED, err.getMessage(), name, streamId);
 				}
 			}

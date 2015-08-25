@@ -19,6 +19,7 @@
 package org.red5.server.net.rtmp;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IClientStream;
 import org.red5.server.api.stream.IRtmpSampleAccess;
@@ -168,6 +169,14 @@ public class Channel {
 				final PendingCall call = new PendingCall(null, CALL_ON_STATUS, new Object[] { status });
 				if (status.getCode().equals(StatusCodes.NS_PLAY_START)) {
 					IScope scope = connection.getScope();
+					IContext context = null;
+					if (scope == null) {
+						log.warn("scope is null for connection {}", connection);
+					} else if ((context = scope.getContext()) == null) {
+						log.warn("scope context is null for connection {}", connection);
+					} else if (context.getApplicationContext() == null) {
+						log.warn("application context is null for connection {}", connection);
+					}
 					if (scope.getContext().getApplicationContext().containsBean(IRtmpSampleAccess.BEAN_NAME)) {
 						IRtmpSampleAccess sampleAccess = (IRtmpSampleAccess) scope.getContext().getApplicationContext().getBean(IRtmpSampleAccess.BEAN_NAME);
 						boolean videoAccess = sampleAccess.isVideoAllowed(scope);
