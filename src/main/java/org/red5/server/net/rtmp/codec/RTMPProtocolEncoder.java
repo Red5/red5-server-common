@@ -312,14 +312,13 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				
 				drop = true;
 			} else {
-				if (isDroppable) {
+				if (isDroppable && message instanceof VideoData) {
 					VideoData video = (VideoData) message;
 					if (video.getFrameType() == FrameType.KEYFRAME) {
 						//if its a key frame the inter and disposible checks can be skipped
 						if (log.isDebugEnabled()) {
 							log.debug("Resuming stream with key frame; message: {}", message);
 						}
-						
 						mapping.setKeyFrameNeeded(false);
 					} else if (incomingLatency >= baseTolerance && incomingLatency < midTolerance) {
 						//drop disposable frames
@@ -327,15 +326,13 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 							if (log.isDebugEnabled()) {
 								log.debug("Dropping disposible frame; message: {}", message);
 							}
-							
 							drop = true;
 						}
 					} else if (incomingLatency >= midTolerance && incomingLatency <= highestTolerance) {
 						//drop inter-frames and disposable frames
 						if (log.isDebugEnabled()) {
 							log.debug("Dropping disposible or inter frame; message: {}", message);
-						}
-						
+						}						
 						drop = true;
 					}
 				}
