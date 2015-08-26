@@ -218,6 +218,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	private int playDecision = 3;
 
 	/**
+	 * Index of the buffered interframe to send instead of current frame
+	 */
+	private int bufferedInterframeIdx = -1;
+
+	/**
 	 * List of pending operations
 	 */
 	private ConcurrentLinkedQueue<Runnable> pendingOperations;
@@ -401,6 +406,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 									sendStartStatus(item);
 								}
 								sendNotifications = false;
+
+								if (videoCodec.getNumInterframes() > 0 ||
+										videoCodec.getKeyframe() != null) {
+									bufferedInterframeIdx = 0;
+									videoFrameDropper.reset(IFrameDropper.SEND_ALL);
+								}
 							}
 						}
 					}
@@ -690,8 +701,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 			case STOPPED:
 				subscriberStream.setState(StreamState.PAUSED);
 				clearWaitJobs();
-				sendClearPing();
 				sendPauseStatus(currentItem);
+				sendClearPing();
 				subscriberStream.onChange(StreamState.PAUSED, currentItem, position);
 				break;
 			default:
@@ -769,8 +780,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 						releasePendingMessage();
 						sendCompleteStatus();
 						bytesSent.set(0);
-						sendClearPing();
 						sendStopStatus(currentItem);
+						sendClearPing();
 					} else {
 						if (lastMessageTs > 0) {
 							// remember last timestamp so we can generate correct headers in playlists.
@@ -1420,6 +1431,19 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 									}
 									videoFrameDropper.dropPacket(rtmpMessage);
 									return;
+								}
+
+								//We are ok to send, check if we should send buffered frame
+								if (bufferedInterframeIdx > -1) {
+									if (bufferedInterframeIdx >= videoCodec.getNumInterframes()) {
+										// It means that new keyframe was received and we should send current frames instead of buffered
+										bufferedInterframeIdx = -1;
+									} else {
+										IVideoStreamCodec.FrameData fd = videoCodec.getInterframe(bufferedInterframeIdx++);
+										VideoData interframe = new VideoData(fd.getFrame());
+										interframe.setTimestamp(rtmpMessage.getBody().getTimestamp());
+										rtmpMessage = RTMPMessage.build(interframe);
+									}
 								}
 							}
 						}
