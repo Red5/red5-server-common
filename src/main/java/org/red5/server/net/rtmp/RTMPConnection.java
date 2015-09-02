@@ -72,6 +72,7 @@ import org.red5.server.service.PendingCall;
 import org.red5.server.so.FlexSharedObjectMessage;
 import org.red5.server.so.ISharedObjectEvent;
 import org.red5.server.so.SharedObjectMessage;
+import org.red5.server.stream.AbstractClientStream;
 import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.OutputStream;
 import org.red5.server.stream.PlaylistSubscriberStream;
@@ -681,16 +682,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (isValidStreamId(streamId)) {
 			// get ClientBroadcastStream defined as a prototype in red5-common.xml
 			ClientBroadcastStream cbs = (ClientBroadcastStream) scope.getContext().getBean("clientBroadcastStream");
-			Integer buffer = streamBuffers.get(streamId - 1);
-			if (buffer != null) {
-				cbs.setClientBufferDuration(buffer);
+			customizeStream(streamId, cbs);
+			if (!registerStream(cbs)) {
+				cbs = null;
 			}
-			cbs.setStreamId(streamId);
-			cbs.setConnection(this);
-			cbs.setName(createStreamName());
-			cbs.setScope(this.getScope());
-
-			registerStream(cbs);
 			return cbs;
 		}
 		return null;
@@ -701,15 +696,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (isValidStreamId(streamId)) {
 			// get SingleItemSubscriberStream defined as a prototype in red5-common.xml
 			SingleItemSubscriberStream siss = (SingleItemSubscriberStream) scope.getContext().getBean("singleItemSubscriberStream");
-			Integer buffer = streamBuffers.get(streamId - 1);
-			if (buffer != null) {
-				siss.setClientBufferDuration(buffer);
+			customizeStream(streamId, siss);
+			if (!registerStream(siss)) {
+				siss = null;
 			}
-			siss.setName(createStreamName());
-			siss.setConnection(this);
-			siss.setScope(this.getScope());
-			siss.setStreamId(streamId);
-			registerStream(siss);
 			return siss;
 		}
 		return null;
@@ -720,15 +710,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (isValidStreamId(streamId)) {
 			// get PlaylistSubscriberStream defined as a prototype in red5-common.xml
 			PlaylistSubscriberStream pss = (PlaylistSubscriberStream) scope.getContext().getBean("playlistSubscriberStream");
-			Integer buffer = streamBuffers.get(streamId - 1);
-			if (buffer != null) {
-				pss.setClientBufferDuration(buffer);
+			customizeStream(streamId, pss);
+			if (!registerStream(pss)) {
+				pss = null;
 			}
-			pss.setName(createStreamName());
-			pss.setConnection(this);
-			pss.setScope(this.getScope());
-			pss.setStreamId(streamId);
-			registerStream(pss);
 			return pss;
 		}
 		return null;
@@ -791,13 +776,35 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	}
 
 	/**
+	 * Specify name, connection, scope and etc for stream
+	 *
+	 * @param streamId Stream id
+	 * @param stream Stream
+	 */
+	private void customizeStream(int streamId, AbstractClientStream stream) {
+		Integer buffer = streamBuffers.get(streamId - 1);
+		if (buffer != null) {
+			stream.setClientBufferDuration(buffer);
+		}
+		stream.setName(createStreamName());
+		stream.setConnection(this);
+		stream.setScope(this.getScope());
+		stream.setStreamId(streamId);
+	}
+
+	/**
 	 * Store a stream in the connection.
 	 * 
 	 * @param stream
 	 */
-	private void registerStream(IClientStream stream) {
-		streams.put(stream.getStreamId() - 1, stream);
-		usedStreams.incrementAndGet();
+	private boolean registerStream(IClientStream stream) {
+		if (streams.putIfAbsent(stream.getStreamId() - 1, stream) != null) {
+			usedStreams.incrementAndGet();
+			return true;
+		}
+		log.error("Unable to register stream {}, stream with id {} was already added",
+				stream, stream.getStreamId() - 1);
+		return false;
 	}
 
 	/**
@@ -856,37 +863,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			// close the base connection - disconnect scopes and unregister client
 			super.close();
 			// kill all the collections etc
-			if (channels != null) {
-				channels.clear();
-			} else {
-				if (log.isTraceEnabled()) {
-					log.trace("Channels collection was null");
-				}
-			}
 
+			channels.clear();
 			streams.clear();
-			if (pendingCalls != null) {
-				pendingCalls.clear();
-			} else {
-				if (log.isTraceEnabled()) {
-					log.trace("PendingCalls collection was null");
-				}
-			}
-			if (deferredResults != null) {
-				deferredResults.clear();
-			} else {
-				if (log.isTraceEnabled()) {
-					log.trace("DeferredResults collection was null");
-				}
-			}
+			pendingCalls.clear();
+			deferredResults.clear();
 			pendingVideos.clear();
-			if (streamBuffers != null) {
-				streamBuffers.clear();
-			} else {
-				if (log.isTraceEnabled()) {
-					log.trace("StreamBuffers collection was null");
-				}
-			}
+			streamBuffers.clear();
 			// drain permits
 			decoderLock.drainPermits();
 			encoderLock.drainPermits();
@@ -932,7 +915,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * although the remote method was invoked, the connection failed before the result could be read, or (3) although the remote method was invoked on the service, the service implementor detected the failure of the connection and performed only partial processing. The caller only knows that it cannot be confirmed that the callee has invoked the service call and returned a result.
 	 */
 	public void sendPendingServiceCallsCloseError() {
-		if (pendingCalls != null && !pendingCalls.isEmpty()) {
+		if (!pendingCalls.isEmpty()) {
 			if (log.isDebugEnabled()) {
 				log.debug("Connection calls pending: {}", pendingCalls.size());
 			}
@@ -1356,12 +1339,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/** {@inheritDoc} */
 	@Override
 	public long getPendingVideoMessages(int streamId) {
-		if (log.isTraceEnabled()) {
-			log.trace("Total pending videos: {}", pendingVideos.size());
-		}
 		AtomicInteger pendingCount = pendingVideos.get(streamId);
-		long result = (pendingCount != null ? pendingCount.intValue() - getUsedStreamCount() : 0);
-		return (result > 0 ? result : 0);
+		if (log.isTraceEnabled()) {
+			log.trace("Stream id: {} pendingCount: {} total pending videos: {}", streamId, pendingCount, pendingVideos.size());
+		}
+		return pendingCount != null ? pendingCount.intValue() : 0;
 	}
 
 	/**
