@@ -31,7 +31,6 @@ import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
 import org.red5.server.api.service.IPendingServiceCall;
 import org.red5.server.api.service.IServiceCall;
-import org.red5.server.api.stream.IClientStream;
 import org.red5.server.exception.ClientDetailsException;
 import org.red5.server.net.ICommand;
 import org.red5.server.net.rtmp.RTMPConnection;
