@@ -356,10 +356,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 		if (lastHeader == null) {
 			return HEADER_NEW;
 		}
-		final Integer lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
-		if (lastFullTs == null) {
-			return HEADER_NEW;
-		}
+		final int lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
 		final byte headerType;
 		final long diff = RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
 		final long timeSinceFullTs = RTMPUtils.diffTimestamps(header.getTimer(), lastFullTs);
