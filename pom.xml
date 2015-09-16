@@ -6,7 +6,7 @@
     <name>Red5 :: Common server classes</name>
     <description>Classes common for multiple red5 projects</description>
     <groupId>org.red5</groupId>
-    <version>1.0.6-SNAPSHOT</version>
+    <version>1.0.7-SNAPSHOT</version>
     <url>https://github.com/Red5/red5-server-common</url>
     <inceptionYear>2005</inceptionYear>
     <organization>
@@ -56,12 +56,13 @@
     </developers>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <red5-io.version>1.0.6-SNAPSHOT</red5-io.version>
+        <red5-io.version>1.0.7-SNAPSHOT</red5-io.version>
         <spring.version>4.1.7.RELEASE</spring.version>
         <mina.version>2.0.9</mina.version>
         <quartz.version>2.2.1</quartz.version>
         <bc.version>1.52</bc.version>
         <junit.version>4.12</junit.version>
+        <tomcat.version>8.0.26</tomcat.version>
     </properties>
     <repositories>
         <repository>
@@ -152,12 +153,10 @@
                     <detectOfflineLinks>false</detectOfflineLinks>
                     <stylesheetfile>javadoc.css</stylesheetfile>
                     <links>
-                        <link>http://download.oracle.com/javase/6/docs/api</link>
-                        <link>http://jetty.codehaus.org/jetty/jetty-6/apidocs</link>
+                        <link>http://download.oracle.com/javase/7/docs/api</link>
                         <link>http://docs.spring.io/spring/docs/4.0.x/javadoc-api</link>
                         <link>http://www.slf4j.org/api</link>
                         <link>http://logging.apache.org/log4j/1.2/apidocs</link>
-                        <link>http://tomcat.apache.org/tomcat-6.0-doc/api</link>
                     </links>
                     <tags>
                         <tag>
@@ -396,9 +395,10 @@
             <version>${bc.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jboss.spec.javax.servlet</groupId>
-            <artifactId>jboss-servlet-api_3.0_spec</artifactId>
-            <version>1.0.2.Final</version>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-servlet-api</artifactId>
+            <version>${tomcat.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
     <profiles>

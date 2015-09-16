@@ -817,7 +817,11 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
 		return sendStats.intValue();
 	}
 
-	/** {@inheritDoc} */
+	/**
+	 * Sets a modified or dirty property on this object to indicate whether or not a modification has been made.
+	 * 
+	 * @param dirty true if modified and false otherwise
+	 */
 	public void setDirty(boolean dirty) {
 		log.trace("setDirty: {}", dirty);
 		modified.set(dirty);

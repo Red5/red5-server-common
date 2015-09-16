@@ -31,7 +31,6 @@ import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
 import org.red5.server.api.service.IPendingServiceCall;
 import org.red5.server.api.service.IServiceCall;
-import org.red5.server.api.stream.IClientStream;
 import org.red5.server.exception.ClientDetailsException;
 import org.red5.server.net.ICommand;
 import org.red5.server.net.rtmp.RTMPConnection;
@@ -312,14 +311,13 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				
 				drop = true;
 			} else {
-				if (isDroppable) {
+				if (isDroppable && message instanceof VideoData) {
 					VideoData video = (VideoData) message;
 					if (video.getFrameType() == FrameType.KEYFRAME) {
 						//if its a key frame the inter and disposible checks can be skipped
 						if (log.isDebugEnabled()) {
 							log.debug("Resuming stream with key frame; message: {}", message);
 						}
-						
 						mapping.setKeyFrameNeeded(false);
 					} else if (incomingLatency >= baseTolerance && incomingLatency < midTolerance) {
 						//drop disposable frames
@@ -327,15 +325,13 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 							if (log.isDebugEnabled()) {
 								log.debug("Dropping disposible frame; message: {}", message);
 							}
-							
 							drop = true;
 						}
 					} else if (incomingLatency >= midTolerance && incomingLatency <= highestTolerance) {
 						//drop inter-frames and disposable frames
 						if (log.isDebugEnabled()) {
 							log.debug("Dropping disposible or inter frame; message: {}", message);
-						}
-						
+						}						
 						drop = true;
 					}
 				}
@@ -360,10 +356,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 		if (lastHeader == null) {
 			return HEADER_NEW;
 		}
-		final Integer lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
-		if (lastFullTs == null) {
-			return HEADER_NEW;
-		}
+		final int lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
 		final byte headerType;
 		final long diff = RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
 		final long timeSinceFullTs = RTMPUtils.diffTimestamps(header.getTimer(), lastFullTs);
