@@ -73,7 +73,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 	protected int defaultClientBandwidth = 10000000;
 
 	protected boolean bandwidthDetection = true;
-	
+
 	/** Constructs a new RTMPMinaConnection. */
 	@ConstructorProperties(value = { "persistent" })
 	public RTMPMinaConnection() {
@@ -113,16 +113,16 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 		super.close();
 		log.debug("IO Session closing: {}", (ioSession != null ? ioSession.isClosing() : null));
 		if (ioSession != null && !ioSession.isClosing()) {
-			// accept no further incoming data
-			// ioSession.suspendRead();
 			// close now, no flushing, no waiting
 			final CloseFuture future = ioSession.close(true);
 			log.debug("Connection close future: {}", future);
 			IoFutureListener<CloseFuture> listener = new IoFutureListener<CloseFuture>() {
 				public void operationComplete(CloseFuture future) {
 					if (future.isClosed()) {
-						log.debug("Connection is closed");
-						log.trace("Session id - local: {} session: {}", getSessionId(), (String) ioSession.removeAttribute(RTMPConnection.RTMP_SESSION_ID));
+						log.info("Connection is closed: ", getSessionId());
+						if (log.isTraceEnabled()) {
+							log.trace("Session id - local: {} session: {}", getSessionId(), (String) ioSession.removeAttribute(RTMPConnection.RTMP_SESSION_ID));
+						}
 						RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
 						if (conn != null) {
 							handler.connectionClosed(conn);
@@ -309,7 +309,9 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 		remoteAddresses.add(remoteAddress);
 		remoteAddresses = Collections.unmodifiableList(remoteAddresses);
 		this.ioSession = protocolSession;
-		log.trace("setIoSession conn: {}", this);
+		if (log.isTraceEnabled()) {
+			log.trace("setIoSession conn: {}", this);
+		}
 	}
 
 	/** {@inheritDoc} */
@@ -317,22 +319,30 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 	public void write(Packet out) {
 		if (ioSession != null) {
 			final Semaphore lock = getLock();
-			log.trace("Write lock wait count: {} closed: {}", lock.getQueueLength(), isClosed());
+			if (log.isTraceEnabled()) {
+				log.trace("Write lock wait count: {} closed: {}", lock.getQueueLength(), isClosed());
+			}
 			while (!isClosed()) {
 				boolean acquired = false;
 				try {
 					acquired = lock.tryAcquire(10, TimeUnit.MILLISECONDS);
 					if (acquired) {
-						log.trace("Writing message");
+						if (log.isTraceEnabled()) {
+							log.trace("Writing message");
+						}
 						writingMessage(out);
 						ioSession.write(out);
 						break;
 					}
 				} catch (InterruptedException e) {
 					log.warn("Interrupted while waiting for write lock. State: {}", RTMP.states[state.getState()], e);
+					if (log.isInfoEnabled()) {
+						// further debugging to assist with possible connection problems
+						log.info("Session id: {} in queue size: {} pending msgs: {} last ping/pong: {}", getSessionId(), currentQueueSize(), getPendingMessages(), getLastPingSentAndLastPongReceivedInterval());
+						log.info("Available permits - decoder: {} encoder: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
+					}
 					String exMsg = e.getMessage();
-					// if the exception cause is null break out of here to
-					// prevent looping until closed
+					// if the exception cause is null break out of here to prevent looping until closed
 					if (exMsg == null || exMsg.indexOf("null") >= 0) {
 						log.debug("Exception writing to connection: {}", this);
 						break;
@@ -356,15 +366,16 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
 				try {
 					acquired = lock.tryAcquire(10, TimeUnit.MILLISECONDS);
 					if (acquired) {
-						log.trace("Writing raw message");
+						if (log.isTraceEnabled()) {
+							log.trace("Writing raw message");
+						}
 						ioSession.write(out);
 						break;
 					}
 				} catch (InterruptedException e) {
 					log.warn("Interrupted while waiting for write lock (writeRaw). State: {}", RTMP.states[state.getState()], e);
 					String exMsg = e.getMessage();
-					// if the exception cause is null break out of here to
-					// prevent looping until closed
+					// if the exception cause is null break out of here to prevent looping until closed
 					if (exMsg == null || exMsg.indexOf("null") >= 0) {
 						log.debug("Exception writing to connection: {}", this);
 						break;
