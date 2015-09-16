@@ -798,7 +798,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @param stream
 	 */
 	private boolean registerStream(IClientStream stream) {
-		if (streams.putIfAbsent(stream.getStreamId() - 1, stream) != null) {
+		if (streams.putIfAbsent(stream.getStreamId() - 1, stream) == null) {
 			usedStreams.incrementAndGet();
 			return true;
 		}
