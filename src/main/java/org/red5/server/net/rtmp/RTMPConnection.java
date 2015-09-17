@@ -591,9 +591,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		int result = -1;
 		for (int i = 0; true; i++) {
 			if (reservedStreams.add(i)) {
-                result = i;
+				result = i;
 				break;
-            }
+			}
 		}
 		return result + 1;
 	}
