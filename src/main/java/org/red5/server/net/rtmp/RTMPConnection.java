@@ -1250,42 +1250,48 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 				break;
 			default:
 				if (executor != null) {
+					final String messageType = getMessageType(message);
 					try {
+						// increment the packet number
 						final long packetNumber = packetSequence.incrementAndGet();
 
 						if (executorQueueSizeToDropAudioPackets > 0 && currentQueueSize.get() >= executorQueueSizeToDropAudioPackets) {
 							if (message.getHeader().getDataType() == Constants.TYPE_AUDIO_DATA) {
-								/**
-								 * There's a backlog of messages in the queue. Flash might have sent a burst of messages after a network congestion. Throw away packets that we are able to discard.
-								 */
-								log.info("Queue threshold reached. Discarding packet: session=[{}], msgType=[{}], packetNum=[{}]", getSessionId(), getMessageType(message), packetNumber);
+								// if there's a backlog of messages in the queue. Flash might have sent a burst of messages after a network congestion. Throw away packets that we are able to discard.
+								log.info("Queue threshold reached. Discarding packet: session=[{}], msgType=[{}], packetNum=[{}]", sessionId, messageType, packetNumber);
 								return;
 							}
 						}
+						// set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
+						if (maxHandlingTimeout > 0) {
+							message.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
+						}
+						// create a task to process the message
 						ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
-						task.setMaxHandlingTimeout(maxHandlingTimeout);
-						packetSequence.incrementAndGet();
-						final Packet sentMessage = message;
-						final long startTime = System.currentTimeMillis();
-						ListenableFuture<Boolean> future = (ListenableFuture<Boolean>) executor.submitListenable(new ListenableFutureTask<Boolean>(task));
+						task.setPacketNumber(packetNumber);
+						ListenableFuture<Packet> future = (ListenableFuture<Packet>) executor.submitListenable(new ListenableFutureTask<Packet>(task));
 						currentQueueSize.incrementAndGet();
-						future.addCallback(new ListenableFutureCallback<Boolean>() {
+						future.addCallback(new ListenableFutureCallback<Packet>() {
 
-							private int getProcessingTime() {
+							final long startTime = System.currentTimeMillis();
+							
+							int getProcessingTime() {
 								return (int) (System.currentTimeMillis() - startTime);
 							}
 
 							public void onFailure(Throwable t) {
+								log.debug("ReceivedMessageTask failure: {}", t);
 								currentQueueSize.decrementAndGet();
 								if (log.isWarnEnabled()) {
-									log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, getMessageType(sentMessage), getProcessingTime(), packetNumber);
+									log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
 								}
 							}
 
-							public void onSuccess(Boolean success) {
+							public void onSuccess(Packet packet) {
+								log.debug("ReceivedMessageTask success");
 								currentQueueSize.decrementAndGet();
 								if (log.isDebugEnabled()) {
-									log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, getMessageType(sentMessage), getProcessingTime(), packetNumber);
+									log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
 								}
 							}
 
@@ -1297,7 +1303,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 						}
 						log.info("Rejected message: {} on {}", message, sessionId);
 					} catch (Exception e) {
-						log.info("Incoming message handling failed on session=[{}], messageType=[{}]", getSessionId(), message);
+						log.info("Incoming message handling failed on session=[{}], messageType=[{}]", sessionId, message);
 						if (log.isDebugEnabled()) {
 							log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
 							log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
@@ -1336,6 +1342,15 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		droppedMessages.incrementAndGet();
 	}
 
+	/**
+	 * Returns the current received message queue size.
+	 * 
+	 * @return current message queue size
+	 */
+	protected int currentQueueSize() {
+		return currentQueueSize.get();
+	}
+	
 	/** {@inheritDoc} */
 	@Override
 	public long getPendingVideoMessages(int streamId) {

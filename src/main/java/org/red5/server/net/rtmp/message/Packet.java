@@ -22,6 +22,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.rtmp.event.IRTMPEvent;
@@ -53,13 +54,24 @@ public class Packet implements Externalizable {
 	 * Packet data
 	 */
 	private IoBuffer data;
-
+	
+	/**
+	 * Expiration time
+	 */
+	private transient long expirationTime = 0L;
+	
+	/**
+	 * Flag representing processed status
+	 */
+	private transient final AtomicBoolean processed = new AtomicBoolean(false);
+	
 	public Packet() {
 		log.trace("ctor");
 	}
 
 	/**
-	 * Create packet with given header
+	 * Create packet with given header.
+	 * 
 	 * @param header       Packet header
 	 */
 	public Packet(Header header) {
@@ -69,7 +81,8 @@ public class Packet implements Externalizable {
 	}
 
 	/**
-	 * Create packet with given header and event context
+	 * Create packet with given header and event context.
+	 * 
 	 * @param header     RTMP header
 	 * @param event      RTMP message
 	 */
@@ -159,6 +172,52 @@ public class Packet implements Externalizable {
 			data.free();
 			data = null;
 		}
+	}
+	
+	/**
+	 * Return the expiration time.
+	 * 
+	 * @return expirationTime
+	 */
+	public long getExpirationTime() {
+		return expirationTime;
+	}
+
+	/**
+	 * Set the expiration time.
+	 * 
+	 * @param expirationTime
+	 */
+	public void setExpirationTime(long expirationTime) {
+		this.expirationTime = expirationTime;
+	}
+	
+	/**
+	 * Returns true if expiration time has been reached and false otherwise.
+	 * 
+	 * @return expired or not
+	 */
+	public boolean isExpired() {
+		// if expirationTime is zero, the expiration is not used
+		return expirationTime > 0L ? System.currentTimeMillis() > expirationTime : false;
+	}
+
+	/**
+	 * Sets the processed flag.
+	 * 
+	 * @param isProcessed true if processed and false otherwise
+	 */
+	public void setProcessed(boolean isProcessed) {
+		this.processed.set(isProcessed);
+	}
+	
+	/**
+	 * Gets the processed flag.
+	 * 
+	 * @return true if processed and false otherwise
+	 */
+	public boolean isProcessed() {
+		return this.processed.get();		
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {

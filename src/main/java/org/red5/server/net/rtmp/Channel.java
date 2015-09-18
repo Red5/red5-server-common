@@ -119,6 +119,7 @@ public class Channel {
 		log.trace("write channel: {} stream id: {}", id, streamId);
 		final Header header = new Header();
 		final Packet packet = new Packet(header, event);
+		// set the channel id
 		header.setChannelId(id);
 		int ts = event.getTimestamp();
 		if (ts != 0) {
