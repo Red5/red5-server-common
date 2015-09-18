@@ -89,8 +89,7 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.ListenableFutureTask;
 
 /**
- * RTMP connection. Stores information about client streams, data transfer channels, pending RPC calls, bandwidth configuration, 
- * AMF encoding type (AMF0/AMF3), connection state (is alive, last ping time and ping result) and session.
+ * RTMP connection. Stores information about client streams, data transfer channels, pending RPC calls, bandwidth configuration, AMF encoding type (AMF0/AMF3), connection state (is alive, last ping time and ping result) and session.
  */
 public abstract class RTMPConnection extends BaseConnection implements IStreamCapableConnection, IServiceCapableConnection {
 
@@ -121,23 +120,63 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	public static final String RTMPE_CIPHER_OUT = "rtmpe.cipher.out";
 
 	/**
+	 * Initial channel capacity
+	 */
+	private int channelsInitalCapacity = 3;
+	
+	/**
+	 * Concurrency level for channels collection
+	 */
+	private int channelsConcurrencyLevel = 1;
+
+	/**
+	 * Initial streams capacity
+	 */
+	private int streamsInitalCapacity = 1;
+
+	/**
+	 * Concurrency level for streams collection
+	 */
+	private int streamsConcurrencyLevel = 1;
+
+	/**
+	 * Initial pending calls capacity
+	 */
+	private int pendingCallsInitalCapacity = 3;
+
+	/**
+	 * Concurrency level for pending calls collection
+	 */
+	private int pendingCallsConcurrencyLevel = 1;
+
+	/**
+	 * Initial reserved streams capacity
+	 */
+	private int reservedStreamsInitalCapacity = 1;
+
+	/**
+	 * Concurrency level for reserved streams collection
+	 */
+	private int reservedStreamsConcurrencyLevel = 1;
+	
+	/**
 	 * Connection channels
 	 * 
 	 * @see org.red5.server.net.rtmp.Channel
 	 */
-	private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(8, 0.9f, 4);
+	private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
 	/**
 	 * Client streams
 	 * 
 	 * @see org.red5.server.api.stream.IClientStream
 	 */
-	private transient ConcurrentMap<Integer, IClientStream> streams = new ConcurrentHashMap<Integer, IClientStream>(4, 0.9f, 2);
+	private transient ConcurrentMap<Integer, IClientStream> streams = new ConcurrentHashMap<Integer, IClientStream>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
 	/**
 	 * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
 	 */
-	private transient Set<Integer> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(4, 0.9f, 2));
+	private transient Set<Integer> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(reservedStreamsInitalCapacity, 0.9f, reservedStreamsConcurrencyLevel));
 
 	/**
 	 * Transaction identifier for remote commands.
@@ -147,7 +186,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Hash map that stores pending calls and ids as pairs.
 	 */
-	private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(4, 0.75f, 2);
+	private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
 
 	/**
 	 * Deferred results set.
@@ -301,7 +340,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Wait for handshake task.
 	 */
 	private ScheduledFuture<?> waitForHandshakeTask;
-	
+
 	/**
 	 * Keep alive task.
 	 */
@@ -433,8 +472,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		}
 		// start the handshake checker after maxHandshakeTimeout milliseconds
 		try {
-			waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(),
-					new Date(System.currentTimeMillis() + maxHandshakeTimeout));
+			waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
 		} catch (TaskRejectedException e) {
 			log.error("WaitForHandshake task was rejected for " + sessionId, e);
 		}
@@ -538,7 +576,17 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * 
 	 * @param channelId
 	 *            Channel id
-	 * @return <pre>true</pre> if channel is in use, <pre>false</pre> otherwise
+	 * @return <pre>
+	 * true
+	 * </pre>
+	 * 
+	 *         if channel is in use,
+	 * 
+	 *         <pre>
+	 * false
+	 * </pre>
+	 * 
+	 *         otherwise
 	 */
 	public boolean isChannelUsed(int channelId) {
 		return channels.get(channelId) != null;
@@ -612,12 +660,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Returns whether or not a given stream id is valid.
 	 * 
-	 * @param streamId stream id
+	 * @param streamId
+	 *            stream id
 	 * @return true if its valid, false if its invalid
 	 */
 	public boolean isValidStreamId(int streamId) {
-		log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}",
-				new Object[] {streamId, reservedStreams, streams, this});
+		log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { streamId, reservedStreams, streams, this });
 		int index = streamId - 1;
 		if (index < 0 || !reservedStreams.contains(index)) {
 			log.warn("Stream id was not reserved in connection {}", this);
@@ -778,8 +826,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Specify name, connection, scope and etc for stream
 	 *
-	 * @param streamId Stream id
-	 * @param stream Stream
+	 * @param streamId
+	 *            Stream id
+	 * @param stream
+	 *            Stream
 	 */
 	private void customizeStream(int streamId, AbstractClientStream stream) {
 		Integer buffer = streamBuffers.get(streamId - 1);
@@ -802,8 +852,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			usedStreams.incrementAndGet();
 			return true;
 		}
-		log.error("Unable to register stream {}, stream with id {} was already added",
-				stream, stream.getStreamId() - 1);
+		log.error("Unable to register stream {}, stream with id {} was already added", stream, stream.getStreamId() - 1);
 		return false;
 	}
 
@@ -1225,7 +1274,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Handle the incoming message.
 	 * 
-	 * @param message message
+	 * @param message
+	 *            message
 	 */
 	@SuppressWarnings("unchecked")
 	public void handleMessageReceived(Packet message) {
@@ -1274,7 +1324,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 						future.addCallback(new ListenableFutureCallback<Packet>() {
 
 							final long startTime = System.currentTimeMillis();
-							
+
 							int getProcessingTime() {
 								return (int) (System.currentTimeMillis() - startTime);
 							}
@@ -1350,7 +1400,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	protected int currentQueueSize() {
 		return currentQueueSize.get();
 	}
-	
+
 	/** {@inheritDoc} */
 	@Override
 	public long getPendingVideoMessages(int streamId) {
@@ -1364,10 +1414,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Send a shared object message.
 	 * 
-	 * @param name shared object name
-	 * @param currentVersion the current version
-	 * @param persistent toggle
-	 * @param events shared object events
+	 * @param name
+	 *            shared object name
+	 * @param currentVersion
+	 *            the current version
+	 * @param persistent
+	 *            toggle
+	 * @param events
+	 *            shared object events
 	 */
 	public void sendSharedObjectMessage(String name, int currentVersion, boolean persistent, ConcurrentLinkedQueue<ISharedObjectEvent> events) {
 		// create a new sync message for every client to avoid concurrent access through multiple threads
@@ -1435,9 +1489,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @return last interval of ping minus pong
 	 */
 	public int getLastPingSentAndLastPongReceivedInterval() {
-	       return (int) (lastPingSentOn.get() - lastPongReceivedOn.get());
+		return (int) (lastPingSentOn.get() - lastPongReceivedOn.get());
 	}
-	
+
 	/** {@inheritDoc} */
 	public int getLastPingTime() {
 		return lastPingRoundTripTime.get();
@@ -1447,7 +1501,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * Setter for ping interval.
 	 * 
 	 * @param pingInterval
-	 *            Interval in ms to ping clients. Set to <pre>0</pre> to disable ghost detection code.
+	 *            Interval in ms to ping clients. Set to
+	 * 
+	 *            <pre>
+	 * 0
+	 * </pre>
+	 * 
+	 *            to disable ghost detection code.
 	 */
 	public void setPingInterval(int pingInterval) {
 		this.pingInterval = pingInterval;
@@ -1505,7 +1565,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Thread pool for guarding deadlocks
 	 * 
-	 * @param deadlockGuardScheduler the deadlockGuardScheduler to set
+	 * @param deadlockGuardScheduler
+	 *            the deadlockGuardScheduler to set
 	 */
 	public void setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler) {
 		this.deadlockGuardScheduler = deadlockGuardScheduler;
@@ -1553,6 +1614,70 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		this.maxHandlingTimeout = maxHandlingTimeout;
 	}
 
+	public int getChannelsInitalCapacity() {
+		return channelsInitalCapacity;
+	}
+
+	public void setChannelsInitalCapacity(int channelsInitalCapacity) {
+		this.channelsInitalCapacity = channelsInitalCapacity;
+	}
+
+	public int getChannelsConcurrencyLevel() {
+		return channelsConcurrencyLevel;
+	}
+
+	public void setChannelsConcurrencyLevel(int channelsConcurrencyLevel) {
+		this.channelsConcurrencyLevel = channelsConcurrencyLevel;
+	}
+
+	public int getStreamsInitalCapacity() {
+		return streamsInitalCapacity;
+	}
+
+	public void setStreamsInitalCapacity(int streamsInitalCapacity) {
+		this.streamsInitalCapacity = streamsInitalCapacity;
+	}
+
+	public int getStreamsConcurrencyLevel() {
+		return streamsConcurrencyLevel;
+	}
+
+	public void setStreamsConcurrencyLevel(int streamsConcurrencyLevel) {
+		this.streamsConcurrencyLevel = streamsConcurrencyLevel;
+	}
+
+	public int getPendingCallsInitalCapacity() {
+		return pendingCallsInitalCapacity;
+	}
+
+	public void setPendingCallsInitalCapacity(int pendingCallsInitalCapacity) {
+		this.pendingCallsInitalCapacity = pendingCallsInitalCapacity;
+	}
+
+	public int getPendingCallsConcurrencyLevel() {
+		return pendingCallsConcurrencyLevel;
+	}
+
+	public void setPendingCallsConcurrencyLevel(int pendingCallsConcurrencyLevel) {
+		this.pendingCallsConcurrencyLevel = pendingCallsConcurrencyLevel;
+	}
+
+	public int getReservedStreamsInitalCapacity() {
+		return reservedStreamsInitalCapacity;
+	}
+
+	public void setReservedStreamsInitalCapacity(int reservedStreamsInitalCapacity) {
+		this.reservedStreamsInitalCapacity = reservedStreamsInitalCapacity;
+	}
+
+	public int getReservedStreamsConcurrencyLevel() {
+		return reservedStreamsConcurrencyLevel;
+	}
+
+	public void setReservedStreamsConcurrencyLevel(int reservedStreamsConcurrencyLevel) {
+		this.reservedStreamsConcurrencyLevel = reservedStreamsConcurrencyLevel;
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public String toString() {
@@ -1568,7 +1693,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
 	 * 
-	 * @param executorQueueSizeToDropAudioPackets queue size
+	 * @param executorQueueSizeToDropAudioPackets
+	 *            queue size
 	 */
 	public void setExecutorQueueSizeToDropAudioPackets(Integer executorQueueSizeToDropAudioPackets) {
 		this.executorQueueSizeToDropAudioPackets = executorQueueSizeToDropAudioPackets;
