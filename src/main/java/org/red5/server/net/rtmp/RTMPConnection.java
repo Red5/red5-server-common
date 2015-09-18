@@ -137,7 +137,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
 	 */
-	private Set<Integer> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(4, 0.9f, 2));
+	private transient Set<Integer> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>(4, 0.9f, 2));
 
 	/**
 	 * Transaction identifier for remote commands.
