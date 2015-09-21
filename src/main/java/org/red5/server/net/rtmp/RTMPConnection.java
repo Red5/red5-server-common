@@ -295,6 +295,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	private AtomicInteger currentQueueSize = new AtomicInteger();
 
 	/**
+	 * FIXME default parameters for this map?
+	 */
+	private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>();
+
+	/**
 	 * Wait for handshake task.
 	 */
 	private ScheduledFuture<?> waitForHandshakeTask;
@@ -549,9 +554,15 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @return Channel by id
 	 */
 	public Channel getChannel(int channelId) {
+		if (log.isTraceEnabled()) {
+			log.trace("Trying to get channel for channelId {}; channels: {}", channelId, channels);
+		}
 		if (channels != null) {
 			Channel channel = channels.putIfAbsent(channelId, new Channel(this, channelId));
 			if (channel == null) {
+				if (log.isTraceEnabled()) {
+					log.trace("Channel has just added for channelId {}; channels: {}", channelId, channels);
+				}
 				channel = channels.get(channelId);
 			}
 			return channel;
@@ -568,6 +579,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 */
 	public void closeChannel(int channelId) {
 		Channel chan = channels.remove(channelId);
+		ReceivedMessageTaskQueue queue = tasksByChannels.remove(channelId);
+		if (queue != null) {
+			queue.removeAllTasks();
+		}
 		if (log.isDebugEnabled()) {
 			log.debug("Closing / removing channel: {}", chan);
 		}
@@ -1293,44 +1308,55 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 						if (maxHandlingTimeout > 0) {
 							message.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
 						}
+
+						log.trace("Current channelId: {}, Channels: {}", message.getHeader().getChannelId(), channels);
+
+						// create a task to process the message
+//						ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
+//						task.setPacketNumber(packetNumber);
+//						ListenableFuture<Packet> future = (ListenableFuture<Packet>) executor.submitListenable(new ListenableFutureTask<Packet>(task));
+//						currentQueueSize.incrementAndGet();
+//						future.addCallback(new ListenableFutureCallback<Packet>() {
+//
+//							final long startTime = System.currentTimeMillis();
+//
+//							int getProcessingTime() {
+//								return (int) (System.currentTimeMillis() - startTime);
+//							}
+//
+//							public void onFailure(Throwable t) {
+//								log.debug("ReceivedMessageTask failure: {}", t);
+//								currentQueueSize.decrementAndGet();
+//								if (log.isWarnEnabled()) {
+//									log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
+//								}
+//							}
+//
+//							public void onSuccess(Packet packet) {
+//								log.debug("ReceivedMessageTask success");
+//								currentQueueSize.decrementAndGet();
+//								if (log.isDebugEnabled()) {
+//									log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
+//								}
+//							}
+//
+//						});
+
 						// create a task to process the message
 						ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
 						task.setPacketNumber(packetNumber);
-						ListenableFuture<Packet> future = (ListenableFuture<Packet>) executor.submitListenable(new ListenableFutureTask<Packet>(task));
-						currentQueueSize.incrementAndGet();
-						future.addCallback(new ListenableFutureCallback<Packet>() {
-
-							final long startTime = System.currentTimeMillis();
-							
-							int getProcessingTime() {
-								return (int) (System.currentTimeMillis() - startTime);
-							}
-
-							public void onFailure(Throwable t) {
-								log.debug("ReceivedMessageTask failure: {}", t);
-								currentQueueSize.decrementAndGet();
-								if (log.isWarnEnabled()) {
-									log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
-								}
-							}
-
-							public void onSuccess(Packet packet) {
-								log.debug("ReceivedMessageTask success");
-								currentQueueSize.decrementAndGet();
-								if (log.isDebugEnabled()) {
-									log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), packetNumber);
-								}
-							}
-
-						});
-					} catch (TaskRejectedException tre) {
-						Throwable[] suppressed = tre.getSuppressed();
-						for (Throwable t : suppressed) {
-							log.warn("Suppressed exception on {}", sessionId, t);
+						int channelId = message.getHeader().getChannelId();
+						ReceivedMessageTaskQueue newChannelTasks = new ReceivedMessageTaskQueue();
+						ReceivedMessageTaskQueue currentChannelTasks = tasksByChannels.putIfAbsent(channelId, newChannelTasks);
+						if (currentChannelTasks == null) {
+							//just added
+							currentChannelTasks = newChannelTasks;
 						}
-						log.info("Rejected message: {} on {}", message, sessionId);
+						currentChannelTasks.addTask(task);
+						currentQueueSize.incrementAndGet();
+						processTask(channelId);
 					} catch (Exception e) {
-						log.info("Incoming message handling failed on session=[{}], messageType=[{}]", sessionId, message);
+						log.error("Incoming message handling failed on session=[" + sessionId + "], messageType=[" + messageType + "]", e);
 						if (log.isDebugEnabled()) {
 							log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
 							log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
@@ -1340,6 +1366,94 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 					log.warn("Executor is null on {} state: {}", getSessionId(), RTMP.states[getStateCode()]);
 				}
 		}
+	}
+
+	private void processTask(final int channelId) {
+		if (log.isTraceEnabled()) {
+			log.trace("Trying to process task for channelId {}", channelId);
+		}
+
+		final ReceivedMessageTaskQueue currentChannelTasks = tasksByChannels.get(channelId);
+		if (currentChannelTasks == null) {
+			if (log.isDebugEnabled()) {
+				log.debug("Channel does not have task queue: {}", channelId);
+			}
+			return;
+		}
+		Packet packet = null;
+//		try {
+			if (!currentChannelTasks.changeProcessing(true)) {
+				if (log.isTraceEnabled()) {
+					log.trace("Another task is processing for channel {}", channelId);
+				}
+				return;
+			}
+
+			final ReceivedMessageTask task = currentChannelTasks.pollTask();
+			if (task == null) {
+				if (log.isTraceEnabled()) {
+					log.trace("There is no task to process for channel {}", channelId);
+				}
+				currentChannelTasks.changeProcessing(false);
+				return;
+			}
+
+			packet = task.getPacket();
+			final String messageType = getMessageType(packet);
+			ListenableFuture<Packet> future = (ListenableFuture<Packet>) executor.submitListenable(new ListenableFutureTask<Packet>(task));
+			future.addCallback(new ListenableFutureCallback<Packet>() {
+
+				final long startTime = System.currentTimeMillis();
+
+				int getProcessingTime() {
+					return (int) (System.currentTimeMillis() - startTime);
+				}
+
+				public void onFailure(Throwable t) {
+					log.debug("ReceivedMessageTask failure: {}", t);
+					currentQueueSize.decrementAndGet();
+					currentChannelTasks.changeProcessing(false);
+					if (log.isWarnEnabled()) {
+						log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
+					}
+					//finish processing, can process new task
+					processTask(channelId);
+				}
+
+				public void onSuccess(Packet packet) {
+					log.debug("ReceivedMessageTask success");
+					currentQueueSize.decrementAndGet();
+					currentChannelTasks.changeProcessing(false);
+					if (log.isDebugEnabled()) {
+						log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
+					}
+					//finish processing, can process new task
+					processTask(channelId);
+				}
+
+			});
+//		} catch (TaskRejectedException tre) {
+//			currentQueueSize.decrementAndGet();
+//			currentChannelTasks.changeProcessing(false);
+//			Throwable[] suppressed = tre.getSuppressed();
+//			for (Throwable t : suppressed) {
+//				log.warn("Suppressed exception on {}", sessionId, t);
+//			}
+//			log.info("Rejected message: {} on {}", packet, sessionId);
+//			//finish processing, can process new task
+//			processTask(channelId);
+//		}
+//		catch (Throwable e) {
+//			currentQueueSize.decrementAndGet();
+//			currentChannelTasks.changeProcessing(false);
+//			log.error("Incoming message handling failed on session=[" + sessionId + "]", e);
+//			if (log.isDebugEnabled()) {
+//				log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
+//				log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
+//			}
+//			//finish processing, can process new task
+//			processTask(channelId);
+//		}
 	}
 
 	/**

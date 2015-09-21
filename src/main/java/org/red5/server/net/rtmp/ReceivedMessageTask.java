@@ -101,8 +101,16 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 		return packet;
 	}
 
+	public long getPacketNumber() {
+		return packetNumber;
+	}
+
 	public void setPacketNumber(long packetNumber) {
 		this.packetNumber = packetNumber;
+	}
+
+	public Packet getPacket() {
+		return packet;
 	}
 
 	/**
