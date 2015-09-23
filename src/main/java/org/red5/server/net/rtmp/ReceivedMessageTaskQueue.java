@@ -145,7 +145,7 @@ public class ReceivedMessageTaskQueue {
 			if (packet.isProcessed()) {
 				log.debug("DeadlockGuard skipping task for processed packet {}", task);
 			} else if (packet.isExpired()) {
-				//I believe we also should try to interrup thread
+				//I believe we also should try to interrupt thread
 				log.debug("DeadlockGuard skipping task for expired packet {}", task);
 			} else {
 				// if the message task is not yet done or is not expired interrupt
