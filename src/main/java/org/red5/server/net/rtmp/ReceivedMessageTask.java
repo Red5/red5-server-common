@@ -21,6 +21,7 @@ package org.red5.server.net.rtmp;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.red5.server.api.Red5;
 import org.red5.server.net.rtmp.message.Packet;
@@ -47,6 +48,8 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 	private Packet packet;
 
 	private long packetNumber;
+
+	private final AtomicBoolean processing = new AtomicBoolean(false);
 
 	public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler) {
 		this(sessionId, packet, handler, (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId));
@@ -111,6 +114,10 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 
 	public Packet getPacket() {
 		return packet;
+	}
+
+	public boolean process() {
+		return processing.compareAndSet(false, true);
 	}
 
 	/**
