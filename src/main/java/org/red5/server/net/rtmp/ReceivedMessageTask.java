@@ -51,6 +51,10 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 
 	private final AtomicBoolean processing = new AtomicBoolean(false);
 
+	private Thread taskThread;
+
+	private ScheduledFuture<Runnable> deadlockFuture;
+
 	public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler) {
 		this(sessionId, packet, handler, (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId));
 	}
@@ -64,36 +68,15 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 
 	@SuppressWarnings("unchecked")
     public Packet call() throws Exception {
-		// keep a ref here for deadlockguard
-		ScheduledFuture<Runnable> deadlockFuture = null;
+		//keep a ref for executor thread
+		taskThread = Thread.currentThread();
 		// set connection to thread local
 		Red5.setConnectionLocal(conn);
 		try {
-			// don't run the deadlock guard if timeout is <= 0
-			if (packet.getExpirationTime() > 0L) {
-				// run a deadlock guard so hanging tasks will be interrupted
-				ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
-				if (deadlockGuard != null) {
-					if (log.isDebugEnabled()) {
-						log.debug("Creating deadlock guard from: {} for: {}", Thread.currentThread().getName(), sessionId);
-					}
-					try {
-						deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(new DeadlockGuard(Thread.currentThread()), new Date(packet.getExpirationTime()));
-					} catch (TaskRejectedException e) {
-						log.warn("DeadlockGuard task is rejected for {}", sessionId, e);
-					}
-				} else {
-					log.error("Deadlock guard is null for {}", sessionId);
-				}
-			}
 			// pass message to the handler
 			handler.messageReceived(conn, packet);
 			// if we get this far, set done / completed flag
 			packet.setProcessed(true);
-			// kill the future for the deadlock since processing is complete
-			if (deadlockFuture != null) {
-				deadlockFuture.cancel(true);
-			}
 		} finally {
 			// clear thread local
 			Red5.setConnectionLocal(null);
@@ -102,6 +85,50 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 			log.debug("Processing message for {} is processed: {} packet #{}", sessionId, packet.isProcessed(), packetNumber);
 		}
 		return packet;
+	}
+
+	/**
+	 * Creates and runs deadlock guard task
+	 *
+	 * @param deadlockGuardTask
+	 */
+	public void runDeadlockFuture(Runnable deadlockGuardTask) {
+		if (deadlockFuture == null) {
+			ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
+			if (deadlockGuard != null) {
+				if (log.isDebugEnabled()) {
+					log.debug("Creating deadlock guard from: {} for: {}", Thread.currentThread().getName(), sessionId);
+				}
+				try {
+					deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(deadlockGuardTask, new Date(packet.getExpirationTime()));
+				} catch (TaskRejectedException e) {
+					log.warn("DeadlockGuard task is rejected for {}", sessionId, e);
+				}
+			} else {
+				log.error("Deadlock guard is null for {}", sessionId);
+			}
+		} else {
+			log.error("Deadlock future is already create for {}", sessionId);
+		}
+	}
+
+	/**
+	 * Cancels deadlock future if it was created
+	 */
+	public void cancelDeadlockFuture() {
+		// kill the future for the deadlock since processing is complete
+		if (deadlockFuture != null) {
+			deadlockFuture.cancel(true);
+		}
+	}
+
+	/**
+	 * Marks task as processing if it is not prosessing yet.
+	 *
+	 * @return true if successful, or false otherwise
+	 */
+	public boolean setProcessing() {
+		return processing.compareAndSet(false, true);
 	}
 
 	public long getPacketNumber() {
@@ -116,55 +143,13 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 		return packet;
 	}
 
-	public boolean process() {
-		return processing.compareAndSet(false, true);
+	public Thread getTaskThread() {
+		return taskThread;
 	}
 
-	/**
-	 * Prevents deadlocked message handling.
-	 */
-	private class DeadlockGuard implements Runnable {
-
-		// executor task thread
-		private final Thread taskThread;
-
-		/**
-		 * Creates the deadlock guard to prevent a message task from taking too long to process.
-		 * 
-		 * @param thread
-		 */
-		private DeadlockGuard(Thread taskThread) {
-			// executor thread ref
-			this.taskThread = taskThread;
-			if (log.isTraceEnabled()) {
-				log.trace("DeadlockGuard is created for {}", sessionId);
-			}
-		}
-
-		/**
-		 * Save the reference to the thread, and wait until the maxHandlingTimeout has elapsed. If it elapsed, kill the other thread.
-		 * */
-		public void run() {
-			if (log.isTraceEnabled()) {
-				log.trace("DeadlockGuard is started for {}", sessionId);
-			}
-			// skip processed packet
-			if (packet.isProcessed()) {
-				log.debug("DeadlockGuard skipping processed packet #{} on {}", packetNumber, sessionId);
-			} else if (packet.isExpired()) {
-				log.debug("DeadlockGuard skipping expired packet #{} on {}", packetNumber, sessionId);
-			} else {
-				// if the message task is not yet done or is not expired interrupt
-				// if the task thread hasn't been interrupted check its live-ness
-				// if the task thread is alive, interrupt it
-				if (!taskThread.isInterrupted() && taskThread.isAlive()) {
-					log.warn("Interrupting unfinished active task for packet #{} on {}", packetNumber, sessionId);
-					taskThread.interrupt();
-				} else {
-					log.debug("Unfinished active task for {} already interrupted packet #{} ", sessionId, packetNumber);
-				}
-			}
-		}
+	@Override
+	public String toString() {
+		return "[sessionId: " + sessionId + "; packetNumber: " + packetNumber + "; processing: " + processing.get() + "]";
 	}
-
+	
 }

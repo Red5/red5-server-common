@@ -126,6 +126,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(3, 0.9f, 1);
 
 	/**
+	 * Tasks queues for every channel
+	 */
+	private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>(3, 0.9f, 1);
+
+	/**
 	 * Client streams
 	 * 
 	 * @see org.red5.server.api.stream.IClientStream
@@ -283,7 +288,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Packet sequence number
 	 * */
-	private AtomicLong packetSequence = new AtomicLong();
+	private final AtomicLong packetSequence = new AtomicLong();
 
 	/**
 	 * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
@@ -293,12 +298,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/**
 	 * Keep track of current queue size
 	 * */
-	private AtomicInteger currentQueueSize = new AtomicInteger();
-
-	/**
-	 * FIXME default parameters for this map?
-	 */
-	private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>();
+	private final AtomicInteger currentQueueSize = new AtomicInteger();
 
 	/**
 	 * Wait for handshake task.
@@ -1312,7 +1312,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
 						log.trace("Current channelId: {}, Channels: {}", message.getHeader().getChannelId(), channels);
 
-						// create a task to process the message
+						// create a task to setProcessing the message
 						ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
 						task.setPacketNumber(packetNumber);
 						int channelId = message.getHeader().getChannelId();
@@ -1323,7 +1323,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 							currentChannelTasks = newChannelTasks;
 						}
 						currentChannelTasks.addTask(task);
-						currentQueueSize.incrementAndGet();
 					} catch (Exception e) {
 						log.error("Incoming message handling failed on session=[" + sessionId + "], messageType=[" + messageType + "]", e);
 						if (log.isDebugEnabled()) {
@@ -1338,7 +1337,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	}
 
 	@Override
-	public void onTaskQueueChanged(ReceivedMessageTaskQueue queue) {
+	public void onTaskAdded(ReceivedMessageTaskQueue queue) {
+		currentQueueSize.incrementAndGet();
+		processTasksQueue(queue);
+	}
+
+	@Override
+	public void onTaskRemoved(ReceivedMessageTaskQueue queue) {
+		currentQueueSize.decrementAndGet();
 		processTasksQueue(queue);
 	}
 
@@ -1370,25 +1376,22 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
 				public void onFailure(Throwable t) {
 					log.debug("ReceivedMessageTask failure: {}", t);
-					currentQueueSize.decrementAndGet();
-					currentChannelTasks.removeTask(task);
 					if (log.isWarnEnabled()) {
 						log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
 					}
+					currentChannelTasks.removeTask(task);
 				}
 
 				public void onSuccess(Packet packet) {
 					log.debug("ReceivedMessageTask success");
-					currentQueueSize.decrementAndGet();
-					currentChannelTasks.removeTask(task);
 					if (log.isDebugEnabled()) {
 						log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
 					}
+					currentChannelTasks.removeTask(task);
 				}
 
 			});
 		} catch (TaskRejectedException tre) {
-			currentQueueSize.decrementAndGet();
 			Throwable[] suppressed = tre.getSuppressed();
 			for (Throwable t : suppressed) {
 				log.warn("Suppressed exception on {}", sessionId, t);
@@ -1396,7 +1399,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			log.info("Rejected message: {} on {}", packet, sessionId);
 			currentChannelTasks.removeTask(task);
 		} catch (Throwable e) {
-			currentQueueSize.decrementAndGet();
 			log.error("Incoming message handling failed on session=[" + sessionId + "]", e);
 			if (log.isDebugEnabled()) {
 				log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
