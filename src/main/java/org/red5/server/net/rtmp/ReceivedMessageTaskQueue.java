@@ -20,13 +20,14 @@ package org.red5.server.net.rtmp;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.red5.server.net.rtmp.message.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Contains queue of tasks for processing messages in specified channel.
- * All messages which has got in channel must be processed sequentially.
+ * Contains queue of tasks for processing messages in the specified channel.
+ * Ensures that all messages which has got in channel will be processed sequentially.
  *
  * @author Maria Chabanets (m.e.platova@gmail.com)
  */
@@ -35,29 +36,29 @@ public class ReceivedMessageTaskQueue {
 	private final static Logger log = LoggerFactory.getLogger(ReceivedMessageTaskQueue.class);
 
 	/**
-	 * Channel id
+	 * Channel id.
 	 */
 	private final int channelId;
 
 	/**
-	 * Tasks queue
+	 * Task queue.
 	 */
 	private final Queue<ReceivedMessageTask> tasks = new ConcurrentLinkedQueue<ReceivedMessageTask>();
 
 	/**
-	 * Listener that try to process message from queue if queue has changed
+	 * Listener which tries to process message from queue if queue has been changed.
 	 */
 	private final IReceivedMessageTaskQueueListener listener;
 
 	public ReceivedMessageTaskQueue(int channelId, IReceivedMessageTaskQueueListener listener) {
-		this.listener = listener;
 		this.channelId = channelId;
+		this.listener = listener;
 	}
 
 	/**
-	 * Adds new task to the end of queue.
+	 * Adds new task to the end of the queue.
 	 *
-	 * @param task
+	 * @param task received message task
 	 */
 	public void addTask(ReceivedMessageTask task) {
 		tasks.add(task);
@@ -75,7 +76,7 @@ public class ReceivedMessageTaskQueue {
 	/**
 	 * Removes the specified task from the queue.
 	 *
-	 * @param task
+	 * @param task received message task
 	 */
 	public void removeTask(ReceivedMessageTask task) {
 		if (tasks.remove(task)) {
@@ -101,7 +102,7 @@ public class ReceivedMessageTaskQueue {
 	}
 
 	/**
-	 * Removes all tasks from queue.
+	 * Removes all tasks from the queue.
 	 */
 	public void removeAllTasks() {
 		for (ReceivedMessageTask task : tasks) {
@@ -161,7 +162,7 @@ public class ReceivedMessageTaskQueue {
 					log.debug("Unfinished task {} already interrupted", task);
 				}
 			}
-			//remove this task from queue in any case
+			//remove this task from the queue in any case
 			removeTask(task);
 		}
 	}

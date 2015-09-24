@@ -91,8 +91,7 @@ import org.springframework.util.concurrent.ListenableFutureTask;
 /**
  * RTMP connection. Stores information about client streams, data transfer channels, pending RPC calls, bandwidth configuration, AMF encoding type (AMF0/AMF3), connection state (is alive, last ping time and ping result) and session.
  */
-public abstract class RTMPConnection extends BaseConnection implements IStreamCapableConnection,
-		IServiceCapableConnection, IReceivedMessageTaskQueueListener {
+public abstract class RTMPConnection extends BaseConnection implements IStreamCapableConnection, IServiceCapableConnection, IReceivedMessageTaskQueueListener {
 
 	private static Logger log = LoggerFactory.getLogger(RTMPConnection.class);
 
@@ -168,9 +167,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
 	/**
-	 * Tasks queues for every channel
+	 * Queues of tasks for every channel 
+	 *
+	 * @see org.red5.server.net.rtmp.ReceivedMessageTaskQueue
 	 */
-	private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>(3, 0.9f, 1);
+	private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
 	/**
 	 * Client streams
@@ -606,15 +607,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @return Channel by id
 	 */
 	public Channel getChannel(int channelId) {
-		if (log.isTraceEnabled()) {
-			log.trace("Trying to get channel for channelId {}; channels: {}", channelId, channels);
-		}
 		if (channels != null) {
 			Channel channel = channels.putIfAbsent(channelId, new Channel(this, channelId));
 			if (channel == null) {
-				if (log.isTraceEnabled()) {
-					log.trace("Channel has just added for channelId {}; channels: {}", channelId, channels);
-				}
 				channel = channels.get(channelId);
 			}
 			return channel;

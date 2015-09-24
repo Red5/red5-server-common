@@ -88,16 +88,16 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 	}
 
 	/**
-	 * Creates and runs deadlock guard task
+	 * Runs deadlock guard task
 	 *
-	 * @param deadlockGuardTask
+	 * @param deadlockGuardTask deadlock guard task
 	 */
 	public void runDeadlockFuture(Runnable deadlockGuardTask) {
 		if (deadlockFuture == null) {
 			ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
 			if (deadlockGuard != null) {
 				if (log.isDebugEnabled()) {
-					log.debug("Creating deadlock guard from: {} for: {}", Thread.currentThread().getName(), sessionId);
+					log.debug("Creating deadlock guard for: {}", this);
 				}
 				try {
 					deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(deadlockGuardTask, new Date(packet.getExpirationTime()));
