@@ -32,6 +32,7 @@ import org.red5.io.object.Output;
  */
 @Anonymous
 public class Status implements StatusCodes, ICustomSerializable, Externalizable {
+	
 	private static final long serialVersionUID = -5501563718489586136L;
 
 	/**
@@ -72,7 +73,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	/**
 	 * Id of client
 	 */
-	protected int clientid;
+	protected Number clientid;
 
 	/** Constructs a new Status. */
 	public Status() {
@@ -158,7 +159,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	 *
 	 * @return  Client id
 	 */
-	public int getClientid() {
+	public Number getClientid() {
 		return clientid;
 	}
 
@@ -167,7 +168,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	 *
 	 * @param clientid  Client id
 	 */
-	public void setClientid(int clientid) {
+	public void setClientid(Number clientid) {
 		this.clientid = clientid;
 	}
 
@@ -222,7 +223,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		clientid = in.readInt();
+		clientid = (Number) in.readObject();
 		code = (String) in.readObject();
 		description = (String) in.readObject();
 		details = (String) in.readObject();
@@ -230,7 +231,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeInt(clientid);
+		out.writeObject(clientid);
 		out.writeObject(code);
 		out.writeObject(description);
 		out.writeObject(details);

@@ -18,6 +18,8 @@
 
 package org.red5.server.api.stream;
 
+import java.util.Map;
+
 import org.red5.server.api.IConnection;
 
 /**
@@ -32,25 +34,31 @@ public interface IStreamCapableConnection extends IConnection {
 	/**
 	 * Return a reserved stream id for use.
 	 * According to FCS/FMS regulation, the base is 1.
+	 * 
 	 * @return              Reserved stream id
 	 */
-	int reserveStreamId();
+	Number reserveStreamId();
 
-	int reserveStreamId(int id);
+	/**
+	 * Return a reserved stream id for use with a preference for the one supplied.
+	 * 
+	 * @return              Reserved stream id
+	 */
+	Number reserveStreamId(Number streamId);
 
 	/**
 	 * Unreserve this id for future use.
 	 * 
 	 * @param streamId      ID of stream to unreserve
 	 */
-	void unreserveStreamId(int streamId);
+	void unreserveStreamId(Number streamId);
 
 	/**
 	 * Deletes the stream with the given id.
 	 * 
 	 * @param streamId      ID of stream to delete
 	 */
-	void deleteStreamById(int streamId);
+	void deleteStreamById(Number streamId);
 
 	/**
 	 * Get a stream by its id.
@@ -58,7 +66,7 @@ public interface IStreamCapableConnection extends IConnection {
 	 * @param streamId      Stream id
 	 * @return              Stream with given id
 	 */
-	IClientStream getStreamById(int streamId);
+	IClientStream getStreamById(Number streamId);
 
 	/**
 	 * Create a stream that can play only one item.
@@ -66,7 +74,7 @@ public interface IStreamCapableConnection extends IConnection {
 	 * @param streamId      Stream id
 	 * @return              New subscriber stream that can play only one item
 	 */
-	ISingleItemSubscriberStream newSingleItemSubscriberStream(int streamId);
+	ISingleItemSubscriberStream newSingleItemSubscriberStream(Number streamId);
 
 	/**
 	 * Create a stream that can play a list.
@@ -74,7 +82,7 @@ public interface IStreamCapableConnection extends IConnection {
 	 * @param streamId      Stream id
 	 * @return              New stream that can play sequence of items
 	 */
-	IPlaylistSubscriberStream newPlaylistSubscriberStream(int streamId);
+	IPlaylistSubscriberStream newPlaylistSubscriberStream(Number streamId);
 
 	/**
 	 * Create a broadcast stream.
@@ -82,7 +90,7 @@ public interface IStreamCapableConnection extends IConnection {
 	 * @param streamId      Stream id
 	 * @return              New broadcast stream
 	 */
-	IClientBroadcastStream newBroadcastStream(int streamId);
+	IClientBroadcastStream newBroadcastStream(Number streamId);
 
 	/**
 	 * Total number of video messages that are pending to be sent to a stream.
@@ -90,6 +98,8 @@ public interface IStreamCapableConnection extends IConnection {
 	 * @param streamId       Stream id
 	 * @return               Number of pending video messages
 	 */
-	long getPendingVideoMessages(int streamId);
+	long getPendingVideoMessages(Number streamId);
+	
+	Map<Number, IClientStream> getStreamsMap();
 
 }

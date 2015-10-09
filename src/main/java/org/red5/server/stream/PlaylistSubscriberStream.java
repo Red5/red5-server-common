@@ -264,7 +264,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 		try {
 			engine.stop();
 		} catch (IllegalStateException e) {
-			log.debug("stop caught an IllegalStateException");
+			if (log.isTraceEnabled()) {
+				log.warn("stop caught an IllegalStateException", e);
+			} else if (log.isDebugEnabled()) {
+				log.debug("stop caught an IllegalStateException");
+			}
 		}
 	}
 

@@ -526,7 +526,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 				message = decodeInvoke(conn.getEncoding(), in);
 				break;
 			case TYPE_NOTIFY:
-				if (header.getStreamId() == 0) {
+				if (header.getStreamId().intValue() == 0) {
 					message = decodeNotify(conn.getEncoding(), in, header);
 				} else {
 					message = decodeStreamMetadata(in);
@@ -781,13 +781,13 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		//throw a runtime exception if there is no action
 		if (action != null) {
 			//TODO Handle NetStream.send? Where and how?
-			if (header != null && header.getStreamId() != 0 && !isStreamCommand(action)) {
+			if (header != null && header.getStreamId().intValue() != 0 && !isStreamCommand(action)) {
 				// don't decode "NetStream.send" requests
 				in.position(start);
 				notify.setData(in.asReadOnlyBuffer());
 				return notify;
 			}
-			if (header == null || header.getStreamId() == 0) {
+			if (header == null || header.getStreamId().intValue() == 0) {
 				int invokeId = Deserializer.<Number> deserialize(input, Number.class).intValue();
 				if (invokeId != 0) {
 					throw new RuntimeException("Notify invoke / transaction id was non-zero");

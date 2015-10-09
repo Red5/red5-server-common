@@ -198,46 +198,38 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 	 */
 	protected boolean dropMessage(int channelId, IRTMPEvent message) {
 		boolean isLiveStream = message.getSourceType() == Constants.SOURCE_TYPE_LIVE;
-			
 		if (!isLiveStream) {
 			return false;
 		}		
-		
 		if (message instanceof Ping) {
 			final Ping pingMessage = (Ping) message;
 			if (pingMessage.getEventType() == Ping.STREAM_PLAYBUFFER_CLEAR) {
 				// client buffer cleared, make sure to reset timestamps for this stream
-				final int channel = (4 + ((pingMessage.getValue2() - 1) * 5));
+				final int channel = (4 + ((pingMessage.getValue2().intValue() - 1) * 5));
 				((RTMPConnection) Red5.getConnectionLocal()).getState().clearLastTimestampMapping(channel, channel + 1, channel + 2);
 			}
 			// never drop pings
 			return false;
 		}
-		
 		// whether or not the packet will be dropped
 		boolean drop = false;
 		// we only drop audio or video data
 		boolean isDroppable = message instanceof VideoData || message instanceof AudioData;
-				
 		if (isDroppable) {
 			if (message.getTimestamp() == 0) {
 				// never drop initial packages, also this could be the first packet after
 				// MP4 seeking and therefore mess with the timestamp mapping
 				return false;
 			}
-			
 			RTMPConnection conn = (RTMPConnection) Red5.getConnectionLocal();
-			
 			if (log.isDebugEnabled()) {
 				String sourceType = (isLiveStream ? "LIVE" : "VOD");
 				log.debug("Connection: {} connType={}", conn, sourceType);
 			}
-			
 			RTMP rtmp = conn.getState();
 			long timestamp = (message.getTimestamp() & 0xFFFFFFFFL);
 			LiveTimestampMapping mapping = rtmp.getLastTimestampMapping(channelId);
 			long now = System.currentTimeMillis();
-			
 			if (mapping == null || timestamp < mapping.getLastStreamTime()) {
 				log.trace("Resetting clock time ({}) to stream time ({})", now, timestamp);
 				// either first time through, or time stamps were reset
@@ -245,7 +237,6 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				rtmp.setLastTimestampMapping(channelId, mapping);
 			}
 			mapping.setLastStreamTime(timestamp);
-			
 			// Calculate when this message should have arrived. Take the time when the stream started, add
 			// the current message's timestamp and subtract the timestamp of the first message.
 			long clockTimeOfMessage = mapping.getClockStartTime() + timestamp - mapping.getStreamStartTime();
@@ -336,12 +327,10 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 					}
 				}
 			}
-		}
-		
+		}		
 		if (log.isDebugEnabled() && drop) {
 			log.debug("Message was dropped");
-		}
-		
+		}		
 		return drop;
 	}
 
@@ -429,7 +418,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				}
 				RTMPUtils.writeMediumInt(buf, header.getSize());
 				buf.put(header.getDataType());
-				RTMPUtils.writeReverseInt(buf, header.getStreamId());
+				RTMPUtils.writeReverseInt(buf, header.getStreamId().intValue());
 				if (timer < 0 || timer >= 0xffffff) {
 					buf.putInt(timer);
 					header.setExtendedTimestamp(timer);
@@ -876,7 +865,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 			case Ping.PONG_SERVER:
 			case Ping.BUFFER_EMPTY:
 			case Ping.BUFFER_FULL:
-				out.putInt(ping.getValue2());
+				out.putInt((Integer) ping.getValue2());
 				break;
 			case Ping.CLIENT_BUFFER:
 				if (ping instanceof SetBuffer) {
@@ -884,7 +873,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 					out.putInt(setBuffer.getStreamId());
 					out.putInt(setBuffer.getBufferLength());
 				} else {
-					out.putInt(ping.getValue2());
+					out.putInt((Integer) ping.getValue2());
 					out.putInt(ping.getValue3());
 				}
 				break;

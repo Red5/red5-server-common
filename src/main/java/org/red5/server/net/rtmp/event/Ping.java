@@ -108,7 +108,7 @@ public class Ping extends BaseEvent {
 	 * Represents the stream id in all cases except PING_CLIENT and PONG_SERVER
 	 * where it represents the local server timestamp.
 	 */
-	private int value2;
+	private Number value2;
 
 	private int value3 = UNDEFINED;
 
@@ -187,7 +187,7 @@ public class Ping extends BaseEvent {
 	 *
 	 * @return Value for property 'value2'.
 	 */
-	public int getValue2() {
+	public Number getValue2() {
 		return value2;
 	}
 
@@ -196,7 +196,7 @@ public class Ping extends BaseEvent {
 	 *
 	 * @param value2 Value to set for property 'value2'.
 	 */
-	public void setValue2(int value2) {
+	public void setValue2(Number value2) {
 		this.value2 = value2;
 	}
 
@@ -277,7 +277,7 @@ public class Ping extends BaseEvent {
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		eventType = in.readShort();
-		value2 = in.readInt();
+		value2 = (Number) in.readObject();
 		value3 = in.readInt();
 		value4 = in.readInt();
 	}
@@ -286,7 +286,7 @@ public class Ping extends BaseEvent {
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 		out.writeShort(eventType);
-		out.writeInt(value2);
+		out.writeObject(value2);
 		out.writeInt(value3);
 		out.writeInt(value4);
 	}

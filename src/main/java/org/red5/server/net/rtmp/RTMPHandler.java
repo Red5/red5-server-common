@@ -263,25 +263,21 @@ public class RTMPHandler extends BaseRTMPHandler {
 					case RECEIVE_VIDEO:
 					case RECEIVE_AUDIO:
 						IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
-						Status status = null;
 						try {
 							log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn, streamService });
 							if (invokeCall(conn, call, streamService)) {
 								log.debug("Stream service invoke {} success", action);
 							} else {
-								status = getStatus(NS_INVALID_ARGUMENT).asStatus();
+								Status status = getStatus(NS_INVALID_ARGUMENT).asStatus();
 								status.setDescription(String.format("Failed to %s (stream id: %d)", action, source.getStreamId()));
+								channel.sendStatus(status);
 							}
 						} catch (Throwable err) {
 							log.error("Error while invoking {} on stream service. {}", action, err);
-							status = getStatus(NS_FAILED).asStatus();
+							Status status = getStatus(NS_FAILED).asStatus();
 							status.setDescription(String.format("Error while invoking %s (stream id: %d)", action, source.getStreamId()));
 							status.setDetails(err.getMessage());
-						}
-						if (status != null) {
 							channel.sendStatus(status);
-						} else {
-							log.debug("Status for {} was null", action);
 						}
 						break;
 					default:
@@ -459,7 +455,7 @@ public class RTMPHandler extends BaseRTMPHandler {
 			}
 		}
 		if (command instanceof Invoke) {
-			if ((source.getStreamId() != 0) && (call.getStatus() == Call.STATUS_SUCCESS_VOID || call.getStatus() == Call.STATUS_SUCCESS_NULL)) {
+			if ((source.getStreamId().intValue() != 0) && (call.getStatus() == Call.STATUS_SUCCESS_VOID || call.getStatus() == Call.STATUS_SUCCESS_NULL)) {
 				// This fixes a bug in the FP on Intel Macs.
 				log.debug("Method does not have return value, do not reply");
 				return;

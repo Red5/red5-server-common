@@ -72,21 +72,22 @@ public class StreamService implements IStreamService {
 	};
 
 	/** {@inheritDoc} */
-	public int createStream() {
+	public Number createStream() {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
-			int streamId = ((IStreamCapableConnection) conn).reserveStreamId();
-			log.trace("Stream created {} for {}", streamId, conn);
+			Number streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+			if (log.isTraceEnabled()) {
+				log.trace("Stream id: {} created for {}", streamId, conn);
+			}
 			return streamId;
-		} else {
-			return -1;
 		}
+		return -1;
 	}
 
 	/** {@inheritDoc} */
-	public void initStream(int streamId) {
+	public void initStream(Number streamId) {
 		IConnection conn = Red5.getConnectionLocal();
-		log.info("initStream: id={} current id: {} connection={}", streamId, conn.getStreamId(), conn);
+		log.info("initStream stream id: {} current stream id: {} connection: {}", streamId, conn.getStreamId(), conn);
 		if (conn instanceof IStreamCapableConnection) {
 			((IStreamCapableConnection) conn).reserveStreamId(streamId);
 			IClientStream stream = ((IStreamCapableConnection) conn).getStreamById(streamId);
@@ -104,6 +105,12 @@ public class StreamService implements IStreamService {
 		} else {
 			log.warn("ERROR in intiStream, connection is not stream capable");
 		}
+	}
+	
+	/** {@inheritDoc} */
+	public void initStream(Number streamId, Object idk) {
+		log.info("initStream parameter #2: {}", idk);
+		initStream(streamId);
 	}
 
 	/**
@@ -141,7 +148,7 @@ public class StreamService implements IStreamService {
 	 * @param conn client connection
 	 * @param streamId stream ID (number: 1,2,...)
 	 */
-	public void closeStream(IConnection conn, int streamId) {
+	public void closeStream(IConnection conn, Number streamId) {
 		log.info("closeStream: streamId={}, connection={}", streamId, conn);
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection scConn = (IStreamCapableConnection) conn;
@@ -162,7 +169,7 @@ public class StreamService implements IStreamService {
 					StreamService.sendNetStreamStatus(conn, StatusCodes.NS_PLAY_STOP, "Stream closed by server", stream.getName(), Status.STATUS, streamId);
 				}
 			} else {
-				log.info("Stream not found: streamId={}, connection={}", streamId, conn);
+				log.info("Stream not found: streamId: {} connection: {}", streamId, conn.getSessionId());
 			}
 		} else {
 			log.warn("Connection is not instance of IStreamCapableConnection: {}", conn);
@@ -175,7 +182,7 @@ public class StreamService implements IStreamService {
 	}
 
 	/** {@inheritDoc} */
-	public void deleteStream(int streamId) {
+	public void deleteStream(Number streamId) {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
@@ -184,7 +191,7 @@ public class StreamService implements IStreamService {
 	}
 
 	/** {@inheritDoc} */
-	public void deleteStream(IStreamCapableConnection conn, int streamId) {
+	public void deleteStream(IStreamCapableConnection conn, Number streamId) {
 		IClientStream stream = conn.getStreamById(streamId);
 		if (stream != null) {
 			if (stream instanceof IClientBroadcastStream) {
@@ -215,7 +222,7 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			IClientStream stream = streamConn.getStreamById(streamId);
 			if (stream != null && stream instanceof ISubscriberStream) {
 				ISubscriberStream subscriberStream = (ISubscriberStream) stream;
@@ -289,7 +296,7 @@ public class StreamService implements IStreamService {
 		if (conn instanceof IStreamCapableConnection) {
 			IScope scope = conn.getScope();
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			if (StringUtils.isEmpty(name)) {
 				log.warn("The stream name may not be empty");
 				sendNSFailed(streamConn, StatusCodes.NS_FAILED, "The stream name may not be empty.", name, streamId);
@@ -308,14 +315,17 @@ public class StreamService implements IStreamService {
 			}
 			boolean created = false;
 			IClientStream stream = streamConn.getStreamById(streamId);
-			log.trace("Stream: {} for streamId: {}", stream, streamId);
 			if (stream == null) {
+				if (log.isTraceEnabled()) {
+					log.trace("Stream not found for stream id: {} streams: {}", streamId, streamConn.getStreamsMap());
+				}
 				try {
-					if (streamId <= 0) {
-						streamId = streamConn.reserveStreamId();
-					}
+					streamId = streamConn.reserveStreamId();
+					// instance a new stream for the stream id
 					stream = streamConn.newPlaylistSubscriberStream(streamId);
-					log.trace("Created stream: {} for streamId: {}", stream, streamId);
+					if (log.isTraceEnabled()) {
+						log.trace("Created stream: {} for stream id: {}", stream, streamId);
+					}
 					stream.setBroadcastStreamPublishName(name);
 					stream.start();
 					created = true;
@@ -380,7 +390,7 @@ public class StreamService implements IStreamService {
 			IConnection conn = Red5.getConnectionLocal();
 			if (conn instanceof IStreamCapableConnection) {
 				IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-				int streamId = conn.getStreamId();
+				Number streamId = conn.getStreamId();
 				IClientStream stream = streamConn.getStreamById(streamId);
 				if (stream != null) {
 					stream.stop();
@@ -475,7 +485,7 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn != null && conn instanceof IStreamCapableConnection) {
 			// get the stream id
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
 			if ("stop".equals(transition)) {
 				play(Boolean.FALSE);
@@ -531,7 +541,7 @@ public class StreamService implements IStreamService {
 			IConnection conn = Red5.getConnectionLocal();
 			if (conn instanceof IStreamCapableConnection) {
 				IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-				int streamId = conn.getStreamId();
+				Number streamId = conn.getStreamId();
 				IClientStream stream = streamConn.getStreamById(streamId);
 				if (stream instanceof IBroadcastStream) {
 					IBroadcastStream bs = (IBroadcastStream) stream;
@@ -579,7 +589,7 @@ public class StreamService implements IStreamService {
 		if (conn instanceof IStreamCapableConnection) {
 			IScope scope = conn.getScope();
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			if (StringUtils.isEmpty(name)) {
 				sendNSFailed(streamConn, StatusCodes.NS_FAILED, "The stream name may not be empty.", name, streamId);
 				log.error("The stream name may not be empty.");
@@ -666,7 +676,7 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			IClientStream stream = streamConn.getStreamById(streamId);
 			if (stream != null && stream instanceof ISubscriberStream) {
 				ISubscriberStream subscriberStream = (ISubscriberStream) stream;
@@ -684,7 +694,7 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			IClientStream stream = streamConn.getStreamById(streamId);
 			if (stream != null && stream instanceof ISubscriberStream) {
 				ISubscriberStream subscriberStream = (ISubscriberStream) stream;
@@ -698,7 +708,7 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;
-			int streamId = conn.getStreamId();
+			Number streamId = conn.getStreamId();
 			IClientStream stream = streamConn.getStreamById(streamId);
 			if (stream != null && stream instanceof ISubscriberStream) {
 				ISubscriberStream subscriberStream = (ISubscriberStream) stream;
@@ -727,7 +737,7 @@ public class StreamService implements IStreamService {
 	 * @param name
 	 * @param streamId
 	 */
-	private void sendNSFailed(IConnection conn, String errorCode, String description, String name, int streamId) {
+	private void sendNSFailed(IConnection conn, String errorCode, String description, String name, Number streamId) {
 		StreamService.sendNetStreamStatus(conn, errorCode, description, name, Status.ERROR, streamId);
 	}
 
@@ -739,7 +749,7 @@ public class StreamService implements IStreamService {
 	 * @param name
 	 * @param streamId
 	 */
-	private void sendNSStatus(IConnection conn, String statusCode, String description, String name, int streamId) {
+	private void sendNSStatus(IConnection conn, String statusCode, String description, String name, Number streamId) {
 		StreamService.sendNetStreamStatus(conn, statusCode, description, name, Status.STATUS, streamId);
 	}
 
@@ -753,7 +763,7 @@ public class StreamService implements IStreamService {
 	 * @param status The status - error, warning, or status
 	 * @param streamId stream id
 	 */
-	public static void sendNetStreamStatus(IConnection conn, String statusCode, String description, String name, String status, int streamId) {
+	public static void sendNetStreamStatus(IConnection conn, String statusCode, String description, String name, String status, Number streamId) {
 		if (conn instanceof RTMPConnection) {
 			Status s = new Status(statusCode);
 			s.setClientid(streamId);
@@ -761,7 +771,8 @@ public class StreamService implements IStreamService {
 			s.setDetails(name);
 			s.setLevel(status);
 			// get the channel
-			Channel channel = ((RTMPConnection) conn).getChannel(4 + ((streamId - 1) * 5));
+			RTMPConnection rtmpConn = (RTMPConnection) conn;
+			Channel channel = rtmpConn.getChannel(rtmpConn.getChannelIdForStreamId(streamId));
 			channel.sendStatus(s);
 		} else {
 			throw new RuntimeException("Connection is not RTMPConnection: " + conn);

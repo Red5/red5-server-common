@@ -99,10 +99,10 @@ public class Channel {
 		if (!connection.isClosed()) {
 			final IClientStream stream = connection.getStreamByChannelId(id);
 			if (id > 3 && stream == null) {
-				log.warn("Non-existant stream for channel id: {}, connection id: {} discarding: {}", id, connection.getSessionId());
+				log.warn("Non-existant stream for channel id: {}, session: {} discarding: {}", id, connection.getSessionId(), event);
 			}
 			// if the stream is non-existant, the event will go out with stream id == 0
-			final int streamId = (stream == null) ? 0 : stream.getStreamId();
+			final Number streamId = (stream == null) ? 0 : stream.getStreamId();
 			write(event, streamId);
 		} else {
 			log.debug("Associated connection {} is closed, cannot write to channel: {}", connection.getSessionId(), id);
@@ -115,7 +115,7 @@ public class Channel {
 	 * @param event           Event data
 	 * @param streamId        Stream id
 	 */
-	private void write(IRTMPEvent event, int streamId) {
+	private void write(IRTMPEvent event, Number streamId) {
 		log.trace("write channel: {} stream id: {}", id, streamId);
 		final Header header = new Header();
 		final Packet packet = new Packet(header, event);
@@ -123,12 +123,7 @@ public class Channel {
 		header.setChannelId(id);
 		int ts = event.getTimestamp();
 		if (ts != 0) {
-			header.setTimer(event.getTimestamp());			
-		} else {
-			// TODO may need to add generated timestamps at some point
-//			int timestamp = connection.getTimer();
-//			header.setTimerBase(timestamp);
-//			event.setTimestamp(timestamp);
+			header.setTimer(event.getTimestamp());
 		}
 		header.setStreamId(streamId);
 		header.setDataType(event.getDataType());
@@ -178,7 +173,7 @@ public class Channel {
 							Notify notify = new Notify();
 							notify.setCall(call2);
 							notify.setData(IoBuffer.wrap(new byte[] { 0x01, (byte) (audioAccess ? 0x01 : 0x00), 0x01, (byte) (videoAccess ? 0x01 : 0x00) }));
-							write(notify, connection.getStreamIdForChannel(id));
+							write(notify, connection.getStreamIdForChannelId(id));
 						}
 					}
 				}
@@ -188,7 +183,7 @@ public class Channel {
 				event.setCall(call);
 			}
 			// send directly to the corresponding stream as for some status codes, no stream has been created  and thus "getStreamByChannelId" will fail
-			write(event, connection.getStreamIdForChannel(id));
+			write(event, connection.getStreamIdForChannelId(id));
 		}
 	}
 
@@ -197,7 +192,10 @@ public class Channel {
 	 */
 	@Override
 	public String toString() {
-		return "Channel [id=" + id + ", connection=" + connection + "]";
+		if (connection != null) {
+			return "Channel [id=" + id + ", stream id=" + connection.getStreamIdForChannelId(id) + ", session=" + connection.getSessionId() + "]";
+		}
+		return "Channel [id=" + id + "]";
 	}
 
 }

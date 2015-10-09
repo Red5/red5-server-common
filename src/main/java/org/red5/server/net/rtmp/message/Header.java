@@ -58,8 +58,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Stream id
 	 */
-	private int streamId;
-	
+	private Number streamId = 0.0d;
+
 	/**
 	 * Extended Timestamp
 	 */
@@ -68,7 +68,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Getter for channel id
 	 *
-	 * @return  Channel id
+	 * @return Channel id
 	 */
 	public int getChannelId() {
 		return channelId;
@@ -77,7 +77,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for channel id
 	 *
-	 * @param channelId  Header channel id
+	 * @param channelId
+	 *            Header channel id
 	 */
 	public void setChannelId(int channelId) {
 		this.channelId = channelId;
@@ -86,7 +87,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Getter for data type
 	 *
-	 * @return  Data type
+	 * @return Data type
 	 */
 	public byte getDataType() {
 		return dataType;
@@ -95,7 +96,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for data type
 	 *
-	 * @param dataType  Data type
+	 * @param dataType
+	 *            Data type
 	 */
 	public void setDataType(byte dataType) {
 		this.dataType = dataType;
@@ -104,7 +106,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Getter for size.
 	 *
-	 * @return  Header size
+	 * @return Header size
 	 */
 	public int getSize() {
 		return size;
@@ -113,7 +115,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for size
 	 *
-	 * @param size  Header size
+	 * @param size
+	 *            Header size
 	 */
 	public void setSize(int size) {
 		this.size = size;
@@ -122,25 +125,26 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Getter for stream id
 	 *
-	 * @return  Stream id
+	 * @return Stream id
 	 */
-	public int getStreamId() {
+	public Number getStreamId() {
 		return streamId;
 	}
 
 	/**
 	 * Setter for stream id
 	 *
-	 * @param streamId  Stream id
+	 * @param streamId
+	 *            Stream id
 	 */
-	public void setStreamId(int streamId) {
+	public void setStreamId(Number streamId) {
 		this.streamId = streamId;
 	}
-	
+
 	/**
 	 * Getter for Extended Timestamp
 	 *
-	 * @return  Extended Timestamp
+	 * @return Extended Timestamp
 	 */
 	public int getExtendedTimestamp() {
 		return extendedTimestamp;
@@ -149,7 +153,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for Extended Timestamp
 	 *
-	 * @param extendedTimestamp  Extended Timestamp
+	 * @param extendedTimestamp
+	 *            Extended Timestamp
 	 */
 	public void setExtendedTimestamp(int extendedTimestamp) {
 		this.extendedTimestamp = extendedTimestamp;
@@ -158,7 +163,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Getter for timer
 	 *
-	 * @return  Timer
+	 * @return Timer
 	 */
 	public int getTimer() {
 		return timerBase + timerDelta;
@@ -167,7 +172,8 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for timer
 	 *
-	 * @param timer  Timer
+	 * @param timer
+	 *            Timer
 	 */
 	public void setTimer(int timer) {
 		this.timerBase = timer;
@@ -218,7 +224,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 		dataType = in.readByte();
 		channelId = in.readInt();
 		size = in.readInt();
-		streamId = in.readInt();
+		streamId = (Number) in.readObject();
 		timerBase = in.readInt();
 		timerDelta = in.readInt();
 		extendedTimestamp = in.readInt();
@@ -228,7 +234,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 		out.writeByte(dataType);
 		out.writeInt(channelId);
 		out.writeInt(size);
-		out.writeInt(streamId);
+		out.writeObject(streamId);
 		out.writeInt(timerBase);
 		out.writeInt(timerDelta);
 		out.writeInt(extendedTimestamp);
@@ -239,8 +245,12 @@ public class Header implements Constants, Cloneable, Externalizable {
 	 */
 	@Override
 	public String toString() {
-		return "Header [channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", streamId="
-				+ streamId + ", extendedTimestamp=" + extendedTimestamp + "]";
+		// if its new and props are un-set, just return that message
+		if ((channelId + dataType + size + streamId.intValue()) > 0) {
+			return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extendedTimestamp=" + extendedTimestamp + "]";
+		} else {
+			return "empty";
+		}
 	}
 
 }

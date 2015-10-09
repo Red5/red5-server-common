@@ -75,7 +75,9 @@ public class Packet implements Externalizable {
 	 * @param header       Packet header
 	 */
 	public Packet(Header header) {
-		log.trace("Header: {}", header);
+		if (log.isTraceEnabled()) {
+			log.trace("Header: {}", header);
+		}
 		this.header = header;
 		data = IoBuffer.allocate(header.getSize()).setAutoExpand(true);
 	}
@@ -87,7 +89,9 @@ public class Packet implements Externalizable {
 	 * @param event      RTMP message
 	 */
 	public Packet(Header header, IRTMPEvent event) {
-		log.trace("Header: {} event: {}", header, event);
+		if (log.isTraceEnabled()) {
+			log.trace("Header: {} event: {}", header, event);
+		}
 		this.header = header;
 		this.message = event;
 	}

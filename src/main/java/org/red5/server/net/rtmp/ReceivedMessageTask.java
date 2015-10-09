@@ -66,8 +66,7 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 		this.conn = conn;
 	}
 
-	@SuppressWarnings("unchecked")
-    public Packet call() throws Exception {
+	public Packet call() throws Exception {
 		//keep a ref for executor thread
 		taskThread = Thread.currentThread();
 		// set connection to thread local
@@ -92,13 +91,11 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 	 *
 	 * @param deadlockGuardTask deadlock guard task
 	 */
-	public void runDeadlockFuture(Runnable deadlockGuardTask) {
+	@SuppressWarnings("unchecked")
+    public void runDeadlockFuture(Runnable deadlockGuardTask) {
 		if (deadlockFuture == null) {
 			ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
 			if (deadlockGuard != null) {
-				if (log.isDebugEnabled()) {
-					log.debug("Creating deadlock guard for: {}", this);
-				}
 				try {
 					deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(deadlockGuardTask, new Date(packet.getExpirationTime()));
 				} catch (TaskRejectedException e) {

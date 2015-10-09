@@ -282,13 +282,13 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
 	 * 
 	 * @return stream id
 	 */
-	public int getStreamId();
+	public Number getStreamId();
 
 	/**
 	 * Sets the current stream id.
 	 * 
 	 * @param id stream id
 	 */
-	public void setStreamId(int id);
+	public void setStreamId(Number id);
 	
 }

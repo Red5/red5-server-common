@@ -55,6 +55,4 @@ public interface RTMPConnectionMXBean extends AttributeStoreMXBean {
 
 	public long getPendingMessages();
 
-	public long getPendingVideoMessages(int streamId);
-
 }

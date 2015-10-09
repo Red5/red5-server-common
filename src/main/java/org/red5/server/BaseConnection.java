@@ -139,15 +139,19 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	private final transient Semaphore writeLock = new Semaphore(1, true);
 
 	// Support for stream ids
-	private transient ThreadLocal<Integer> streamLocal = new ThreadLocal<Integer>();
+	private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>() {
+		public Number initialValue() {
+			return 0;
+		}
+	};
 
 	/** {@inheritDoc} */
-	public int getStreamId() {
-		return streamLocal.get().intValue();
+	public Number getStreamId() {
+		return streamLocal.get();
 	}
 
 	/** {@inheritDoc} */
-	public void setStreamId(int id) {
+	public void setStreamId(Number id) {
 		streamLocal.set(id);
 	}
 
@@ -546,11 +550,12 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	}
 
 	/**
-	 *
+	 * Count of outgoing video messages not yet written.
+	 * 
 	 * @param streamId the id you want to know about
 	 * @return pending messages for this streamId
 	 */
-	public long getPendingVideoMessages(int streamId) {
+	public long getPendingVideoMessages(Number streamId) {
 		return 0;
 	}
 

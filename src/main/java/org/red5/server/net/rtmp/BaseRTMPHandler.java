@@ -69,10 +69,12 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 			try {
 				message = packet.getMessage();
 				final Header header = packet.getHeader();
-				final int streamId = header.getStreamId();
+				final Number streamId = header.getStreamId();
 				final Channel channel = conn.getChannel(header.getChannelId());
 				final IClientStream stream = conn.getStreamById(streamId);
-				log.trace("Message received - stream id: {} channel: {} header: {}", streamId, channel.getId(), header);
+				if (log.isTraceEnabled()) {
+					log.trace("Message received - header: {}", header);
+				}
 				// set stream id on the connection
 				conn.setStreamId(streamId);
 				// increase number of received messages
@@ -81,7 +83,9 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 				message.setSource(conn);
 				// process based on data type
 				final byte headerDataType = header.getDataType();
-				log.trace("Header / message data type: {}", headerDataType);
+				if (log.isTraceEnabled()) {
+					log.trace("Header / message data type: {}", headerDataType);
+				}
 				switch (headerDataType) {
 				case TYPE_AGGREGATE:
 					log.debug("Aggregate type data - header timer: {} size: {}", header.getTimer(), header.getSize());
@@ -104,7 +108,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 				case TYPE_FLEX_MESSAGE:
 					onCommand(conn, channel, header, (Invoke) message);
 					IPendingServiceCall call = ((Invoke) message).getCall();
-					if (message.getHeader().getStreamId() != 0 && call.getServiceName() == null && StreamAction.PUBLISH.equals(call.getServiceMethodName())) {
+					if (message.getHeader().getStreamId().intValue() != 0 && call.getServiceName() == null && StreamAction.PUBLISH.equals(call.getServiceMethodName())) {
 						if (stream != null) {
 							// Only dispatch if stream really was created
 							((IEventDispatcher) stream).dispatchEvent(message);
@@ -185,8 +189,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 	/**
 	 * Return hostname for URL.
 	 * 
-	 * @param url
-	 *            URL
+	 * @param url URL
 	 * @return Hostname from that URL
 	 */
 	protected String getHostname(String url) {

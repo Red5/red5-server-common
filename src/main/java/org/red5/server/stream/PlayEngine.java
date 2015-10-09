@@ -102,7 +102,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
 	private IProviderService providerService;
 
-	private int streamId;
+	private Number streamId;
 
 	/**
 	 * Receive video?
@@ -795,6 +795,9 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 			case CLOSED:
 				clearWaitJobs();
 				cancelDeferredStop();
+				break;
+			case STOPPED:
+				log.trace("Already in stopped state");
 				break;
 			default:
 				throw new IllegalStateException(String.format("Cannot stop in current state: %s", subscriberStream.getState()));

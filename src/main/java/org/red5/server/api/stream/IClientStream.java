@@ -41,7 +41,7 @@ public interface IClientStream extends IStream {
 	 * 
 	 * @return the stream id
 	 */
-	int getStreamId();
+	Number getStreamId();
 
 	/**
 	 * Get connection containing the stream.

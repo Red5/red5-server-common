@@ -31,7 +31,7 @@ public abstract class AbstractClientStream extends AbstractStream implements ICl
 	/**
 	 *  Stream identifier. Unique across server.
 	 */
-	private int streamId;
+	private Number streamId = 0.0d;
 
 	/**
 	 * Stream name of the broadcasting stream.
@@ -52,7 +52,7 @@ public abstract class AbstractClientStream extends AbstractStream implements ICl
 	 * Setter for stream id
 	 * @param streamId       Stream id
 	 */
-	public void setStreamId(int streamId) {
+	public void setStreamId(Number streamId) {
 		this.streamId = streamId;
 	}
 
@@ -60,7 +60,7 @@ public abstract class AbstractClientStream extends AbstractStream implements ICl
 	 * Return stream id
 	 * @return           Stream id
 	 */
-	public int getStreamId() {
+	public Number getStreamId() {
 		return streamId;
 	}
 
