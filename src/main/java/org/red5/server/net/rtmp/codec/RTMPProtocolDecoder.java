@@ -526,7 +526,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 				message = decodeInvoke(conn.getEncoding(), in);
 				break;
 			case TYPE_NOTIFY:
-				if (header.getStreamId().intValue() == 0) {
+				log.trace("Sending notify on stream id: {}", header.getStreamId());
+				if (header.getStreamId().doubleValue() == 0.0d) {
 					message = decodeNotify(conn.getEncoding(), in, header);
 				} else {
 					message = decodeStreamMetadata(in);
@@ -776,18 +777,18 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		// get the action
 		String action = Deserializer.deserialize(input, String.class);
 		if (log.isTraceEnabled()) {
-			log.trace("Action " + action);
+			log.trace("Action: {} stream id: {}", action, header.getStreamId());
 		}
 		//throw a runtime exception if there is no action
 		if (action != null) {
 			//TODO Handle NetStream.send? Where and how?
-			if (header != null && header.getStreamId().intValue() != 0 && !isStreamCommand(action)) {
+			if (header != null && header.getStreamId().doubleValue() != 0.0d && !isStreamCommand(action)) {
 				// don't decode "NetStream.send" requests
 				in.position(start);
 				notify.setData(in.asReadOnlyBuffer());
 				return notify;
 			}
-			if (header == null || header.getStreamId().intValue() == 0) {
+			if (header == null || header.getStreamId().doubleValue() == 0.0d) {
 				int invokeId = Deserializer.<Number> deserialize(input, Number.class).intValue();
 				if (invokeId != 0) {
 					throw new RuntimeException("Notify invoke / transaction id was non-zero");

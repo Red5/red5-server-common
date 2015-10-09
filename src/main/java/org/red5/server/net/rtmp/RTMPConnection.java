@@ -635,7 +635,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/** {@inheritDoc} */
 	public Number reserveStreamId() {
 		// ~320 streams seems like a sufficient max amount of streams for a single connection
-		Number result = 0.0d;
+		Number result = -1.0d;
 		for (double i = 0.0d; i < 320.0d; i++) {
 			if (reservedStreams.add(i)) {
 				result = i;
@@ -664,20 +664,20 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 */
 	public boolean isValidStreamId(Number streamId) {
 		if (log.isTraceEnabled()) {
-			log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { streamId, reservedStreams, streams, this });
+			log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { streamId, reservedStreams, streams, sessionId });
 		}
 		if (streamId.doubleValue() < 0 || !reservedStreams.contains(streamId)) {
-			log.warn("Stream id: {} was not reserved in connection {}", streamId, this);
+			log.warn("Stream id: {} was not reserved in connection {}", streamId, sessionId);
 			// stream id has not been reserved before
 			return false;
 		}
 		if (streams.get(streamId) != null) {
 			// another stream already exists with this id
-			log.warn("Another stream already exists with this id in streams {} in connection: {}", streams, this);
+			log.warn("Another stream already exists with this id in streams {} in connection: {}", streams, sessionId);
 			return false;
 		}
 		if (log.isTraceEnabled()) {
-			log.trace("Stream id: {} is valid for connection: {}", streamId, this);
+			log.trace("Stream id: {} is valid for connection: {}", streamId, sessionId);
 		}
 		return true;
 	}
@@ -786,7 +786,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (channelId < 4) {
 			return 0;
 		}
-		Number streamId = Math.round(((channelId - 4) / 5.0d));
+		Number streamId = Math.floor(((channelId - 4) / 5.0d) + 1);
 		if (log.isTraceEnabled()) {
 			log.trace("Stream id: {} requested for channel id: {}", streamId, channelId);
 		}
@@ -818,7 +818,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @return ID of channel that belongs to the stream
 	 */
 	public int getChannelIdForStreamId(Number streamId) {
-		int channelId = (int) ((streamId.doubleValue() + 1) * 3) + 1;
+		int channelId = (int) (streamId.doubleValue() * 5) - 1;
 		if (log.isTraceEnabled()) {
 			log.trace("Channel id: {} requested for stream id: {}", channelId, streamId);
 		}
@@ -1001,11 +1001,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Unreserve streamId: {}", streamId);
 		}
-		if (reservedStreams.remove(streamId)) {
-			deleteStreamById(streamId);
-		} else {
-			if (log.isTraceEnabled()) {
-				log.trace("Failed to unreserve stream id: {} streams: {}", streamId, streams);
+		if (streamId.doubleValue() > 0.0d) {
+			if (reservedStreams.remove(streamId)) {
+				deleteStreamById(streamId);
+			} else {
+				if (log.isTraceEnabled()) {
+					log.trace("Failed to unreserve stream id: {} streams: {}", streamId, streams);
+				}
 			}
 		}
 	}
@@ -1015,13 +1017,15 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Delete streamId: {}", streamId);
 		}
-		if (streams.remove(streamId) != null) {
-			usedStreams.decrementAndGet();
-			pendingVideos.remove(streamId);
-			streamBuffers.remove(streamId);
-		} else {
-			if (log.isTraceEnabled()) {
-				log.trace("Failed to remove stream id: {} streams: {}", streamId, streams);
+		if (streamId.doubleValue() > 0.0d) {
+			if (streams.remove(streamId) != null) {
+				usedStreams.decrementAndGet();
+				pendingVideos.remove(streamId);
+				streamBuffers.remove(streamId);
+			} else {
+				if (log.isTraceEnabled()) {
+					log.trace("Failed to remove stream id: {} streams: {}", streamId, streams);
+				}
 			}
 		}
 	}

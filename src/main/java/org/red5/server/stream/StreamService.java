@@ -77,7 +77,7 @@ public class StreamService implements IStreamService {
 		if (conn instanceof IStreamCapableConnection) {
 			Number streamId = ((IStreamCapableConnection) conn).reserveStreamId();
 			if (log.isTraceEnabled()) {
-				log.trace("Stream id: {} created for {}", streamId, conn);
+				log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
 			}
 			return streamId;
 		}
@@ -87,7 +87,7 @@ public class StreamService implements IStreamService {
 	/** {@inheritDoc} */
 	public void initStream(Number streamId) {
 		IConnection conn = Red5.getConnectionLocal();
-		log.info("initStream stream id: {} current stream id: {} connection: {}", streamId, conn.getStreamId(), conn);
+		log.info("initStream stream id: {} current stream id: {} connection: {}", streamId, conn.getStreamId(), conn.getSessionId());
 		if (conn instanceof IStreamCapableConnection) {
 			((IStreamCapableConnection) conn).reserveStreamId(streamId);
 			IClientStream stream = ((IStreamCapableConnection) conn).getStreamById(streamId);
@@ -169,7 +169,7 @@ public class StreamService implements IStreamService {
 					StreamService.sendNetStreamStatus(conn, StatusCodes.NS_PLAY_STOP, "Stream closed by server", stream.getName(), Status.STATUS, streamId);
 				}
 			} else {
-				log.info("Stream not found: streamId: {} connection: {}", streamId, conn.getSessionId());
+				log.info("Stream not found - streamId: {} connection: {}", streamId, conn.getSessionId());
 			}
 		} else {
 			log.warn("Connection is not instance of IStreamCapableConnection: {}", conn);
@@ -320,7 +320,10 @@ public class StreamService implements IStreamService {
 					log.trace("Stream not found for stream id: {} streams: {}", streamId, streamConn.getStreamsMap());
 				}
 				try {
-					streamId = streamConn.reserveStreamId();
+					// if our current stream id is less than or equal to 0, reserve a new id
+					if (streamId.doubleValue() <= 0.0d) {
+						streamId = streamConn.reserveStreamId();
+					}
 					// instance a new stream for the stream id
 					stream = streamConn.newPlaylistSubscriberStream(streamId);
 					if (log.isTraceEnabled()) {
@@ -385,7 +388,7 @@ public class StreamService implements IStreamService {
 
 	/** {@inheritDoc} */
 	public void play(Boolean dontStop) {
-		log.debug("Play called. Dont stop param: {}", dontStop);
+		log.debug("Play without stop: {}", dontStop);
 		if (!dontStop) {
 			IConnection conn = Red5.getConnectionLocal();
 			if (conn instanceof IStreamCapableConnection) {

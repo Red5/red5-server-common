@@ -77,8 +77,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for channel id
 	 *
-	 * @param channelId
-	 *            Header channel id
+	 * @param channelId  Header channel id
 	 */
 	public void setChannelId(int channelId) {
 		this.channelId = channelId;
@@ -96,8 +95,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for data type
 	 *
-	 * @param dataType
-	 *            Data type
+	 * @param dataType Data type
 	 */
 	public void setDataType(byte dataType) {
 		this.dataType = dataType;
@@ -115,8 +113,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for size
 	 *
-	 * @param size
-	 *            Header size
+	 * @param size  Header size
 	 */
 	public void setSize(int size) {
 		this.size = size;
@@ -134,8 +131,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for stream id
 	 *
-	 * @param streamId
-	 *            Stream id
+	 * @param streamId  Stream id
 	 */
 	public void setStreamId(Number streamId) {
 		this.streamId = streamId;
@@ -153,8 +149,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for Extended Timestamp
 	 *
-	 * @param extendedTimestamp
-	 *            Extended Timestamp
+	 * @param extendedTimestamp  Extended Timestamp
 	 */
 	public void setExtendedTimestamp(int extendedTimestamp) {
 		this.extendedTimestamp = extendedTimestamp;
@@ -172,8 +167,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	/**
 	 * Setter for timer
 	 *
-	 * @param timer
-	 *            Timer
+	 * @param timer  Timer
 	 */
 	public void setTimer(int timer) {
 		this.timerBase = timer;

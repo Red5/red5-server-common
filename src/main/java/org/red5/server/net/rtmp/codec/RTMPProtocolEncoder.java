@@ -201,12 +201,14 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 		if (!isLiveStream) {
 			return false;
 		}		
+		RTMPConnection conn = (RTMPConnection) Red5.getConnectionLocal();
 		if (message instanceof Ping) {
 			final Ping pingMessage = (Ping) message;
 			if (pingMessage.getEventType() == Ping.STREAM_PLAYBUFFER_CLEAR) {
 				// client buffer cleared, make sure to reset timestamps for this stream
-				final int channel = (4 + ((pingMessage.getValue2().intValue() - 1) * 5));
-				((RTMPConnection) Red5.getConnectionLocal()).getState().clearLastTimestampMapping(channel, channel + 1, channel + 2);
+				final int channel = conn.getChannelIdForStreamId(pingMessage.getValue2()); //(4 + ((pingMessage.getValue2().intValue() - 1) * 5));
+                log.trace("Ping stream id: {} channel id: {}", pingMessage.getValue2(), channel);
+				conn.getState().clearLastTimestampMapping(channel, channel + 1, channel + 2);
 			}
 			// never drop pings
 			return false;
@@ -220,11 +222,10 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 				// never drop initial packages, also this could be the first packet after
 				// MP4 seeking and therefore mess with the timestamp mapping
 				return false;
-			}
-			RTMPConnection conn = (RTMPConnection) Red5.getConnectionLocal();
+			}			
 			if (log.isDebugEnabled()) {
 				String sourceType = (isLiveStream ? "LIVE" : "VOD");
-				log.debug("Connection: {} connType={}", conn, sourceType);
+				log.debug("Connection: {} connType={}", conn.getSessionId(), sourceType);
 			}
 			RTMP rtmp = conn.getState();
 			long timestamp = (message.getTimestamp() & 0xFFFFFFFFL);
@@ -500,6 +501,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 								//desc: Seeking 25000 (stream ID: 1).
 								int seekTime = Integer.valueOf(status.getDescription().split(" ")[1]);
 								log.trace("Seek to time: {}", seekTime);
+								// TODO make sure this works on stream ids > 1
 								//audio and video channels
 								int[] channels = new int[] { 5, 6 };
 								//if its a seek notification, reset the "mapping" for audio (5) and video (6)
@@ -865,7 +867,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 			case Ping.PONG_SERVER:
 			case Ping.BUFFER_EMPTY:
 			case Ping.BUFFER_FULL:
-				out.putInt((Integer) ping.getValue2());
+				out.putInt(ping.getValue2().intValue());
 				break;
 			case Ping.CLIENT_BUFFER:
 				if (ping instanceof SetBuffer) {
@@ -873,7 +875,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 					out.putInt(setBuffer.getStreamId());
 					out.putInt(setBuffer.getBufferLength());
 				} else {
-					out.putInt((Integer) ping.getValue2());
+					out.putInt(ping.getValue2().intValue());
 					out.putInt(ping.getValue3());
 				}
 				break;

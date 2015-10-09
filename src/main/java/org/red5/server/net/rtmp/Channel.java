@@ -105,7 +105,7 @@ public class Channel {
 			final Number streamId = (stream == null) ? 0 : stream.getStreamId();
 			write(event, streamId);
 		} else {
-			log.debug("Associated connection {} is closed, cannot write to channel: {}", connection.getSessionId(), id);
+			log.debug("Connection {} is closed, cannot write to channel: {}", connection.getSessionId(), id);
 		}
 	}
 
@@ -116,7 +116,7 @@ public class Channel {
 	 * @param streamId        Stream id
 	 */
 	private void write(IRTMPEvent event, Number streamId) {
-		log.trace("write channel: {} stream id: {}", id, streamId);
+		log.trace("write to stream id: {} channel: {}", streamId, id);
 		final Header header = new Header();
 		final Packet packet = new Packet(header, event);
 		// set the channel id

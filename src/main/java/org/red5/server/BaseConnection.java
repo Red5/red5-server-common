@@ -139,11 +139,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 	private final transient Semaphore writeLock = new Semaphore(1, true);
 
 	// Support for stream ids
-	private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>() {
-		public Number initialValue() {
-			return 0;
-		}
-	};
+	private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>();
 
 	/** {@inheritDoc} */
 	public Number getStreamId() {

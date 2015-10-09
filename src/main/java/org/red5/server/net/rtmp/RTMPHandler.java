@@ -264,7 +264,7 @@ public class RTMPHandler extends BaseRTMPHandler {
 					case RECEIVE_AUDIO:
 						IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
 						try {
-							log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn, streamService });
+							log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
 							if (invokeCall(conn, call, streamService)) {
 								log.debug("Stream service invoke {} success", action);
 							} else {
