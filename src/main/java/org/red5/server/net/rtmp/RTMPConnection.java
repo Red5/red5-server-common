@@ -635,14 +635,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/** {@inheritDoc} */
 	public Number reserveStreamId() {
 		// ~320 streams seems like a sufficient max amount of streams for a single connection
-		Number result = -1.0d;
-		for (double i = 0.0d; i < 320.0d; i++) {
-			if (reservedStreams.add(i)) {
-				result = i;
+		double d = 1.0d;
+		for (; d < 320.0d; d++) {
+			if (reservedStreams.add(d)) {
 				break;
 			}
 		}
-		return result.doubleValue() + 1.0d;
+		return d;
 	}
 
 	/** {@inheritDoc} */
@@ -650,7 +649,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Reserve stream id: {}", streamId);
 		}
-		if (reservedStreams.add(streamId)) {
+		if (reservedStreams.add(streamId.doubleValue())) {
 			return streamId;
 		}
 		return reserveStreamId();
@@ -663,21 +662,22 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @return true if its valid, false if its invalid
 	 */
 	public boolean isValidStreamId(Number streamId) {
+		double d = streamId.doubleValue();
 		if (log.isTraceEnabled()) {
-			log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { streamId, reservedStreams, streams, sessionId });
+			log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { d, reservedStreams, streams, sessionId });
 		}
-		if (streamId.doubleValue() < 0 || !reservedStreams.contains(streamId)) {
-			log.warn("Stream id: {} was not reserved in connection {}", streamId, sessionId);
+		if (d < 0 || !reservedStreams.contains(d)) {
+			log.warn("Stream id: {} was not reserved in connection {}", d, sessionId);
 			// stream id has not been reserved before
 			return false;
 		}
-		if (streams.get(streamId) != null) {
+		if (streams.get(d) != null) {
 			// another stream already exists with this id
 			log.warn("Another stream already exists with this id in streams {} in connection: {}", streams, sessionId);
 			return false;
 		}
 		if (log.isTraceEnabled()) {
-			log.trace("Stream id: {} is valid for connection: {}", streamId, sessionId);
+			log.trace("Stream id: {} is valid for connection: {}", d, sessionId);
 		}
 		return true;
 	}
@@ -1001,9 +1001,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Unreserve streamId: {}", streamId);
 		}
-		if (streamId.doubleValue() > 0.0d) {
-			if (reservedStreams.remove(streamId)) {
-				deleteStreamById(streamId);
+		double d = streamId.doubleValue();
+		if (d > 0.0d) {
+			if (reservedStreams.remove(d)) {
+				deleteStreamById(d);
 			} else {
 				if (log.isTraceEnabled()) {
 					log.trace("Failed to unreserve stream id: {} streams: {}", streamId, streams);

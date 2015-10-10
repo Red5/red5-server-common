@@ -39,20 +39,6 @@ public class TestRTMPConnection {
 //		fail("Not yet implemented");
 //	}
 //
-//	@Test
-//	public void testReserveStreamId() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testReserveStreamIdNumber() {
-//		fail("Not yet implemented");
-//	}
-//
-//	@Test
-//	public void testIsValidStreamId() {
-//		fail("Not yet implemented");
-//	}
 //
 //	@Test
 //	public void testNewPlaylistSubscriberStream() {
@@ -65,7 +51,7 @@ public class TestRTMPConnection {
 //		System.out.printf("PlaylistSubscriberStream for stream id 0: %s\n", stream);
 //		
 //	}
-
+//
 //	@Test
 //	public void testRemoveClientStream() {
 //		fail("Not yet implemented");
@@ -145,12 +131,46 @@ public class TestRTMPConnection {
 		
 		System.out.printf("Channel id - sid 20: %d sid 33: %d\n", conn.getChannelIdForStreamId(20), conn.getChannelIdForStreamId(33));
 	}
+	
+	@Test
+	public void testReserveStreamId() {
+		System.out.println("\n testReserveStreamId");
+		RTMPConnection conn = new RTMPMinaConnection();
+		Number streamId = conn.reserveStreamId();		
+		boolean valid = conn.isValidStreamId(streamId);		
+		System.out.printf("Stream id: %f valid: %b\n", streamId, valid);
+		assertTrue(1 == streamId.intValue());
+		assertTrue(1.0d == streamId.doubleValue());
+		assertTrue(valid);
+		conn.unreserveStreamId(streamId);
+		assertFalse(conn.isValidStreamId(streamId));		
+	}
 
-//	@Test
-//	public void testUnreserveStreamId() {
-//		fail("Not yet implemented");
-//	}
-//
+	@Test
+	public void testReserveStreamIdNumber() {
+		System.out.println("\n testReserveStreamIdNumber");
+		RTMPConnection conn = new RTMPMinaConnection();
+		// try integer first
+		Number streamId = 1;
+		streamId = conn.reserveStreamId(streamId);
+		boolean valid = conn.isValidStreamId(streamId);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);	
+		assertTrue(1 == streamId.intValue());
+		assertTrue(valid);
+		conn.unreserveStreamId(streamId);
+		assertFalse(conn.isValidStreamId(streamId));
+		// try double first
+		streamId = 1.0d;
+		streamId = conn.reserveStreamId(streamId);
+		assertTrue(1 == streamId.intValue());
+		assertTrue(1.0d == streamId.doubleValue());
+		valid = conn.isValidStreamId(streamId);
+		assertTrue(valid);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);	
+		conn.unreserveStreamId(streamId);
+		assertFalse(conn.isValidStreamId(streamId));
+	}
+
 //	@Test
 //	public void testDeleteStreamById() {
 //		fail("Not yet implemented");
