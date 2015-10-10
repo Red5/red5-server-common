@@ -837,7 +837,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Create output - stream id: {} channel id: {}", streamId, channelId);
 		}
-		final Channel data = getChannel(channelId);
+		final Channel data = getChannel(channelId++);
 		final Channel video = getChannel(channelId++);
 		final Channel audio = getChannel(channelId++);
 		if (log.isTraceEnabled()) {
