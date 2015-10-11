@@ -750,7 +750,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	}
 
 	public void addClientStream(IClientStream stream) {
-		if (reservedStreams.add(stream.getStreamId())) {
+		if (reservedStreams.add(stream.getStreamId().doubleValue())) {
 			registerStream(stream);
 		} else {
 			// stream not added to registered? what to do with it?
@@ -773,7 +773,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
 	/** {@inheritDoc} */
 	public IClientStream getStreamById(Number streamId) {
-		return streams.get(streamId);
+		return streams.get(streamId.doubleValue());
 	}
 
 	/**
@@ -808,7 +808,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Stream requested for channel id: {} stream id: {} streams: {}", channelId, streamId, streams);
 		}
-		return streams.get(streamId);
+		return getStreamById(streamId);
 	}
 
 	/**
@@ -853,7 +853,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @param stream Stream
 	 */
 	private void customizeStream(Number streamId, AbstractClientStream stream) {
-		Integer buffer = streamBuffers.get(streamId);
+		Integer buffer = streamBuffers.get(streamId.doubleValue());
 		if (buffer != null) {
 			stream.setClientBufferDuration(buffer);
 		}
@@ -869,7 +869,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	 * @param stream
 	 */
 	private boolean registerStream(IClientStream stream) {
-		if (streams.putIfAbsent(stream.getStreamId(), stream) == null) {
+		if (streams.putIfAbsent(stream.getStreamId().doubleValue(), stream) == null) {
 			usedStreams.incrementAndGet();
 			return true;
 		}
@@ -1007,7 +1007,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 				deleteStreamById(d);
 			} else {
 				if (log.isTraceEnabled()) {
-					log.trace("Failed to unreserve stream id: {} streams: {}", streamId, streams);
+					log.trace("Failed to unreserve stream id: {} streams: {}", d, streams);
 				}
 			}
 		}
@@ -1018,14 +1018,15 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Delete streamId: {}", streamId);
 		}
-		if (streamId.doubleValue() > 0.0d) {
-			if (streams.remove(streamId) != null) {
+		double d = streamId.doubleValue();
+		if (d > 0.0d) {
+			if (streams.remove(d) != null) {
 				usedStreams.decrementAndGet();
-				pendingVideos.remove(streamId);
-				streamBuffers.remove(streamId);
+				pendingVideos.remove(d);
+				streamBuffers.remove(d);
 			} else {
 				if (log.isTraceEnabled()) {
-					log.trace("Failed to remove stream id: {} streams: {}", streamId, streams);
+					log.trace("Failed to remove stream id: {} streams: {}", d, streams);
 				}
 			}
 		}
@@ -1239,7 +1240,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (message.getMessage() instanceof VideoData) {
 			Number streamId = message.getHeader().getStreamId();
 			final AtomicInteger value = new AtomicInteger();
-			AtomicInteger old = pendingVideos.putIfAbsent(streamId, value);
+			AtomicInteger old = pendingVideos.putIfAbsent(streamId.doubleValue(), value);
 			if (old == null) {
 				old = value;
 			}
@@ -1455,7 +1456,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	public void messageSent(Packet message) {
 		if (message.getMessage() instanceof VideoData) {
 			Number streamId = message.getHeader().getStreamId();
-			AtomicInteger pending = pendingVideos.get(streamId);
+			AtomicInteger pending = pendingVideos.get(streamId.doubleValue());
 			if (log.isTraceEnabled()) {
 				log.trace("Stream id: {} pending: {} total pending videos: {}", streamId, pending, pendingVideos.size());
 			}
@@ -1485,7 +1486,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	/** {@inheritDoc} */
 	@Override
 	public long getPendingVideoMessages(Number streamId) {
-		AtomicInteger pendingCount = pendingVideos.get(streamId);
+		AtomicInteger pendingCount = pendingVideos.get(streamId.doubleValue());
 		if (log.isTraceEnabled()) {
 			log.trace("Stream id: {} pendingCount: {} total pending videos: {}", streamId, pendingCount, pendingVideos.size());
 		}
