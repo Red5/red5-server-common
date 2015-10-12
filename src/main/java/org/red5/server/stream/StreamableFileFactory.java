@@ -49,7 +49,7 @@ public class StreamableFileFactory implements IStreamableFileFactory {
 
 	/** {@inheritDoc} */
 	public IStreamableFileService getService(File fp) {
-		logger.debug("Get service for file: " + fp.getName());
+		logger.debug("Get service for file: {}", fp.getName());
 		// Return first service that can handle the passed file
 		for (IStreamableFileService service : this.services) {
 			if (service.canHandle(fp)) {
