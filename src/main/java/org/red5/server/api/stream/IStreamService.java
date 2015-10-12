@@ -36,6 +36,14 @@ public interface IStreamService extends IScopeService {
 	public Number createStream();
 
 	/**
+	 * Create a stream and return a corresponding id.
+	 * 
+	 * @param streamId  Stream id
+	 * @return     ID of created stream
+	 */
+	public Number createStream(Number streamId);	
+	
+	/**
 	 * Close the stream but not deallocate the resources.
 	 * 
 	 * @param connection Connection

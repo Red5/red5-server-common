@@ -74,6 +74,7 @@ public class StreamService implements IStreamService {
 	/** {@inheritDoc} */
 	public Number createStream() {
 		IConnection conn = Red5.getConnectionLocal();
+		log.trace("createStream connection: {}", conn.getSessionId());
 		if (conn instanceof IStreamCapableConnection) {
 			Number streamId = ((IStreamCapableConnection) conn).reserveStreamId();
 			if (log.isTraceEnabled()) {
@@ -83,6 +84,24 @@ public class StreamService implements IStreamService {
 		}
 		return -1;
 	}
+
+	/** {@inheritDoc} */
+	public Number createStream(Number streamId) {
+		IConnection conn = Red5.getConnectionLocal();
+		log.trace("createStream stream id: {} connection: {}", streamId, conn.getSessionId());
+		if (conn instanceof IStreamCapableConnection) {
+			if (streamId.doubleValue() > 0d) {
+				streamId = ((IStreamCapableConnection) conn).reserveStreamId(streamId);				
+			} else {
+				streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+			}
+			if (log.isTraceEnabled()) {
+				log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
+			}
+			return streamId;
+		}
+		return -1;
+	}	
 
 	/** {@inheritDoc} */
 	public void initStream(Number streamId) {
@@ -149,7 +168,7 @@ public class StreamService implements IStreamService {
 	 * @param streamId stream ID (number: 1,2,...)
 	 */
 	public void closeStream(IConnection conn, Number streamId) {
-		log.info("closeStream: streamId={}, connection={}", streamId, conn);
+		log.info("closeStream  stream id: {} connection: {}", streamId, conn.getSessionId());
 		if (conn instanceof IStreamCapableConnection) {
 			IStreamCapableConnection scConn = (IStreamCapableConnection) conn;
 			IClientStream stream = scConn.getStreamById(streamId);

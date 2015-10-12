@@ -277,7 +277,14 @@ public class Ping extends BaseEvent {
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		eventType = in.readShort();
-		value2 = (Number) in.readObject();
+		switch (eventType) {
+			case PING_CLIENT:
+			case PONG_SERVER:
+				value2 = (Number) in.readInt();
+				break;
+			default:
+				value2 = (Number) in.readDouble();				
+		}
 		value3 = in.readInt();
 		value4 = in.readInt();
 	}
@@ -286,7 +293,14 @@ public class Ping extends BaseEvent {
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
 		out.writeShort(eventType);
-		out.writeObject(value2);
+		switch (eventType) {
+			case PING_CLIENT:
+			case PONG_SERVER:
+				out.writeDouble(value2.intValue());
+				break;
+			default:
+				out.writeDouble(value2.doubleValue());				
+		}
 		out.writeInt(value3);
 		out.writeInt(value4);
 	}

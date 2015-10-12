@@ -223,7 +223,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	}
 
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		clientid = (Number) in.readObject();
+		clientid = (Number) in.readDouble();
 		code = (String) in.readObject();
 		description = (String) in.readObject();
 		details = (String) in.readObject();
@@ -231,7 +231,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
 	}
 
 	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(clientid);
+		out.writeDouble(clientid.doubleValue());
 		out.writeObject(code);
 		out.writeObject(description);
 		out.writeObject(details);

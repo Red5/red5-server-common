@@ -218,7 +218,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 		dataType = in.readByte();
 		channelId = in.readInt();
 		size = in.readInt();
-		streamId = (Number) in.readObject();
+		streamId = (Number) in.readDouble();
 		timerBase = in.readInt();
 		timerDelta = in.readInt();
 		extendedTimestamp = in.readInt();
@@ -228,7 +228,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 		out.writeByte(dataType);
 		out.writeInt(channelId);
 		out.writeInt(size);
-		out.writeObject(streamId);
+		out.writeDouble(streamId.doubleValue());
 		out.writeInt(timerBase);
 		out.writeInt(timerDelta);
 		out.writeInt(extendedTimestamp);
@@ -240,7 +240,7 @@ public class Header implements Constants, Cloneable, Externalizable {
 	@Override
 	public String toString() {
 		// if its new and props are un-set, just return that message
-		if ((channelId + dataType + size + streamId.intValue()) > 0) {
+		if ((channelId + dataType + size + streamId.doubleValue()) > 0d) {
 			return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extendedTimestamp=" + extendedTimestamp + "]";
 		} else {
 			return "empty";
