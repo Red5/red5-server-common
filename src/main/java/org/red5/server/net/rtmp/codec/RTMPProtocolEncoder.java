@@ -104,10 +104,19 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 	 * @throws Exception    Any decoding exception
 	 */
 	public IoBuffer encode(Object message) throws Exception {
-		try {
-			return encodePacket((Packet) message);
-		} catch (Exception e) {
-			log.error("Error encoding", e);
+		if (message != null) {
+    		try {
+    			return encodePacket((Packet) message);
+    		} catch (Exception e) {
+    			log.error("Error encoding", e);
+    		}
+		} else if (log.isDebugEnabled()) {
+			try {
+				String callingMethod = Thread.currentThread().getStackTrace()[4].getMethodName();			
+				log.debug("Message is null at encode, expecting a Packet from: {}", callingMethod);
+			} catch (Throwable t) {
+				log.warn("Problem getting current calling method from stacktrace", t);
+			}
 		}
 		return null;
 	}

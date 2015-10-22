@@ -260,16 +260,18 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
 				future.removeListener(this);
 				for (Object key : session.getAttributeKeys()) {
 					Object obj = session.getAttribute(key);
-					log.debug("Attribute: {}", obj.getClass().getName());
-					if (obj instanceof IoProcessor) {
-						log.debug("Flushing session in processor");
-						((IoProcessor) obj).flush(session);
-						log.debug("Removing session from processor");
-						((IoProcessor) obj).remove(session);
-					} else if (obj instanceof IoBuffer) {
-						log.debug("Clearing session buffer");
-						((IoBuffer) obj).clear();
-						((IoBuffer) obj).free();
+					if (obj != null) {
+    					log.debug("Attribute: {}", obj.getClass().getName());
+    					if (obj instanceof IoProcessor) {
+    						log.debug("Flushing session in processor");
+    						((IoProcessor) obj).flush(session);
+    						log.debug("Removing session from processor");
+    						((IoProcessor) obj).remove(session);
+    					} else if (obj instanceof IoBuffer) {
+    						log.debug("Clearing session buffer");
+    						((IoBuffer) obj).clear();
+    						((IoBuffer) obj).free();
+    					}
 					}
 				}
 			}
