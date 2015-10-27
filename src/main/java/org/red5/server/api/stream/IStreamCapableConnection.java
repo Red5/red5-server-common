@@ -36,15 +36,18 @@ public interface IStreamCapableConnection extends IConnection {
 	 * According to FCS/FMS regulation, the base is 1.
 	 * 
 	 * @return              Reserved stream id
+	 * @throws IndexOutOfBoundsException when it is impossible to reserve new stream
 	 */
-	Number reserveStreamId();
+	Number reserveStreamId() throws IndexOutOfBoundsException;
 
 	/**
 	 * Return a reserved stream id for use with a preference for the one supplied.
 	 * 
+	 * @param streamId supplied stream id
 	 * @return              Reserved stream id
+	 * @throws IndexOutOfBoundsException when it is impossible to reserve new stream
 	 */
-	Number reserveStreamId(Number streamId);
+	Number reserveStreamId(Number streamId) throws IndexOutOfBoundsException;
 
 	/**
 	 * Unreserve this id for future use.

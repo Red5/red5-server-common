@@ -76,11 +76,16 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		log.trace("createStream connection: {}", conn.getSessionId());
 		if (conn instanceof IStreamCapableConnection) {
-			Number streamId = ((IStreamCapableConnection) conn).reserveStreamId();
-			if (log.isTraceEnabled()) {
-				log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
+			try {
+				Number streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+				if (log.isTraceEnabled()) {
+					log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
+				}
+				return streamId;
+			} catch (IndexOutOfBoundsException e) {
+				log.error("Unable to create stream", e);
+				return -1;
 			}
-			return streamId;
 		}
 		return -1;
 	}
@@ -90,15 +95,20 @@ public class StreamService implements IStreamService {
 		IConnection conn = Red5.getConnectionLocal();
 		log.trace("createStream stream id: {} connection: {}", streamId, conn.getSessionId());
 		if (conn instanceof IStreamCapableConnection) {
-			if (streamId.doubleValue() > 0d) {
-				streamId = ((IStreamCapableConnection) conn).reserveStreamId(streamId);				
-			} else {
-				streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+			try {
+				if (streamId.intValue() > 0) {
+					streamId = ((IStreamCapableConnection) conn).reserveStreamId(streamId);
+				} else {
+					streamId = ((IStreamCapableConnection) conn).reserveStreamId();
+				}
+				if (log.isTraceEnabled()) {
+					log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
+				}
+				return streamId;
+			} catch (IndexOutOfBoundsException e) {
+				log.error("Unable to create stream", e);
+				return -1;
 			}
-			if (log.isTraceEnabled()) {
-				log.trace("Stream id: {} created for {}", streamId, conn.getSessionId());
-			}
-			return streamId;
 		}
 		return -1;
 	}	
@@ -122,7 +132,7 @@ public class StreamService implements IStreamService {
 			}
 			((IStreamCapableConnection) conn).deleteStreamById(streamId);
 		} else {
-			log.warn("ERROR in intiStream, connection is not stream capable");
+			log.warn("ERROR in initStream, connection is not stream capable");
 		}
 	}
 	

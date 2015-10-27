@@ -5,9 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.red5.server.api.IConnection;
-import org.red5.server.api.stream.IClientStream;
-import org.red5.server.api.stream.IPlaylistSubscriberStream;
+import static org.red5.server.net.rtmp.RTMPConnection.MAX_RESERVED_STREAMS;
 
 public class TestRTMPConnection {
 
@@ -146,29 +144,77 @@ public class TestRTMPConnection {
 		assertFalse(conn.isValidStreamId(streamId));		
 	}
 
+	@Test(expected = IndexOutOfBoundsException.class)
+	public void testReserveStreamIdImpossible() {
+		System.out.println("\n testReserveStreamIdImpossible");
+		RTMPConnection conn = new RTMPMinaConnection();
+		for (int i = 0; i < MAX_RESERVED_STREAMS; i++) {
+			conn.reserveStreamId();
+		}
+		conn.reserveStreamId();
+	}
+
 	@Test
 	public void testReserveStreamIdNumber() {
 		System.out.println("\n testReserveStreamIdNumber");
 		RTMPConnection conn = new RTMPMinaConnection();
 		// try integer first
-		Number streamId = 1;
+		Number streamId = 5;
 		streamId = conn.reserveStreamId(streamId);
 		boolean valid = conn.isValidStreamId(streamId);
 		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);	
-		assertTrue(1 == streamId.intValue());
+		assertTrue(5 == streamId.intValue());
+		assertTrue(5.0d == streamId.doubleValue());
 		assertTrue(valid);
 		conn.unreserveStreamId(streamId);
 		assertFalse(conn.isValidStreamId(streamId));
 		// try double first
-		streamId = 1.0d;
+		streamId = 3.0d;
 		streamId = conn.reserveStreamId(streamId);
-		assertTrue(1 == streamId.intValue());
-		assertTrue(1.0d == streamId.doubleValue());
+		assertTrue(3 == streamId.intValue());
+		assertTrue(3.0d == streamId.doubleValue());
 		valid = conn.isValidStreamId(streamId);
 		assertTrue(valid);
 		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);	
 		conn.unreserveStreamId(streamId);
 		assertFalse(conn.isValidStreamId(streamId));
+	}
+
+	@Test
+	public void testReserveStreamIdMixed() {
+		System.out.println("\n testReserveStreamIdMixed");
+		RTMPConnection conn = new RTMPMinaConnection();
+		// try integer
+		Number streamId = 1;
+		streamId = conn.reserveStreamId(streamId);
+		boolean valid = conn.isValidStreamId(streamId);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);
+		assertTrue(1 == streamId.intValue());
+		assertTrue(1.0d == streamId.doubleValue());
+		assertTrue(valid);
+		// try double
+		streamId = 3.0d;
+		streamId = conn.reserveStreamId(streamId);
+		assertTrue(3 == streamId.intValue());
+		assertTrue(3.0d == streamId.doubleValue());
+		valid = conn.isValidStreamId(streamId);
+		assertTrue(valid);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);
+		//try one without specified streamIds
+		streamId = conn.reserveStreamId();
+		assertTrue(2 == streamId.intValue());
+		assertTrue(2.0d == streamId.doubleValue());
+		valid = conn.isValidStreamId(streamId);
+		assertTrue(valid);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);
+		//try one with already reserved stream id
+		streamId = 3.0d;
+		streamId = conn.reserveStreamId(streamId);
+		assertTrue(4 == streamId.intValue());
+		assertTrue(4.0d == streamId.doubleValue());
+		valid = conn.isValidStreamId(streamId);
+		assertTrue(valid);
+		System.out.printf("Stream id: %f valid: %b\n", streamId.doubleValue(), valid);
 	}
 
 //	@Test
