@@ -120,7 +120,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	public static final String RTMPE_CIPHER_OUT = "rtmpe.cipher.out";
 
 	// ~320 streams seems like a sufficient max amount of streams for a single connection
-	public static final int MAX_RESERVED_STREAMS = 320;
+	public static final double MAX_RESERVED_STREAMS = 320;
 
 	/**
 	 * Initial channel capacity
@@ -644,7 +644,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			}
 		}
 
-		if ((int) d == MAX_RESERVED_STREAMS) {
+		if (d == MAX_RESERVED_STREAMS) {
 			throw new IndexOutOfBoundsException("Unable to reserve new stream");
 		}
 		
