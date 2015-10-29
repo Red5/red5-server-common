@@ -632,7 +632,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 	}
 	
 	public Map<Number, IClientStream> getStreamsMap() {
-		return streams;
+		return Collections.unmodifiableMap(streams);
 	}
 
 	/** {@inheritDoc} */
@@ -644,7 +644,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			}
 		}
 
-		if (d == MAX_RESERVED_STREAMS) {
+		if ((int) d == MAX_RESERVED_STREAMS) {
 			throw new IndexOutOfBoundsException("Unable to reserve new stream");
 		}
 		
@@ -673,7 +673,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 		if (log.isTraceEnabled()) {
 			log.trace("Checking validation for streamId {}; reservedStreams: {}; streams: {}, connection: {}", new Object[] { d, reservedStreams, streams, sessionId });
 		}
-		if (d < 0 || !reservedStreams.contains(d)) {
+		if (d <= 0 || !reservedStreams.contains(d)) {
 			log.warn("Stream id: {} was not reserved in connection {}", d, sessionId);
 			// stream id has not been reserved before
 			return false;

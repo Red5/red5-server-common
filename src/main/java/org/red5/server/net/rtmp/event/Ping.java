@@ -296,7 +296,7 @@ public class Ping extends BaseEvent {
 		switch (eventType) {
 			case PING_CLIENT:
 			case PONG_SERVER:
-				out.writeDouble(value2.intValue());
+				out.writeInt(value2.intValue());
 				break;
 			default:
 				out.writeDouble(value2.doubleValue());				
