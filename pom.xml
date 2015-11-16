@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>red5-server-common</artifactId>
     <packaging>jar</packaging>
@@ -58,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <red5-io.version>1.0.7-SNAPSHOT</red5-io.version>
         <spring.version>4.1.7.RELEASE</spring.version>
-        <mina.version>2.0.9</mina.version>
+        <mina.version>2.0.10-SNAPSHOT</mina.version>
         <quartz.version>2.2.2</quartz.version>
         <bc.version>1.52</bc.version>
         <junit.version>4.12</junit.version>
@@ -74,7 +75,7 @@
             <id>sonatype-releases</id>
             <name>Sonatype Releases</name>
             <url>http://oss.sonatype.org/content/repositories/releases</url>
-        </repository> 
+        </repository>
     </repositories>
     <build>
         <defaultGoal>install</defaultGoal>
@@ -197,7 +198,7 @@
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                 </configuration>
-            </plugin>            
+            </plugin>
         </plugins>
     </build>
     <dependencyManagement>

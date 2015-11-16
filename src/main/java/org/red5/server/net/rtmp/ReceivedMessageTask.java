@@ -102,10 +102,10 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 					log.warn("DeadlockGuard task is rejected for {}", sessionId, e);
 				}
 			} else {
-				log.error("Deadlock guard is null for {}", sessionId);
+				log.debug("Deadlock guard is null for {}", sessionId);
 			}
 		} else {
-			log.error("Deadlock future is already create for {}", sessionId);
+			log.warn("Deadlock future is already create for {}", sessionId);
 		}
 	}
 
@@ -120,7 +120,7 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 	}
 
 	/**
-	 * Marks task as processing if it is not prosessing yet.
+	 * Marks task as processing if it is not processing yet.
 	 *
 	 * @return true if successful, or false otherwise
 	 */
