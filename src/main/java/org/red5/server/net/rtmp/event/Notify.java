@@ -65,6 +65,8 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
 	 */
 	private Map<String, Object> connectionParams;
 
+	private String action;
+
 	/** Constructs a new Notify */
 	public Notify() {
 		super(Type.SERVICE_CALL);
@@ -260,8 +262,16 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
 		result.readExternal(ois);
 		ois.close();
 		bais.close();
-
 		return result;
+	}
+
+	public void setAction(String onCueOrOnMeta) {
+		this.action = onCueOrOnMeta;
+		
+	}
+
+	public String getAction() {
+		return action;
 	}
 
 }

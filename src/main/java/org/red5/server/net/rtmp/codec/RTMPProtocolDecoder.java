@@ -168,20 +168,20 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		try {
 			final byte connectionState = conn.getStateCode();
 			switch (connectionState) {
-				case RTMP.STATE_CONNECTED:
-					return decodePacket(conn, state, in);
-				case RTMP.STATE_CONNECT:
-					return decodeHandshakeS1(conn, state, in);
-				case RTMP.STATE_HANDSHAKE:
-					return decodeHandshakeS2(conn, state, in);
-				case RTMP.STATE_ERROR:
-				case RTMP.STATE_DISCONNECTING:
-				case RTMP.STATE_DISCONNECTED:
-					// throw away any remaining input data:
-					in.position(in.limit());
-					return null;
-				default:
-					throw new IllegalStateException("Invalid RTMP state: " + connectionState);
+			case RTMP.STATE_CONNECTED:
+				return decodePacket(conn, state, in);
+			case RTMP.STATE_CONNECT:
+				return decodeHandshakeS1(conn, state, in);
+			case RTMP.STATE_HANDSHAKE:
+				return decodeHandshakeS2(conn, state, in);
+			case RTMP.STATE_ERROR:
+			case RTMP.STATE_DISCONNECTING:
+			case RTMP.STATE_DISCONNECTED:
+				// throw away any remaining input data:
+				in.position(in.limit());
+				return null;
+			default:
+				throw new IllegalStateException("Invalid RTMP state: " + connectionState);
 			}
 		} catch (ProtocolException pe) {
 			// raise to caller unmodified
@@ -310,23 +310,23 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		Header lastHeader = rtmp.getLastReadHeader(channelId);
 		headerLength += byteCount - 1;
 		switch (headerSize) {
-			case HEADER_NEW:
-			case HEADER_SAME_SOURCE:
-			case HEADER_TIMER_CHANGE:
-				if (remaining >= headerLength) {
-					int timeValue = RTMPUtils.readUnsignedMediumInt(in);
-					if (timeValue == 0xffffff) {
-						headerLength += 4;
-					}
-				}
-				break;
-			case HEADER_CONTINUE:
-				if (lastHeader != null && lastHeader.getExtendedTimestamp() != 0) {
+		case HEADER_NEW:
+		case HEADER_SAME_SOURCE:
+		case HEADER_TIMER_CHANGE:
+			if (remaining >= headerLength) {
+				int timeValue = RTMPUtils.readUnsignedMediumInt(in);
+				if (timeValue == 0xffffff) {
 					headerLength += 4;
 				}
-				break;
-			default:
-				throw new ProtocolException("Unexpected header size " + headerSize + " check for error");
+			}
+			break;
+		case HEADER_CONTINUE:
+			if (lastHeader != null && lastHeader.getExtendedTimestamp() != 0) {
+				headerLength += 4;
+			}
+			break;
+		default:
+			throw new ProtocolException("Unexpected header size " + headerSize + " check for error");
 		}
 		if (remaining < headerLength) {
 			log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
@@ -443,68 +443,68 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		}
 		int timeValue;
 		switch (headerSize) {
-			case HEADER_NEW:
-				// an absolute time value
-				timeValue = RTMPUtils.readUnsignedMediumInt(in);
-				header.setSize(RTMPUtils.readUnsignedMediumInt(in));
-				header.setDataType(in.get());
-				header.setStreamId(RTMPUtils.readReverseInt(in));
-				if (timeValue == 0xffffff) {
-					timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-					header.setExtendedTimestamp(timeValue);
-				}
-				header.setTimerBase(timeValue);
-				header.setTimerDelta(0);
-				break;
-			case HEADER_SAME_SOURCE:
-				// a delta time value
-				timeValue = RTMPUtils.readUnsignedMediumInt(in);
-				header.setSize(RTMPUtils.readUnsignedMediumInt(in));
-				header.setDataType(in.get());
-				header.setStreamId(lastHeader.getStreamId());
-				if (timeValue == 0xffffff) {
-					timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-					header.setExtendedTimestamp(timeValue);
-				} else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-					// header.setIsGarbage(true);
-					log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(),
-							headerSize });
-				}
-				header.setTimerBase(lastHeader.getTimerBase());
-				header.setTimerDelta(timeValue);
-				break;
-			case HEADER_TIMER_CHANGE:
-				// a delta time value
-				timeValue = RTMPUtils.readUnsignedMediumInt(in);
-				header.setSize(lastHeader.getSize());
-				header.setDataType(lastHeader.getDataType());
-				header.setStreamId(lastHeader.getStreamId());
-				if (timeValue == 0xffffff) {
-					timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-					header.setExtendedTimestamp(timeValue);
-				} else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-					// header.setIsGarbage(true);
-					log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(),
-							headerSize });
-				}
-				header.setTimerBase(lastHeader.getTimerBase());
-				header.setTimerDelta(timeValue);
-				break;
-			case HEADER_CONTINUE:
-				header.setSize(lastHeader.getSize());
-				header.setDataType(lastHeader.getDataType());
-				header.setStreamId(lastHeader.getStreamId());
-				header.setTimerBase(lastHeader.getTimerBase());
-				header.setTimerDelta(lastHeader.getTimerDelta());
-				if (lastHeader.getExtendedTimestamp() != 0) {
-					timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-					header.setExtendedTimestamp(timeValue);
-					log.trace("HEADER_CONTINUE with extended timestamp: {}", timeValue);
-				}
-				break;
-			default:
-				log.error("Unexpected header size: {}", headerSize);
-				return null;
+		case HEADER_NEW:
+			// an absolute time value
+			timeValue = RTMPUtils.readUnsignedMediumInt(in);
+			header.setSize(RTMPUtils.readUnsignedMediumInt(in));
+			header.setDataType(in.get());
+			header.setStreamId(RTMPUtils.readReverseInt(in));
+			if (timeValue == 0xffffff) {
+				timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
+				header.setExtendedTimestamp(timeValue);
+			}
+			header.setTimerBase(timeValue);
+			header.setTimerDelta(0);
+			break;
+		case HEADER_SAME_SOURCE:
+			// a delta time value
+			timeValue = RTMPUtils.readUnsignedMediumInt(in);
+			header.setSize(RTMPUtils.readUnsignedMediumInt(in));
+			header.setDataType(in.get());
+			header.setStreamId(lastHeader.getStreamId());
+			if (timeValue == 0xffffff) {
+				timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
+				header.setExtendedTimestamp(timeValue);
+			} else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
+				// header.setIsGarbage(true);
+				log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(),
+						headerSize });
+			}
+			header.setTimerBase(lastHeader.getTimerBase());
+			header.setTimerDelta(timeValue);
+			break;
+		case HEADER_TIMER_CHANGE:
+			// a delta time value
+			timeValue = RTMPUtils.readUnsignedMediumInt(in);
+			header.setSize(lastHeader.getSize());
+			header.setDataType(lastHeader.getDataType());
+			header.setStreamId(lastHeader.getStreamId());
+			if (timeValue == 0xffffff) {
+				timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
+				header.setExtendedTimestamp(timeValue);
+			} else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
+				// header.setIsGarbage(true);
+				log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(),
+						headerSize });
+			}
+			header.setTimerBase(lastHeader.getTimerBase());
+			header.setTimerDelta(timeValue);
+			break;
+		case HEADER_CONTINUE:
+			header.setSize(lastHeader.getSize());
+			header.setDataType(lastHeader.getDataType());
+			header.setStreamId(lastHeader.getStreamId());
+			header.setTimerBase(lastHeader.getTimerBase());
+			header.setTimerDelta(lastHeader.getTimerDelta());
+			if (lastHeader.getExtendedTimestamp() != 0) {
+				timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
+				header.setExtendedTimestamp(timeValue);
+				log.trace("HEADER_CONTINUE with extended timestamp: {}", timeValue);
+			}
+			break;
+		default:
+			log.error("Unexpected header size: {}", headerSize);
+			return null;
 		}
 		log.trace("CHUNK, D, {}, {}", header, headerSize);
 		return header;
@@ -522,62 +522,62 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		IRTMPEvent message;
 		byte dataType = header.getDataType();
 		switch (dataType) {
-			case TYPE_INVOKE:
-				message = decodeInvoke(conn.getEncoding(), in);
-				break;
-			case TYPE_NOTIFY:
-				log.trace("Sending notify on stream id: {}", header.getStreamId());
-				if (header.getStreamId().doubleValue() == 0.0d) {
-					message = decodeNotify(conn.getEncoding(), in, header);
-				} else {
-					message = decodeStreamMetadata(in);
-				}
-				break;
-			case TYPE_AUDIO_DATA:
-				message = decodeAudioData(in);
-				message.setSourceType(Constants.SOURCE_TYPE_LIVE);
-				break;
-			case TYPE_VIDEO_DATA:
-				message = decodeVideoData(in);
-				message.setSourceType(Constants.SOURCE_TYPE_LIVE);
-				break;
-			case TYPE_AGGREGATE:
-				message = decodeAggregate(in);
-				break;
-			case TYPE_FLEX_SHARED_OBJECT: // represents an SO in an AMF3 container
-				message = decodeFlexSharedObject(in);
-				break;
-			case TYPE_SHARED_OBJECT:
-				message = decodeSharedObject(in);
-				break;
-			case TYPE_FLEX_MESSAGE:
-				message = decodeFlexMessage(in);
-				break;
-			case TYPE_FLEX_STREAM_SEND:
-				message = decodeFlexStreamSend(in);
-				break;
-			case TYPE_PING:
-				message = decodePing(in);
-				break;
-			case TYPE_BYTES_READ:
-				message = decodeBytesRead(in);
-				break;
-			case TYPE_CHUNK_SIZE:
-				message = decodeChunkSize(in);
-				break;
-			case TYPE_SERVER_BANDWIDTH:
-				message = decodeServerBW(in);
-				break;
-			case TYPE_CLIENT_BANDWIDTH:
-				message = decodeClientBW(in);
-				break;
-			case TYPE_ABORT:
-				message = decodeAbort(in);
-				break;
-			default:
-				log.warn("Unknown object type: {}", dataType);
-				message = decodeUnknown(dataType, in);
-				break;
+		case TYPE_INVOKE:
+			message = decodeInvoke(conn.getEncoding(), in);
+			break;
+		case TYPE_NOTIFY:
+			log.trace("Sending notify on stream id: {}", header.getStreamId());
+			if (header.getStreamId().doubleValue() == 0.0d) {
+				message = decodeNotify(conn.getEncoding(), in, header);
+			} else {
+				message = decodeStreamMetadata(in);
+			}
+			break;
+		case TYPE_AUDIO_DATA:
+			message = decodeAudioData(in);
+			message.setSourceType(Constants.SOURCE_TYPE_LIVE);
+			break;
+		case TYPE_VIDEO_DATA:
+			message = decodeVideoData(in);
+			message.setSourceType(Constants.SOURCE_TYPE_LIVE);
+			break;
+		case TYPE_AGGREGATE:
+			message = decodeAggregate(in);
+			break;
+		case TYPE_FLEX_SHARED_OBJECT: // represents an SO in an AMF3 container
+			message = decodeFlexSharedObject(in);
+			break;
+		case TYPE_SHARED_OBJECT:
+			message = decodeSharedObject(in);
+			break;
+		case TYPE_FLEX_MESSAGE:
+			message = decodeFlexMessage(in);
+			break;
+		case TYPE_FLEX_STREAM_SEND:
+			message = decodeFlexStreamSend(in);
+			break;
+		case TYPE_PING:
+			message = decodePing(in);
+			break;
+		case TYPE_BYTES_READ:
+			message = decodeBytesRead(in);
+			break;
+		case TYPE_CHUNK_SIZE:
+			message = decodeChunkSize(in);
+			break;
+		case TYPE_SERVER_BANDWIDTH:
+			message = decodeServerBW(in);
+			break;
+		case TYPE_CLIENT_BANDWIDTH:
+			message = decodeClientBW(in);
+			break;
+		case TYPE_ABORT:
+			message = decodeAbort(in);
+			break;
+		default:
+			log.warn("Unknown object type: {}", dataType);
+			message = decodeUnknown(dataType, in);
+			break;
 		}
 		return message;
 	}
@@ -892,24 +892,24 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		// control type
 		short type = in.getShort();
 		switch (type) {
-			case Ping.CLIENT_BUFFER:
-				ping = new SetBuffer(in.getInt(), in.getInt());
-				break;
-			case Ping.PING_SWF_VERIFY:
-				// only contains the type (2 bytes)
-				ping = new Ping(type);
-				break;
-			case Ping.PONG_SWF_VERIFY:
-				byte[] bytes = new byte[42];
-				in.get(bytes);
-				ping = new SWFResponse(bytes);
-				break;
-			default:
-				//STREAM_BEGIN, STREAM_PLAYBUFFER_CLEAR, STREAM_DRY, RECORDED_STREAM
-				//PING_CLIENT, PONG_SERVER
-				//BUFFER_EMPTY, BUFFER_FULL
-				ping = new Ping(type, in.getInt());
-				break;
+		case Ping.CLIENT_BUFFER:
+			ping = new SetBuffer(in.getInt(), in.getInt());
+			break;
+		case Ping.PING_SWF_VERIFY:
+			// only contains the type (2 bytes)
+			ping = new Ping(type);
+			break;
+		case Ping.PONG_SWF_VERIFY:
+			byte[] bytes = new byte[42];
+			in.get(bytes);
+			ping = new SWFResponse(bytes);
+			break;
+		default:
+			//STREAM_BEGIN, STREAM_PLAYBUFFER_CLEAR, STREAM_DRY, RECORDED_STREAM
+			//PING_CLIENT, PONG_SERVER
+			//BUFFER_EMPTY, BUFFER_FULL
+			ping = new Ping(type, in.getInt());
+			break;
 		}
 		return ping;
 	}
@@ -946,14 +946,14 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 		if (encoding == Encoding.AMF3) {
 			amfVersion = in.get();
 		}
-		
+
 		// reset the position back to 0
 		in.position(0);
-		
+
 		//make a pre-emptive copy of the incoming buffer here to prevent issues that occur fairly often
 		IoBuffer copy = in.duplicate();
-		
-		
+
+
 		if (encoding == Encoding.AMF0 || amfVersion != AMF.TYPE_AMF3_OBJECT ) {
 			input = new org.red5.io.amf.Input(copy);
 		} else {
@@ -987,26 +987,30 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 				Output out = new Output(buf);
 				out.writeString(onCueOrOnMeta);
 				out.writeMap(params);
-
 				buf.flip();
-				return new Notify(buf);
+				Notify ret =  new Notify(buf);
+				ret.setAction(onCueOrOnMeta);
+
+				return ret;
 			} else if ("onFI".equals(setData)) {
 				// the onFI request contains 2 items relative to the publishing client application
 				// sd = system date (12-07-2011)
 				// st = system time (09:11:33.387)
 				byte object = input.readDataType();
 				log.debug("onFI params type: {}", object);
-				Map<Object, Object> params;
-				if (object == DataTypes.CORE_MAP) {
-					// the params are sent as a Mixed-Array
-					params = (Map<Object, Object>) input.readMap(null);
-				} else {
-					// read the params as a standard object
-					params = (Map<Object, Object>) input.readObject(Object.class);
+				if(log.isDebugEnabled()){
+					Map<Object, Object> params;
+					if (object == DataTypes.CORE_MAP) {
+						// the params are sent as a Mixed-Array
+						params = (Map<Object, Object>) input.readMap(null);
+					} else {
+						// read the params as a standard object
+						params = (Map<Object, Object>) input.readObject(Object.class);
+					}
+					log.debug("onFI params: {}", params.toString());
 				}
-				log.debug("onFI params: {}", params.toString());
 			} else {
-				log.info("Unhandled request: {}", setData);
+				log.info("stream send: {}", setData);
 				if (log.isDebugEnabled()) {
 					byte object = input.readDataType();
 					log.debug("Params type: {}", object);
@@ -1018,6 +1022,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 					}
 				}
 			}
+			Notify toReturn = new Notify(in.asReadOnlyBuffer());
+			toReturn.setAction(setData); 
+			return toReturn;
 		}
 		return new Notify(in.asReadOnlyBuffer());
 	}
@@ -1054,22 +1061,22 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 				in.position(in.position() - 1);
 				log.debug("Object encoding: {}", objectEncodingType);
 				switch (objectEncodingType) {
-					case AMF.TYPE_AMF3_OBJECT:
-					case AMF3.TYPE_VECTOR_NUMBER:
-					case AMF3.TYPE_VECTOR_OBJECT:
-						// The next parameter is encoded using AMF3
-						input = new org.red5.io.amf3.Input(in, refStorage);
-						// Vectors with number and object have to have AMF3 forced
-						((org.red5.io.amf3.Input) input).enforceAMF3();
-						break;
-					case AMF3.TYPE_VECTOR_INT:
-					case AMF3.TYPE_VECTOR_UINT:
-						// The next parameter is encoded using AMF3
-						input = new org.red5.io.amf3.Input(in, refStorage);
-						break;
-					default:
-						// The next parameter is encoded using AMF0
-						input = new org.red5.io.amf.Input(in);
+				case AMF.TYPE_AMF3_OBJECT:
+				case AMF3.TYPE_VECTOR_NUMBER:
+				case AMF3.TYPE_VECTOR_OBJECT:
+					// The next parameter is encoded using AMF3
+					input = new org.red5.io.amf3.Input(in, refStorage);
+					// Vectors with number and object have to have AMF3 forced
+					((org.red5.io.amf3.Input) input).enforceAMF3();
+					break;
+				case AMF3.TYPE_VECTOR_INT:
+				case AMF3.TYPE_VECTOR_UINT:
+					// The next parameter is encoded using AMF3
+					input = new org.red5.io.amf3.Input(in, refStorage);
+					break;
+				default:
+					// The next parameter is encoded using AMF0
+					input = new org.red5.io.amf.Input(in);
 				}
 				paramList.add(Deserializer.deserialize(input, Object.class));
 			}
@@ -1093,16 +1100,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	public Notify decodeFlexStreamSend(IoBuffer in) {
 		// grab the initial limit
 		int limit = in.limit();
-		
+
 		// remove the first byte
 		in.position(1);
 		in.compact();
 		in.rewind();
-		
+
 		// set the limit back to the original minus the one
 		// byte that we removed from the buffer
 		in.limit(limit-1);
-		
+
 		return new FlexStreamSend(in.asReadOnlyBuffer());
 	}
 
@@ -1116,22 +1123,22 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	 */
 	private boolean isStreamCommand(String action) {
 		switch (StreamAction.getEnum(action)) {
-			case CREATE_STREAM:
-			case DELETE_STREAM:
-			case RELEASE_STREAM:
-			case PUBLISH:
-			case PLAY:
-			case PLAY2:
-			case SEEK:
-			case PAUSE:
-			case PAUSE_RAW:
-			case CLOSE_STREAM:
-			case RECEIVE_VIDEO:
-			case RECEIVE_AUDIO:
-				return true;
-			default:
-				log.debug("Stream action {} is not a recognized command", action);
-				return false;
+		case CREATE_STREAM:
+		case DELETE_STREAM:
+		case RELEASE_STREAM:
+		case PUBLISH:
+		case PLAY:
+		case PLAY2:
+		case SEEK:
+		case PAUSE:
+		case PAUSE_RAW:
+		case CLOSE_STREAM:
+		case RECEIVE_VIDEO:
+		case RECEIVE_AUDIO:
+			return true;
+		default:
+			log.debug("Stream action {} is not a recognized command", action);
+			return false;
 		}
 	}
 
