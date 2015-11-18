@@ -59,7 +59,7 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 				// replace conn with the one from the session id lookup
 				Red5.setConnectionLocal(conn);
 			}
-			final Semaphore lock = conn.getEncoderLock();
+			Semaphore lock = conn.getEncoderLock();
 			try {
 				// acquire the decoder lock
 				log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
@@ -85,6 +85,9 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 			} finally {
 				log.trace("Encoder lock releasing.. {}", conn.getSessionId());
 				lock.release();
+				if(Thread.interrupted()){
+					log.info("Released lock after encoding error");
+				}
 			}
 			// set connection local back to previous value
 			if (prev != null) {
