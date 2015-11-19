@@ -946,9 +946,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 			deferredResults.clear();
 			pendingVideos.clear();
 			streamBuffers.clear();
-			// drain permits
-			decoderLock.drainPermits();
-			encoderLock.drainPermits();
+			
 			if (log.isTraceEnabled()) {
 				// dump memory stats
 				log.trace("Memory at close - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
