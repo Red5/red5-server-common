@@ -59,9 +59,10 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 				// replace conn with the one from the session id lookup
 				Red5.setConnectionLocal(conn);
 			}
+			Boolean interrupted = false;
 			Semaphore lock = conn.getEncoderLock();
 			try {
-				// acquire the decoder lock
+				// acquire the encoder lock
 				log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
 				lock.acquire();
 				log.trace("Encoder lock acquired {}", conn.getSessionId());
@@ -80,13 +81,16 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 				} else {
 					log.trace("Response buffer was null after encoding");
 				}
+			} catch (InterruptedException ex) {
+				log.error("InterruptedException during encode", ex);
+				interrupted = true;
 			} catch (Exception ex) {
 				log.error("Exception during encode", ex);
 			} finally {
 				log.trace("Encoder lock releasing.. {}", conn.getSessionId());
 				lock.release();
-				if(Thread.interrupted()){
-					log.info("Released lock after encoding error");
+				if(interrupted && log.isInfoEnabled()){
+					log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
 				}
 			}
 			// set connection local back to previous value
