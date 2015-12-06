@@ -10,197 +10,204 @@ import org.red5.io.ITag;
  */
 public class ImmutableTag implements ITag {
 
-	/**
-	 * Tag data type
-	 */
-	private final byte dataType;
+    /**
+     * Tag data type
+     */
+    private final byte dataType;
 
-	/**
-	 * Timestamp
-	 */
-	private int timestamp;
+    /**
+     * Timestamp
+     */
+    private int timestamp;
 
-	/**
-	 * Tag body as byte buffer
-	 */
-	private final byte[] body;
+    /**
+     * Tag body as byte buffer
+     */
+    private final byte[] body;
 
-	/**
-	 * Previous tag size
-	 */
-	private final int previousTagSize;
+    /**
+     * Previous tag size
+     */
+    private final int previousTagSize;
 
-	/**
-	 * ImmutableTag Constructor
-	 * 
-	 * @param dataType          Tag data type
-	 * @param timestamp         Timestamp
-	 * @param body              Tag body
-	 */
-	private ImmutableTag(byte dataType, int timestamp, byte[] data) {
-		this.dataType = dataType;
-		this.timestamp = timestamp;
-		this.body = data;
-		this.previousTagSize = 0;
-	}	
-	
-	/**
-	 * ImmutableTag Constructor
-	 * 
-	 * @param dataType          Tag data type
-	 * @param timestamp         Timestamp
-	 * @param body              Tag body
-	 * @param previousTagSize   Previous tag size information
-	 */
-	private ImmutableTag(byte dataType, int timestamp, byte[] data, int previousTagSize) {
-		this.dataType = dataType;
-		this.timestamp = timestamp;
-		this.body = data;
-		this.previousTagSize = previousTagSize;
-	}
+    /**
+     * ImmutableTag Constructor
+     * 
+     * @param dataType
+     *            Tag data type
+     * @param timestamp
+     *            Timestamp
+     * @param body
+     *            Tag body
+     */
+    private ImmutableTag(byte dataType, int timestamp, byte[] data) {
+        this.dataType = dataType;
+        this.timestamp = timestamp;
+        this.body = data;
+        this.previousTagSize = 0;
+    }
 
-	/**
-	 * Get the data type
-	 * 
-	 * @return               Tag data type
-	 */
-	public byte getDataType() {
-		return dataType;
-	}
+    /**
+     * ImmutableTag Constructor
+     * 
+     * @param dataType
+     *            Tag data type
+     * @param timestamp
+     *            Timestamp
+     * @param body
+     *            Tag body
+     * @param previousTagSize
+     *            Previous tag size information
+     */
+    private ImmutableTag(byte dataType, int timestamp, byte[] data, int previousTagSize) {
+        this.dataType = dataType;
+        this.timestamp = timestamp;
+        this.body = data;
+        this.previousTagSize = previousTagSize;
+    }
 
-	/**
-	 * Return the timestamp
-	 * 
-	 * @return                Tag timestamp
-	 */
-	public int getTimestamp() {
-		return timestamp;
-	}
+    /**
+     * Get the data type
+     * 
+     * @return Tag data type
+     */
+    public byte getDataType() {
+        return dataType;
+    }
 
-	@Override
-	public void setTimestamp(int timestamp) {
-		this.timestamp = timestamp;
-	}
-	
-	/** {@inheritDoc} */
-	public IoBuffer getData() {
-		return IoBuffer.wrap(body);
-	}
-	
-	/**
-	 * Return the body IoBuffer
-	 * 
-	 * @return         Tag body
-	 */
-	public IoBuffer getBody() {
-		return IoBuffer.wrap(body);
-	}
+    /**
+     * Return the timestamp
+     * 
+     * @return Tag timestamp
+     */
+    public int getTimestamp() {
+        return timestamp;
+    }
 
-	/**
-	 * Return the size of the body
-	 * 
-	 * @return                Tag body size
-	 */
-	public int getBodySize() {
-		return body.length;
-	}
+    @Override
+    public void setTimestamp(int timestamp) {
+        this.timestamp = timestamp;
+    }
 
-	/**
-	 * Return previous tag size
-	 * 
-	 * @return                Previous tag size
-	 */
-	public int getPreviousTagSize() {
-		return previousTagSize;
-	}
+    /** {@inheritDoc} */
+    public IoBuffer getData() {
+        return IoBuffer.wrap(body);
+    }
 
-	@Override
-	public void setBody(IoBuffer body) {
-	}
+    /**
+     * Return the body IoBuffer
+     * 
+     * @return Tag body
+     */
+    public IoBuffer getBody() {
+        return IoBuffer.wrap(body);
+    }
 
-	@Override
-	public void setBodySize(int size) {
-	}
+    /**
+     * Return the size of the body
+     * 
+     * @return Tag body size
+     */
+    public int getBodySize() {
+        return body.length;
+    }
 
-	@Override
-	public void setDataType(byte datatype) {
-	}
+    /**
+     * Return previous tag size
+     * 
+     * @return Previous tag size
+     */
+    public int getPreviousTagSize() {
+        return previousTagSize;
+    }
 
-	@Override
-	public void setPreviousTagSize(int size) {
-	}
+    @Override
+    public void setBody(IoBuffer body) {
+    }
 
-	/**
-	 * Prints out the contents of the tag
-	 * 
-	 * @return  Tag contents
-	 */
-	@Override
-	public String toString() {
-		String ret = "Data Type\t=" + dataType + "\n";
-		ret += "Prev. Tag Size\t=" + previousTagSize + "\n";
-		ret += "Body size\t=" + body.length + "\n";
-		ret += "timestamp\t=" + timestamp + "\n";
-		ret += "Body Data\t=" + body + "\n";
-		return ret;
-	}
-	
-	public static ImmutableTag build(byte dataType, int timestamp) {
-		return ImmutableTag.build(dataType, timestamp, null);
-	}
-	
-	public static ImmutableTag build(byte dataType, int timestamp, Object data) {
-		if (data != null) {
-			if (data instanceof IoBuffer) {
-				IoBuffer buf = (IoBuffer) data;
-	        	byte[] body = new byte[buf.limit()];
-	        	int pos = buf.position();
-	        	buf.get(body);
-	        	buf.position(pos);	
-	        	return new ImmutableTag(dataType, timestamp, body);			
-			} else {
-				byte[] buf = (byte[]) data;
-        		byte[] body = new byte[buf.length];
-        		System.arraycopy(buf, 0, body, 0, body.length);
-        		return new ImmutableTag(dataType, timestamp, body);		
-			}
-		} else {
-			return new ImmutableTag(dataType, timestamp, null);					
-		}
-	}
+    @Override
+    public void setBodySize(int size) {
+    }
 
-	public static ImmutableTag build(byte dataType, int timestamp, IoBuffer data) {
-		if (data != null) {
-        	byte[] body = new byte[data.limit()];
-        	int pos = data.position();
-        	data.get(body);
-        	data.position(pos);
-        	return new ImmutableTag(dataType, timestamp, body);		
-		} else {
-			return new ImmutableTag(dataType, timestamp, null);					
-		}
-	}	
+    @Override
+    public void setDataType(byte datatype) {
+    }
 
-	public static ImmutableTag build(byte dataType, int timestamp, byte[] data, int previousTagSize) {
-		if (data != null) {
-    		byte[] body = new byte[data.length];
-    		System.arraycopy(data, 0, body, 0, body.length);
-    		return new ImmutableTag(dataType, timestamp, body, previousTagSize);		
-    	} else {
-    		return new ImmutableTag(dataType, timestamp, null, previousTagSize);				
-    	}		
-	}
+    @Override
+    public void setPreviousTagSize(int size) {
+    }
 
-	public static ImmutableTag build(byte dataType, int timestamp, IoBuffer data, int previousTagSize) {
-		if (data != null) {
-    		byte[] body = new byte[data.limit()];
-    		int pos = data.position();
-    		data.get(body);
-    		data.position(pos);
-    		return new ImmutableTag(dataType, timestamp, body, previousTagSize);		
-    	} else {
-    		return new ImmutableTag(dataType, timestamp, null, previousTagSize);				
-    	}		
-	}
-	
+    /**
+     * Prints out the contents of the tag
+     * 
+     * @return Tag contents
+     */
+    @Override
+    public String toString() {
+        String ret = "Data Type\t=" + dataType + "\n";
+        ret += "Prev. Tag Size\t=" + previousTagSize + "\n";
+        ret += "Body size\t=" + body.length + "\n";
+        ret += "timestamp\t=" + timestamp + "\n";
+        ret += "Body Data\t=" + body + "\n";
+        return ret;
+    }
+
+    public static ImmutableTag build(byte dataType, int timestamp) {
+        return ImmutableTag.build(dataType, timestamp, null);
+    }
+
+    public static ImmutableTag build(byte dataType, int timestamp, Object data) {
+        if (data != null) {
+            if (data instanceof IoBuffer) {
+                IoBuffer buf = (IoBuffer) data;
+                byte[] body = new byte[buf.limit()];
+                int pos = buf.position();
+                buf.get(body);
+                buf.position(pos);
+                return new ImmutableTag(dataType, timestamp, body);
+            } else {
+                byte[] buf = (byte[]) data;
+                byte[] body = new byte[buf.length];
+                System.arraycopy(buf, 0, body, 0, body.length);
+                return new ImmutableTag(dataType, timestamp, body);
+            }
+        } else {
+            return new ImmutableTag(dataType, timestamp, null);
+        }
+    }
+
+    public static ImmutableTag build(byte dataType, int timestamp, IoBuffer data) {
+        if (data != null) {
+            byte[] body = new byte[data.limit()];
+            int pos = data.position();
+            data.get(body);
+            data.position(pos);
+            return new ImmutableTag(dataType, timestamp, body);
+        } else {
+            return new ImmutableTag(dataType, timestamp, null);
+        }
+    }
+
+    public static ImmutableTag build(byte dataType, int timestamp, byte[] data, int previousTagSize) {
+        if (data != null) {
+            byte[] body = new byte[data.length];
+            System.arraycopy(data, 0, body, 0, body.length);
+            return new ImmutableTag(dataType, timestamp, body, previousTagSize);
+        } else {
+            return new ImmutableTag(dataType, timestamp, null, previousTagSize);
+        }
+    }
+
+    public static ImmutableTag build(byte dataType, int timestamp, IoBuffer data, int previousTagSize) {
+        if (data != null) {
+            byte[] body = new byte[data.limit()];
+            int pos = data.position();
+            data.get(body);
+            data.position(pos);
+            return new ImmutableTag(dataType, timestamp, body, previousTagSize);
+        } else {
+            return new ImmutableTag(dataType, timestamp, null, previousTagSize);
+        }
+    }
+
 }

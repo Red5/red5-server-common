@@ -21,6 +21,8 @@ package org.red5.server.api.stream;
 import java.io.IOException;
 import java.util.Collection;
 
+import org.red5.codec.AudioCodec;
+import org.red5.codec.VideoCodec;
 import org.red5.server.messaging.IProvider;
 import org.red5.server.net.rtmp.event.Notify;
 
