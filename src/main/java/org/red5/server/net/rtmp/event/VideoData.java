@@ -36,179 +36,184 @@ import org.red5.server.stream.IStreamData;
  */
 public class VideoData extends BaseEvent implements IoConstants, IStreamData<VideoData>, IStreamPacket {
 
-	private static final long serialVersionUID = 5538859593815804830L;
+    private static final long serialVersionUID = 5538859593815804830L;
 
-	/**
-	 * Videoframe type
-	 */
-	public static enum FrameType {
-		UNKNOWN, KEYFRAME, INTERFRAME, DISPOSABLE_INTERFRAME,
-	}
+    /**
+     * Videoframe type
+     */
+    public static enum FrameType {
+        UNKNOWN, KEYFRAME, INTERFRAME, DISPOSABLE_INTERFRAME,
+    }
 
-	/**
-	 * Video data
-	 */
-	protected IoBuffer data;
+    /**
+     * Video data
+     */
+    protected IoBuffer data;
 
-	/**
-	 * Data type
-	 */
-	private byte dataType = TYPE_VIDEO_DATA;
+    /**
+     * Data type
+     */
+    private byte dataType = TYPE_VIDEO_DATA;
 
-	/**
-	 * Frame type, unknown by default
-	 */
-	protected FrameType frameType = FrameType.UNKNOWN;
+    /**
+     * Frame type, unknown by default
+     */
+    protected FrameType frameType = FrameType.UNKNOWN;
 
-	/** Constructs a new VideoData. */
-	public VideoData() {
-		this(IoBuffer.allocate(0).flip());
-	}
+    /** Constructs a new VideoData. */
+    public VideoData() {
+        this(IoBuffer.allocate(0).flip());
+    }
 
-	/**
-	 * Create video data event with given data buffer
-	 * @param data            Video data
-	 */
-	public VideoData(IoBuffer data) {
-		super(Type.STREAM_DATA);
-		setData(data);
-	}
-	
-	/**
-	 * Create video data event with given data buffer
-	 * @param data Video data
-	 * @param copy true to use a copy of the data or false to use reference
-	 */
-	public VideoData(IoBuffer data, boolean copy) {
-		super(Type.STREAM_DATA);
-		if (copy) {
-			byte[] array = new byte[data.limit()];
-			data.mark();
-			data.get(array);
-			data.reset();
-			setData(array);
-		} else {
-			setData(data);
-		}
-	}
+    /**
+     * Create video data event with given data buffer
+     * 
+     * @param data
+     *            Video data
+     */
+    public VideoData(IoBuffer data) {
+        super(Type.STREAM_DATA);
+        setData(data);
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public byte getDataType() {
-		return dataType;
-	}
+    /**
+     * Create video data event with given data buffer
+     * 
+     * @param data
+     *            Video data
+     * @param copy
+     *            true to use a copy of the data or false to use reference
+     */
+    public VideoData(IoBuffer data, boolean copy) {
+        super(Type.STREAM_DATA);
+        if (copy) {
+            byte[] array = new byte[data.limit()];
+            data.mark();
+            data.get(array);
+            data.reset();
+            setData(array);
+        } else {
+            setData(data);
+        }
+    }
 
-	public void setDataType(byte dataType) {
-		this.dataType = dataType;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public byte getDataType() {
+        return dataType;
+    }
 
-	/** {@inheritDoc} */
-	public IoBuffer getData() {
-		return data;
-	}
+    public void setDataType(byte dataType) {
+        this.dataType = dataType;
+    }
 
-	public void setData(IoBuffer data) {
-		this.data = data;
-		if (data != null && data.limit() > 0) {
-			data.mark();
-			int firstByte = (data.get(0)) & 0xff;
-			data.reset();
-			int frameType = (firstByte & MASK_VIDEO_FRAMETYPE) >> 4;
-			if (frameType == FLAG_FRAMETYPE_KEYFRAME) {
-				this.frameType = FrameType.KEYFRAME;
-			} else if (frameType == FLAG_FRAMETYPE_INTERFRAME) {
-				this.frameType = FrameType.INTERFRAME;
-			} else if (frameType == FLAG_FRAMETYPE_DISPOSABLE) {
-				this.frameType = FrameType.DISPOSABLE_INTERFRAME;
-			} else {
-				this.frameType = FrameType.UNKNOWN;
-			}
-		}
-	}
+    /** {@inheritDoc} */
+    public IoBuffer getData() {
+        return data;
+    }
 
-	public void setData(byte[] data) {
-		this.data = IoBuffer.allocate(data.length);
-		this.data.put(data).flip();
-	}
+    public void setData(IoBuffer data) {
+        this.data = data;
+        if (data != null && data.limit() > 0) {
+            data.mark();
+            int firstByte = (data.get(0)) & 0xff;
+            data.reset();
+            int frameType = (firstByte & MASK_VIDEO_FRAMETYPE) >> 4;
+            if (frameType == FLAG_FRAMETYPE_KEYFRAME) {
+                this.frameType = FrameType.KEYFRAME;
+            } else if (frameType == FLAG_FRAMETYPE_INTERFRAME) {
+                this.frameType = FrameType.INTERFRAME;
+            } else if (frameType == FLAG_FRAMETYPE_DISPOSABLE) {
+                this.frameType = FrameType.DISPOSABLE_INTERFRAME;
+            } else {
+                this.frameType = FrameType.UNKNOWN;
+            }
+        }
+    }
 
-	/**
-	 * Getter for frame type
-	 *
-	 * @return  Type of video frame
-	 */
-	public FrameType getFrameType() {
-		return frameType;
-	}
+    public void setData(byte[] data) {
+        this.data = IoBuffer.allocate(data.length);
+        this.data.put(data).flip();
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	protected void releaseInternal() {
-		if (data != null) {
-			final IoBuffer localData = data;
-			// null out the data first so we don't accidentally
-			// return a valid reference first
-			data = null;
-			localData.clear();
-			localData.free();
-		}
-	}
+    /**
+     * Getter for frame type
+     *
+     * @return Type of video frame
+     */
+    public FrameType getFrameType() {
+        return frameType;
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		frameType = (FrameType) in.readObject();
-		byte[] byteBuf = (byte[]) in.readObject();
-		if (byteBuf != null) {
-			data = IoBuffer.allocate(byteBuf.length);
-			data.setAutoExpand(true);
-			SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
-		}
-	}
+    /** {@inheritDoc} */
+    @Override
+    protected void releaseInternal() {
+        if (data != null) {
+            final IoBuffer localData = data;
+            // null out the data first so we don't accidentally
+            // return a valid reference first
+            data = null;
+            localData.clear();
+            localData.free();
+        }
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeObject(frameType);
-		if (data != null) {
-			out.writeObject(SerializeUtils.ByteBufferToByteArray(data));
-		} else {
-			out.writeObject(null);
-		}
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        frameType = (FrameType) in.readObject();
+        byte[] byteBuf = (byte[]) in.readObject();
+        if (byteBuf != null) {
+            data = IoBuffer.allocate(byteBuf.length);
+            data.setAutoExpand(true);
+            SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
+        }
+    }
 
-	/**
-	 * Duplicate this message / event.
-	 * 
-	 * @return  duplicated event
-	 */
-	public VideoData duplicate() throws IOException, ClassNotFoundException {
-		VideoData result = new VideoData();
-		// serialize
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		writeExternal(oos);
-		oos.close();
-		// convert to byte array
-		byte[] buf = baos.toByteArray();
-		baos.close();
-		// create input streams
-		ByteArrayInputStream bais = new ByteArrayInputStream(buf);
-		ObjectInputStream ois = new ObjectInputStream(bais);
-		// deserialize
-		result.readExternal(ois);
-		ois.close();
-		bais.close();
-		// clone the header if there is one
-		if (header != null) {
-			result.setHeader(header.clone());
-		}
-		return result;
-	}
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeObject(frameType);
+        if (data != null) {
+            out.writeObject(SerializeUtils.ByteBufferToByteArray(data));
+        } else {
+            out.writeObject(null);
+        }
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return String.format("Video - ts: %s length: %s", getTimestamp(), (data != null ? data.limit() : '0'));
-	}
-	
+    /**
+     * Duplicate this message / event.
+     * 
+     * @return duplicated event
+     */
+    public VideoData duplicate() throws IOException, ClassNotFoundException {
+        VideoData result = new VideoData();
+        // serialize
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        writeExternal(oos);
+        oos.close();
+        // convert to byte array
+        byte[] buf = baos.toByteArray();
+        baos.close();
+        // create input streams
+        ByteArrayInputStream bais = new ByteArrayInputStream(buf);
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        // deserialize
+        result.readExternal(ois);
+        ois.close();
+        bais.close();
+        // clone the header if there is one
+        if (header != null) {
+            result.setHeader(header.clone());
+        }
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return String.format("Video - ts: %s length: %s", getTimestamp(), (data != null ? data.limit() : '0'));
+    }
+
 }
