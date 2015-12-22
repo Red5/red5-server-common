@@ -12,12 +12,12 @@ import org.red5.server.api.service.IServiceCall;
  */
 public interface ICommand {
 
-	int getTransactionId();
-	
-	IServiceCall getCall();
+    int getTransactionId();
 
-	Map<String, Object> getConnectionParams();
+    IServiceCall getCall();
 
-	IoBuffer getData();
+    Map<String, Object> getConnectionParams();
+
+    IoBuffer getData();
 
 }

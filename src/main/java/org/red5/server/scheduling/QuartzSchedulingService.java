@@ -61,347 +61,323 @@ import org.springframework.scheduling.quartz.SimpleTriggerFactoryBean;
 @ManagedResource(objectName = "org.red5.server:name=schedulingService,type=QuartzSchedulingService")
 public class QuartzSchedulingService implements ISchedulingService, QuartzSchedulingServiceMXBean, InitializingBean, DisposableBean {
 
-	private static Logger log = Red5LoggerFactory.getLogger(QuartzSchedulingService.class);
-	
-	/**
-	 * Quartz configuration properties file
-	 */
-	protected String configFile;	
-	
-	/**
-	 * Number of job details
-	 */
-	protected AtomicLong jobDetailCounter = new AtomicLong(0);
+    private static Logger log = Red5LoggerFactory.getLogger(QuartzSchedulingService.class);
 
-	/**
-	 * Creates schedulers.
-	 */
-	protected SchedulerFactory factory;
+    /**
+     * Quartz configuration properties file
+     */
+    protected String configFile;
 
-	/**
-	 * Creates job detail.
-	 */
-	protected JobDetailFactoryBean jobDetailfactory;
+    /**
+     * Number of job details
+     */
+    protected AtomicLong jobDetailCounter = new AtomicLong(0);
 
-	/**
-	 * Creates triggers.
-	 */
-	protected SimpleTriggerFactoryBean triggerfactory;
-	
-	/**
-	 * Service scheduler
-	 */
-	protected Scheduler scheduler;
+    /**
+     * Creates schedulers.
+     */
+    protected SchedulerFactory factory;
 
-	/**
-	 * Instance id
-	 */
-	protected String instanceId;
-	
-	/**
-	 * Default thread count
-	 */
-	protected String threadCount = "10";
-	
-	/**
-	 * Storage for job and trigger keys
-	 */
-	protected ConcurrentMap<String, ScheduledJobKey> keyMap = new ConcurrentHashMap<String, ScheduledJobKey>();
+    /**
+     * Creates job detail.
+     */
+    protected JobDetailFactoryBean jobDetailfactory;
 
-	/** Constructs a new QuartzSchedulingService. */
-	public void afterPropertiesSet() throws Exception {
-		log.debug("Initializing...");
-		try {
-			//create the standard factory if we dont have one
-			if (factory == null) {
-				//set properties
-				if (configFile != null) {
-					factory = new StdSchedulerFactory(configFile);
-				} else {
-					Properties props = new Properties();
-					props.put("org.quartz.scheduler.instanceName", "Red5_Scheduler");
-					props.put("org.quartz.scheduler.instanceId", "AUTO");
-					props.put("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
-					props.put("org.quartz.threadPool.threadCount", threadCount);
-					props.put("org.quartz.threadPool.threadPriority", "5");
-					props.put("org.quartz.jobStore.misfireThreshold", "60000");
-					props.put("org.quartz.jobStore.class", "org.quartz.simpl.RAMJobStore");
-					factory = new StdSchedulerFactory(props);
-				}
-			}
-			if (instanceId == null) {
-				scheduler = factory.getScheduler();
-			} else {
-				scheduler = factory.getScheduler(instanceId);
-			}
-			//start the scheduler
-			if (scheduler != null) {
-				scheduler.start();
-			} else {
-				log.error("Scheduler was not started");
-			}
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-	
-	public void setFactory(SchedulerFactory factory) {
-		this.factory = factory;
-	}
+    /**
+     * Creates triggers.
+     */
+    protected SimpleTriggerFactoryBean triggerfactory;
 
-	public void setInstanceId(String instanceId) {
-		this.instanceId = instanceId;
-	}
+    /**
+     * Service scheduler
+     */
+    protected Scheduler scheduler;
 
-	public String getConfigFile() {
-		return configFile;
-	}
+    /**
+     * Instance id
+     */
+    protected String instanceId;
 
-	public void setConfigFile(String configFile) {
-		this.configFile = configFile;
-	}
-	
-//	protected void registerJMX() {
-//		//register with jmx server
-//		MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-//		try {
-//			ObjectName oName = null;
-//			if (instanceId == null) {
-//				oName = new ObjectName("org.red5.server:name=" + this.getClass().getName());
-//			} else {
-//				oName = new ObjectName("org.red5.server:name=" + this.getClass().getName() + ",instanceId=" + instanceId);
-//			}
-//	        mbeanServer.registerMBean(this, oName);
-//		} catch (Exception e) {
-//			log.warn("Error on jmx registration", e);
-//		}		
-//	}
+    /**
+     * Default thread count
+     */
+    protected String threadCount = "10";
 
-	/**
-	 * @return the threadCount
-	 */
-	public String getThreadCount() {
-		return threadCount;
-	}
+    /**
+     * Storage for job and trigger keys
+     */
+    protected ConcurrentMap<String, ScheduledJobKey> keyMap = new ConcurrentHashMap<String, ScheduledJobKey>();
 
-	/**
-	 * @param threadCount the threadCount to set
-	 */
-	public void setThreadCount(String threadCount) {
-		this.threadCount = threadCount;
-	}
+    /** Constructs a new QuartzSchedulingService. */
+    public void afterPropertiesSet() throws Exception {
+        log.debug("Initializing...");
+        try {
+            //create the standard factory if we dont have one
+            if (factory == null) {
+                //set properties
+                if (configFile != null) {
+                    factory = new StdSchedulerFactory(configFile);
+                } else {
+                    Properties props = new Properties();
+                    props.put("org.quartz.scheduler.instanceName", "Red5_Scheduler");
+                    props.put("org.quartz.scheduler.instanceId", "AUTO");
+                    props.put("org.quartz.threadPool.class", "org.quartz.simpl.SimpleThreadPool");
+                    props.put("org.quartz.threadPool.threadCount", threadCount);
+                    props.put("org.quartz.threadPool.threadPriority", "5");
+                    props.put("org.quartz.jobStore.misfireThreshold", "60000");
+                    props.put("org.quartz.jobStore.class", "org.quartz.simpl.RAMJobStore");
+                    factory = new StdSchedulerFactory(props);
+                }
+            }
+            if (instanceId == null) {
+                scheduler = factory.getScheduler();
+            } else {
+                scheduler = factory.getScheduler(instanceId);
+            }
+            //start the scheduler
+            if (scheduler != null) {
+                scheduler.start();
+            } else {
+                log.error("Scheduler was not started");
+            }
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
-	/** {@inheritDoc} */
-	public String addScheduledJob(int interval, IScheduledJob job) {
-		String name = getJobName();
-		// Store reference to applications job and service		
-		JobDataMap jobData = new JobDataMap();
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
-		// detail
-		JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class)
-			    .withIdentity(name)
-			    .usingJobData(jobData)
-			    .build();
-		// create trigger that fires indefinitely every <interval> milliseconds
-		Trigger trigger = TriggerBuilder.newTrigger()
-			    .withIdentity(String.format("Trigger_%s", name))
-			    .startAt(DateBuilder.futureDate(1, IntervalUnit.MILLISECOND))
-			    .forJob(jobDetail)
-			    .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-			    		.withIntervalInMilliseconds(interval)
-			    		.repeatForever())
-			    .build();		
-		// store keys by name
-		TriggerKey tKey = trigger.getKey();
-		JobKey jKey = trigger.getJobKey();
-		log.debug("Job key: {} Trigger key: {}", jKey, tKey);
-		ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
-		keyMap.put(name, key);
-		// schedule
-		scheduleJob(trigger, jobDetail);
-		return name;
-	}
+    public void setFactory(SchedulerFactory factory) {
+        this.factory = factory;
+    }
 
-	/** {@inheritDoc} */
-	public String addScheduledOnceJob(Date date, IScheduledJob job) {
-		String name = getJobName();
-		// Store reference to applications job and service		
-		JobDataMap jobData = new JobDataMap();
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
-		// detail
-		JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class)
-			    .withIdentity(name)
-			    .usingJobData(jobData)
-			    .build();
-		// create trigger that fires once
-		Trigger trigger = TriggerBuilder.newTrigger()
-			    .withIdentity(String.format("Trigger_%s", name))
-			    .startAt(date)
-			    .forJob(jobDetail)
-			    .build();			
-		log.debug("Job key: {} Trigger key: {}", trigger.getJobKey(), trigger.getKey());
-		// store keys by name
-		TriggerKey tKey = trigger.getKey();
-		JobKey jKey = trigger.getJobKey();
-		log.debug("Job key: {} Trigger key: {}", jKey, tKey);
-		ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
-		keyMap.put(name, key);		
-		// schedule		
-		scheduleJob(trigger, jobDetail);
-		return name;
-	}
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
 
-	/** {@inheritDoc} */
-	public String addScheduledOnceJob(long timeDelta, IScheduledJob job) {
-		// Create trigger that fires once in <timeDelta> milliseconds
-		return addScheduledOnceJob(new Date(System.currentTimeMillis() + timeDelta), job);
-	}
+    public String getConfigFile() {
+        return configFile;
+    }
 
-	/** {@inheritDoc} */
-	public String addScheduledJobAfterDelay(int interval, IScheduledJob job, int delay) {
-		String name = getJobName();
-		// Store reference to applications job and service		
-		JobDataMap jobData = new JobDataMap();
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
-		jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
-		// detail
-		JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class)
-			    .withIdentity(name, null)
-			    .usingJobData(jobData)
-			    .build();
-		// Create trigger that fires indefinitely every <interval> milliseconds
-		Trigger trigger = TriggerBuilder.newTrigger()
-			    .withIdentity(String.format("Trigger_%s", name))
-			    .startAt(DateBuilder.futureDate(delay, IntervalUnit.MILLISECOND))
-			    .forJob(jobDetail)
-			    .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-			    		.withIntervalInMilliseconds(interval)
-			    		.repeatForever())
-			    .build();		
-		// store keys by name
-		TriggerKey tKey = trigger.getKey();
-		JobKey jKey = trigger.getJobKey();
-		log.debug("Job key: {} Trigger key: {}", jKey, tKey);
-		ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
-		keyMap.put(name, key);
-		// schedule
-		scheduleJob(trigger, jobDetail);
-		return name;		
-	}
+    public void setConfigFile(String configFile) {
+        this.configFile = configFile;
+    }
 
-	/**
-	 * Getter for job name.
-	 *
-	 * @return  Job name
-	 */
-	public String getJobName() {
-		return String.format("ScheduledJob_%d", jobDetailCounter.getAndIncrement());
-	}
+    //	protected void registerJMX() {
+    //		//register with jmx server
+    //		MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    //		try {
+    //			ObjectName oName = null;
+    //			if (instanceId == null) {
+    //				oName = new ObjectName("org.red5.server:name=" + this.getClass().getName());
+    //			} else {
+    //				oName = new ObjectName("org.red5.server:name=" + this.getClass().getName() + ",instanceId=" + instanceId);
+    //			}
+    //	        mbeanServer.registerMBean(this, oName);
+    //		} catch (Exception e) {
+    //			log.warn("Error on jmx registration", e);
+    //		}		
+    //	}
 
-	/** {@inheritDoc} */
-	public List<String> getScheduledJobNames() {
-		List<String> result = new ArrayList<String>();
-		if (scheduler != null) {
-			try {
-				for (JobKey jobKey : scheduler.getJobKeys(null)) {
-					result.add(jobKey.getName());
-				}
-			} catch (SchedulerException ex) {
-				throw new RuntimeException(ex);
-			}
-		} else {
-			log.warn("No scheduler is available");
-		}
-		return result;
-	}
+    /**
+     * @return the threadCount
+     */
+    public String getThreadCount() {
+        return threadCount;
+    }
 
-	/** {@inheritDoc} */
-	public void pauseScheduledJob(String name) {
-		try {
-			scheduler.pauseJob(keyMap.get(name).jKey);
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    /**
+     * @param threadCount
+     *            the threadCount to set
+     */
+    public void setThreadCount(String threadCount) {
+        this.threadCount = threadCount;
+    }
 
-	/** {@inheritDoc} */
-	public void resumeScheduledJob(String name) {
-		try {
-			scheduler.resumeJob(keyMap.get(name).jKey);
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    /** {@inheritDoc} */
+    public String addScheduledJob(int interval, IScheduledJob job) {
+        String name = getJobName();
+        // Store reference to applications job and service		
+        JobDataMap jobData = new JobDataMap();
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
+        // detail
+        JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class).withIdentity(name).usingJobData(jobData).build();
+        // create trigger that fires indefinitely every <interval> milliseconds
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(String.format("Trigger_%s", name)).startAt(DateBuilder.futureDate(1, IntervalUnit.MILLISECOND)).forJob(jobDetail).withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(interval).repeatForever()).build();
+        // store keys by name
+        TriggerKey tKey = trigger.getKey();
+        JobKey jKey = trigger.getJobKey();
+        log.debug("Job key: {} Trigger key: {}", jKey, tKey);
+        ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
+        keyMap.put(name, key);
+        // schedule
+        scheduleJob(trigger, jobDetail);
+        return name;
+    }
 
-	public void pauseScheduledTrigger(String name) {
-		try {
-			scheduler.pauseTrigger(keyMap.get(name).tKey);
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    /** {@inheritDoc} */
+    public String addScheduledOnceJob(Date date, IScheduledJob job) {
+        String name = getJobName();
+        // Store reference to applications job and service		
+        JobDataMap jobData = new JobDataMap();
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
+        // detail
+        JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class).withIdentity(name).usingJobData(jobData).build();
+        // create trigger that fires once
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(String.format("Trigger_%s", name)).startAt(date).forJob(jobDetail).build();
+        log.debug("Job key: {} Trigger key: {}", trigger.getJobKey(), trigger.getKey());
+        // store keys by name
+        TriggerKey tKey = trigger.getKey();
+        JobKey jKey = trigger.getJobKey();
+        log.debug("Job key: {} Trigger key: {}", jKey, tKey);
+        ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
+        keyMap.put(name, key);
+        // schedule		
+        scheduleJob(trigger, jobDetail);
+        return name;
+    }
 
-	public void resumeScheduledTrigger(String name) {
-		try {
-			scheduler.resumeTrigger(keyMap.get(name).tKey);
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    /** {@inheritDoc} */
+    public String addScheduledOnceJob(long timeDelta, IScheduledJob job) {
+        // Create trigger that fires once in <timeDelta> milliseconds
+        return addScheduledOnceJob(new Date(System.currentTimeMillis() + timeDelta), job);
+    }
 
-	/** {@inheritDoc} */
-	public void removeScheduledJob(String name) {
-		try {
-			ScheduledJobKey key = keyMap.remove(name);
-			if (key != null) {
-				scheduler.deleteJob(key.jKey);
-			} else {
-				log.debug("No key found for job: {}", name);
-			}
-		} catch (SchedulerException ex) {
-			throw new RuntimeException(ex);
-		}
-	}
+    /** {@inheritDoc} */
+    public String addScheduledJobAfterDelay(int interval, IScheduledJob job, int delay) {
+        String name = getJobName();
+        // Store reference to applications job and service		
+        JobDataMap jobData = new JobDataMap();
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULING_SERVICE, this);
+        jobData.put(QuartzSchedulingServiceJob.SCHEDULED_JOB, job);
+        // detail
+        JobDetail jobDetail = JobBuilder.newJob(QuartzSchedulingServiceJob.class).withIdentity(name, null).usingJobData(jobData).build();
+        // Create trigger that fires indefinitely every <interval> milliseconds
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(String.format("Trigger_%s", name)).startAt(DateBuilder.futureDate(delay, IntervalUnit.MILLISECOND)).forJob(jobDetail).withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInMilliseconds(interval).repeatForever()).build();
+        // store keys by name
+        TriggerKey tKey = trigger.getKey();
+        JobKey jKey = trigger.getJobKey();
+        log.debug("Job key: {} Trigger key: {}", jKey, tKey);
+        ScheduledJobKey key = new ScheduledJobKey(tKey, jKey);
+        keyMap.put(name, key);
+        // schedule
+        scheduleJob(trigger, jobDetail);
+        return name;
+    }
 
-	/**
-	 * Schedules job
-	 * 
-	 * @param trigger Job trigger
-	 * @param jobDetail Job detail
-	 */
-	private void scheduleJob(Trigger trigger, JobDetail jobDetail) {
-		if (scheduler != null) {		
-			try {
-				scheduler.scheduleJob(jobDetail, trigger);
-			} catch (SchedulerException ex) {
-				throw new RuntimeException(ex);
-			}
-		} else {
-			log.warn("No scheduler is available");
-		}
-	}
+    /**
+     * Getter for job name.
+     *
+     * @return Job name
+     */
+    public String getJobName() {
+        return String.format("ScheduledJob_%d", jobDetailCounter.getAndIncrement());
+    }
 
-	public void destroy() throws Exception {
-		if (scheduler != null) {
-			log.debug("Destroying...");
-			scheduler.shutdown(false);
-		}
-		keyMap.clear();
-	}
+    /** {@inheritDoc} */
+    public List<String> getScheduledJobNames() {
+        List<String> result = new ArrayList<String>();
+        if (scheduler != null) {
+            try {
+                for (JobKey jobKey : scheduler.getJobKeys(null)) {
+                    result.add(jobKey.getName());
+                }
+            } catch (SchedulerException ex) {
+                throw new RuntimeException(ex);
+            }
+        } else {
+            log.warn("No scheduler is available");
+        }
+        return result;
+    }
 
-	protected final class ScheduledJobKey {
+    /** {@inheritDoc} */
+    public void pauseScheduledJob(String name) {
+        try {
+            scheduler.pauseJob(keyMap.get(name).jKey);
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
-		TriggerKey tKey;
-		
-		JobKey jKey;
-		
-		public ScheduledJobKey(TriggerKey tKey, JobKey jKey) {
-			this.tKey = tKey;
-			this.jKey = jKey;
-		}
-		
-	}
-	
+    /** {@inheritDoc} */
+    public void resumeScheduledJob(String name) {
+        try {
+            scheduler.resumeJob(keyMap.get(name).jKey);
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void pauseScheduledTrigger(String name) {
+        try {
+            scheduler.pauseTrigger(keyMap.get(name).tKey);
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void resumeScheduledTrigger(String name) {
+        try {
+            scheduler.resumeTrigger(keyMap.get(name).tKey);
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /** {@inheritDoc} */
+    public void removeScheduledJob(String name) {
+        try {
+            ScheduledJobKey key = keyMap.remove(name);
+            if (key != null) {
+                scheduler.deleteJob(key.jKey);
+            } else {
+                log.debug("No key found for job: {}", name);
+            }
+        } catch (SchedulerException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Schedules job
+     * 
+     * @param trigger
+     *            Job trigger
+     * @param jobDetail
+     *            Job detail
+     */
+    private void scheduleJob(Trigger trigger, JobDetail jobDetail) {
+        if (scheduler != null) {
+            try {
+                scheduler.scheduleJob(jobDetail, trigger);
+            } catch (SchedulerException ex) {
+                throw new RuntimeException(ex);
+            }
+        } else {
+            log.warn("No scheduler is available");
+        }
+    }
+
+    public void destroy() throws Exception {
+        if (scheduler != null) {
+            log.debug("Destroying...");
+            scheduler.shutdown(false);
+        }
+        keyMap.clear();
+    }
+
+    protected final class ScheduledJobKey {
+
+        TriggerKey tKey;
+
+        JobKey jKey;
+
+        public ScheduledJobKey(TriggerKey tKey, JobKey jKey) {
+            this.tKey = tKey;
+            this.jKey = jKey;
+        }
+
+    }
+
 }

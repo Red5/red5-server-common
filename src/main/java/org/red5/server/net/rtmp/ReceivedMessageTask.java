@@ -37,116 +37,117 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  */
 public final class ReceivedMessageTask implements Callable<Packet> {
 
-	private final static Logger log = LoggerFactory.getLogger(ReceivedMessageTask.class);
+    private final static Logger log = LoggerFactory.getLogger(ReceivedMessageTask.class);
 
-	private final RTMPConnection conn;
+    private final RTMPConnection conn;
 
-	private final IRTMPHandler handler;
+    private final IRTMPHandler handler;
 
-	private final String sessionId;
+    private final String sessionId;
 
-	private Packet packet;
+    private Packet packet;
 
-	private long packetNumber;
+    private long packetNumber;
 
-	private final AtomicBoolean processing = new AtomicBoolean(false);
+    private final AtomicBoolean processing = new AtomicBoolean(false);
 
-	private Thread taskThread;
+    private Thread taskThread;
 
-	private ScheduledFuture<Runnable> deadlockFuture;
+    private ScheduledFuture<Runnable> deadlockFuture;
 
-	public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler) {
-		this(sessionId, packet, handler, (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId));
-	}
+    public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler) {
+        this(sessionId, packet, handler, (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId));
+    }
 
-	public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler, RTMPConnection conn) {
-		this.sessionId = sessionId;
-		this.packet = packet;
-		this.handler = handler;
-		this.conn = conn;
-	}
+    public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler, RTMPConnection conn) {
+        this.sessionId = sessionId;
+        this.packet = packet;
+        this.handler = handler;
+        this.conn = conn;
+    }
 
-	public Packet call() throws Exception {
-		//keep a ref for executor thread
-		taskThread = Thread.currentThread();
-		// set connection to thread local
-		Red5.setConnectionLocal(conn);
-		try {
-			// pass message to the handler
-			handler.messageReceived(conn, packet);
-			// if we get this far, set done / completed flag
-			packet.setProcessed(true);
-		} finally {
-			// clear thread local
-			Red5.setConnectionLocal(null);
-		}
-		if (log.isDebugEnabled()) {
-			log.debug("Processing message for {} is processed: {} packet #{}", sessionId, packet.isProcessed(), packetNumber);
-		}
-		return packet;
-	}
+    public Packet call() throws Exception {
+        //keep a ref for executor thread
+        taskThread = Thread.currentThread();
+        // set connection to thread local
+        Red5.setConnectionLocal(conn);
+        try {
+            // pass message to the handler
+            handler.messageReceived(conn, packet);
+            // if we get this far, set done / completed flag
+            packet.setProcessed(true);
+        } finally {
+            // clear thread local
+            Red5.setConnectionLocal(null);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Processing message for {} is processed: {} packet #{}", sessionId, packet.isProcessed(), packetNumber);
+        }
+        return packet;
+    }
 
-	/**
-	 * Runs deadlock guard task
-	 *
-	 * @param deadlockGuardTask deadlock guard task
-	 */
-	@SuppressWarnings("unchecked")
+    /**
+     * Runs deadlock guard task
+     *
+     * @param deadlockGuardTask
+     *            deadlock guard task
+     */
+    @SuppressWarnings("unchecked")
     public void runDeadlockFuture(Runnable deadlockGuardTask) {
-		if (deadlockFuture == null) {
-			ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
-			if (deadlockGuard != null) {
-				try {
-					deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(deadlockGuardTask, new Date(packet.getExpirationTime()));
-				} catch (TaskRejectedException e) {
-					log.warn("DeadlockGuard task is rejected for {}", sessionId, e);
-				}
-			} else {
-				log.debug("Deadlock guard is null for {}", sessionId);
-			}
-		} else {
-			log.warn("Deadlock future is already create for {}", sessionId);
-		}
-	}
+        if (deadlockFuture == null) {
+            ThreadPoolTaskScheduler deadlockGuard = conn.getDeadlockGuardScheduler();
+            if (deadlockGuard != null) {
+                try {
+                    deadlockFuture = (ScheduledFuture<Runnable>) deadlockGuard.schedule(deadlockGuardTask, new Date(packet.getExpirationTime()));
+                } catch (TaskRejectedException e) {
+                    log.warn("DeadlockGuard task is rejected for {}", sessionId, e);
+                }
+            } else {
+                log.debug("Deadlock guard is null for {}", sessionId);
+            }
+        } else {
+            log.warn("Deadlock future is already create for {}", sessionId);
+        }
+    }
 
-	/**
-	 * Cancels deadlock future if it was created
-	 */
-	public void cancelDeadlockFuture() {
-		// kill the future for the deadlock since processing is complete
-		if (deadlockFuture != null) {
-			deadlockFuture.cancel(true);
-		}
-	}
+    /**
+     * Cancels deadlock future if it was created
+     */
+    public void cancelDeadlockFuture() {
+        // kill the future for the deadlock since processing is complete
+        if (deadlockFuture != null) {
+            deadlockFuture.cancel(true);
+        }
+    }
 
-	/**
-	 * Marks task as processing if it is not processing yet.
-	 *
-	 * @return true if successful, or false otherwise
-	 */
-	public boolean setProcessing() {
-		return processing.compareAndSet(false, true);
-	}
+    /**
+     * Marks task as processing if it is not processing yet.
+     *
+     * @return true if successful, or false otherwise
+     */
+    public boolean setProcessing() {
+        return processing.compareAndSet(false, true);
+    }
 
-	public long getPacketNumber() {
-		return packetNumber;
-	}
+    public long getPacketNumber() {
+        return packetNumber;
+    }
 
-	public void setPacketNumber(long packetNumber) {
-		this.packetNumber = packetNumber;
-	}
+    public void setPacketNumber(long packetNumber) {
+        this.packetNumber = packetNumber;
+    }
 
-	public Packet getPacket() {
-		return packet;
-	}
+    public Packet getPacket() {
+        return packet;
+    }
 
-	public Thread getTaskThread() {
-		return taskThread;
-	}
+    public Thread getTaskThread() {
+        return taskThread;
+    }
 
-	@Override
-	public String toString() {
-		return "[sessionId: " + sessionId + "; packetNumber: " + packetNumber + "; processing: " + processing.get() + "]";
-	}
-	
+    @Override
+    public String toString() {
+        return "[sessionId: " + sessionId + "; packetNumber: " + packetNumber + "; processing: " + processing.get() + "]";
+    }
+
 }

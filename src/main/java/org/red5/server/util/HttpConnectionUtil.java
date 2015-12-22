@@ -41,85 +41,89 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpConnectionUtil {
 
-	private static Logger log = LoggerFactory.getLogger(HttpConnectionUtil.class);
+    private static Logger log = LoggerFactory.getLogger(HttpConnectionUtil.class);
 
-	private static final String userAgent = "Mozilla/4.0 (compatible; Red5 Server)";
-	
-	private static PoolingHttpClientConnectionManager connectionManager;
-	
-	private static int connectionTimeout = 7000;
-	
-	static {
-		// Create an HttpClient with the PoolingHttpClientConnectionManager.
-		// This connection manager must be used if more than one thread will
-		// be using the HttpClient.
-		connectionManager = new PoolingHttpClientConnectionManager();
-		connectionManager.setMaxTotal(40);
-	}
+    private static final String userAgent = "Mozilla/4.0 (compatible; Red5 Server)";
 
-	/**
-	 * Returns a client with all our selected properties / params.
-	 * 
-	 * @return client
-	 */
-	public static final HttpClient getClient() {
-		return getClient(connectionTimeout);
-	}
+    private static PoolingHttpClientConnectionManager connectionManager;
 
-	/**
-	 * Returns a client with all our selected properties / params.
-	 * 
-	 * @param timeout - socket timeout to set
-	 * @return client
-	 */
-	public static final HttpClient getClient(int timeout) {
-		HttpClientBuilder client = HttpClientBuilder.create();
-		client.setConnectionManager(connectionManager);
-		// dont retry
-		client.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
-		// establish a connection within x seconds
-		RequestConfig config = RequestConfig.custom().setSocketTimeout(timeout).build();
-		client.setDefaultRequestConfig(config);
-		// no redirects
-		client.disableRedirectHandling();
-		// set custom ua
-		client.setUserAgent(userAgent);
-		// set the proxy if the user has one set
-		if ((System.getProperty("http.proxyHost") != null) && (System.getProperty("http.proxyPort") != null)) {
-			HttpHost proxy = new HttpHost(System.getProperty("http.proxyHost").toString(), Integer.valueOf(System.getProperty("http.proxyPort")));
-			client.setProxy(proxy);
-		}
-		
-		return client.build();
-	}
-	
-	/**
-	 * Logs details about the request error.
-	 * 
-	 * @param response http response
-	 * @throws IOException on IO error
-	 * @throws ParseException on parse error
-	 */
-	public static void handleError(HttpResponse response) throws ParseException, IOException {
-		log.debug("{}", response.getStatusLine().toString());
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			log.debug("{}", EntityUtils.toString(entity));
-		}
-	}	
-	
-	/**
-	 * @return the connectionTimeout
-	 */
-	public int getConnectionTimeout() {
-		return connectionTimeout;
-	}
+    private static int connectionTimeout = 7000;
 
-	/**
-	 * @param connectionTimeout the connectionTimeout to set
-	 */
-	public void setConnectionTimeout(int connectionTimeout) {
-		HttpConnectionUtil.connectionTimeout = connectionTimeout;
-	}
-	
+    static {
+        // Create an HttpClient with the PoolingHttpClientConnectionManager.
+        // This connection manager must be used if more than one thread will
+        // be using the HttpClient.
+        connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(40);
+    }
+
+    /**
+     * Returns a client with all our selected properties / params.
+     * 
+     * @return client
+     */
+    public static final HttpClient getClient() {
+        return getClient(connectionTimeout);
+    }
+
+    /**
+     * Returns a client with all our selected properties / params.
+     * 
+     * @param timeout
+     *            - socket timeout to set
+     * @return client
+     */
+    public static final HttpClient getClient(int timeout) {
+        HttpClientBuilder client = HttpClientBuilder.create();
+        client.setConnectionManager(connectionManager);
+        // dont retry
+        client.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
+        // establish a connection within x seconds
+        RequestConfig config = RequestConfig.custom().setSocketTimeout(timeout).build();
+        client.setDefaultRequestConfig(config);
+        // no redirects
+        client.disableRedirectHandling();
+        // set custom ua
+        client.setUserAgent(userAgent);
+        // set the proxy if the user has one set
+        if ((System.getProperty("http.proxyHost") != null) && (System.getProperty("http.proxyPort") != null)) {
+            HttpHost proxy = new HttpHost(System.getProperty("http.proxyHost").toString(), Integer.valueOf(System.getProperty("http.proxyPort")));
+            client.setProxy(proxy);
+        }
+        return client.build();
+    }
+
+    /**
+     * Logs details about the request error.
+     * 
+     * @param response
+     *            http response
+     * @throws IOException
+     *             on IO error
+     * @throws ParseException
+     *             on parse error
+     */
+    public static void handleError(HttpResponse response) throws ParseException, IOException {
+        log.debug("{}", response.getStatusLine().toString());
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            log.debug("{}", EntityUtils.toString(entity));
+        }
+    }
+
+    /**
+     * @return the connectionTimeout
+     */
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    /**
+     * @param connectionTimeout
+     *            the connectionTimeout to set
+     */
+    public void setConnectionTimeout(int connectionTimeout) {
+        HttpConnectionUtil.connectionTimeout = connectionTimeout;
+    }
+
 }

@@ -29,48 +29,48 @@ import java.io.ObjectOutput;
  */
 public class Abort extends BaseEvent {
 
-	private int channelId = 0;
+    private int channelId = 0;
 
-	public Abort() {
-		super(Type.SYSTEM);
-	}
+    public Abort() {
+        super(Type.SYSTEM);
+    }
 
-	public Abort(int channelId) {
-		this.channelId = channelId;
-	}
+    public Abort(int channelId) {
+        this.channelId = channelId;
+    }
 
-	public byte getDataType() {
-		return TYPE_ABORT;
-	}
+    public byte getDataType() {
+        return TYPE_ABORT;
+    }
 
-	protected void releaseInternal() {
+    protected void releaseInternal() {
 
-	}
+    }
 
-	public void setChannelId(int channelId) {
-		this.channelId = channelId;
-	}
+    public void setChannelId(int channelId) {
+        this.channelId = channelId;
+    }
 
-	public int getChannelId() {
-		return channelId;
-	}
+    public int getChannelId() {
+        return channelId;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return "Abort Channel: " + channelId;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return "Abort Channel: " + channelId;
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		channelId = in.readInt();
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        channelId = in.readInt();
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeInt(channelId);
-	}
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeInt(channelId);
+    }
 
 }

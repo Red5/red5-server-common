@@ -27,7 +27,7 @@ import org.apache.mina.core.buffer.IoBuffer;
  */
 public interface IHandshake {
 
-	public IoBuffer doHandshake(IoBuffer input);
+    public IoBuffer doHandshake(IoBuffer input);
 
-	public boolean validate(IoBuffer input);
+    public boolean validate(IoBuffer input);
 }

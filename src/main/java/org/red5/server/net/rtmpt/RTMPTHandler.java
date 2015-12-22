@@ -32,53 +32,54 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPTHandler extends RTMPHandler {
 
-	private static final Logger log = LoggerFactory.getLogger(RTMPTHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RTMPTHandler.class);
 
-	/**
-	 * Protocol codec factory
-	 */
-	protected RTMPTCodecFactory codecFactory;
+    /**
+     * Protocol codec factory
+     */
+    protected RTMPTCodecFactory codecFactory;
 
-	/**
-	 * Setter for codec factory
-	 *
-	 * @param factory  Codec factory to use
-	 */
-	public void setCodecFactory(RTMPTCodecFactory factory) {
-		this.codecFactory = factory;
-	}
+    /**
+     * Setter for codec factory
+     *
+     * @param factory
+     *            Codec factory to use
+     */
+    public void setCodecFactory(RTMPTCodecFactory factory) {
+        this.codecFactory = factory;
+    }
 
-	/**
-	 * Getter for codec factory
-	 *
-	 * @return Codec factory
-	 */
-	public RTMPTCodecFactory getCodecFactory() {
-		return this.codecFactory;
-	}
-	
-	/**
-	 * Return hostname for URL.
-	 * 
-	 * @param url
-	 *            URL
-	 * @return Hostname from that URL
-	 */
-	@Override
-	protected String getHostname(String url) {
-		log.debug("url: {}", url);
-		String[] parts = url.split("/");
-		if (parts.length == 2) {
-			return "";
-		} else {
-			String host = parts[2];
-			// strip out default port if the client added it
-			if (host.endsWith(":80")) {
-				// Remove default port from connection string
-				return host.substring(0, host.length() - 3);
-			}
-			return host;
-		}
-	}
+    /**
+     * Getter for codec factory
+     *
+     * @return Codec factory
+     */
+    public RTMPTCodecFactory getCodecFactory() {
+        return this.codecFactory;
+    }
+
+    /**
+     * Return hostname for URL.
+     * 
+     * @param url
+     *            URL
+     * @return Hostname from that URL
+     */
+    @Override
+    protected String getHostname(String url) {
+        log.debug("url: {}", url);
+        String[] parts = url.split("/");
+        if (parts.length == 2) {
+            return "";
+        } else {
+            String host = parts[2];
+            // strip out default port if the client added it
+            if (host.endsWith(":80")) {
+                // Remove default port from connection string
+                return host.substring(0, host.length() - 3);
+            }
+            return host;
+        }
+    }
 
 }

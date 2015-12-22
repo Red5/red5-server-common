@@ -37,37 +37,37 @@ import org.slf4j.LoggerFactory;
  */
 public class ClientServerDetection implements IPendingServiceCallback {
 
-	protected static Logger log = LoggerFactory.getLogger(ClientServerDetection.class);
+    protected static Logger log = LoggerFactory.getLogger(ClientServerDetection.class);
 
-	/**
-	 * Handle callback from service call.
-	 */
-	public void resultReceived(IPendingServiceCall call) {
-		// if we aren't connection, skip any further testing
-		if (Call.STATUS_NOT_CONNECTED != call.getStatus()) {
-			
-		} else {
-			log.debug("Pending call skipped due to being no longer connected");
-		}
-	}
+    /**
+     * Handle callback from service call.
+     */
+    public void resultReceived(IPendingServiceCall call) {
+        // if we aren't connection, skip any further testing
+        if (Call.STATUS_NOT_CONNECTED != call.getStatus()) {
 
-	private IStreamCapableConnection getStats() {
-		IConnection conn = Red5.getConnectionLocal();
-		if (conn instanceof IStreamCapableConnection) {
-			return (IStreamCapableConnection) conn;
-		}
-		return null;
-	}
+        } else {
+            log.debug("Pending call skipped due to being no longer connected");
+        }
+    }
 
-	public Map<String, Object> checkBandwidth(Object[] params) {
-		final IStreamCapableConnection stats = getStats();
-		Map<String, Object> statsValues = new HashMap<String, Object>();
-		Integer time = (Integer) (params.length > 0 ? params[0] : 0);
-		statsValues.put("cOutBytes", stats.getReadBytes());
-		statsValues.put("cInBytes", stats.getWrittenBytes());
-		statsValues.put("time", time);
-		log.debug("cOutBytes: {} cInBytes: {} time: {}", new Object[] { stats.getReadBytes(), stats.getWrittenBytes(), time });
-		return statsValues;
-	}
+    private IStreamCapableConnection getStats() {
+        IConnection conn = Red5.getConnectionLocal();
+        if (conn instanceof IStreamCapableConnection) {
+            return (IStreamCapableConnection) conn;
+        }
+        return null;
+    }
+
+    public Map<String, Object> checkBandwidth(Object[] params) {
+        final IStreamCapableConnection stats = getStats();
+        Map<String, Object> statsValues = new HashMap<String, Object>();
+        Integer time = (Integer) (params.length > 0 ? params[0] : 0);
+        statsValues.put("cOutBytes", stats.getReadBytes());
+        statsValues.put("cInBytes", stats.getWrittenBytes());
+        statsValues.put("time", time);
+        log.debug("cOutBytes: {} cInBytes: {} time: {}", new Object[] { stats.getReadBytes(), stats.getWrittenBytes(), time });
+        return statsValues;
+    }
 
 }

@@ -38,74 +38,75 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
 
-	protected static Logger log = LoggerFactory.getLogger(RTMPMinaProtocolDecoder.class);
+    protected static Logger log = LoggerFactory.getLogger(RTMPMinaProtocolDecoder.class);
 
-	private RTMPProtocolDecoder decoder = new RTMPProtocolDecoder();
+    private RTMPProtocolDecoder decoder = new RTMPProtocolDecoder();
 
-	/** {@inheritDoc} */
-	public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws ProtocolCodecException {
-		// create a buffer and store it on the session
-		IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
-		if (buf == null) {
-			buf = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
-			buf.setAutoExpand(true);
-			session.setAttribute("buffer", buf);
-		}
-		buf.put(in);
-		buf.flip();
-		// get the connection from the session
-		String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-		log.trace("Session id: {}", sessionId);
-		// connection verification routine
-		RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);		
-		RTMPConnection connLocal = (RTMPConnection) Red5.getConnectionLocal();
-		if (connLocal == null || !conn.getSessionId().equals(connLocal.getSessionId())) {
-			if (log.isDebugEnabled() && connLocal != null) {
-				log.debug("Connection local didn't match session");
-			}
-		}
-		// set the connection to local if its referred to by this session
-		Red5.setConnectionLocal(conn);
-		// get the connections decoder lock
-		final Semaphore lock = conn.getDecoderLock();
-		try {
-			// acquire the decoder lock
-			log.trace("Decoder lock acquiring.. {}", conn.getSessionId());
-			lock.acquire();
-			log.trace("Decoder lock acquired {}", conn.getSessionId());
-			// construct any objects from the decoded bugger
-			List<?> objects = decoder.decodeBuffer(conn, buf);
-			if (objects != null) {
-				for (Object object : objects) {
-					out.write(object);
-				}
-			}
-		} catch (Exception e) {
-			log.error("Error during decode", e);
-		} finally {
-			log.trace("Decoder lock releasing.. {}", conn.getSessionId());
-			lock.release();
-			// clear local
-			Red5.setConnectionLocal(null);
-		}
-	}
+    /** {@inheritDoc} */
+    public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws ProtocolCodecException {
+        // create a buffer and store it on the session
+        IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
+        if (buf == null) {
+            buf = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
+            buf.setAutoExpand(true);
+            session.setAttribute("buffer", buf);
+        }
+        buf.put(in);
+        buf.flip();
+        // get the connection from the session
+        String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
+        log.trace("Session id: {}", sessionId);
+        // connection verification routine
+        RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+        RTMPConnection connLocal = (RTMPConnection) Red5.getConnectionLocal();
+        if (connLocal == null || !conn.getSessionId().equals(connLocal.getSessionId())) {
+            if (log.isDebugEnabled() && connLocal != null) {
+                log.debug("Connection local didn't match session");
+            }
+        }
+        // set the connection to local if its referred to by this session
+        Red5.setConnectionLocal(conn);
+        // get the connections decoder lock
+        final Semaphore lock = conn.getDecoderLock();
+        try {
+            // acquire the decoder lock
+            log.trace("Decoder lock acquiring.. {}", conn.getSessionId());
+            lock.acquire();
+            log.trace("Decoder lock acquired {}", conn.getSessionId());
+            // construct any objects from the decoded bugger
+            List<?> objects = decoder.decodeBuffer(conn, buf);
+            if (objects != null) {
+                for (Object object : objects) {
+                    out.write(object);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error during decode", e);
+        } finally {
+            log.trace("Decoder lock releasing.. {}", conn.getSessionId());
+            lock.release();
+            // clear local
+            Red5.setConnectionLocal(null);
+        }
+    }
 
-	/**
-	 * Sets the RTMP protocol decoder.
-	 * 
-	 * @param decoder RTMP decoder
-	 */
-	public void setDecoder(RTMPProtocolDecoder decoder) {
-		this.decoder = decoder;
-	}
+    /**
+     * Sets the RTMP protocol decoder.
+     * 
+     * @param decoder
+     *            RTMP decoder
+     */
+    public void setDecoder(RTMPProtocolDecoder decoder) {
+        this.decoder = decoder;
+    }
 
-	/**
-	 * Returns an RTMP decoder.
-	 * 
-	 * @return RTMP decoder
-	 */
-	public RTMPProtocolDecoder getDecoder() {
-		return decoder;
-	}
+    /**
+     * Returns an RTMP decoder.
+     * 
+     * @return RTMP decoder
+     */
+    public RTMPProtocolDecoder getDecoder() {
+        return decoder;
+    }
 
 }

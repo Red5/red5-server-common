@@ -27,281 +27,285 @@ import java.io.ObjectOutput;
  */
 public class Ping extends BaseEvent {
 
-	private static final long serialVersionUID = -6478248060425544923L;
+    private static final long serialVersionUID = -6478248060425544923L;
 
-	/**
-	 * Stream begin / clear event
-	 */
-	public static final short STREAM_BEGIN = 0;
+    /**
+     * Stream begin / clear event
+     */
+    public static final short STREAM_BEGIN = 0;
 
-	/**
-	 * Stream EOF, playback of requested stream is completed.
-	 */
-	public static final short STREAM_PLAYBUFFER_CLEAR = 1;
+    /**
+     * Stream EOF, playback of requested stream is completed.
+     */
+    public static final short STREAM_PLAYBUFFER_CLEAR = 1;
 
-	/**
-	 * Stream is empty
-	 */
-	public static final short STREAM_DRY = 2;
+    /**
+     * Stream is empty
+     */
+    public static final short STREAM_DRY = 2;
 
-	/**
-	 * Client buffer. Sent by client to indicate its buffer time in milliseconds.
-	 */
-	public static final short CLIENT_BUFFER = 3;
+    /**
+     * Client buffer. Sent by client to indicate its buffer time in milliseconds.
+     */
+    public static final short CLIENT_BUFFER = 3;
 
-	/**
-	 * Recorded stream. Sent by server to indicate a recorded stream.
-	 */
-	public static final short RECORDED_STREAM = 4;
+    /**
+     * Recorded stream. Sent by server to indicate a recorded stream.
+     */
+    public static final short RECORDED_STREAM = 4;
 
-	/**
-	 * One more unknown event
-	 */
-	public static final short UNKNOWN_5 = 5;
+    /**
+     * One more unknown event
+     */
+    public static final short UNKNOWN_5 = 5;
 
-	/**
-	 * Client ping event. Sent by server to test if client is reachable.
-	 */
-	public static final short PING_CLIENT = 6;
+    /**
+     * Client ping event. Sent by server to test if client is reachable.
+     */
+    public static final short PING_CLIENT = 6;
 
-	/**
-	 * Server response event. A clients ping response.
-	 */
-	public static final short PONG_SERVER = 7;
+    /**
+     * Server response event. A clients ping response.
+     */
+    public static final short PONG_SERVER = 7;
 
-	/**
-	 * One more unknown event
-	 */
-	public static final short UNKNOWN_8 = 8;
+    /**
+     * One more unknown event
+     */
+    public static final short UNKNOWN_8 = 8;
 
-	/**
-	 * SWF verification ping 0x001a
-	 */
-	public static final short PING_SWF_VERIFY = 26;
+    /**
+     * SWF verification ping 0x001a
+     */
+    public static final short PING_SWF_VERIFY = 26;
 
-	/**
-	 * SWF verification pong 0x001b
-	 */
-	public static final short PONG_SWF_VERIFY = 27;
+    /**
+     * SWF verification pong 0x001b
+     */
+    public static final short PONG_SWF_VERIFY = 27;
 
-	/**
-	 * Buffer empty.
-	 */
-	public static final short BUFFER_EMPTY = 31;
-	
-	/**
-	 * Buffer full.
-	 */
-	public static final short BUFFER_FULL = 32;
-	
-	/**
-	 * Event type is undefined
-	 */
-	public static final int UNDEFINED = -1;
+    /**
+     * Buffer empty.
+     */
+    public static final short BUFFER_EMPTY = 31;
 
-	/**
-	 * The sub-type
-	 */
-	protected short eventType;
+    /**
+     * Buffer full.
+     */
+    public static final short BUFFER_FULL = 32;
 
-	/**
-	 * Represents the stream id in all cases except PING_CLIENT and PONG_SERVER
-	 * where it represents the local server timestamp.
-	 */
-	private Number value2;
+    /**
+     * Event type is undefined
+     */
+    public static final int UNDEFINED = -1;
 
-	private int value3 = UNDEFINED;
+    /**
+     * The sub-type
+     */
+    protected short eventType;
 
-	private int value4 = UNDEFINED;
+    /**
+     * Represents the stream id in all cases except PING_CLIENT and PONG_SERVER where it represents the local server timestamp.
+     */
+    private Number value2;
 
-	/**
-	 * Debug string
-	 */
-	private String debug = "";
+    private int value3 = UNDEFINED;
 
-	/** Constructs a new Ping. */
-	public Ping() {
-		super(Type.SYSTEM);
-	}
+    private int value4 = UNDEFINED;
 
-	public Ping(short eventType) {
-		super(Type.SYSTEM);
-		this.eventType = eventType;
-	}
-	
-	public Ping(short eventType, int value2) {
-		super(Type.SYSTEM);
-		this.eventType = eventType;
-		this.value2 = value2;
-	}
+    /**
+     * Debug string
+     */
+    private String debug = "";
 
-	public Ping(short eventType, int value2, int value3) {
-		super(Type.SYSTEM);
-		this.eventType = eventType;
-		this.value2 = value2;
-		this.value3 = value3;
-	}
+    /** Constructs a new Ping. */
+    public Ping() {
+        super(Type.SYSTEM);
+    }
 
-	public Ping(short eventType, int value2, int value3, int value4) {
-		super(Type.SYSTEM);
-		this.eventType = eventType;
-		this.value2 = value2;
-		this.value3 = value3;
-		this.value4 = value4;
-	}
+    public Ping(short eventType) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+    }
 
-	public Ping(Ping in) {
-		super(Type.SYSTEM);
-		this.eventType = in.getEventType();
-		this.value2 = in.getValue2();
-		this.value3 = in.getValue3();
-		this.value4 = in.getValue4();
-	}
+    public Ping(short eventType, int value2) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public byte getDataType() {
-		return TYPE_PING;
-	}
+    public Ping(short eventType, int value2, int value3) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+        this.value3 = value3;
+    }
 
-	/**
-	 * Returns the events sub-type
-	 * 
-	 * @return the event type
-	 */
-	public short getEventType() {
-		return eventType;
-	}
+    public Ping(short eventType, int value2, int value3, int value4) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+        this.value3 = value3;
+        this.value4 = value4;
+    }
 
-	/**
-	 * Sets the events sub-type
-	 * 
-	 * @param eventType event type
-	 */
-	public void setEventType(short eventType) {
-		this.eventType = eventType;
-	}
+    public Ping(Ping in) {
+        super(Type.SYSTEM);
+        this.eventType = in.getEventType();
+        this.value2 = in.getValue2();
+        this.value3 = in.getValue3();
+        this.value4 = in.getValue4();
+    }
 
-	/**
-	 * Getter for property 'value2'.
-	 *
-	 * @return Value for property 'value2'.
-	 */
-	public Number getValue2() {
-		return value2;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public byte getDataType() {
+        return TYPE_PING;
+    }
 
-	/**
-	 * Setter for property 'value2'.
-	 *
-	 * @param value2 Value to set for property 'value2'.
-	 */
-	public void setValue2(Number value2) {
-		this.value2 = value2;
-	}
+    /**
+     * Returns the events sub-type
+     * 
+     * @return the event type
+     */
+    public short getEventType() {
+        return eventType;
+    }
 
-	/**
-	 * Getter for property 'value3'.
-	 *
-	 * @return Value for property 'value3'.
-	 */
-	public int getValue3() {
-		return value3;
-	}
+    /**
+     * Sets the events sub-type
+     * 
+     * @param eventType
+     *            event type
+     */
+    public void setEventType(short eventType) {
+        this.eventType = eventType;
+    }
 
-	/**
-	 * Setter for property 'value3'.
-	 *
-	 * @param value3 Value to set for property 'value3'.
-	 */
-	public void setValue3(int value3) {
-		this.value3 = value3;
-	}
+    /**
+     * Getter for property 'value2'.
+     *
+     * @return Value for property 'value2'.
+     */
+    public Number getValue2() {
+        return value2;
+    }
 
-	/**
-	 * Getter for property 'value4'.
-	 *
-	 * @return Value for property 'value4'.
-	 */
-	public int getValue4() {
-		return value4;
-	}
+    /**
+     * Setter for property 'value2'.
+     *
+     * @param value2
+     *            Value to set for property 'value2'.
+     */
+    public void setValue2(Number value2) {
+        this.value2 = value2;
+    }
 
-	/**
-	 * Setter for property 'value4'.
-	 *
-	 * @param value4 Value to set for property 'value4'.
-	 */
-	public void setValue4(int value4) {
-		this.value4 = value4;
-	}
+    /**
+     * Getter for property 'value3'.
+     *
+     * @return Value for property 'value3'.
+     */
+    public int getValue3() {
+        return value3;
+    }
 
-	/**
-	 * Getter for property 'debug'.
-	 *
-	 * @return Value for property 'debug'.
-	 */
-	public String getDebug() {
-		return debug;
-	}
+    /**
+     * Setter for property 'value3'.
+     *
+     * @param value3
+     *            Value to set for property 'value3'.
+     */
+    public void setValue3(int value3) {
+        this.value3 = value3;
+    }
 
-	/**
-	 * Setter for property 'debug'.
-	 *
-	 * @param debug Value to set for property 'debug'.
-	 */
-	public void setDebug(String debug) {
-		this.debug = debug;
-	}
+    /**
+     * Getter for property 'value4'.
+     *
+     * @return Value for property 'value4'.
+     */
+    public int getValue4() {
+        return value4;
+    }
 
-	protected void doRelease() {
-		eventType = 0;
-		value2 = 0;
-		value3 = UNDEFINED;
-		value4 = UNDEFINED;
-	}
+    /**
+     * Setter for property 'value4'.
+     *
+     * @param value4
+     *            Value to set for property 'value4'.
+     */
+    public void setValue4(int value4) {
+        this.value4 = value4;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return "Ping: " + eventType + ", " + value2 + ", " + value3 + ", " + value4 + "\n" + debug;
-	}
+    /**
+     * Getter for property 'debug'.
+     *
+     * @return Value for property 'debug'.
+     */
+    public String getDebug() {
+        return debug;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	protected void releaseInternal() {
+    /**
+     * Setter for property 'debug'.
+     *
+     * @param debug
+     *            Value to set for property 'debug'.
+     */
+    public void setDebug(String debug) {
+        this.debug = debug;
+    }
 
-	}
+    protected void doRelease() {
+        eventType = 0;
+        value2 = 0;
+        value3 = UNDEFINED;
+        value4 = UNDEFINED;
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		eventType = in.readShort();
-		switch (eventType) {
-			case PING_CLIENT:
-			case PONG_SERVER:
-				value2 = (Number) in.readInt();
-				break;
-			default:
-				value2 = (Number) in.readDouble();				
-		}
-		value3 = in.readInt();
-		value4 = in.readInt();
-	}
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return "Ping: " + eventType + ", " + value2 + ", " + value3 + ", " + value4 + "\n" + debug;
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeShort(eventType);
-		switch (eventType) {
-			case PING_CLIENT:
-			case PONG_SERVER:
-				out.writeInt(value2.intValue());
-				break;
-			default:
-				out.writeDouble(value2.doubleValue());				
-		}
-		out.writeInt(value3);
-		out.writeInt(value4);
-	}
+    /** {@inheritDoc} */
+    @Override
+    protected void releaseInternal() {
+
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        eventType = in.readShort();
+        switch (eventType) {
+            case PING_CLIENT:
+            case PONG_SERVER:
+                value2 = (Number) in.readInt();
+                break;
+            default:
+                value2 = (Number) in.readDouble();
+        }
+        value3 = in.readInt();
+        value4 = in.readInt();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeShort(eventType);
+        switch (eventType) {
+            case PING_CLIENT:
+            case PONG_SERVER:
+                out.writeInt(value2.intValue());
+                break;
+            default:
+                out.writeDouble(value2.doubleValue());
+        }
+        out.writeInt(value3);
+        out.writeInt(value4);
+    }
 }

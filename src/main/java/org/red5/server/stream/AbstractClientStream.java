@@ -28,84 +28,91 @@ import org.red5.server.api.stream.IStreamCapableConnection;
  */
 public abstract class AbstractClientStream extends AbstractStream implements IClientStream {
 
-	/**
-	 *  Stream identifier. Unique across server.
-	 */
-	private Number streamId = 0.0d;
+    /**
+     * Stream identifier. Unique across server.
+     */
+    private Number streamId = 0.0d;
 
-	/**
-	 * Stream name of the broadcasting stream.
-	 */
-	private String broadcastStreamPublishName;
+    /**
+     * Stream name of the broadcasting stream.
+     */
+    private String broadcastStreamPublishName;
 
-	/**
-	 *  Connection that works with streams
-	 */
-	private WeakReference<IStreamCapableConnection> conn;
+    /**
+     * Connection that works with streams
+     */
+    private WeakReference<IStreamCapableConnection> conn;
 
-	/**
-	 * Buffer duration in ms as requested by the client
-	 */
-	private int clientBufferDuration;
+    /**
+     * Buffer duration in ms as requested by the client
+     */
+    private int clientBufferDuration;
 
-	/**
-	 * Setter for stream id
-	 * @param streamId       Stream id
-	 */
-	public void setStreamId(Number streamId) {
-		this.streamId = streamId;
-	}
+    /**
+     * Setter for stream id
+     * 
+     * @param streamId
+     *            Stream id
+     */
+    public void setStreamId(Number streamId) {
+        this.streamId = streamId;
+    }
 
-	/**
-	 * Return stream id
-	 * @return           Stream id
-	 */
-	public Number getStreamId() {
-		return streamId;
-	}
+    /**
+     * Return stream id
+     * 
+     * @return Stream id
+     */
+    public Number getStreamId() {
+        return streamId;
+    }
 
-	/**
-	 * Setter for stream capable connection
-	 * @param conn           IStreamCapableConnection object
-	 */
-	public void setConnection(IStreamCapableConnection conn) {
-		this.conn = new WeakReference<IStreamCapableConnection>(conn);
-	}
+    /**
+     * Setter for stream capable connection
+     * 
+     * @param conn
+     *            IStreamCapableConnection object
+     */
+    public void setConnection(IStreamCapableConnection conn) {
+        this.conn = new WeakReference<IStreamCapableConnection>(conn);
+    }
 
-	/**
-	 * Return connection associated with stream
-	 * @return           Stream capable connection object
-	 */
-	public IStreamCapableConnection getConnection() {
-		return conn.get();
-	}
+    /**
+     * Return connection associated with stream
+     * 
+     * @return Stream capable connection object
+     */
+    public IStreamCapableConnection getConnection() {
+        return conn.get();
+    }
 
-	/** {@inheritDoc} */
-	public void setClientBufferDuration(int duration) {
-		clientBufferDuration = duration;
-	}
+    /** {@inheritDoc} */
+    public void setClientBufferDuration(int duration) {
+        clientBufferDuration = duration;
+    }
 
-	/**
-	 * Get duration in ms as requested by the client.
-	 *
-	 * @return value
-	 */
-	public int getClientBufferDuration() {
-		return clientBufferDuration;
-	}
+    /**
+     * Get duration in ms as requested by the client.
+     *
+     * @return value
+     */
+    public int getClientBufferDuration() {
+        return clientBufferDuration;
+    }
 
-	/**
-	 * Sets the broadcasting streams name.
-	 * 
-	 * @param broadcastStreamPublishName name of the broadcasting stream
-	 */
-	public void setBroadcastStreamPublishName(String broadcastStreamPublishName) {
-		this.broadcastStreamPublishName = broadcastStreamPublishName;
-	}
+    /**
+     * Sets the broadcasting streams name.
+     * 
+     * @param broadcastStreamPublishName
+     *            name of the broadcasting stream
+     */
+    public void setBroadcastStreamPublishName(String broadcastStreamPublishName) {
+        this.broadcastStreamPublishName = broadcastStreamPublishName;
+    }
 
-	/** {@inheritDoc} */
-	public String getBroadcastStreamPublishName() {
-		return broadcastStreamPublishName;
-	}
+    /** {@inheritDoc} */
+    public String getBroadcastStreamPublishName() {
+        return broadcastStreamPublishName;
+    }
 
 }

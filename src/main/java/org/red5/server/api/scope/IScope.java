@@ -32,12 +32,8 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 /**
  * The scope object.
  * 
- * A stateful object shared between a group of clients connected to the same
- * <tt>context path</tt>. Scopes are arranged in hierarchical way, so its possible for
- * a scope to have a parent and children scopes. If a client connects to a scope then they are
- * also connected to its parent scope. The scope object is used to access
- * resources, shared object, streams, etc. That is, scope are general option for grouping things
- * in application.
+ * A stateful object shared between a group of clients connected to the same <tt>context path</tt>. Scopes are arranged in hierarchical way, so its possible for a scope to have a parent and children scopes. If a client connects to a scope then they are also connected to its parent scope. The scope object is used to access resources, shared object, streams, etc. That is, scope are general option for grouping things in
+ * application.
  * 
  * The following are all names for scopes: application, room, place, lobby.
  * 
@@ -47,249 +43,347 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  */
 public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHandlerProvider {
 
-	/**
-	 * Scope separator
-	 */
-	public static final String SEPARATOR = ":";
+    /**
+     * Scope separator
+     */
+    public static final String SEPARATOR = ":";
 
-	/**
-	 * Check to see if this scope has a child scope matching a given name.
-	 * 
-	 * @param name the name of the child scope
-	 * @return <pre>true</pre> if a child scope exists, otherwise
-	 *         <pre>false</pre>
-	 */
-	public boolean hasChildScope(String name);
+    /**
+     * Check to see if this scope has a child scope matching a given name.
+     * 
+     * @param name
+     *            the name of the child scope
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if a child scope exists, otherwise
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     */
+    public boolean hasChildScope(String name);
 
-	/**
-	 * Checks whether scope has a child scope with given name and type
-	 * 
-	 * @param type Child scope type
-	 * @param name Child scope name
-	 * @return <pre>true</pre> if a child scope exists, otherwise
-	 *         <pre>false</pre>
-	 */
-	public boolean hasChildScope(ScopeType type, String name);
+    /**
+     * Checks whether scope has a child scope with given name and type
+     * 
+     * @param type
+     *            Child scope type
+     * @param name
+     *            Child scope name
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if a child scope exists, otherwise
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     */
+    public boolean hasChildScope(ScopeType type, String name);
 
-	/**
-	 * Creates child scope with name given and returns success value. Returns
-	 * <pre>true</pre> on success, <pre>false</pre> if given scope
-	 * already exists among children.
-	 * 
-	 * @param name New child scope name
-	 * @return <pre>true</pre> if child scope was successfully creates,
-	 *         <pre>false</pre> otherwise
-	 */
-	public boolean createChildScope(String name);
+    /**
+     * Creates child scope with name given and returns success value. Returns
+     * 
+     * <pre>
+     * true
+     * </pre>
+     * 
+     * on success,
+     * 
+     * <pre>
+     * false
+     * </pre>
+     * 
+     * if given scope already exists among children.
+     * 
+     * @param name
+     *            New child scope name
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if child scope was successfully creates,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    public boolean createChildScope(String name);
 
-	/**
-	 * Adds scope as a child scope. Returns <pre>true</pre> on success,
-	 * <pre>false</pre> if given scope is already a child of current.
-	 * 
-	 * @param scope Scope given
-	 * @return <pre>true</pre> if child scope was successfully added,
-	 *         <pre>false</pre> otherwise
-	 */
-	public boolean addChildScope(IBasicScope scope);
+    /**
+     * Adds scope as a child scope. Returns
+     * 
+     * <pre>
+     * true
+     * </pre>
+     * 
+     * on success,
+     * 
+     * <pre>
+     * false
+     * </pre>
+     * 
+     * if given scope is already a child of current.
+     * 
+     * @param scope
+     *            Scope given
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if child scope was successfully added,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    public boolean addChildScope(IBasicScope scope);
 
-	/**
-	 * Removes scope from the children scope list.
-	 * 
-	 * @param scope Scope given
-	 */
-	public void removeChildScope(IBasicScope scope);
+    /**
+     * Removes scope from the children scope list.
+     * 
+     * @param scope
+     *            Scope given
+     */
+    public void removeChildScope(IBasicScope scope);
 
-	/**
-	 * Removes all the child scopes
-	 */
-	public void removeChildren();
-	
-	/**
-	 * Get a set of the child scope names.
-	 * 
-	 * @return set containing child scope names
-	 */
-	public Set<String> getScopeNames();
+    /**
+     * Removes all the child scopes
+     */
+    public void removeChildren();
 
-	public Set<String> getBasicScopeNames(ScopeType type);
+    /**
+     * Get a set of the child scope names.
+     * 
+     * @return set containing child scope names
+     */
+    public Set<String> getScopeNames();
 
-	/**
-	 * Return the broadcast scope for a given name.
-	 * 
-	 * @param name name
-	 * @return broadcast scope or null if not found
-	 */
-	public IBroadcastScope getBroadcastScope(String name);
-	
-	/**
-	 * Get a child scope by type and name.
-	 * 
-	 * @param type     Child scope type
-	 * @param name Name of the child scope
-	 * @return the child scope, or null if no scope is found
-	 */
-	public IBasicScope getBasicScope(ScopeType type, String name);
+    public Set<String> getBasicScopeNames(ScopeType type);
 
-	/**
-	 * Return scope by name
-	 * 
-	 * @param name     Scope name
-	 * @return         Scope with given name
-	 */
-	public IScope getScope(String name);
+    /**
+     * Return the broadcast scope for a given name.
+     * 
+     * @param name
+     *            name
+     * @return broadcast scope or null if not found
+     */
+    public IBroadcastScope getBroadcastScope(String name);
 
-	/**
-	 * Get a set of connected clients. You can get the connections by passing
-	 * the scope to the clients {@link IClient#getConnections()} method.
-	 * 
-	 * @return Set containing all connected clients
-	 * @see org.red5.server.api.IClient#getConnections(IScope)
-	 */
-	public Set<IClient> getClients();
+    /**
+     * Get a child scope by type and name.
+     * 
+     * @param type
+     *            Child scope type
+     * @param name
+     *            Name of the child scope
+     * @return the child scope, or null if no scope is found
+     */
+    public IBasicScope getBasicScope(ScopeType type, String name);
 
-	/**
-	 * Get a connection iterator. You can call remove, and the connection will
-	 * be closed.
-	 * 
-	 * @deprecated Use {@link IScope#getClientConnections()} instead
-	 * @return Iterator holding all connections
-	 */
-	@Deprecated
-	public Collection<Set<IConnection>> getConnections();
+    /**
+     * Return scope by name
+     * 
+     * @param name
+     *            Scope name
+     * @return Scope with given name
+     */
+    public IScope getScope(String name);
 
-	/**
-	 * Get all current connections. You can call remove, and the connection will
-	 * be closed.
-	 * 
-	 * @return Set containing all connections
-	 */
-	public Set<IConnection> getClientConnections();
-	
-	/**
-	 * Lookup connections.
-	 * 
-	 * @deprecated Use {@link IScope#lookupConnection(IClient)} instead
-	 * @param client object
-	 * @return Set of connection objects (read-only)
-	 */
-	@Deprecated
-	public Set<IConnection> lookupConnections(IClient client);
-	
-	/**
-	 * Lookup connection for a given client.
-	 * 
-	 * @param client object
-	 * @return connection object
-	 */
-	public IConnection lookupConnection(IClient client);
+    /**
+     * Get a set of connected clients. You can get the connections by passing the scope to the clients {@link IClient#getConnections()} method.
+     * 
+     * @return Set containing all connected clients
+     * @see org.red5.server.api.IClient#getConnections(IScope)
+     */
+    public Set<IClient> getClients();
 
-	/**
-	 * Returns scope context
-	 * 
-	 * @return	Scope context
-	 */
-	public IContext getContext();
+    /**
+     * Get a connection iterator. You can call remove, and the connection will be closed.
+     * 
+     * @deprecated Use {@link IScope#getClientConnections()} instead
+     * @return Iterator holding all connections
+     */
+    @Deprecated
+    public Collection<Set<IConnection>> getConnections();
 
-	/**
-	 * Checks whether scope has handler or not. 
-	 * 
-	 * @return <pre>true</pre> if scope has a handler, <pre>false</pre>
-	 *         otherwise
-	 */
-	public boolean hasHandler();
+    /**
+     * Get all current connections. You can call remove, and the connection will be closed.
+     * 
+     * @return Set containing all connections
+     */
+    public Set<IConnection> getClientConnections();
 
-	/**
-	 * Return handler of the scope
-	 * 
-	 * @return	Scope handler
-	 */
-	public IScopeHandler getHandler();
+    /**
+     * Lookup connections.
+     * 
+     * @deprecated Use {@link IScope#lookupConnection(IClient)} instead
+     * @param client
+     *            object
+     * @return Set of connection objects (read-only)
+     */
+    @Deprecated
+    public Set<IConnection> lookupConnections(IClient client);
 
-	/**
-	 * Return context path.
-	 * 
-	 * @return	Context path
-	 */
-	public String getContextPath();
+    /**
+     * Lookup connection for a given client.
+     * 
+     * @param client
+     *            object
+     * @return connection object
+     */
+    public IConnection lookupConnection(IClient client);
 
-	/**
-	 * Adds given connection to the scope
-	 * 
-	 * @param conn Given connection
-	 * @return <pre>true</pre> on success, <pre>false</pre> if given
-	 *         connection already belongs to this scope
-	 */
-	public boolean connect(IConnection conn);
+    /**
+     * Returns scope context
+     * 
+     * @return Scope context
+     */
+    public IContext getContext();
 
-	/**
-	 * Add given connection to the scope, overloaded for parameters pass case.
-	 * @param conn             Given connection
-	 * @param params           Parameters passed
-	 * @return                 <pre>true</pre> on success, <pre>false</pre> if given
-	 *                         connection already belongs to this scope
-	 */
-	public boolean connect(IConnection conn, Object[] params);
+    /**
+     * Checks whether scope has handler or not.
+     * 
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if scope has a handler,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    public boolean hasHandler();
 
-	/**
-	 * Removes given connection from list of scope connections. This disconnects
-	 * all clients of given connection from the scope.
-	 * 
-	 * @param conn Connection given
-	 */
-	public void disconnect(IConnection conn);
+    /**
+     * Return handler of the scope
+     * 
+     * @return Scope handler
+     */
+    public IScopeHandler getHandler();
 
-	/**
-	 * Return statistics informations about the scope.
-	 * 
-	 * @return statistics
-	 */
-	public IScopeStatistics getStatistics();
+    /**
+     * Return context path.
+     * 
+     * @return Context path
+     */
+    public String getContextPath();
 
-	/**
-	 * Set attribute by name
-	 * 
-	 * @param name name
-	 * @param value value
-	 * @return true if added, false if not added
-	 */
-	public boolean setAttribute(String name, Object value);
-	
-	/**
-	 * Get attribute by name
-	 * 
-	 * @param name name
-	 * @return value for the given name in the attributes or null if not found
-	 */
-	public Object getAttribute(String name);
-	
-	/**
-	 * Whether or not an attribute exists, keyed by the given name
-	 * 
-	 * @param name name
-	 * @return true if it exists, false otherwise
-	 */
-	public boolean hasAttribute(String name);
+    /**
+     * Adds given connection to the scope
+     * 
+     * @param conn
+     *            Given connection
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         on success,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         if given connection already belongs to this scope
+     */
+    public boolean connect(IConnection conn);
 
-	/**
-	 * Remove attribute by name
-	 * 
-	 * @param name name
-	 * @return true if removed, false otherwise
-	 */
-	public boolean removeAttribute(String name);
-	
-	/**
-	 * Return attribute names
-	 * 
-	 * @return attribute names
-	 */
-	public Set<String> getAttributeNames();	
-	
-	/**
-	 * Return scope attributes
-	 * 
-	 * @return attributes
-	 */
-	public Map<String, Object> getAttributes();
+    /**
+     * Add given connection to the scope, overloaded for parameters pass case.
+     * 
+     * @param conn
+     *            Given connection
+     * @param params
+     *            Parameters passed
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         on success,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         if given connection already belongs to this scope
+     */
+    public boolean connect(IConnection conn, Object[] params);
+
+    /**
+     * Removes given connection from list of scope connections. This disconnects all clients of given connection from the scope.
+     * 
+     * @param conn
+     *            Connection given
+     */
+    public void disconnect(IConnection conn);
+
+    /**
+     * Return statistics informations about the scope.
+     * 
+     * @return statistics
+     */
+    public IScopeStatistics getStatistics();
+
+    /**
+     * Set attribute by name
+     * 
+     * @param name
+     *            name
+     * @param value
+     *            value
+     * @return true if added, false if not added
+     */
+    public boolean setAttribute(String name, Object value);
+
+    /**
+     * Get attribute by name
+     * 
+     * @param name
+     *            name
+     * @return value for the given name in the attributes or null if not found
+     */
+    public Object getAttribute(String name);
+
+    /**
+     * Whether or not an attribute exists, keyed by the given name
+     * 
+     * @param name
+     *            name
+     * @return true if it exists, false otherwise
+     */
+    public boolean hasAttribute(String name);
+
+    /**
+     * Remove attribute by name
+     * 
+     * @param name
+     *            name
+     * @return true if removed, false otherwise
+     */
+    public boolean removeAttribute(String name);
+
+    /**
+     * Return attribute names
+     * 
+     * @return attribute names
+     */
+    public Set<String> getAttributeNames();
+
+    /**
+     * Return scope attributes
+     * 
+     * @return attributes
+     */
+    public Map<String, Object> getAttributes();
 
 }

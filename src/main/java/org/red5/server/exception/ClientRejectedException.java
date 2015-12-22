@@ -19,38 +19,39 @@
 package org.red5.server.exception;
 
 /**
- * The client is not allowed to connect. Reason that provided with this
- * exception is sent to client-side status event description.
+ * The client is not allowed to connect. Reason that provided with this exception is sent to client-side status event description.
  *
  */
 public class ClientRejectedException extends RuntimeException {
 
-	private static final long serialVersionUID = 9204597649465357898L;
+    private static final long serialVersionUID = 9204597649465357898L;
 
-	@SuppressWarnings("all") 
-	private Object reason;
+    @SuppressWarnings("all")
+    private Object reason;
 
-	/** Constructs a new ClientRejectedException. */
+    /** Constructs a new ClientRejectedException. */
     public ClientRejectedException() {
-		this("Client rejected");
-	}
+        this("Client rejected");
+    }
 
     /**
      * Create new exception with given rejection reason
-     * @param reason          Rejection reason
+     * 
+     * @param reason
+     *            Rejection reason
      */
     public ClientRejectedException(Object reason) {
-		super("Client rejected");
-		this.reason = reason;
-	}
+        super("Client rejected");
+        this.reason = reason;
+    }
 
-	/**
+    /**
      * Getter for reason
      *
-     * @return  Rejection reason
+     * @return Rejection reason
      */
     public Object getReason() {
-		return reason;
-	}
+        return reason;
+    }
 
 }

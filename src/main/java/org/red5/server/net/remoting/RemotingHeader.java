@@ -28,46 +28,49 @@ import org.red5.server.api.remoting.IRemotingHeader;
  */
 public class RemotingHeader implements IRemotingHeader {
 
-	/**
-	 * The name of the header.
-	 */
-	protected String name;
+    /**
+     * The name of the header.
+     */
+    protected String name;
 
-	/**
-	 * Is this header required?
-	 */
-	protected boolean required;
+    /**
+     * Is this header required?
+     */
+    protected boolean required;
 
-	/**
-	 * The actual data of the header.
-	 */
-	protected Object data;
+    /**
+     * The actual data of the header.
+     */
+    protected Object data;
 
-	/**
-	 * Create a new header to be sent through remoting.
-	 * 
-	 * @param name            Header name
-	 * @param required        Header required?
-	 * @param data            Header data
-	 */
-	public RemotingHeader(String name, boolean required, Object data) {
-		this.name = name;
-		this.required = required;
-		this.data = data;
-	}
+    /**
+     * Create a new header to be sent through remoting.
+     * 
+     * @param name
+     *            Header name
+     * @param required
+     *            Header required?
+     * @param data
+     *            Header data
+     */
+    public RemotingHeader(String name, boolean required, Object data) {
+        this.name = name;
+        this.required = required;
+        this.data = data;
+    }
 
-	/** {@inheritDoc} */
-	public boolean getMustUnderstand() {
-		return required;
-	}
+    /** {@inheritDoc} */
+    public boolean getMustUnderstand() {
+        return required;
+    }
 
-	/** {@inheritDoc} */
-	public String getName() {
-		return name;
-	}
+    /** {@inheritDoc} */
+    public String getName() {
+        return name;
+    }
 
-	/** {@inheritDoc} */
-	public Object getValue() {
-		return data;
-	}
+    /** {@inheritDoc} */
+    public Object getValue() {
+        return data;
+    }
 }

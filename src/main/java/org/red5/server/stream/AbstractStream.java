@@ -29,162 +29,165 @@ import org.red5.server.api.stream.StreamState;
 import org.red5.server.net.rtmp.event.Notify;
 
 /**
- * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling
- * meand, provides stream start and stop operations.
+ * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling meand, provides stream start and stop operations.
  *
- * @see  org.red5.server.api.stream.IStream
+ * @see org.red5.server.api.stream.IStream
  */
 public abstract class AbstractStream implements IStream {
-    
+
     /**
      * Current state
      */
-	protected StreamState state = StreamState.UNINIT;
-    
-	/**
-     *  Stream name
+    protected StreamState state = StreamState.UNINIT;
+
+    /**
+     * Stream name
      */
     private String name;
-    
+
     /**
-     *  Stream audio and video codec information
+     * Stream audio and video codec information
      */
-	private IStreamCodecInfo codecInfo;
-    
-	/**
-	 * Stores the streams metadata
-	 */
-	protected Notify metaData;
-	
-	/**
-     *  Stream scope
-     */
-	private IScope scope;
-	
-	/**
-	 * Timestamp the stream was created.
-	 */
-	protected long creationTime;
-	
-	/**
-	 * Lock for protecting critical sections
-	 */
-	protected final transient Semaphore lock = new Semaphore(1, true);
-	
+    private IStreamCodecInfo codecInfo;
+
     /**
-     *  Return stream name.
-	 * 
-     *  @return     Stream name
+     * Stores the streams metadata
      */
-	public String getName() {
-		return name;
-	}
+    protected Notify metaData;
+
+    /**
+     * Stream scope
+     */
+    private IScope scope;
+
+    /**
+     * Timestamp the stream was created.
+     */
+    protected long creationTime;
+
+    /**
+     * Lock for protecting critical sections
+     */
+    protected final transient Semaphore lock = new Semaphore(1, true);
+
+    /**
+     * Return stream name.
+     * 
+     * @return Stream name
+     */
+    public String getName() {
+        return name;
+    }
 
     /**
      * Return codec information.
-	 * 
-     * @return              Stream codec information
+     * 
+     * @return Stream codec information
      */
     public IStreamCodecInfo getCodecInfo() {
-		return codecInfo;
-	}
+        return codecInfo;
+    }
 
-	/**
-	 * Returns the metadata for the associated stream, if it exists.
-	 * 
-	 * @return stream meta data
-	 */
-	public Notify getMetaData() {
-		return metaData;
-	}    
-    
+    /**
+     * Returns the metadata for the associated stream, if it exists.
+     * 
+     * @return stream meta data
+     */
+    public Notify getMetaData() {
+        return metaData;
+    }
+
     /**
      * Return scope.
-	 * 
-     * @return         Scope
+     * 
+     * @return Scope
      */
     public IScope getScope() {
-		return scope;
-	}
-    
-	/**
-	 * Returns timestamp at which the stream was created.
-	 * 
-	 * @return creation timestamp
-	 */
-	public long getCreationTime() {
-		return creationTime;
-	}
+        return scope;
+    }
+
+    /**
+     * Returns timestamp at which the stream was created.
+     * 
+     * @return creation timestamp
+     */
+    public long getCreationTime() {
+        return creationTime;
+    }
 
     /**
      * Setter for name.
-	 * 
-     * @param name     Stream name
+     * 
+     * @param name
+     *            Stream name
      */
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
     /**
      * Setter for codec info.
-	 * 
-     * @param codecInfo     Codec info
+     * 
+     * @param codecInfo
+     *            Codec info
      */
     public void setCodecInfo(IStreamCodecInfo codecInfo) {
-		this.codecInfo = codecInfo;
-	}
+        this.codecInfo = codecInfo;
+    }
 
     /**
      * Setter for scope.
-	 * 
-     * @param scope         Scope
+     * 
+     * @param scope
+     *            Scope
      */
-	public void setScope(IScope scope) {
-		this.scope = scope;
-	}
+    public void setScope(IScope scope) {
+        this.scope = scope;
+    }
 
-	/**
-	 * Return stream state.
-	 * 
-	 * @return StreamState
-	 */
-	public StreamState getState() {
-		try {
-			lock.acquireUninterruptibly();
-			return state;
-		} finally {
-			lock.release();
-		}
-	}
+    /**
+     * Return stream state.
+     * 
+     * @return StreamState
+     */
+    public StreamState getState() {
+        try {
+            lock.acquireUninterruptibly();
+            return state;
+        } finally {
+            lock.release();
+        }
+    }
 
-	/**
-	 * Sets the stream state.
-	 * 
-	 * @param state stream state
-	 */
-	public void setState(StreamState state) {
-		if (!this.state.equals(state)) {
-			try {
-				lock.acquireUninterruptibly();
-				this.state = state;
-			} finally {
-				lock.release();
-			}
-		}
-	}	
-	
+    /**
+     * Sets the stream state.
+     * 
+     * @param state
+     *            stream state
+     */
+    public void setState(StreamState state) {
+        if (!this.state.equals(state)) {
+            try {
+                lock.acquireUninterruptibly();
+                this.state = state;
+            } finally {
+                lock.release();
+            }
+        }
+    }
+
     /**
      * Return stream aware scope handler or null if scope is null.
-	 * 
-     * @return      IStreamAwareScopeHandler implementation
+     * 
+     * @return IStreamAwareScopeHandler implementation
      */
-	protected IStreamAwareScopeHandler getStreamAwareHandler() {
-		if (scope != null) {
-			IScopeHandler handler = scope.getHandler();
-			if (handler instanceof IStreamAwareScopeHandler) {
-				return (IStreamAwareScopeHandler) handler;
-			}
-		}
-		return null;
-	}
+    protected IStreamAwareScopeHandler getStreamAwareHandler() {
+        if (scope != null) {
+            IScopeHandler handler = scope.getHandler();
+            if (handler instanceof IStreamAwareScopeHandler) {
+                return (IStreamAwareScopeHandler) handler;
+            }
+        }
+        return null;
+    }
 }

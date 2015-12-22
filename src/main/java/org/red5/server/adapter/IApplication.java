@@ -23,120 +23,184 @@ import org.red5.server.api.IConnection;
 import org.red5.server.api.scope.IScope;
 
 /**
- * IApplication provides lifecycle methods that most communication applications
- * will use. This interface defines the methods that are called by Red5 through
- * an applications life. It is suggested that you NOT implement this interface yourself, but
- * instead you should subclass <tt>org.red5.server.adapter.MultiThreadedApplicationAdapter</tt> or <tt>org.red5.server.adapter.ApplicationAdapter</tt>.
+ * IApplication provides lifecycle methods that most communication applications will use. This interface defines the methods that are called by Red5 through an applications life. It is suggested that you NOT implement this interface yourself, but instead you should subclass <tt>org.red5.server.adapter.MultiThreadedApplicationAdapter</tt> or <tt>org.red5.server.adapter.ApplicationAdapter</tt>.
  * 
  * @author Dominick Accattato
  */
 public interface IApplication {
 
-	/**
-	 * Called once when application or room starts
-	 * 
-	 * @param app Application or room level scope. See
-	 *            {@link org.red5.server.api.scope.IScope} for details
-	 * @return <pre>true</pre> continues application run, <pre>false</pre>
-	 *         terminates
-	 */
-	public boolean appStart(IScope app);
+    /**
+     * Called once when application or room starts
+     * 
+     * @param app
+     *            Application or room level scope. See {@link org.red5.server.api.scope.IScope} for details
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         continues application run,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         terminates
+     */
+    public boolean appStart(IScope app);
 
-	/**
-	 * Called per each client connect
-	 * 
-	 * @param conn Connection object used to provide basic connection methods.
-	 *            See {@link org.red5.server.api.IConnection}
-	 * @param params List of params sent from client with NetConnection.connect
-	 *            call
-	 * @return <pre>true</pre> accepts the connection, <pre>false</pre>
-	 *         rejects it
-	 */
-	public boolean appConnect(IConnection conn, Object[] params);
+    /**
+     * Called per each client connect
+     * 
+     * @param conn
+     *            Connection object used to provide basic connection methods. See {@link org.red5.server.api.IConnection}
+     * @param params
+     *            List of params sent from client with NetConnection.connect call
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         accepts the connection,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         rejects it
+     */
+    public boolean appConnect(IConnection conn, Object[] params);
 
-	/**
-	 * Called every time client joins app level scope
-	 * 
-	 * @param client Client object
-	 * @param app Scope object
-	 * @return <pre>true</pre> accepts the client, <pre>false</pre>
-	 *         rejects it
-	 */
-	public boolean appJoin(IClient client, IScope app);
+    /**
+     * Called every time client joins app level scope
+     * 
+     * @param client
+     *            Client object
+     * @param app
+     *            Scope object
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         accepts the client,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         rejects it
+     */
+    public boolean appJoin(IClient client, IScope app);
 
-	/**
-	 * Called every time client disconnects from the application
-	 * 
-	 * @param conn Connection object See {@link org.red5.server.api.IConnection}
-	 */
-	public void appDisconnect(IConnection conn);
+    /**
+     * Called every time client disconnects from the application
+     * 
+     * @param conn
+     *            Connection object See {@link org.red5.server.api.IConnection}
+     */
+    public void appDisconnect(IConnection conn);
 
-	/**
-	 * Called every time client leaves the application scope
-	 * 
-	 * @param client Client object
-	 * @param app Scope object
-	 */
-	public void appLeave(IClient client, IScope app);
+    /**
+     * Called every time client leaves the application scope
+     * 
+     * @param client
+     *            Client object
+     * @param app
+     *            Scope object
+     */
+    public void appLeave(IClient client, IScope app);
 
-	/**
-	 * Called on application stop
-	 * 
-	 * @param app Scope object
-	 */
-	public void appStop(IScope app);
+    /**
+     * Called on application stop
+     * 
+     * @param app
+     *            Scope object
+     */
+    public void appStop(IScope app);
 
-	/**
-	 * Called on application room start
-	 * 
-	 * @param room Scope object
-	 * @return <pre>true</pre> if scope can be started, <pre>false</pre>
-	 *         otherwise
-	 */
-	public boolean roomStart(IScope room);
+    /**
+     * Called on application room start
+     * 
+     * @param room
+     *            Scope object
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if scope can be started,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    public boolean roomStart(IScope room);
 
-	/**
-	 * Called every time client connects to the room
-	 * 
-	 * @param conn Connection object
-	 * @param params List of params sent from client with NetConnection.connect
-	 *            call
-	 * @return <pre>true</pre> accepts the connection, <pre>false</pre>
-	 *         rejects it
-	 */
-	public boolean roomConnect(IConnection conn, Object[] params);
+    /**
+     * Called every time client connects to the room
+     * 
+     * @param conn
+     *            Connection object
+     * @param params
+     *            List of params sent from client with NetConnection.connect call
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         accepts the connection,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         rejects it
+     */
+    public boolean roomConnect(IConnection conn, Object[] params);
 
-	/**
-	 * Called when user joins room scope
-	 * 
-	 * @param client Client object
-	 * @param room Scope object
-	 * @return <pre>true</pre> accepts the client, <pre>false</pre>
-	 *         rejects it
-	 */
-	public boolean roomJoin(IClient client, IScope room);
+    /**
+     * Called when user joins room scope
+     * 
+     * @param client
+     *            Client object
+     * @param room
+     *            Scope object
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         accepts the client,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         rejects it
+     */
+    public boolean roomJoin(IClient client, IScope room);
 
-	/**
-	 * Called when client disconnects from room  scope
-	 * 
-	 * @param conn Connection object used to provide basic connection methods.
-	 *            See {@link org.red5.server.api.IConnection}
-	 */
-	public void roomDisconnect(IConnection conn);
+    /**
+     * Called when client disconnects from room scope
+     * 
+     * @param conn
+     *            Connection object used to provide basic connection methods. See {@link org.red5.server.api.IConnection}
+     */
+    public void roomDisconnect(IConnection conn);
 
-	/**
-	 * Called when user leaves room scope
-	 * 
-	 * @param client Client object
-	 * @param room Scope object
-	 */
-	public void roomLeave(IClient client, IScope room);
+    /**
+     * Called when user leaves room scope
+     * 
+     * @param client
+     *            Client object
+     * @param room
+     *            Scope object
+     */
+    public void roomLeave(IClient client, IScope room);
 
-	/**
-	 * Called on room scope stop
-	 * 
-	 * @param room Scope object
-	 */
-	public void roomStop(IScope room);
+    /**
+     * Called on room scope stop
+     * 
+     * @param room
+     *            Scope object
+     */
+    public void roomStop(IScope room);
 
 }

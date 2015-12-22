@@ -28,72 +28,75 @@ import org.slf4j.LoggerFactory;
  * @see org.red5.server.net.rtmp.Channel
  */
 public class OutputStream {
-	/**
-	 * Logger
-	 */
-	protected static Logger log = LoggerFactory.getLogger(OutputStream.class);
+    /**
+     * Logger
+     */
+    protected static Logger log = LoggerFactory.getLogger(OutputStream.class);
 
-	/**
-	 * Video channel
-	 */
-	private Channel video;
+    /**
+     * Video channel
+     */
+    private Channel video;
 
-	/**
-	 * Audio channel
-	 */
-	private Channel audio;
+    /**
+     * Audio channel
+     */
+    private Channel audio;
 
-	/**
-	 * Data channel
-	 */
-	private Channel data;
+    /**
+     * Data channel
+     */
+    private Channel data;
 
-	/**
-	 * Creates output stream from channels
-	 *
-	 * @param video        Video channel
-	 * @param audio        Audio channel
-	 * @param data         Data channel
-	 */
-	public OutputStream(Channel video, Channel audio, Channel data) {
-		this.video = video;
-		this.audio = audio;
-		this.data = data;
-	}
+    /**
+     * Creates output stream from channels
+     *
+     * @param video
+     *            Video channel
+     * @param audio
+     *            Audio channel
+     * @param data
+     *            Data channel
+     */
+    public OutputStream(Channel video, Channel audio, Channel data) {
+        this.video = video;
+        this.audio = audio;
+        this.data = data;
+    }
 
-	/**
-	 * Closes audion, video and data channels
-	 */
-	public void close() {
-		video.close();
-		audio.close();
-		data.close();
-	}
+    /**
+     * Closes audion, video and data channels
+     */
+    public void close() {
+        video.close();
+        audio.close();
+        data.close();
+    }
 
-	/**
-	 * Getter for audio channel
-	 *
-	 * @return  Audio channel
-	 */
-	public Channel getAudio() {
-		return audio;
-	}
+    /**
+     * Getter for audio channel
+     *
+     * @return Audio channel
+     */
+    public Channel getAudio() {
+        return audio;
+    }
 
-	/**
-	 * Getter for data channel
-	 *
-	 * @return   Data channel
-	 */
-	public Channel getData() {
-		return data;
-	}
+    /**
+     * Getter for data channel
+     *
+     * @return Data channel
+     */
+    public Channel getData() {
+        return data;
+    }
 
-	/**
-	 * Getter for video channel
-	 *
-	 * @return Video channel
-	 */
-	public Channel getVideo() {
-		return video;
-	}
+    /**
+     * Getter for video channel
+     *
+     * @return Video channel
+     */
+    public Channel getVideo() {
+        return video;
+    }
 }

@@ -23,6 +23,6 @@ import javax.management.MXBean;
 @MXBean
 public interface RTMPMinaConnectionMXBean extends RTMPConnectionMXBean {
 
-    public void invokeMethod(String method);	
-	
+    public void invokeMethod(String method);
+
 }

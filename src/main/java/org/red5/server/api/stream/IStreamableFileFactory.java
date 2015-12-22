@@ -29,15 +29,15 @@ import org.red5.server.api.service.IStreamableFileService;
  */
 public interface IStreamableFileFactory extends IScopeService {
 
-	public static String BEAN_NAME = "streamableFileFactory";
+    public static String BEAN_NAME = "streamableFileFactory";
 
-	public abstract IStreamableFileService getService(File fp);
+    public abstract IStreamableFileService getService(File fp);
 
-	/**
-	 * Getter for services
-	 *
-	 * @return  Set of streamable file services
-	 */
-	public abstract Set<IStreamableFileService> getServices();
+    /**
+     * Getter for services
+     *
+     * @return Set of streamable file services
+     */
+    public abstract Set<IStreamableFileService> getServices();
 
 }

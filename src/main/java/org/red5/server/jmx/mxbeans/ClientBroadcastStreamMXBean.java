@@ -26,33 +26,29 @@ import org.red5.server.api.stream.ResourceExistException;
 import org.red5.server.api.stream.ResourceNotFoundException;
 
 /**
- * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports
- * recording mode for live streams, that is, broadcasted stream has broadcast mode. It can be either
- * "live" or "record" and latter causes server-side application to record broadcasted stream.
+ * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is, broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record broadcasted stream.
  *
- * Note that recorded streams are recorded as FLV files. The same is correct for audio, because
- * NellyMoser codec that Flash Player uses prohibits on-the-fly transcoding to audio formats like MP3
- * without paying of licensing fee or buying SDK.
+ * Note that recorded streams are recorded as FLV files. The same is correct for audio, because NellyMoser codec that Flash Player uses prohibits on-the-fly transcoding to audio formats like MP3 without paying of licensing fee or buying SDK.
  *
  * This type of stream uses two different pipes for live streaming and recording.
  */
 @MXBean
 public interface ClientBroadcastStreamMXBean {
 
-	public void start();
+    public void start();
 
-	public void startPublishing();
+    public void startPublishing();
 
-	public void stop();
+    public void stop();
 
-	public void close();
+    public void close();
 
-	public void saveAs(String name, boolean isAppend) throws IOException, ResourceNotFoundException, ResourceExistException;
+    public void saveAs(String name, boolean isAppend) throws IOException, ResourceNotFoundException, ResourceExistException;
 
-	public String getSaveFilename();
+    public String getSaveFilename();
 
-	public String getPublishedName();
+    public String getPublishedName();
 
-	public void setPublishedName(String name);
+    public void setPublishedName(String name);
 
 }

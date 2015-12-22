@@ -27,106 +27,110 @@ import org.red5.server.api.stream.IStreamPacket;
  * @author Paul Gregoire (mondain@gmail.com)
  */
 public class CachedEvent implements IStreamPacket {
-	
-	/**
-	 * Event timestamp
-	 */
-	private int timestamp; 
-	
-	/**
-	 * Time at which the event entered the server
-	 */
-	private long receivedTime;
 
-	private byte dataType;
+    /**
+     * Event timestamp
+     */
+    private int timestamp;
 
-	private IoBuffer data;
+    /**
+     * Time at which the event entered the server
+     */
+    private long receivedTime;
 
-	/**
-	 * @return the timestamp
-	 */
-	public int getTimestamp() {
-		return timestamp;
-	}
+    private byte dataType;
 
-	/**
-	 * @param timestamp the timestamp to set
-	 */
-	public void setTimestamp(int timestamp) {
-		this.timestamp = timestamp;
-	}
+    private IoBuffer data;
 
-	/**
-	 * @return the receivedTime
-	 */
-	public long getReceivedTime() {
-		return receivedTime;
-	}
+    /**
+     * @return the timestamp
+     */
+    public int getTimestamp() {
+        return timestamp;
+    }
 
-	/**
-	 * @param receivedTime the receivedTime to set
-	 */
-	public void setReceivedTime(long receivedTime) {
-		this.receivedTime = receivedTime;
-	}
+    /**
+     * @param timestamp
+     *            the timestamp to set
+     */
+    public void setTimestamp(int timestamp) {
+        this.timestamp = timestamp;
+    }
 
-	/**
-	 * @return the dataType
-	 */
-	public byte getDataType() {
-		return dataType;
-	}
+    /**
+     * @return the receivedTime
+     */
+    public long getReceivedTime() {
+        return receivedTime;
+    }
 
-	/**
-	 * @param dataType the dataType to set
-	 */
-	public void setDataType(byte dataType) {
-		this.dataType = dataType;
-	}
+    /**
+     * @param receivedTime
+     *            the receivedTime to set
+     */
+    public void setReceivedTime(long receivedTime) {
+        this.receivedTime = receivedTime;
+    }
 
-	/**
-	 * @return the data
-	 */
-	public IoBuffer getData() {
-		return data;
-	}
+    /**
+     * @return the dataType
+     */
+    public byte getDataType() {
+        return dataType;
+    }
 
-	/**
-	 * @param data the data to set
-	 */
-	public void setData(IoBuffer data) {
-		this.data = data;
-	}
+    /**
+     * @param dataType
+     *            the dataType to set
+     */
+    public void setDataType(byte dataType) {
+        this.dataType = dataType;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + dataType;
-		result = prime * result + timestamp;
-		return result;
-	}
+    /**
+     * @return the data
+     */
+    public IoBuffer getData() {
+        return data;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		CachedEvent other = (CachedEvent) obj;
-		if (dataType != other.dataType)
-			return false;
-		if (timestamp != other.timestamp)
-			return false;
-		return true;
-	}
+    /**
+     * @param data
+     *            the data to set
+     */
+    public void setData(IoBuffer data) {
+        this.data = data;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + dataType;
+        result = prime * result + timestamp;
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        CachedEvent other = (CachedEvent) obj;
+        if (dataType != other.dataType)
+            return false;
+        if (timestamp != other.timestamp)
+            return false;
+        return true;
+    }
 
 }

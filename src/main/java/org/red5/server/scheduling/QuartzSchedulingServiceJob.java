@@ -29,71 +29,71 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 /**
- * Scheduled job that is registered in the Quartz scheduler. 
+ * Scheduled job that is registered in the Quartz scheduler.
  * 
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
  */
 public class QuartzSchedulingServiceJob extends QuartzJobBean {
 
-	private Logger log = LoggerFactory.getLogger(QuartzSchedulingServiceJob.class);
-	
-	/**
-	 * Scheduling service constant
-	 */
-	protected static final String SCHEDULING_SERVICE = "scheduling_service";
+    private Logger log = LoggerFactory.getLogger(QuartzSchedulingServiceJob.class);
 
-	/**
-	 * Scheduled job constant
-	 */
-	protected static final String SCHEDULED_JOB = "scheduled_job";
+    /**
+     * Scheduling service constant
+     */
+    protected static final String SCHEDULING_SERVICE = "scheduling_service";
 
-	/**
-	 * Job data map
-	 */
-	private JobDataMap jobDataMap;
-	
-	public void setJobDataMap(JobDataMap jobDataMap) {
-		log.debug("Set job data map: {}", jobDataMap);
-		this.jobDataMap = jobDataMap;
-	}
-	
-	public void execute() {
-		log.debug("execute");
-		ISchedulingService service = null;
-		IScheduledJob job = null;
-		try {
-			service = (ISchedulingService) jobDataMap.get(SCHEDULING_SERVICE);
-			job = (IScheduledJob) jobDataMap.get(SCHEDULED_JOB);
-			job.execute(service);
-		} catch (Throwable e) {
-			if (job == null) {
-				log.error("Job not found");
-			} else {
-				log.error("Job {} execution failed", job.toString(), e);
-			}
-		}		
-	}
-	
-	/** {@inheritDoc} */
-	@Override
-	protected void executeInternal(JobExecutionContext executionContext) throws JobExecutionException {
-		log.debug("execute: {}", executionContext);
-		ISchedulingService service = null;
-		IScheduledJob job = null;
-		try {
-			JobDetail jobDetail = executionContext.getJobDetail();
-			JobDataMap dataMap = jobDetail.getJobDataMap();
-			service = (ISchedulingService) dataMap.get(SCHEDULING_SERVICE);
-			job = (IScheduledJob) dataMap.get(SCHEDULED_JOB);
-			job.execute(service);
-		} catch (Throwable e) {
-			if (job == null) {
-				log.error("Job not found");
-			} else {
-				log.error("Job {} execution failed", job.toString(), e);
-			}
-		}		
-	}
+    /**
+     * Scheduled job constant
+     */
+    protected static final String SCHEDULED_JOB = "scheduled_job";
+
+    /**
+     * Job data map
+     */
+    private JobDataMap jobDataMap;
+
+    public void setJobDataMap(JobDataMap jobDataMap) {
+        log.debug("Set job data map: {}", jobDataMap);
+        this.jobDataMap = jobDataMap;
+    }
+
+    public void execute() {
+        log.debug("execute");
+        ISchedulingService service = null;
+        IScheduledJob job = null;
+        try {
+            service = (ISchedulingService) jobDataMap.get(SCHEDULING_SERVICE);
+            job = (IScheduledJob) jobDataMap.get(SCHEDULED_JOB);
+            job.execute(service);
+        } catch (Throwable e) {
+            if (job == null) {
+                log.error("Job not found");
+            } else {
+                log.error("Job {} execution failed", job.toString(), e);
+            }
+        }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    protected void executeInternal(JobExecutionContext executionContext) throws JobExecutionException {
+        log.debug("execute: {}", executionContext);
+        ISchedulingService service = null;
+        IScheduledJob job = null;
+        try {
+            JobDetail jobDetail = executionContext.getJobDetail();
+            JobDataMap dataMap = jobDetail.getJobDataMap();
+            service = (ISchedulingService) dataMap.get(SCHEDULING_SERVICE);
+            job = (IScheduledJob) dataMap.get(SCHEDULED_JOB);
+            job.execute(service);
+        } catch (Throwable e) {
+            if (job == null) {
+                log.error("Job not found");
+            } else {
+                log.error("Job {} execution failed", job.toString(), e);
+            }
+        }
+    }
 
 }

@@ -26,175 +26,180 @@ import org.red5.server.messaging.IMessageInput;
  */
 public class SimplePlayItem implements IPlayItem, Comparable<SimplePlayItem> {
 
-	private long created = System.nanoTime();
-	
-	/**
-	 * Playlist item name
-	 */
-	protected final String name;
+    private long created = System.nanoTime();
 
-	/**
-	 * Start mark
-	 */
-	protected final long start;
+    /**
+     * Playlist item name
+     */
+    protected final String name;
 
-	/**
-	 * Length - amount to play
-	 */
-	protected final long length;
-	
-	/**
-	 * Message source
-	 */
-	protected IMessageInput msgInput;
-	
-	private SimplePlayItem(String name) {
-		this.name = name;
-		this.start = -2L;
-		this.length = -1L;
-	}
-	
-	private SimplePlayItem(String name, long start, long length) {
-		this.name = name;
-		this.start = start;
-		this.length = length;
-	}
+    /**
+     * Start mark
+     */
+    protected final long start;
 
-	/**
-	 * Returns play item length in milliseconds
-	 * 
-	 * @return	Play item length in milliseconds
-	 */
-	public long getLength() {
-		return length;
-	}
+    /**
+     * Length - amount to play
+     */
+    protected final long length;
 
-	/**
-	 * Returns IMessageInput object. IMessageInput is an endpoint for a consumer
-	 * to connect.
-	 * 
-	 * @return	IMessageInput object
-	 */
-	public IMessageInput getMessageInput() {
-		return msgInput;
-	}
+    /**
+     * Message source
+     */
+    protected IMessageInput msgInput;
 
-	/**
-	 * Returns item name
-	 * 
-	 * @return	item name
-	 */
-	public String getName() {
-		return name;
-	}
+    private SimplePlayItem(String name) {
+        this.name = name;
+        this.start = -2L;
+        this.length = -1L;
+    }
 
-	/**
-	 * Returns boolean value that specifies whether item can be played
-	 */
-	public long getStart() {
-		return start;
-	}
+    private SimplePlayItem(String name, long start, long length) {
+        this.name = name;
+        this.start = start;
+        this.length = length;
+    }
 
-	/**
-	 * Alias for getMessageInput
-	 * 
-	 * @return      Message input source
-	 */
-	public IMessageInput getMsgInput() {
-		return msgInput;
-	}
+    /**
+     * Returns play item length in milliseconds
+     * 
+     * @return Play item length in milliseconds
+     */
+    public long getLength() {
+        return length;
+    }
 
-	/**
-	 * Setter for message input
-	 *
-	 * @param msgInput Message input
-	 */
-	public void setMsgInput(IMessageInput msgInput) {
-		this.msgInput = msgInput;
-	}
+    /**
+     * Returns IMessageInput object. IMessageInput is an endpoint for a consumer to connect.
+     * 
+     * @return IMessageInput object
+     */
+    public IMessageInput getMessageInput() {
+        return msgInput;
+    }
 
-	/**
-	 * @return the created
-	 */
-	public long getCreated() {
-		return created;
-	}
+    /**
+     * Returns item name
+     * 
+     * @return item name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @param created the created to set
-	 */
-	public void setCreated(long created) {
-		this.created = created;
-	}
+    /**
+     * Returns boolean value that specifies whether item can be played
+     */
+    public long getStart() {
+        return start;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + (int) (start ^ (start >>> 32));
-		return result;
-	}
+    /**
+     * Alias for getMessageInput
+     * 
+     * @return Message input source
+     */
+    public IMessageInput getMsgInput() {
+        return msgInput;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SimplePlayItem other = (SimplePlayItem) obj;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (start != other.start)
-			return false;
-		return true;
-	}
+    /**
+     * Setter for message input
+     *
+     * @param msgInput
+     *            Message input
+     */
+    public void setMsgInput(IMessageInput msgInput) {
+        this.msgInput = msgInput;
+    }
 
-	@Override
-	public int compareTo(SimplePlayItem that) {
-		if (created > that.getCreated()) {
-			return -1;
-		} else if (created < that.getCreated()) {
-			return 1;
-		}
-		return 0;
-	}	
-	
-	/**
-	 * Builder for SimplePlayItem
-	 * 
-	 * @param name name
-	 * @return play item instance
-	 */
-	public static SimplePlayItem build(String name) {
-		SimplePlayItem playItem = new SimplePlayItem(name);
-		return playItem;
-	}	
-	
-	/**
-	 * Builder for SimplePlayItem
-	 * 
-	 * @param name name
-	 * @param start start
-	 * @param length length
-	 * @return play item instance
-	 */
-	public static SimplePlayItem build(String name, long start, long length) {
-		SimplePlayItem playItem = new SimplePlayItem(name, start, length);
-		return playItem;
-	}
+    /**
+     * @return the created
+     */
+    public long getCreated() {
+        return created;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "SimplePlayItem [created=" + created + ", name=" + name + ", start=" + start + ", length=" + length + "]";
-	}
-	
+    /**
+     * @param created
+     *            the created to set
+     */
+    public void setCreated(long created) {
+        this.created = created;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + (int) (start ^ (start >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SimplePlayItem other = (SimplePlayItem) obj;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        if (start != other.start)
+            return false;
+        return true;
+    }
+
+    @Override
+    public int compareTo(SimplePlayItem that) {
+        if (created > that.getCreated()) {
+            return -1;
+        } else if (created < that.getCreated()) {
+            return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Builder for SimplePlayItem
+     * 
+     * @param name
+     *            name
+     * @return play item instance
+     */
+    public static SimplePlayItem build(String name) {
+        SimplePlayItem playItem = new SimplePlayItem(name);
+        return playItem;
+    }
+
+    /**
+     * Builder for SimplePlayItem
+     * 
+     * @param name
+     *            name
+     * @param start
+     *            start
+     * @param length
+     *            length
+     * @return play item instance
+     */
+    public static SimplePlayItem build(String name, long start, long length) {
+        SimplePlayItem playItem = new SimplePlayItem(name, start, length);
+        return playItem;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "SimplePlayItem [created=" + created + ", name=" + name + ", start=" + start + ", length=" + length + "]";
+    }
+
 }

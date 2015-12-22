@@ -37,197 +37,203 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 
-	protected static Logger log = LoggerFactory.getLogger(RTMPMinaProtocolEncoder.class);
+    protected static Logger log = LoggerFactory.getLogger(RTMPMinaProtocolEncoder.class);
 
-	private RTMPProtocolEncoder encoder = new RTMPProtocolEncoder();
+    private RTMPProtocolEncoder encoder = new RTMPProtocolEncoder();
 
-	private int targetChunkSize = 2048;
+    private int targetChunkSize = 2048;
 
-	/** {@inheritDoc} */
-	public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws ProtocolCodecException {
-		// get the connection from the session
-		String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-		log.trace("Session id: {}", sessionId);
-		RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);		
-		if (conn != null) {
-			RTMPConnection prev = null;
-			// look for and compare the connection local; set it from the session
-			if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
-				log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
-				// keep track of conn we're replacing
-				prev = (RTMPConnection) Red5.getConnectionLocal();
-				// replace conn with the one from the session id lookup
-				Red5.setConnectionLocal(conn);
-			}
-			Boolean interrupted = false;
-			Semaphore lock = conn.getEncoderLock();
-			try {
-				// acquire the encoder lock
-				log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
-				lock.acquire();
-				log.trace("Encoder lock acquired {}", conn.getSessionId());
-				// get the buffer
-				final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
-				if (buf != null) {
-					int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
-					log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
-					if (buf.remaining() <= targetChunkSize * 2) {
-						log.trace("Writing output data");
-						out.write(buf);
-					} else {
-						int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
-						log.trace("Wrote {} chunks", sentChunks);
-					}
-				} else {
-					log.trace("Response buffer was null after encoding");
-				}
-			} catch (InterruptedException ex) {
-				log.error("InterruptedException during encode", ex);
-				interrupted = true;
-			} catch (Exception ex) {
-				log.error("Exception during encode", ex);
-			} finally {
-				log.trace("Encoder lock releasing.. {}", conn.getSessionId());
-				lock.release();
-				if(interrupted && log.isInfoEnabled()){
-					log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
-				}
-			}
-			// set connection local back to previous value
-			if (prev != null) {
-				Red5.setConnectionLocal(prev);
-			}
-		} else {
-			log.debug("Connection is no longer available for encoding, may have been closed already");
-		}
-	}
+    /** {@inheritDoc} */
+    public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws ProtocolCodecException {
+        // get the connection from the session
+        String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
+        log.trace("Session id: {}", sessionId);
+        RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+        if (conn != null) {
+            RTMPConnection prev = null;
+            // look for and compare the connection local; set it from the session
+            if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
+                log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
+                // keep track of conn we're replacing
+                prev = (RTMPConnection) Red5.getConnectionLocal();
+                // replace conn with the one from the session id lookup
+                Red5.setConnectionLocal(conn);
+            }
+            Boolean interrupted = false;
+            Semaphore lock = conn.getEncoderLock();
+            try {
+                // acquire the encoder lock
+                log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
+                lock.acquire();
+                log.trace("Encoder lock acquired {}", conn.getSessionId());
+                // get the buffer
+                final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
+                if (buf != null) {
+                    int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
+                    log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
+                    if (buf.remaining() <= targetChunkSize * 2) {
+                        log.trace("Writing output data");
+                        out.write(buf);
+                    } else {
+                        int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
+                        log.trace("Wrote {} chunks", sentChunks);
+                    }
+                } else {
+                    log.trace("Response buffer was null after encoding");
+                }
+            } catch (InterruptedException ex) {
+                log.error("InterruptedException during encode", ex);
+                interrupted = true;
+            } catch (Exception ex) {
+                log.error("Exception during encode", ex);
+            } finally {
+                log.trace("Encoder lock releasing.. {}", conn.getSessionId());
+                lock.release();
+                if (interrupted && log.isInfoEnabled()) {
+                    log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
+                }
+            }
+            // set connection local back to previous value
+            if (prev != null) {
+                Red5.setConnectionLocal(prev);
+            }
+        } else {
+            log.debug("Connection is no longer available for encoding, may have been closed already");
+        }
+    }
 
-	/**
-	 * Sets an RTMP protocol encoder
-	 * @param encoder the RTMP encoder
-	 */
-	public void setEncoder(RTMPProtocolEncoder encoder) {
-		this.encoder = encoder;
-	}
+    /**
+     * Sets an RTMP protocol encoder
+     * 
+     * @param encoder
+     *            the RTMP encoder
+     */
+    public void setEncoder(RTMPProtocolEncoder encoder) {
+        this.encoder = encoder;
+    }
 
-	/**
-	 * Returns an RTMP encoder
-	 * @return RTMP encoder
-	 */
-	public RTMPProtocolEncoder getEncoder() {
-		return encoder;
-	}
+    /**
+     * Returns an RTMP encoder
+     * 
+     * @return RTMP encoder
+     */
+    public RTMPProtocolEncoder getEncoder() {
+        return encoder;
+    }
 
-	/**
-	 * Setter for baseTolerance
-	 * 
-	 * @param baseTolerance base tolerance
-	 */
-	public void setBaseTolerance(long baseTolerance) {
-		encoder.setBaseTolerance(baseTolerance);
-	}
+    /**
+     * Setter for baseTolerance
+     * 
+     * @param baseTolerance
+     *            base tolerance
+     */
+    public void setBaseTolerance(long baseTolerance) {
+        encoder.setBaseTolerance(baseTolerance);
+    }
 
-	/**
-	 * Setter for dropLiveFuture
-	 * 
-	 * @param dropLiveFuture drop live future
-	 */
-	public void setDropLiveFuture(boolean dropLiveFuture) {
-		encoder.setDropLiveFuture(dropLiveFuture);
-	}
+    /**
+     * Setter for dropLiveFuture
+     * 
+     * @param dropLiveFuture
+     *            drop live future
+     */
+    public void setDropLiveFuture(boolean dropLiveFuture) {
+        encoder.setDropLiveFuture(dropLiveFuture);
+    }
 
-	/**
-	 * @return the targetChunkSize
-	 */
-	public int getTargetChunkSize() {
-		return targetChunkSize;
-	}
+    /**
+     * @return the targetChunkSize
+     */
+    public int getTargetChunkSize() {
+        return targetChunkSize;
+    }
 
-	/**
-	 * @param targetChunkSize the targetChunkSize to set
-	 */
-	public void setTargetChunkSize(int targetChunkSize) {
-		this.targetChunkSize = targetChunkSize;
-	}
+    /**
+     * @param targetChunkSize
+     *            the targetChunkSize to set
+     */
+    public void setTargetChunkSize(int targetChunkSize) {
+        this.targetChunkSize = targetChunkSize;
+    }
 
-	/**
-	 * Output data chunker.
-	 */
-	private static final class Chunker {
+    /**
+     * Output data chunker.
+     */
+    private static final class Chunker {
 
-		@SuppressWarnings("unused")
-		public static LinkedList<IoBuffer> chunk(IoBuffer message, int chunkSize, int desiredSize) {
-			LinkedList<IoBuffer> chunks = new LinkedList<IoBuffer>();
-			int targetSize = desiredSize > chunkSize ? desiredSize : chunkSize;
-			int limit = message.limit();
-			do {
-				int length = 0;
-				int pos = message.position();
-				while (length < targetSize && pos < limit) {
-					byte basicHeader = message.get(pos);
-					length += getDataSize(basicHeader) + chunkSize;
-					pos += length;
-				}
-				int remaining = message.remaining();
-				log.trace("Length: {} remaining: {} pos+len: {} limit: {}", new Object[] { length, remaining, (message.position() + length), limit });
-				if (length > remaining) {
-					length = remaining;
-				}
-				// add a chunk
-				chunks.add(message.getSlice(length));
-			} while (message.hasRemaining());
-			return chunks;
-		}
+        @SuppressWarnings("unused")
+        public static LinkedList<IoBuffer> chunk(IoBuffer message, int chunkSize, int desiredSize) {
+            LinkedList<IoBuffer> chunks = new LinkedList<IoBuffer>();
+            int targetSize = desiredSize > chunkSize ? desiredSize : chunkSize;
+            int limit = message.limit();
+            do {
+                int length = 0;
+                int pos = message.position();
+                while (length < targetSize && pos < limit) {
+                    byte basicHeader = message.get(pos);
+                    length += getDataSize(basicHeader) + chunkSize;
+                    pos += length;
+                }
+                int remaining = message.remaining();
+                log.trace("Length: {} remaining: {} pos+len: {} limit: {}", new Object[] { length, remaining, (message.position() + length), limit });
+                if (length > remaining) {
+                    length = remaining;
+                }
+                // add a chunk
+                chunks.add(message.getSlice(length));
+            } while (message.hasRemaining());
+            return chunks;
+        }
 
-		public static int chunkAndWrite(ProtocolEncoderOutput out, IoBuffer message, int chunkSize, int desiredSize) {
-			int sentChunks = 0;
-			int targetSize = desiredSize > chunkSize ? desiredSize : chunkSize;
-			int limit = message.limit();
-			do {
-				int length = 0;
-				int pos = message.position();
-				while (length < targetSize && pos < limit) {
-					byte basicHeader = message.get(pos);
-					length += getDataSize(basicHeader) + chunkSize;
-					pos += length;
-				}
-				int remaining = message.remaining();
-				log.trace("Length: {} remaining: {} pos+len: {} limit: {}", new Object[] { length, remaining, (message.position() + length), limit });
-				if (length > remaining) {
-					length = remaining;
-				}
-				// send it
-				out.write(message.getSlice(length));
-				sentChunks++;
-			} while (message.hasRemaining());
-			return sentChunks;
-		}
-		
-		private static int getDataSize(byte basicHeader) {
-			final int streamId = basicHeader & 0x0000003F;
-			final int headerType = (basicHeader >> 6) & 0x00000003;
-			int size = 0;
-			switch (headerType) {
-				case 0:
-					size = 12;
-					break;
-				case 1:
-					size = 8;
-					break;
-				case 2:
-					size = 4;
-					break;
-				default:
-					size = 1;
-					break;
-			}
-			if (streamId == 0) {
-				size += 1;
-			} else if (streamId == 1) {
-				size += 2;
-			}
-			return size;
-		}
-	}
+        public static int chunkAndWrite(ProtocolEncoderOutput out, IoBuffer message, int chunkSize, int desiredSize) {
+            int sentChunks = 0;
+            int targetSize = desiredSize > chunkSize ? desiredSize : chunkSize;
+            int limit = message.limit();
+            do {
+                int length = 0;
+                int pos = message.position();
+                while (length < targetSize && pos < limit) {
+                    byte basicHeader = message.get(pos);
+                    length += getDataSize(basicHeader) + chunkSize;
+                    pos += length;
+                }
+                int remaining = message.remaining();
+                log.trace("Length: {} remaining: {} pos+len: {} limit: {}", new Object[] { length, remaining, (message.position() + length), limit });
+                if (length > remaining) {
+                    length = remaining;
+                }
+                // send it
+                out.write(message.getSlice(length));
+                sentChunks++;
+            } while (message.hasRemaining());
+            return sentChunks;
+        }
+
+        private static int getDataSize(byte basicHeader) {
+            final int streamId = basicHeader & 0x0000003F;
+            final int headerType = (basicHeader >> 6) & 0x00000003;
+            int size = 0;
+            switch (headerType) {
+                case 0:
+                    size = 12;
+                    break;
+                case 1:
+                    size = 8;
+                    break;
+                case 2:
+                    size = 4;
+                    break;
+                default:
+                    size = 1;
+                    break;
+            }
+            if (streamId == 0) {
+                size += 1;
+            } else if (streamId == 1) {
+                size += 2;
+            }
+            return size;
+        }
+    }
 
 }

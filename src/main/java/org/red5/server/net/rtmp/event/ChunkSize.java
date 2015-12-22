@@ -26,95 +26,99 @@ import java.io.ObjectOutput;
  * Chunk size event
  */
 public class ChunkSize extends BaseEvent {
-	
-	private static final long serialVersionUID = -7680099175881755879L;
-    
-	/**
+
+    private static final long serialVersionUID = -7680099175881755879L;
+
+    /**
      * Chunk size
      */
-	private int size;
+    private int size;
 
-	public ChunkSize() {
-		super(Type.SYSTEM);
-	}
+    public ChunkSize() {
+        super(Type.SYSTEM);
+    }
+
     /**
      * Create chunk size event with given size
-     * @param size         Chunk size
+     * 
+     * @param size
+     *            Chunk size
      */
     public ChunkSize(int size) {
-		this();
-		this.size = size;
-	}
+        this();
+        this.size = size;
+    }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public byte getDataType() {
-		return TYPE_CHUNK_SIZE;
-	}
+    public byte getDataType() {
+        return TYPE_CHUNK_SIZE;
+    }
 
-	/**
+    /**
      * Getter for size.
      *
-     * @return  Chunk size
+     * @return Chunk size
      */
     public int getSize() {
-		return size;
-	}
+        return size;
+    }
 
-	/**
+    /**
      * Setter for size.
      *
-     * @param size  Chunk size
+     * @param size
+     *            Chunk size
      */
     public void setSize(int size) {
-		this.size = size;
-	}
+        this.size = size;
+    }
 
     /**
      * Releases chunk (set size to zero)
      */
     protected void doRelease() {
-		size = 0;
-	}
+        size = 0;
+    }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String toString() {
-		return "ChunkSize: " + size;
-	}
+    public String toString() {
+        return "ChunkSize: " + size;
+    }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof ChunkSize)) {
-			return false;
-		}
-		final ChunkSize other = (ChunkSize) obj;
-		return getSize() == other.getSize();
-	}
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ChunkSize)) {
+            return false;
+        }
+        final ChunkSize other = (ChunkSize) obj;
+        return getSize() == other.getSize();
+    }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	protected void releaseInternal() {
+    protected void releaseInternal() {
 
-	}
+    }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public int hashCode() {
-		// XXX Paul: use timestamp as the hash instead of Object.hashCode()
-		return timestamp;
-	}
+    public int hashCode() {
+        // XXX Paul: use timestamp as the hash instead of Object.hashCode()
+        return timestamp;
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		size = in.readInt();
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        size = in.readInt();
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeInt(size);
-	}
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeInt(size);
+    }
 }

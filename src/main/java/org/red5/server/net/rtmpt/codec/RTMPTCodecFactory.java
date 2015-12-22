@@ -27,60 +27,62 @@ import org.red5.server.net.rtmp.codec.RTMPProtocolEncoder;
  */
 public class RTMPTCodecFactory extends RTMPCodecFactory {
 
-	/**
-	 * RTMP decoder
-	 */
-	private RTMPTProtocolDecoder decoder;
+    /**
+     * RTMP decoder
+     */
+    private RTMPTProtocolDecoder decoder;
 
-	/**
-	 * RTMP encoder
-	 */
-	private ThreadLocal<RTMPTProtocolEncoder> encoder;
+    /**
+     * RTMP encoder
+     */
+    private ThreadLocal<RTMPTProtocolEncoder> encoder;
 
-	private long baseTolerance = 5000;
+    private long baseTolerance = 5000;
 
-	private boolean dropLiveFuture;
+    private boolean dropLiveFuture;
 
-	/**
-	 * Initialization
-	 */
-	public void init() {
-		// decoder is ok for sharing between rtmpt connections
-		decoder = new RTMPTProtocolDecoder();
-		encoder = new ThreadLocal<RTMPTProtocolEncoder>() {
-			protected RTMPTProtocolEncoder initialValue() {
-				RTMPTProtocolEncoder enc = new RTMPTProtocolEncoder();
-				enc.setBaseTolerance(baseTolerance);
-				enc.setDropLiveFuture(dropLiveFuture);
-				return enc;
-			}
-		};
-	}
+    /**
+     * Initialization
+     */
+    public void init() {
+        // decoder is ok for sharing between rtmpt connections
+        decoder = new RTMPTProtocolDecoder();
+        encoder = new ThreadLocal<RTMPTProtocolEncoder>() {
+            protected RTMPTProtocolEncoder initialValue() {
+                RTMPTProtocolEncoder enc = new RTMPTProtocolEncoder();
+                enc.setBaseTolerance(baseTolerance);
+                enc.setDropLiveFuture(dropLiveFuture);
+                return enc;
+            }
+        };
+    }
 
-	/**
-	 * @param baseTolerance the baseTolerance to set
-	 */
-	public void setBaseTolerance(long baseTolerance) {
-		this.baseTolerance = baseTolerance;
-	}
+    /**
+     * @param baseTolerance
+     *            the baseTolerance to set
+     */
+    public void setBaseTolerance(long baseTolerance) {
+        this.baseTolerance = baseTolerance;
+    }
 
-	/**
-	 * @param dropLiveFuture the dropLiveFuture to set
-	 */
-	public void setDropLiveFuture(boolean dropLiveFuture) {
-		this.dropLiveFuture = dropLiveFuture;
-	}
+    /**
+     * @param dropLiveFuture
+     *            the dropLiveFuture to set
+     */
+    public void setDropLiveFuture(boolean dropLiveFuture) {
+        this.dropLiveFuture = dropLiveFuture;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public RTMPProtocolDecoder getRTMPDecoder() {
-		return decoder;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public RTMPProtocolDecoder getRTMPDecoder() {
+        return decoder;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public RTMPProtocolEncoder getRTMPEncoder() {
-		return encoder.get();
-	}
+    /** {@inheritDoc} */
+    @Override
+    public RTMPProtocolEncoder getRTMPEncoder() {
+        return encoder.get();
+    }
 
 }

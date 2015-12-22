@@ -29,24 +29,24 @@ import org.red5.server.net.rtmp.status.Status;
  */
 public class RTMPTProtocolEncoder extends RTMPProtocolEncoder {
 
-	@Override
-	protected void encodeCommand(IoBuffer out, ICommand command) {
-		// if we get an InsufficientBW message for the client, we'll reduce the base tolerance and set drop live to true
-		final IServiceCall call = command.getCall();
-		if ("onStatus".equals(call.getServiceMethodName()) && call.getArguments().length >= 1) {
-			Object arg0 = call.getArguments()[0];
-			if ("NetStream.Play.InsufficientBW".equals(((Status) arg0).getCode())) {
-				long baseT = getBaseTolerance();
-				try {
-					// drop the tolerances by half but not less than 500
-					setBaseTolerance(Math.max(baseT / 2, 500));
-				} catch (Exception e) {
-					log.debug("Problem setting base tolerance: {}", e.getMessage());
-				}
-				setDropLiveFuture(true);
-			}
-		}
-		super.encodeCommand(out, command);
-	}
+    @Override
+    protected void encodeCommand(IoBuffer out, ICommand command) {
+        // if we get an InsufficientBW message for the client, we'll reduce the base tolerance and set drop live to true
+        final IServiceCall call = command.getCall();
+        if ("onStatus".equals(call.getServiceMethodName()) && call.getArguments().length >= 1) {
+            Object arg0 = call.getArguments()[0];
+            if ("NetStream.Play.InsufficientBW".equals(((Status) arg0).getCode())) {
+                long baseT = getBaseTolerance();
+                try {
+                    // drop the tolerances by half but not less than 500
+                    setBaseTolerance(Math.max(baseT / 2, 500));
+                } catch (Exception e) {
+                    log.debug("Problem setting base tolerance: {}", e.getMessage());
+                }
+                setDropLiveFuture(true);
+            }
+        }
+        super.encodeCommand(out, command);
+    }
 
 }

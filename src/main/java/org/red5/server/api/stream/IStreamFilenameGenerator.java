@@ -29,46 +29,61 @@ import org.red5.server.api.scope.IScopeService;
  */
 public interface IStreamFilenameGenerator extends IScopeService {
 
-	/** Name of the bean to setup a custom filename generator in an application. */
-	public static String BEAN_NAME = "streamFilenameGenerator";
+    /** Name of the bean to setup a custom filename generator in an application. */
+    public static String BEAN_NAME = "streamFilenameGenerator";
 
-	/** Possible filename generation types. */
-	public static enum GenerationType {
-		PLAYBACK, RECORD
-	};
+    /** Possible filename generation types. */
+    public static enum GenerationType {
+        PLAYBACK, RECORD
+    };
 
-	/**
-	 * Generate a filename without an extension.
-	 * 
-	 * @param scope           Scope to use
-	 * @param name            Stream name
-	 * @param type            Generation strategy (either playback or record)
-	 * @return                Full filename
-	 */
-	public String generateFilename(IScope scope, String name, GenerationType type);
+    /**
+     * Generate a filename without an extension.
+     * 
+     * @param scope
+     *            Scope to use
+     * @param name
+     *            Stream name
+     * @param type
+     *            Generation strategy (either playback or record)
+     * @return Full filename
+     */
+    public String generateFilename(IScope scope, String name, GenerationType type);
 
-	/**
-	 * Generate a filename with an extension.
-	 *
-	 * @param scope           Scope to use
-	 * @param name            Stream filename
-	 * @param extension       Extension
-	 * @param type            Generation strategy (either playback or record)
-	 * @return                Full filename with extension
-	 */
-	public String generateFilename(IScope scope, String name, String extension, GenerationType type);
+    /**
+     * Generate a filename with an extension.
+     *
+     * @param scope
+     *            Scope to use
+     * @param name
+     *            Stream filename
+     * @param extension
+     *            Extension
+     * @param type
+     *            Generation strategy (either playback or record)
+     * @return Full filename with extension
+     */
+    public String generateFilename(IScope scope, String name, String extension, GenerationType type);
 
-	/**
-	 * True if returned filename is an absolute path, else relative to application.
-	 * 
-	 * If relative to application, you need to use
-	 * <pre>scope.getContext().getResources(fileName)[0].getFile()</pre> to resolve
-	 * this to a file.
-	 * 
-	 * If absolute (ie returns true) simply use <pre>new File(generateFilename(scope, name))</pre>
-	 * 
-	 * @return true if an absolute path; else false
-	 */
-	public boolean resolvesToAbsolutePath();
+    /**
+     * True if returned filename is an absolute path, else relative to application.
+     * 
+     * If relative to application, you need to use
+     * 
+     * <pre>
+     * scope.getContext().getResources(fileName)[0].getFile()
+     * </pre>
+     * 
+     * to resolve this to a file.
+     * 
+     * If absolute (ie returns true) simply use
+     * 
+     * <pre>
+     * new File(generateFilename(scope, name))
+     * </pre>
+     * 
+     * @return true if an absolute path; else false
+     */
+    public boolean resolvesToAbsolutePath();
 
 }

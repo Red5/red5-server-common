@@ -25,7 +25,7 @@ import org.red5.server.net.rtmp.codec.RTMPProtocolDecoder;
  */
 public class RTMPTProtocolDecoder extends RTMPProtocolDecoder {
 
-	/*
-	 * Nothing special here right now...
-	 */
+    /*
+     * Nothing special here right now...
+     */
 }

@@ -26,79 +26,82 @@ import java.io.ObjectOutput;
  * Bytes read event
  */
 public class BytesRead extends BaseEvent {
-	
-	private static final long serialVersionUID = -127649312402709338L;
 
-	/**
-	 * Bytes read
-	 */
-	private int bytesRead;
+    private static final long serialVersionUID = -127649312402709338L;
 
-	public BytesRead() {
-		super(Type.STREAM_CONTROL);
-	}
+    /**
+     * Bytes read
+     */
+    private int bytesRead;
 
-	/**
-	 * Creates new event with given bytes number
-	 * @param bytesRead       Number of bytes read
-	 */
-	public BytesRead(int bytesRead) {
-		this();
-		this.bytesRead = bytesRead;
-	}
+    public BytesRead() {
+        super(Type.STREAM_CONTROL);
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public byte getDataType() {
-		return TYPE_BYTES_READ;
-	}
+    /**
+     * Creates new event with given bytes number
+     * 
+     * @param bytesRead
+     *            Number of bytes read
+     */
+    public BytesRead(int bytesRead) {
+        this();
+        this.bytesRead = bytesRead;
+    }
 
-	/**
-	 * Return number of bytes read
-	 *
-	 * @return  Number of bytes
-	 */
-	public int getBytesRead() {
-		return bytesRead;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public byte getDataType() {
+        return TYPE_BYTES_READ;
+    }
 
-	/**
-	 * Setter for bytes read
-	 *
-	 * @param bytesRead  Number of bytes read
-	 */
-	public void setBytesRead(int bytesRead) {
-		this.bytesRead = bytesRead;
-	}
+    /**
+     * Return number of bytes read
+     *
+     * @return Number of bytes
+     */
+    public int getBytesRead() {
+        return bytesRead;
+    }
 
-	/**
-	 * Release event (set bytes read to zero)
-	 */
-	protected void doRelease() {
-		bytesRead = 0;
-	}
+    /**
+     * Setter for bytes read
+     *
+     * @param bytesRead
+     *            Number of bytes read
+     */
+    public void setBytesRead(int bytesRead) {
+        this.bytesRead = bytesRead;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return "StreamBytesRead: " + bytesRead;
-	}
+    /**
+     * Release event (set bytes read to zero)
+     */
+    protected void doRelease() {
+        bytesRead = 0;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	protected void releaseInternal() {
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return "StreamBytesRead: " + bytesRead;
+    }
 
-	}
+    /** {@inheritDoc} */
+    @Override
+    protected void releaseInternal() {
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		bytesRead = in.readInt();
-	}
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeInt(bytesRead);
-	}
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        bytesRead = in.readInt();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeInt(bytesRead);
+    }
 }

@@ -36,66 +36,69 @@ public class AudioCodecFactory {
     /**
      * Object key
      */
-	public static final String KEY = "audioCodecFactory";
-	
+    public static final String KEY = "audioCodecFactory";
+
     /**
      * Logger for audio factory
      */
-	private static Logger log = LoggerFactory.getLogger(AudioCodecFactory.class);
-    
-	/**
+    private static Logger log = LoggerFactory.getLogger(AudioCodecFactory.class);
+
+    /**
      * List of available codecs
      */
-	private static List<IAudioStreamCodec> codecs = new ArrayList<IAudioStreamCodec>(1);
+    private static List<IAudioStreamCodec> codecs = new ArrayList<IAudioStreamCodec>(1);
 
-	/**
+    /**
      * Setter for codecs
      *
-     * @param codecs List of codecs
+     * @param codecs
+     *            List of codecs
      */
     public void setCodecs(List<IAudioStreamCodec> codecs) {
-    	AudioCodecFactory.codecs = codecs;
-	}
+        AudioCodecFactory.codecs = codecs;
+    }
 
     /**
      * Create and return new audio codec applicable for byte buffer data
-     * @param data                 Byte buffer data
-     * @return                     audio codec
+     * 
+     * @param data
+     *            Byte buffer data
+     * @return audio codec
      */
-	public static IAudioStreamCodec getAudioCodec(IoBuffer data) {
-		IAudioStreamCodec result = null;
-		try {
-			//get the codec identifying byte
-			int codecId = (data.get() & 0xf0) >> 4;		
-    		switch (codecId) {
-    			case 10: //aac 
-    				result = (IAudioStreamCodec) Class.forName("org.red5.codec.AACAudio").newInstance();
-    				break;
-    			// TODO add SPEEX support?
-    		}
-    		data.rewind();
-		} catch (Exception ex) {
-			log.error("Error creating codec instance", ex);			
-		}
-		//if codec is not found do the old-style loop
-		if (result == null) {
-    		for (IAudioStreamCodec storedCodec: codecs) {
-    			IAudioStreamCodec codec;
-    			// XXX: this is a bit of a hack to create new instances of the
-    			// configured audio codec for each stream
-    			try {
-    				codec = storedCodec.getClass().newInstance();
-    			} catch (Exception e) {
-    				log.error("Could not create audio codec instance", e);
-    				continue;
-    			}
-    			if (codec.canHandleData(data)) {
-    				result = codec;
-    				break;
-    			}
-    		}
-		}
-		return result;
-	}
+    public static IAudioStreamCodec getAudioCodec(IoBuffer data) {
+        IAudioStreamCodec result = null;
+        try {
+            //get the codec identifying byte
+            int codecId = (data.get() & 0xf0) >> 4;
+            switch (codecId) {
+                case 10: //aac 
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.AACAudio").newInstance();
+                    break;
+            // TODO add SPEEX support?
+            }
+            data.rewind();
+        } catch (Exception ex) {
+            log.error("Error creating codec instance", ex);
+        }
+        //if codec is not found do the old-style loop
+        if (result == null) {
+            for (IAudioStreamCodec storedCodec : codecs) {
+                IAudioStreamCodec codec;
+                // XXX: this is a bit of a hack to create new instances of the
+                // configured audio codec for each stream
+                try {
+                    codec = storedCodec.getClass().newInstance();
+                } catch (Exception e) {
+                    log.error("Could not create audio codec instance", e);
+                    continue;
+                }
+                if (codec.canHandleData(data)) {
+                    result = codec;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
 
 }

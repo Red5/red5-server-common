@@ -18,19 +18,16 @@
 package org.red5.server.api.scope;
 
 /**
- * Base marker interface for all scope services. Used by the ScopeUtils to lookup
- * services defined as beans in Spring application context. A scope service usually can perform various
- * tasks on a scope like managing shared objects, streams, etc.
+ * Base marker interface for all scope services. Used by the ScopeUtils to lookup services defined as beans in Spring application context. A scope service usually can perform various tasks on a scope like managing shared objects, streams, etc.
  * 
  * @author The Red5 Project
  * @author Joachim Bauch (bauch@struktur.de)
  */
 public interface IScopeService {
 
-	/** 
-	 * Name of a bean defining that scope service. Override in
-	 * subinterfaces.
-	 * */
-	public static String BEAN_NAME = null;
+    /**
+     * Name of a bean defining that scope service. Override in subinterfaces.
+     * */
+    public static String BEAN_NAME = null;
 
 }

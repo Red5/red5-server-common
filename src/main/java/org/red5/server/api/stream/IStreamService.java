@@ -26,153 +26,198 @@ import org.red5.server.api.scope.IScopeService;
  */
 public interface IStreamService extends IScopeService {
 
-	public static String BEAN_NAME = "streamService";
+    public static String BEAN_NAME = "streamService";
 
-	/**
-	 * Create a stream and return a corresponding id.
-	 * 
-	 * @return     ID of created stream
-	 */
-	public Number createStream();
+    /**
+     * Create a stream and return a corresponding id.
+     * 
+     * @return ID of created stream
+     */
+    public Number createStream();
 
-	/**
-	 * Create a stream and return a corresponding id.
-	 * 
-	 * @param streamId  Stream id
-	 * @return     ID of created stream
-	 */
-	public Number createStream(Number streamId);	
-	
-	/**
-	 * Close the stream but not deallocate the resources.
-	 * 
-	 * @param connection Connection
-	 * @param streamId  Stream id
-	 */
-	public void closeStream(IConnection connection, Number streamId);
+    /**
+     * Create a stream and return a corresponding id.
+     * 
+     * @param streamId
+     *            Stream id
+     * @return ID of created stream
+     */
+    public Number createStream(Number streamId);
 
-	/**
-	 * Close the stream if not been closed.
-	 * Deallocate the related resources.
-	 * @param streamId          Stream id
-	 */
-	public void deleteStream(Number streamId);
+    /**
+     * Close the stream but not deallocate the resources.
+     * 
+     * @param connection
+     *            Connection
+     * @param streamId
+     *            Stream id
+     */
+    public void closeStream(IConnection connection, Number streamId);
 
-	/**
-	 * Called by FMS.
-	 * 
-	 * @param streamId          Stream id
-	 */
-	public void initStream(Number streamId);
+    /**
+     * Close the stream if not been closed. Deallocate the related resources.
+     * 
+     * @param streamId
+     *            Stream id
+     */
+    public void deleteStream(Number streamId);
 
-	/**
-	 * Called by FMS.
-	 * 
-	 * @param streamId          Stream id
-	 * @param idk	I dont know what this is yet
-	 */
-	public void initStream(Number streamId, Object idk);
-	
-	/**
-	 * Called by FME.
-	 * 
-	 * @param streamName stream name
-	 */
-	public void releaseStream(String streamName);
+    /**
+     * Called by FMS.
+     * 
+     * @param streamId
+     *            Stream id
+     */
+    public void initStream(Number streamId);
 
-	/**
-	 * Delete stream
-	 * @param conn            Stream capable connection
-	 * @param streamId        Stream id
-	 */
-	public void deleteStream(IStreamCapableConnection conn, Number streamId);
+    /**
+     * Called by FMS.
+     * 
+     * @param streamId
+     *            Stream id
+     * @param idk
+     *            I dont know what this is yet
+     */
+    public void initStream(Number streamId, Object idk);
 
-	/**
-	 * Play stream without initial stop
-	 * @param dontStop         Stoppage flag
-	 */
-	public void play(Boolean dontStop);
+    /**
+     * Called by FME.
+     * 
+     * @param streamName
+     *            stream name
+     */
+    public void releaseStream(String streamName);
 
-	/**
-	 * Play stream with name
-	 * @param name          Stream name
-	 */
-	public void play(String name);
+    /**
+     * Delete stream
+     * 
+     * @param conn
+     *            Stream capable connection
+     * @param streamId
+     *            Stream id
+     */
+    public void deleteStream(IStreamCapableConnection conn, Number streamId);
 
-	/**
-	 * Play stream with name from start position
-	 * @param name          Stream name
-	 * @param start         Start position
-	 */
-	public void play(String name, int start);
+    /**
+     * Play stream without initial stop
+     * 
+     * @param dontStop
+     *            Stoppage flag
+     */
+    public void play(Boolean dontStop);
 
-	/**
-	 * Play stream with name from start position and for given amount if time
-	 * @param name          Stream name
-	 * @param start         Start position
-	 * @param length        Playback length
-	 */
-	public void play(String name, int start, int length);
+    /**
+     * Play stream with name
+     * 
+     * @param name
+     *            Stream name
+     */
+    public void play(String name);
 
-	/**
-	 * Publishes stream from given position for given amount of time
-	 * @param name                      Stream published name
-	 * @param start                     Start position
-	 * @param length                    Playback length
-	 * @param flushPlaylist             Flush playlist?
-	 */
-	public void play(String name, int start, int length, boolean flushPlaylist);
+    /**
+     * Play stream with name from start position
+     * 
+     * @param name
+     *            Stream name
+     * @param start
+     *            Start position
+     */
+    public void play(String name, int start);
 
-	/**
-	 * Publishes stream with given name
-	 * @param name             Stream published name
-	 */
-	public void publish(String name);
+    /**
+     * Play stream with name from start position and for given amount if time
+     * 
+     * @param name
+     *            Stream name
+     * @param start
+     *            Start position
+     * @param length
+     *            Playback length
+     */
+    public void play(String name, int start, int length);
 
-	/**
-	 * Publishes stream with given name and mode
-	 * @param name            Stream published name
-	 * @param mode            Stream publishing mode
-	 */
-	public void publish(String name, String mode);
+    /**
+     * Publishes stream from given position for given amount of time
+     * 
+     * @param name
+     *            Stream published name
+     * @param start
+     *            Start position
+     * @param length
+     *            Playback length
+     * @param flushPlaylist
+     *            Flush playlist?
+     */
+    public void play(String name, int start, int length, boolean flushPlaylist);
 
-	/**
-	 * Publish
-	 * @param dontStop      Whether need to stop first
-	 */
-	public void publish(Boolean dontStop);
+    /**
+     * Publishes stream with given name
+     * 
+     * @param name
+     *            Stream published name
+     */
+    public void publish(String name);
 
-	/**
-	 * Seek to position
-	 * @param position         Seek position
-	 */
-	public void seek(int position);
+    /**
+     * Publishes stream with given name and mode
+     * 
+     * @param name
+     *            Stream published name
+     * @param mode
+     *            Stream publishing mode
+     */
+    public void publish(String name, String mode);
 
-	/**
-	 * Pauses playback
-	 * @param pausePlayback           Pause or resume flash
-	 * @param position                Pause position
-	 */
-	public void pause(Boolean pausePlayback, int position);
+    /**
+     * Publish
+     * 
+     * @param dontStop
+     *            Whether need to stop first
+     */
+    public void publish(Boolean dontStop);
 
-	/**
-	 * Undocumented Flash Plugin 10 call, assuming to be the alias to pause(boolean, int)
-	 * 
-	 * @param pausePlayback           Pause or resume flash
-	 * @param position                Pause position
-	 */
-	public void pauseRaw(Boolean pausePlayback, int position);
+    /**
+     * Seek to position
+     * 
+     * @param position
+     *            Seek position
+     */
+    public void seek(int position);
 
-	/**
-	 * Can recieve video?
-	 * @param receive       Boolean flag
-	 */
-	public void receiveVideo(boolean receive);
+    /**
+     * Pauses playback
+     * 
+     * @param pausePlayback
+     *            Pause or resume flash
+     * @param position
+     *            Pause position
+     */
+    public void pause(Boolean pausePlayback, int position);
 
-	/**
-	 * Can recieve audio?
-	 * @param receive       Boolean flag
-	 */
-	public void receiveAudio(boolean receive);
+    /**
+     * Undocumented Flash Plugin 10 call, assuming to be the alias to pause(boolean, int)
+     * 
+     * @param pausePlayback
+     *            Pause or resume flash
+     * @param position
+     *            Pause position
+     */
+    public void pauseRaw(Boolean pausePlayback, int position);
+
+    /**
+     * Can recieve video?
+     * 
+     * @param receive
+     *            Boolean flag
+     */
+    public void receiveVideo(boolean receive);
+
+    /**
+     * Can recieve audio?
+     * 
+     * @param receive
+     *            Boolean flag
+     */
+    public void receiveAudio(boolean receive);
 
 }

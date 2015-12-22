@@ -28,16 +28,29 @@ import org.red5.server.api.scope.IScope;
  */
 public interface IStreamPlaybackSecurity {
 
-	/**
-	 * Check if playback of a stream with the given name is allowed.
-	 * 
-	 * @param scope Scope the stream is about to be played back from.
-	 * @param name Name of the stream to play.
-	 * @param start Position to start playback from (in milliseconds).
-	 * @param length Duration to play (in milliseconds).
-	 * @param flushPlaylist Flush playlist?
-	 * @return <pre>True</pre> if playback is allowed, otherwise <pre>False</pre>
-	 */
-	public boolean isPlaybackAllowed(IScope scope, String name, int start, int length, boolean flushPlaylist);
+    /**
+     * Check if playback of a stream with the given name is allowed.
+     * 
+     * @param scope
+     *            Scope the stream is about to be played back from.
+     * @param name
+     *            Name of the stream to play.
+     * @param start
+     *            Position to start playback from (in milliseconds).
+     * @param length
+     *            Duration to play (in milliseconds).
+     * @param flushPlaylist
+     *            Flush playlist?
+     * @return <pre>
+     * True
+     * </pre>
+     * 
+     *         if playback is allowed, otherwise
+     * 
+     *         <pre>
+     * False
+     * </pre>
+     */
+    public boolean isPlaybackAllowed(IScope scope, String name, int start, int length, boolean flushPlaylist);
 
 }

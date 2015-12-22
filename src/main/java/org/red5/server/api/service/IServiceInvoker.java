@@ -28,27 +28,42 @@ import org.red5.server.api.scope.IScope;
  */
 public interface IServiceInvoker {
 
-	/**
-	 * Execute the passed service call in the given scope.  This looks up the
-	 * handler for the call in the scope and the context of the scope.
-	 * 
-	 * @param call
-	 * 			the call to invoke
-	 * @param scope
-	 * 			the scope to search for a handler
-	 * @return <pre>true</pre> if the call was performed, otherwise <pre>false</pre>
-	 */
-	boolean invoke(IServiceCall call, IScope scope);
+    /**
+     * Execute the passed service call in the given scope. This looks up the handler for the call in the scope and the context of the scope.
+     * 
+     * @param call
+     *            the call to invoke
+     * @param scope
+     *            the scope to search for a handler
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if the call was performed, otherwise
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     */
+    boolean invoke(IServiceCall call, IScope scope);
 
-	/**
-	 * Execute the passed service call in the given object.
-	 * 
-	 * @param call
-	 * 			the call to invoke
-	 * @param service
-	 * 			the service to use
-	 * @return <pre>true</pre> if the call was performed, otherwise <pre>false</pre>
-	 */
-	boolean invoke(IServiceCall call, Object service);
+    /**
+     * Execute the passed service call in the given object.
+     * 
+     * @param call
+     *            the call to invoke
+     * @param service
+     *            the service to use
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if the call was performed, otherwise
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     */
+    boolean invoke(IServiceCall call, Object service);
 
 }

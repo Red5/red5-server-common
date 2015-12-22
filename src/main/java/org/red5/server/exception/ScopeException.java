@@ -23,10 +23,10 @@ package org.red5.server.exception;
  */
 public class ScopeException extends RuntimeException {
 
-	private static final long serialVersionUID = -8512088658139011L;
+    private static final long serialVersionUID = -8512088658139011L;
 
-	public ScopeException(String string) {
-		super(string);
-	}
+    public ScopeException(String string) {
+        super(string);
+    }
 
 }

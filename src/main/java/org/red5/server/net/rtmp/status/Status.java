@@ -32,209 +32,221 @@ import org.red5.io.object.Output;
  */
 @Anonymous
 public class Status implements StatusCodes, ICustomSerializable, Externalizable {
-	
-	private static final long serialVersionUID = -5501563718489586136L;
 
-	/**
-	 * Error constant
-	 */
-	public static final String ERROR = "error";
+    private static final long serialVersionUID = -5501563718489586136L;
 
-	/**
-	 * Status constant
-	 */
-	public static final String STATUS = "status";
+    /**
+     * Error constant
+     */
+    public static final String ERROR = "error";
 
-	/**
-	 * Warning constant
-	 */
-	public static final String WARNING = "warning";
+    /**
+     * Status constant
+     */
+    public static final String STATUS = "status";
 
-	/**
-	 * Status code
-	 */
-	protected String code;
+    /**
+     * Warning constant
+     */
+    public static final String WARNING = "warning";
 
-	/**
-	 * Status level
-	 */
-	protected String level;
+    /**
+     * Status code
+     */
+    protected String code;
 
-	/**
-	 * Status event description
-	 */
-	protected String description = "";
+    /**
+     * Status level
+     */
+    protected String level;
 
-	/**
-	 * Status event details
-	 */
-	protected String details = "";
+    /**
+     * Status event description
+     */
+    protected String description = "";
 
-	/**
-	 * Id of client
-	 */
-	protected Number clientid;
+    /**
+     * Status event details
+     */
+    protected String details = "";
 
-	/** Constructs a new Status. */
-	public Status() {
-	}
+    /**
+     * Id of client
+     */
+    protected Number clientid;
 
-	/**
-	 * Creates status object with given status code
-	 * @param code            Status code
-	 */
-	public Status(String code) {
-		this.code = code;
-		this.level = STATUS;
-	}
+    /** Constructs a new Status. */
+    public Status() {
+    }
 
-	/**
-	 * Creates status object with given level, description and status code
-	 * @param code            Status code
-	 * @param level           Level
-	 * @param description     Description
-	 */
-	public Status(String code, String level, String description) {
-		this.code = code;
-		this.level = level;
-		this.description = description;
-	}
+    /**
+     * Creates status object with given status code
+     * 
+     * @param code
+     *            Status code
+     */
+    public Status(String code) {
+        this.code = code;
+        this.level = STATUS;
+    }
 
-	/**
-	 * Getter for status code.
-	 *
-	 * @return  Status code
-	 */
-	public String getCode() {
-		return code;
-	}
+    /**
+     * Creates status object with given level, description and status code
+     * 
+     * @param code
+     *            Status code
+     * @param level
+     *            Level
+     * @param description
+     *            Description
+     */
+    public Status(String code, String level, String description) {
+        this.code = code;
+        this.level = level;
+        this.description = description;
+    }
 
-	/**
-	 * Setter for code
-	 *
-	 * @param code Status code
-	 */
-	public void setCode(String code) {
-		this.code = code;
-	}
+    /**
+     * Getter for status code.
+     *
+     * @return Status code
+     */
+    public String getCode() {
+        return code;
+    }
 
-	/**
-	 * Getter for description.
-	 *
-	 * @return Status event description.
-	 */
-	public String getDescription() {
-		return description;
-	}
+    /**
+     * Setter for code
+     *
+     * @param code
+     *            Status code
+     */
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-	/**
-	 * Setter for description.
-	 *
-	 * @param description Status event description.
-	 */
-	public void setDesciption(String description) {
-		this.description = description;
-	}
+    /**
+     * Getter for description.
+     *
+     * @return Status event description.
+     */
+    public String getDescription() {
+        return description;
+    }
 
-	/**
-	 * Getter for level.
-	 *
-	 * @return Level
-	 */
-	public String getLevel() {
-		return level;
-	}
+    /**
+     * Setter for description.
+     *
+     * @param description
+     *            Status event description.
+     */
+    public void setDesciption(String description) {
+        this.description = description;
+    }
 
-	/**
-	 * Setter for level
-	 *
-	 * @param level Level
-	 */
-	public void setLevel(String level) {
-		this.level = level;
-	}
+    /**
+     * Getter for level.
+     *
+     * @return Level
+     */
+    public String getLevel() {
+        return level;
+    }
 
-	/**
-	 * Getter for client id
-	 *
-	 * @return  Client id
-	 */
-	public Number getClientid() {
-		return clientid;
-	}
+    /**
+     * Setter for level
+     *
+     * @param level
+     *            Level
+     */
+    public void setLevel(String level) {
+        this.level = level;
+    }
 
-	/**
-	 * Setter for client id
-	 *
-	 * @param clientid  Client id
-	 */
-	public void setClientid(Number clientid) {
-		this.clientid = clientid;
-	}
+    /**
+     * Getter for client id
+     *
+     * @return Client id
+     */
+    public Number getClientid() {
+        return clientid;
+    }
 
-	/**
-	 * Getter for details
-	 *
-	 * @return  Status event details
-	 */
-	public String getDetails() {
-		return details;
-	}
+    /**
+     * Setter for client id
+     *
+     * @param clientid
+     *            Client id
+     */
+    public void setClientid(Number clientid) {
+        this.clientid = clientid;
+    }
 
-	/**
-	 * Setter for details.
-	 *
-	 * @param details  Status event details
-	 */
-	public void setDetails(String details) {
-		this.details = details;
-	}
+    /**
+     * Getter for details
+     *
+     * @return Status event details
+     */
+    public String getDetails() {
+        return details;
+    }
 
-	/**
-	 * Setter for description.
-	 *
-	 * @param description  Status event description
-	 */
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    /**
+     * Setter for details.
+     *
+     * @param details
+     *            Status event details
+     */
+    public void setDetails(String details) {
+        this.details = details;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return "Status: code: " + getCode() + " desc: " + getDescription() + " level: " + getLevel();
-	}
+    /**
+     * Setter for description.
+     *
+     * @param description
+     *            Status event description
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void serialize(Output output) {
-		output.putString("level");
-		output.writeString(getLevel());
-		output.putString("code");
-		output.writeString(getCode());
-		output.putString("description");
-		output.writeString(getDescription());
-		output.putString("details");
-		if (getDetails() != null) {
-			output.writeString(getDetails());
-		} else {
-			output.writeNull();
-		}
-		output.putString("clientid");
-		output.writeNumber(getClientid());
-	}
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return "Status: code: " + getCode() + " desc: " + getDescription() + " level: " + getLevel();
+    }
 
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		clientid = (Number) in.readDouble();
-		code = (String) in.readObject();
-		description = (String) in.readObject();
-		details = (String) in.readObject();
-		level = (String) in.readObject();
-	}
+    public void serialize(Output output) {
+        output.putString("level");
+        output.writeString(getLevel());
+        output.putString("code");
+        output.writeString(getCode());
+        output.putString("description");
+        output.writeString(getDescription());
+        output.putString("details");
+        if (getDetails() != null) {
+            output.writeString(getDetails());
+        } else {
+            output.writeNull();
+        }
+        output.putString("clientid");
+        output.writeNumber(getClientid());
+    }
 
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeDouble(clientid.doubleValue());
-		out.writeObject(code);
-		out.writeObject(description);
-		out.writeObject(details);
-		out.writeObject(level);
-	}
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        clientid = (Number) in.readDouble();
+        code = (String) in.readObject();
+        description = (String) in.readObject();
+        details = (String) in.readObject();
+        level = (String) in.readObject();
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeDouble(clientid.doubleValue());
+        out.writeObject(code);
+        out.writeObject(description);
+        out.writeObject(details);
+        out.writeObject(level);
+    }
 }

@@ -19,12 +19,11 @@
 package org.red5.server.messaging;
 
 /**
- * Signature to mark a provider/consumer never actively providers/consumers
- * messages.
+ * Signature to mark a provider/consumer never actively providers/consumers messages.
  * 
  * @author The Red5 Project
  * @author Steven Gong (steven.gong@gmail.com)
  */
 public interface IPassive {
-	public static final String KEY = IPassive.class.getName();
+    public static final String KEY = IPassive.class.getName();
 }

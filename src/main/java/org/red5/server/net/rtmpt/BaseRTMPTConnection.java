@@ -47,328 +47,335 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class BaseRTMPTConnection extends RTMPConnection {
 
-	private static final Logger log = LoggerFactory.getLogger(BaseRTMPTConnection.class);
+    private static final Logger log = LoggerFactory.getLogger(BaseRTMPTConnection.class);
 
-	/**
-	 * Protocol decoder
-	 */
-	private transient RTMPTProtocolDecoder decoder;
+    /**
+     * Protocol decoder
+     */
+    private transient RTMPTProtocolDecoder decoder;
 
-	/**
-	 * Protocol encoder
-	 */
-	private transient RTMPTProtocolEncoder encoder;
+    /**
+     * Protocol encoder
+     */
+    private transient RTMPTProtocolEncoder encoder;
 
-	/**
-	 * Closing flag
-	 */
-	private volatile boolean closing;
+    /**
+     * Closing flag
+     */
+    private volatile boolean closing;
 
-	/**
-	 * Number of read bytes
-	 */
-	private AtomicLong readBytes = new AtomicLong(0);
+    /**
+     * Number of read bytes
+     */
+    private AtomicLong readBytes = new AtomicLong(0);
 
-	/**
-	 * Number of written bytes
-	 */
-	private AtomicLong writtenBytes = new AtomicLong(0);
+    /**
+     * Number of written bytes
+     */
+    private AtomicLong writtenBytes = new AtomicLong(0);
 
-	/**
-	 * Byte buffer
-	 */
-	private volatile IoBuffer buffer;
+    /**
+     * Byte buffer
+     */
+    private volatile IoBuffer buffer;
 
-	/**
-	 * List of pending outgoing messages. Default size is 8192.
-	 */
-	protected transient volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>(8192);
+    /**
+     * List of pending outgoing messages. Default size is 8192.
+     */
+    protected transient volatile LinkedBlockingQueue<PendingData> pendingOutMessages = new LinkedBlockingQueue<PendingData>(8192);
 
-	/**
-	 * Maximum incoming messages to process at a time per client
-	 */
-	protected int maxInMessagesPerProcess = 16;
+    /**
+     * Maximum incoming messages to process at a time per client
+     */
+    protected int maxInMessagesPerProcess = 16;
 
-	/**
-	 * Maximum amount of time in milliseconds to wait before allowing an offer to fail
-	 */
-	protected long maxQueueOfferTime = 500L;
+    /**
+     * Maximum amount of time in milliseconds to wait before allowing an offer to fail
+     */
+    protected long maxQueueOfferTime = 500L;
 
-	/**
-	 * Maximum offer attempts before failing on incoming or outgoing queues
-	 */
-	protected int maxQueueOfferAttempts = 4;
+    /**
+     * Maximum offer attempts before failing on incoming or outgoing queues
+     */
+    protected int maxQueueOfferAttempts = 4;
 
-	public BaseRTMPTConnection(String type) {
-		super(type);
-		this.buffer = IoBuffer.allocate(0).setAutoExpand(true);
-	}
+    public BaseRTMPTConnection(String type) {
+        super(type);
+        this.buffer = IoBuffer.allocate(0).setAutoExpand(true);
+    }
 
-	/**
-	 * Return any pending messages up to a given size.
-	 *
-	 * @param targetSize the size the resulting buffer should have
-	 * @return a buffer containing the data to send or null if no messages are pending
-	 */
-	abstract public IoBuffer getPendingMessages(int targetSize);
+    /**
+     * Return any pending messages up to a given size.
+     *
+     * @param targetSize
+     *            the size the resulting buffer should have
+     * @return a buffer containing the data to send or null if no messages are pending
+     */
+    abstract public IoBuffer getPendingMessages(int targetSize);
 
-	/** {@inheritDoc} */
-	@Override
-	public void close() {
-		closing = true;
-		if (pendingOutMessages.size() > 0) {
-			if (log.isTraceEnabled()) {
-				log.trace("Clearing pending messages out: {}", pendingOutMessages.size());
-			}
-			pendingOutMessages.clear();
-		}
-		// clean up buffer
-		if (buffer != null) {
-			buffer.free();
-			buffer = null;
-		}
-		super.close();
-	}
+    /** {@inheritDoc} */
+    @Override
+    public void close() {
+        closing = true;
+        if (pendingOutMessages.size() > 0) {
+            if (log.isTraceEnabled()) {
+                log.trace("Clearing pending messages out: {}", pendingOutMessages.size());
+            }
+            pendingOutMessages.clear();
+        }
+        // clean up buffer
+        if (buffer != null) {
+            buffer.free();
+            buffer = null;
+        }
+        super.close();
+    }
 
-	/**
-	 * Getter for property 'closing'.
-	 *
-	 * @return Value for property 'closing'.
-	 */
-	public boolean isClosing() {
-		return closing;
-	}
+    /**
+     * Getter for property 'closing'.
+     *
+     * @return Value for property 'closing'.
+     */
+    public boolean isClosing() {
+        return closing;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public long getReadBytes() {
-		return readBytes.get();
-	}
+    /** {@inheritDoc} */
+    @Override
+    public long getReadBytes() {
+        return readBytes.get();
+    }
 
-	public void updateReadBytes(int read) {
-		readBytes.addAndGet(read);
-	}
-	
-	/** {@inheritDoc} */
-	@Override
-	public long getWrittenBytes() {
-		return writtenBytes.get();
-	}
+    public void updateReadBytes(int read) {
+        readBytes.addAndGet(read);
+    }
 
-	public void updateWrittenBytes(int wrote) {
-		writtenBytes.addAndGet(wrote);
-	}	
-	
-	/** {@inheritDoc} */
-	@Override
-	public long getPendingMessages() {
-		log.debug("Checking pending queue size. Session id: {} closing: {} state: {}", sessionId, closing, state);
-		if (state.getState() == RTMP.STATE_DISCONNECTED) {
-			log.debug("Connection is disconnected");
-			pendingOutMessages.clear();
-		}
-		return pendingOutMessages.size();
-	}
+    /** {@inheritDoc} */
+    @Override
+    public long getWrittenBytes() {
+        return writtenBytes.get();
+    }
 
-	/**
-	 * Decode data sent by the client.
-	 *
-	 * @param data the data to decode
-	 * @return a list of decoded objects
-	 */
-	public List<?> decode(IoBuffer data) {
-		log.debug("decode");
-		if (closing || state.getState() == RTMP.STATE_DISCONNECTED) {
-			// connection is being closed, don't decode any new packets
-			return Collections.EMPTY_LIST;
-		}
-		if (log.isTraceEnabled()) {
-			log.trace("Current bytes read at decode: {}", data.limit());
-		}
-		buffer.put(data);
-		buffer.flip();
-		return decoder.decodeBuffer(this, buffer);
-	}
-	
-	/**
-	 * Send RTMP packet down the connection.
-	 *
-	 * @param packet the packet to send
-	 */
-	@Override
-	public void write(final Packet packet) {
-		log.debug("write - packet: {}", packet);
-		//log.trace("state: {}", state);
-		if (closing || state.getState() == RTMP.STATE_DISCONNECTED) {
-			// connection is being closed, don't send any new packets
-			log.debug("No write completed due to connection disconnecting");
-		} else {
-			IoBuffer data = null;
-			try {
-				// set the connection local before attempting to encode
-				log.debug("Local: {} this: {}", Red5.getConnectionLocal(), this);
-				Red5.setConnectionLocal(this);
-				// encode the data
-				data = encoder.encodePacket(packet);
-				if (data != null) {
-					// add to pending
-					log.debug("Adding outgoing message packet");
-					PendingData pendingData = new PendingData(data, packet);
-					try {
-						int attempt = 0;
-						while (!pendingOutMessages.offer(pendingData, maxQueueOfferTime, TimeUnit.MILLISECONDS)) {
-							log.trace("Packet was not added to out queue");
-							attempt++;
-							if (attempt >= maxQueueOfferAttempts) {
-								break;
-							}
-						}
-					} catch (InterruptedException ex) {
-						log.warn("Offering packet to out queue failed", ex);
-					}
-				} else {
-					log.warn("Response buffer was null after encoding");
-				}
-			} catch (Exception e) {
-				log.error("Could not encode message {}", packet, e);
-			}
-		}
-	}
+    public void updateWrittenBytes(int wrote) {
+        writtenBytes.addAndGet(wrote);
+    }
 
-	/**
-	 * Send raw data down the connection.
-	 *
-	 * @param packet the buffer containing the raw data
-	 */
-	@Override
-	public void writeRaw(IoBuffer packet) {
-		log.debug("write - io buffer: {}", packet);
-		PendingData pendingData = new PendingData(packet);
-		try {
-			int attempt = 0;
-			while (!pendingOutMessages.offer(pendingData, maxQueueOfferTime, TimeUnit.MILLISECONDS)) {
-				log.trace("Packet was not added to out queue");
-				attempt++;
-				if (attempt >= maxQueueOfferAttempts) {
-					break;
-				}
-			}
-		} catch (InterruptedException ex) {
-			log.warn("Offering io buffer to out queue failed", ex);
-		}
-	}
+    /** {@inheritDoc} */
+    @Override
+    public long getPendingMessages() {
+        log.debug("Checking pending queue size. Session id: {} closing: {} state: {}", sessionId, closing, state);
+        if (state.getState() == RTMP.STATE_DISCONNECTED) {
+            log.debug("Connection is disconnected");
+            pendingOutMessages.clear();
+        }
+        return pendingOutMessages.size();
+    }
 
-	protected IoBuffer foldPendingMessages(int targetSize) {
-		log.debug("foldPendingMessages - target size: {}", targetSize);
-		IoBuffer result = null;
-		if (!pendingOutMessages.isEmpty()) {
-			int available = pendingOutMessages.size();
-			// create list to hold outgoing data
-			LinkedList<PendingData> sendList = new LinkedList<PendingData>();
-			pendingOutMessages.drainTo(sendList, Math.min(164, available));
-			result = IoBuffer.allocate(targetSize).setAutoExpand(true);
-			for (PendingData pendingMessage : sendList) {
-				result.put(pendingMessage.getBuffer());
-				Packet packet = pendingMessage.getPacket();
-				if (packet != null) {
-					try {
-						handler.messageSent(this, packet);
-						// mark packet as being written
-						writingMessage(packet);
-					} catch (Exception e) {
-						log.error("Could not notify stream subsystem about sent message", e);
-					}
-				} else {
-					log.trace("Pending message did not have a packet");
-				}
-			}
-			sendList.clear();
-			result.flip();
-			// send byte length
-			log.debug("Send size: {}", result.limit());
-		}
-		return result;
-	}
+    /**
+     * Decode data sent by the client.
+     *
+     * @param data
+     *            the data to decode
+     * @return a list of decoded objects
+     */
+    public List<?> decode(IoBuffer data) {
+        log.debug("decode");
+        if (closing || state.getState() == RTMP.STATE_DISCONNECTED) {
+            // connection is being closed, don't decode any new packets
+            return Collections.EMPTY_LIST;
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("Current bytes read at decode: {}", data.limit());
+        }
+        buffer.put(data);
+        buffer.flip();
+        return decoder.decodeBuffer(this, buffer);
+    }
 
-	public void setDecoder(RTMPProtocolDecoder decoder) {
-		this.decoder = (RTMPTProtocolDecoder) decoder;
-	}
+    /**
+     * Send RTMP packet down the connection.
+     *
+     * @param packet
+     *            the packet to send
+     */
+    @Override
+    public void write(final Packet packet) {
+        log.debug("write - packet: {}", packet);
+        //log.trace("state: {}", state);
+        if (closing || state.getState() == RTMP.STATE_DISCONNECTED) {
+            // connection is being closed, don't send any new packets
+            log.debug("No write completed due to connection disconnecting");
+        } else {
+            IoBuffer data = null;
+            try {
+                // set the connection local before attempting to encode
+                log.debug("Local: {} this: {}", Red5.getConnectionLocal(), this);
+                Red5.setConnectionLocal(this);
+                // encode the data
+                data = encoder.encodePacket(packet);
+                if (data != null) {
+                    // add to pending
+                    log.debug("Adding outgoing message packet");
+                    PendingData pendingData = new PendingData(data, packet);
+                    try {
+                        int attempt = 0;
+                        while (!pendingOutMessages.offer(pendingData, maxQueueOfferTime, TimeUnit.MILLISECONDS)) {
+                            log.trace("Packet was not added to out queue");
+                            attempt++;
+                            if (attempt >= maxQueueOfferAttempts) {
+                                break;
+                            }
+                        }
+                    } catch (InterruptedException ex) {
+                        log.warn("Offering packet to out queue failed", ex);
+                    }
+                } else {
+                    log.warn("Response buffer was null after encoding");
+                }
+            } catch (Exception e) {
+                log.error("Could not encode message {}", packet, e);
+            }
+        }
+    }
 
-	public void setEncoder(RTMPProtocolEncoder encoder) {
-		this.encoder = (RTMPTProtocolEncoder) encoder;
-	}
+    /**
+     * Send raw data down the connection.
+     *
+     * @param packet
+     *            the buffer containing the raw data
+     */
+    @Override
+    public void writeRaw(IoBuffer packet) {
+        log.debug("write - io buffer: {}", packet);
+        PendingData pendingData = new PendingData(packet);
+        try {
+            int attempt = 0;
+            while (!pendingOutMessages.offer(pendingData, maxQueueOfferTime, TimeUnit.MILLISECONDS)) {
+                log.trace("Packet was not added to out queue");
+                attempt++;
+                if (attempt >= maxQueueOfferAttempts) {
+                    break;
+                }
+            }
+        } catch (InterruptedException ex) {
+            log.warn("Offering io buffer to out queue failed", ex);
+        }
+    }
 
-	/**
-	 * @param maxInMessagesPerProcess the maxInMessagesPerProcess to set
-	 */
-	public void setMaxInMessagesPerProcess(int maxInMessagesPerProcess) {
-		this.maxInMessagesPerProcess = maxInMessagesPerProcess;
-	}
+    protected IoBuffer foldPendingMessages(int targetSize) {
+        log.debug("foldPendingMessages - target size: {}", targetSize);
+        IoBuffer result = null;
+        if (!pendingOutMessages.isEmpty()) {
+            int available = pendingOutMessages.size();
+            // create list to hold outgoing data
+            LinkedList<PendingData> sendList = new LinkedList<PendingData>();
+            pendingOutMessages.drainTo(sendList, Math.min(164, available));
+            result = IoBuffer.allocate(targetSize).setAutoExpand(true);
+            for (PendingData pendingMessage : sendList) {
+                result.put(pendingMessage.getBuffer());
+                Packet packet = pendingMessage.getPacket();
+                if (packet != null) {
+                    try {
+                        handler.messageSent(this, packet);
+                        // mark packet as being written
+                        writingMessage(packet);
+                    } catch (Exception e) {
+                        log.error("Could not notify stream subsystem about sent message", e);
+                    }
+                } else {
+                    log.trace("Pending message did not have a packet");
+                }
+            }
+            sendList.clear();
+            result.flip();
+            // send byte length
+            log.debug("Send size: {}", result.limit());
+        }
+        return result;
+    }
 
-	/**
-	 * @param maxQueueOfferTime the maxQueueOfferTime to set
-	 */
-	public void setMaxQueueOfferTime(long maxQueueOfferTime) {
-		this.maxQueueOfferTime = maxQueueOfferTime;
-	}
+    public void setDecoder(RTMPProtocolDecoder decoder) {
+        this.decoder = (RTMPTProtocolDecoder) decoder;
+    }
 
-	/**
-	 * @param maxQueueOfferAttempts the maxQueueOfferAttempts to set
-	 */
-	public void setMaxQueueOfferAttempts(int maxQueueOfferAttempts) {
-		this.maxQueueOfferAttempts = maxQueueOfferAttempts;
-	}
+    public void setEncoder(RTMPProtocolEncoder encoder) {
+        this.encoder = (RTMPTProtocolEncoder) encoder;
+    }
 
-	/**
-	 * Holder for data destined for a requester that is not ready to be sent.
-	 */
-	private static class PendingData {
+    /**
+     * @param maxInMessagesPerProcess
+     *            the maxInMessagesPerProcess to set
+     */
+    public void setMaxInMessagesPerProcess(int maxInMessagesPerProcess) {
+        this.maxInMessagesPerProcess = maxInMessagesPerProcess;
+    }
 
-		// simple packet
-		private final Packet packet;
+    /**
+     * @param maxQueueOfferTime
+     *            the maxQueueOfferTime to set
+     */
+    public void setMaxQueueOfferTime(long maxQueueOfferTime) {
+        this.maxQueueOfferTime = maxQueueOfferTime;
+    }
 
-		// encoded packet data
-		private final byte[] byteBuffer;
+    /**
+     * @param maxQueueOfferAttempts
+     *            the maxQueueOfferAttempts to set
+     */
+    public void setMaxQueueOfferAttempts(int maxQueueOfferAttempts) {
+        this.maxQueueOfferAttempts = maxQueueOfferAttempts;
+    }
 
-		private PendingData(IoBuffer buffer, Packet packet) {
-			int size = buffer.limit();
-			this.byteBuffer = new byte[size];
-			buffer.get(byteBuffer);
-			this.packet = packet;
-			if (log.isTraceEnabled()) {
-				log.trace("Buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
-			}
-		}
+    /**
+     * Holder for data destined for a requester that is not ready to be sent.
+     */
+    private static class PendingData {
 
-		private PendingData(IoBuffer buffer) {
-			int size = buffer.limit();
-			this.byteBuffer = new byte[size];
-			buffer.get(byteBuffer);
-			this.packet = null;
-			if (log.isTraceEnabled()) {
-				log.trace("Buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
-			}
-		}
+        // simple packet
+        private final Packet packet;
 
-		public byte[] getBuffer() {
-			if (log.isTraceEnabled()) {
-				log.trace("Get buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
-			}
-			return byteBuffer;
-		}
+        // encoded packet data
+        private final byte[] byteBuffer;
 
-		public Packet getPacket() {
-			return packet;
-		}
+        private PendingData(IoBuffer buffer, Packet packet) {
+            int size = buffer.limit();
+            this.byteBuffer = new byte[size];
+            buffer.get(byteBuffer);
+            this.packet = packet;
+            if (log.isTraceEnabled()) {
+                log.trace("Buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
+            }
+        }
 
-		@SuppressWarnings("unused")
-		public int getBufferSize() {
-			if (byteBuffer != null) {
-				return byteBuffer.length;
-			}
-			return 0;
-		}
+        private PendingData(IoBuffer buffer) {
+            int size = buffer.limit();
+            this.byteBuffer = new byte[size];
+            buffer.get(byteBuffer);
+            this.packet = null;
+            if (log.isTraceEnabled()) {
+                log.trace("Buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
+            }
+        }
 
-	}	
+        public byte[] getBuffer() {
+            if (log.isTraceEnabled()) {
+                log.trace("Get buffer: {}", Arrays.toString(ArrayUtils.subarray(byteBuffer, 0, 32)));
+            }
+            return byteBuffer;
+        }
+
+        public Packet getPacket() {
+            return packet;
+        }
+
+        @SuppressWarnings("unused")
+        public int getBufferSize() {
+            if (byteBuffer != null) {
+                return byteBuffer.length;
+            }
+            return 0;
+        }
+
+    }
 
 }

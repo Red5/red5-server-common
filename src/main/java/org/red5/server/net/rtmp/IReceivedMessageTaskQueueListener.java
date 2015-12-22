@@ -18,8 +18,8 @@
 
 package org.red5.server.net.rtmp;
 
-public interface IReceivedMessageTaskQueueListener
-{
-	void onTaskAdded(ReceivedMessageTaskQueue queue);
-	void onTaskRemoved(ReceivedMessageTaskQueue queue);
+public interface IReceivedMessageTaskQueueListener {
+    void onTaskAdded(ReceivedMessageTaskQueue queue);
+
+    void onTaskRemoved(ReceivedMessageTaskQueue queue);
 }

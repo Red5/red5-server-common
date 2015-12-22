@@ -31,15 +31,15 @@ import javax.management.MXBean;
 @MXBean
 public interface QuartzSchedulingServiceMXBean {
 
-	/**
-	 * Getter for job name.
-	 *
-	 * @return  Job name
-	 */
-	public String getJobName();
+    /**
+     * Getter for job name.
+     *
+     * @return Job name
+     */
+    public String getJobName();
 
-	public void removeScheduledJob(String name);
+    public void removeScheduledJob(String name);
 
-	public List<String> getScheduledJobNames();
+    public List<String> getScheduledJobNames();
 
 }

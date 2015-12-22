@@ -28,50 +28,50 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
  */
 public class RTMPCodecFactory implements ProtocolCodecFactory {
 
-	/**
-	 * Mina protocol decoder for RTMP.
-	 */
-	private RTMPMinaProtocolDecoder decoder;
+    /**
+     * Mina protocol decoder for RTMP.
+     */
+    private RTMPMinaProtocolDecoder decoder;
 
-	/**
-	 * Mina protocol encoder for RTMP.
-	 */
-	private RTMPMinaProtocolEncoder encoder;
+    /**
+     * Mina protocol encoder for RTMP.
+     */
+    private RTMPMinaProtocolEncoder encoder;
 
-	/**
-	 * Initialization
-	 */
-	public void init() {
-		decoder = new RTMPMinaProtocolDecoder();
-		encoder = new RTMPMinaProtocolEncoder();
-	}
+    /**
+     * Initialization
+     */
+    public void init() {
+        decoder = new RTMPMinaProtocolDecoder();
+        encoder = new RTMPMinaProtocolEncoder();
+    }
 
-	/** {@inheritDoc} */
-	public ProtocolDecoder getDecoder(IoSession session) {
-		return decoder;
-	}
+    /** {@inheritDoc} */
+    public ProtocolDecoder getDecoder(IoSession session) {
+        return decoder;
+    }
 
-	/** {@inheritDoc} */
-	public ProtocolEncoder getEncoder(IoSession session) {
-		return encoder;
-	}
+    /** {@inheritDoc} */
+    public ProtocolEncoder getEncoder(IoSession session) {
+        return encoder;
+    }
 
-	/**
-	 * Returns the RTMP decoder.
-	 * 
-	 * @return decoder
-	 */
-	public RTMPProtocolDecoder getRTMPDecoder() {
-		return decoder.getDecoder();
-	}
+    /**
+     * Returns the RTMP decoder.
+     * 
+     * @return decoder
+     */
+    public RTMPProtocolDecoder getRTMPDecoder() {
+        return decoder.getDecoder();
+    }
 
-	/**
-	 * Returns the RTMP encoder.
-	 * 
-	 * @return encoder
-	 */
-	public RTMPProtocolEncoder getRTMPEncoder() {
-		return encoder.getEncoder();
-	}
+    /**
+     * Returns the RTMP encoder.
+     * 
+     * @return encoder
+     */
+    public RTMPProtocolEncoder getRTMPEncoder() {
+        return encoder.getEncoder();
+    }
 
 }

@@ -9,49 +9,50 @@ import java.util.Arrays;
  */
 public class ClientNotifyEvent extends BaseEvent {
 
-	private final String method;
-	private final Object[] params;
-	
-	public ClientNotifyEvent(String method, Object[] params) {
-		super(Type.CLIENT_NOTIFY);
-		this.method = method;
-		this.params = params;
-	}
+    private final String method;
 
-	public final static ClientNotifyEvent build(String method, Object[] params) {
-		ClientNotifyEvent event = new ClientNotifyEvent(method, params);
-		return event;
-	}
+    private final Object[] params;
 
-	@Override
-	public byte getDataType() {
-		return TYPE_NOTIFY;
-	}
+    public ClientNotifyEvent(String method, Object[] params) {
+        super(Type.CLIENT_NOTIFY);
+        this.method = method;
+        this.params = params;
+    }
 
-	@Override
-	protected void releaseInternal() {
-	}
+    public final static ClientNotifyEvent build(String method, Object[] params) {
+        ClientNotifyEvent event = new ClientNotifyEvent(method, params);
+        return event;
+    }
 
-	/**
-	 * @return the method
-	 */
-	public String getMethod() {
-		return method;
-	}
+    @Override
+    public byte getDataType() {
+        return TYPE_NOTIFY;
+    }
 
-	/**
-	 * @return the params
-	 */
-	public Object[] getParams() {
-		return params;
-	}
+    @Override
+    protected void releaseInternal() {
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "ClientNotifyEvent [method=" + method + ", params=" + Arrays.toString(params) + "]";
-	}
+    /**
+     * @return the method
+     */
+    public String getMethod() {
+        return method;
+    }
+
+    /**
+     * @return the params
+     */
+    public Object[] getParams() {
+        return params;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "ClientNotifyEvent [method=" + method + ", params=" + Arrays.toString(params) + "]";
+    }
 
 }

@@ -28,21 +28,22 @@ import org.apache.mina.core.buffer.IoBuffer;
  */
 public class FlexStreamSend extends Notify {
 
-	private static final long serialVersionUID = -4226252245996614504L;
+    private static final long serialVersionUID = -4226252245996614504L;
 
-	public FlexStreamSend() {
-		super();
-		dataType = TYPE_FLEX_STREAM_SEND;
-	}
+    public FlexStreamSend() {
+        super();
+        dataType = TYPE_FLEX_STREAM_SEND;
+    }
 
-	/**
-	 * Create new stream send object.
-	 * 
-	 * @param data data
-	 */
-	public FlexStreamSend(IoBuffer data) {
-		super(data);
-		dataType = TYPE_FLEX_STREAM_SEND;
-	}
+    /**
+     * Create new stream send object.
+     * 
+     * @param data
+     *            data
+     */
+    public FlexStreamSend(IoBuffer data) {
+        super(data);
+        dataType = TYPE_FLEX_STREAM_SEND;
+    }
 
 }

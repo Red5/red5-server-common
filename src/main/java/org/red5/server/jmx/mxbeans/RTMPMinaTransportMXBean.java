@@ -25,17 +25,17 @@ import javax.management.MXBean;
  */
 @MXBean
 public interface RTMPMinaTransportMXBean {
-	public void setIoThreads(int ioThreads);
+    public void setIoThreads(int ioThreads);
 
-	public void setTcpNoDelay(boolean tcpNoDelay);
+    public void setTcpNoDelay(boolean tcpNoDelay);
 
-	public void setUseHeapBuffers(boolean useHeapBuffers);
+    public void setUseHeapBuffers(boolean useHeapBuffers);
 
-	public String getAddress();
-	
-	public String getStatistics();
-	
-	public void start() throws Exception;
+    public String getAddress();
 
-	public void stop();
+    public String getStatistics();
+
+    public void start() throws Exception;
+
+    public void stop();
 }

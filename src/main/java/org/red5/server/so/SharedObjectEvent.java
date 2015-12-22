@@ -25,108 +25,111 @@ import java.io.ObjectOutput;
 
 public class SharedObjectEvent implements ISharedObjectEvent, Externalizable {
 
-	private static final long serialVersionUID = -4129018814289863535L;
+    private static final long serialVersionUID = -4129018814289863535L;
 
-	/**
-	 * Event type
-	 */
-	private Type type;
+    /**
+     * Event type
+     */
+    private Type type;
 
-	/**
-	 * Changed pair key
-	 */
-	private String key;
+    /**
+     * Changed pair key
+     */
+    private String key;
 
-	/**
-	 * Changed pair value
-	 */
-	private Object value;
+    /**
+     * Changed pair value
+     */
+    private Object value;
 
-	public SharedObjectEvent() {
-	}
+    public SharedObjectEvent() {
+    }
 
-	/**
-	 * 
-	 * @param type type
-	 * @param key key
-	 * @param value value
-	 */
-	public SharedObjectEvent(Type type, String key, Object value) {
-		this.type = type;
-		this.key = key;
-		this.value = value;
-	}
+    /**
+     * 
+     * @param type
+     *            type
+     * @param key
+     *            key
+     * @param value
+     *            value
+     */
+    public SharedObjectEvent(Type type, String key, Object value) {
+        this.type = type;
+        this.key = key;
+        this.value = value;
+    }
 
-	/** {@inheritDoc} */
-	public String getKey() {
-		return key;
-	}
+    /** {@inheritDoc} */
+    public String getKey() {
+        return key;
+    }
 
-	/** {@inheritDoc} */
-	public Type getType() {
-		return type;
-	}
+    /** {@inheritDoc} */
+    public Type getType() {
+        return type;
+    }
 
-	/** {@inheritDoc} */
-	public Object getValue() {
-		return value;
-	}
+    /** {@inheritDoc} */
+    public Object getValue() {
+        return value;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((key == null) ? 0 : key.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
-	}
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((key == null) ? 0 : key.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
+        return result;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SharedObjectEvent other = (SharedObjectEvent) obj;
-		if (key == null) {
-			if (other.key != null)
-				return false;
-		} else if (!key.equals(other.key))
-			return false;
-		if (type != other.type)
-			return false;
-		if (value == null) {
-			if (other.value != null)
-				return false;
-		} else if (!value.equals(other.value))
-			return false;
-		return true;
-	}
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SharedObjectEvent other = (SharedObjectEvent) obj;
+        if (key == null) {
+            if (other.key != null)
+                return false;
+        } else if (!key.equals(other.key))
+            return false;
+        if (type != other.type)
+            return false;
+        if (value == null) {
+            if (other.value != null)
+                return false;
+        } else if (!value.equals(other.value))
+            return false;
+        return true;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		return String.format("SharedObjectEvent(%s, key: %s value: %s)", getType(), getKey(), getValue());
-	}
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        return String.format("SharedObjectEvent(%s, key: %s value: %s)", getType(), getKey(), getValue());
+    }
 
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		type = (Type) in.readObject();
-		key = (String) in.readObject();
-		value = in.readObject();
-	}
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        type = (Type) in.readObject();
+        key = (String) in.readObject();
+        value = in.readObject();
+    }
 
-	public void writeExternal(ObjectOutput out) throws IOException {
-		out.writeObject(type);
-		out.writeObject(key);
-		out.writeObject(value);
-	}
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(type);
+        out.writeObject(key);
+        out.writeObject(value);
+    }
 }

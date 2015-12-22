@@ -21,31 +21,32 @@ package org.red5.server.api.event;
 import java.util.Set;
 
 /**
- * IEventObservable hold functionality of the well-known Observer pattern, that is
- * it has a list of objects that listen to events.
+ * IEventObservable hold functionality of the well-known Observer pattern, that is it has a list of objects that listen to events.
  */
 public interface IEventObservable {
-	
+
     /**
      * Add event listener to this observable
      * 
-     * @param listener      Event listener
-	 * @return true if listener is added and false otherwise
+     * @param listener
+     *            Event listener
+     * @return true if listener is added and false otherwise
      */
-	public boolean addEventListener(IEventListener listener);
+    public boolean addEventListener(IEventListener listener);
 
     /**
      * Remove event listener from this observable
      * 
-     * @param listener      Event listener
-	 * @return true if listener is removed and false otherwise
+     * @param listener
+     *            Event listener
+     * @return true if listener is removed and false otherwise
      */
     public boolean removeEventListener(IEventListener listener);
 
-	/**
+    /**
      * Returns event listeners
      *
-     * @return  Event listeners iterator
+     * @return Event listeners iterator
      */
     public Set<IEventListener> getEventListeners();
 

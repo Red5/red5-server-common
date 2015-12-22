@@ -26,96 +26,116 @@ import org.red5.server.net.rtmp.status.Status;
  */
 // TODO: this should really extend IServiceInvoker
 public interface IServiceCapableConnection extends IConnection {
-	/**
-	 * Invokes service using remoting call object.
-	 * 
-	 * @param call       Service call object
-	 */
-	void invoke(IServiceCall call);
+    /**
+     * Invokes service using remoting call object.
+     * 
+     * @param call
+     *            Service call object
+     */
+    void invoke(IServiceCall call);
 
-	/**
-	 * Invoke service using call and channel.
-	 * 
-	 * @param call       Service call
-	 * @param channel    Channel used
-	 */
-	void invoke(IServiceCall call, int channel);
+    /**
+     * Invoke service using call and channel.
+     * 
+     * @param call
+     *            Service call
+     * @param channel
+     *            Channel used
+     */
+    void invoke(IServiceCall call, int channel);
 
-	/**
-	 * Invoke method by name.
-	 * 
-	 * @param method     Called method name
-	 */
-	void invoke(String method);
+    /**
+     * Invoke method by name.
+     * 
+     * @param method
+     *            Called method name
+     */
+    void invoke(String method);
 
-	/**
-	 * Invoke method by name with callback.
-	 * 
-	 * @param method     Called method name
-	 * @param callback   Callback
-	 */
-	void invoke(String method, IPendingServiceCallback callback);
+    /**
+     * Invoke method by name with callback.
+     * 
+     * @param method
+     *            Called method name
+     * @param callback
+     *            Callback
+     */
+    void invoke(String method, IPendingServiceCallback callback);
 
-	/**
-	 * Invoke method with parameters.
-	 * 
-	 * @param method     Method name
-	 * @param params     Invocation parameters passed to method
-	 */
-	void invoke(String method, Object[] params);
+    /**
+     * Invoke method with parameters.
+     * 
+     * @param method
+     *            Method name
+     * @param params
+     *            Invocation parameters passed to method
+     */
+    void invoke(String method, Object[] params);
 
-	/**
-	 * Invoke method with parameters.
-	 *
-	 * @param method by name
-	 * @param params method params
-	 * @param callback callback
-	 */
-	void invoke(String method, Object[] params, IPendingServiceCallback callback);
+    /**
+     * Invoke method with parameters.
+     *
+     * @param method
+     *            by name
+     * @param params
+     *            method params
+     * @param callback
+     *            callback
+     */
+    void invoke(String method, Object[] params, IPendingServiceCallback callback);
 
-	/**
-	 * Notify method.
-	 *
-	 * @param call service call
-	 */
-	void notify(IServiceCall call);
+    /**
+     * Notify method.
+     *
+     * @param call
+     *            service call
+     */
+    void notify(IServiceCall call);
 
-	/**
-	 * Notify method with channel id.
-	 *
-	 * @param call service call
-	 * @param channel channel id
-	 */
-	void notify(IServiceCall call, int channel);
+    /**
+     * Notify method with channel id.
+     *
+     * @param call
+     *            service call
+     * @param channel
+     *            channel id
+     */
+    void notify(IServiceCall call, int channel);
 
-	/**
-	 * Notify method.
-	 *
-	 * @param method by name
-	 */
-	void notify(String method);
+    /**
+     * Notify method.
+     *
+     * @param method
+     *            by name
+     */
+    void notify(String method);
 
-	/**
-	 * Notify method with parameters.
-	 * 
-	 * @param method by name
-	 * @param params method params
-	 */
-	void notify(String method, Object[] params);
+    /**
+     * Notify method with parameters.
+     * 
+     * @param method
+     *            by name
+     * @param params
+     *            method params
+     */
+    void notify(String method, Object[] params);
 
-	/**
-	 * Sends a status object to the connection.
-	 * 
-	 * @param status Status
-	 */
-	void status(Status status);
-	
-	/**
-	 * Sends a status object to the connection on a given channel.
-	 * 
-	 * @param status Status
-	 * @param channel channel id
-	 */
-	void status(Status status, int channel);
-	
+    /**
+     * Sends a status object to the connection.
+     * 
+     * @param status
+     *            Status
+     */
+    void status(Status status);
+
+    /**
+     * Sends a status object to the connection on a given channel.
+     * 
+     * @param status
+     *            Status
+     * @param channel
+     *            channel id
+     */
+    void status(Status status, int channel);
+
 }

@@ -43,548 +43,573 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Base abstract class for connections. Adds connection specific functionality like work with clients
- * to AttributeStore.
+ * Base abstract class for connections. Adds connection specific functionality like work with clients to AttributeStore.
  */
 public abstract class BaseConnection extends AttributeStore implements IConnection {
 
-	private static final Logger log = LoggerFactory.getLogger(BaseConnection.class);
+    private static final Logger log = LoggerFactory.getLogger(BaseConnection.class);
 
-	/**
-	 *  Connection type
-	 */
-	protected final String type;
+    /**
+     * Connection type
+     */
+    protected final String type;
 
-	/**
-	 *  Connection host
-	 */
-	protected volatile String host;
+    /**
+     * Connection host
+     */
+    protected volatile String host;
 
-	/**
-	 *  Connection remote address
-	 */
-	protected volatile String remoteAddress;
+    /**
+     * Connection remote address
+     */
+    protected volatile String remoteAddress;
 
-	/**
-	 *  Connection remote addresses
-	 */
-	protected volatile List<String> remoteAddresses;
+    /**
+     * Connection remote addresses
+     */
+    protected volatile List<String> remoteAddresses;
 
-	/**
-	 *  Remote port
-	 */
-	protected volatile int remotePort;
+    /**
+     * Remote port
+     */
+    protected volatile int remotePort;
 
-	/**
-	 *  Path of scope client connected to
-	 */
-	protected volatile String path;
+    /**
+     * Path of scope client connected to
+     */
+    protected volatile String path;
 
-	/**
-	 *  Connection session identifier
-	 */
-	protected final String sessionId;
+    /**
+     * Connection session identifier
+     */
+    protected final String sessionId;
 
-	/**
-	 *  Number of read messages
-	 */
-	protected AtomicLong readMessages = new AtomicLong(0);
+    /**
+     * Number of read messages
+     */
+    protected AtomicLong readMessages = new AtomicLong(0);
 
-	/**
-	 *  Number of written messages
-	 */
-	protected AtomicLong writtenMessages = new AtomicLong(0);
+    /**
+     * Number of written messages
+     */
+    protected AtomicLong writtenMessages = new AtomicLong(0);
 
-	/**
-	 *  Number of dropped messages
-	 */
-	protected AtomicLong droppedMessages = new AtomicLong(0);
+    /**
+     * Number of dropped messages
+     */
+    protected AtomicLong droppedMessages = new AtomicLong(0);
 
-	/**
-	 * Connection params passed from client with NetConnection.connect call
-	 *
-	 * @see <a href='http://livedocs.adobe.com/fms/2/docs/00000570.html'>NetConnection in Flash Media Server docs (external)</a>
-	 */
-	@SuppressWarnings("all")
-	protected volatile Map<String, Object> params = null;
+    /**
+     * Connection params passed from client with NetConnection.connect call
+     *
+     * @see <a href='http://livedocs.adobe.com/fms/2/docs/00000570.html'>NetConnection in Flash Media Server docs (external)</a>
+     */
+    @SuppressWarnings("all")
+    protected volatile Map<String, Object> params = null;
 
-	/**
-	 * Client bound to connection
-	 */
-	protected volatile IClient client;
+    /**
+     * Client bound to connection
+     */
+    protected volatile IClient client;
 
-	/**
-	 * Scope to which this connection belongs
-	 */
-	protected transient volatile Scope scope;
+    /**
+     * Scope to which this connection belongs
+     */
+    protected transient volatile Scope scope;
 
-	/**
-	 * Set of basic scopes. The scopes may be of shared object or broadcast stream type.
-	 */
-	protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
+    /**
+     * Set of basic scopes. The scopes may be of shared object or broadcast stream type.
+     */
+    protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
 
-	/**
-	 * Is the connection closed?
-	 */
-	private volatile boolean closed;
+    /**
+     * Is the connection closed?
+     */
+    private volatile boolean closed;
 
-	/**
-	 * Listeners
-	 */
-	protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
+    /**
+     * Listeners
+     */
+    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
 
-	/**
-	 * Used to protect mulit-threaded operations on write
-	 */
-	private final transient Semaphore writeLock = new Semaphore(1, true);
+    /**
+     * Used to protect mulit-threaded operations on write
+     */
+    private final transient Semaphore writeLock = new Semaphore(1, true);
 
-	// Support for stream ids
-	private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>();
+    // Support for stream ids
+    private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>();
 
-	/** {@inheritDoc} */
-	public Number getStreamId() {
-		return streamLocal.get();
-	}
+    /** {@inheritDoc} */
+    public Number getStreamId() {
+        return streamLocal.get();
+    }
 
-	/** {@inheritDoc} */
-	public void setStreamId(Number id) {
-		streamLocal.set(id);
-	}
+    /** {@inheritDoc} */
+    public void setStreamId(Number id) {
+        streamLocal.set(id);
+    }
 
-	/**
-	 * Creates a new persistent base connection
-	 */
-	@ConstructorProperties(value = { "persistent" })
-	public BaseConnection() {
-		this(PERSISTENT);
-	}
+    /**
+     * Creates a new persistent base connection
+     */
+    @ConstructorProperties(value = { "persistent" })
+    public BaseConnection() {
+        this(PERSISTENT);
+    }
 
-	/**
-	 * Creates a new base connection with the given type.
-	 *
-	 * @param type                Connection type
-	 */
-	@ConstructorProperties({ "type" })
-	public BaseConnection(String type) {
-		log.debug("New BaseConnection - type: {}", type);
-		this.type = type;
-		this.sessionId = RandomStringUtils.randomAlphanumeric(13).toUpperCase();
-		log.debug("Generated session id: {}", sessionId);
-	}
+    /**
+     * Creates a new base connection with the given type.
+     *
+     * @param type
+     *            Connection type
+     */
+    @ConstructorProperties({ "type" })
+    public BaseConnection(String type) {
+        log.debug("New BaseConnection - type: {}", type);
+        this.type = type;
+        this.sessionId = RandomStringUtils.randomAlphanumeric(13).toUpperCase();
+        log.debug("Generated session id: {}", sessionId);
+    }
 
-	/**
-	 * Creates a new base connection with the given parameters.
-	 *
-	 * @param type                Connection type
-	 * @param host                Host
-	 * @param remoteAddress       Remote address
-	 * @param remotePort          Remote port
-	 * @param path                Scope path on server
-	 * @param sessionId           Session id
-	 * @param params              Params passed from client
-	 */
-	@ConstructorProperties({ "type", "host", "remoteAddress", "remotePort", "path", "sessionId" })
-	public BaseConnection(String type, String host, String remoteAddress, int remotePort, String path, String sessionId, Map<String, Object> params) {
-		log.debug("New BaseConnection - type: {} host: {} remoteAddress: {} remotePort: {} path: {} sessionId: {}", new Object[] { type, host, remoteAddress, remotePort, path,
-				sessionId });
-		log.debug("Params: {}", params);
-		this.type = type;
-		this.host = host;
-		this.remoteAddress = remoteAddress;
-		this.remoteAddresses = new ArrayList<String>(1);
-		this.remoteAddresses.add(remoteAddress);
-		this.remoteAddresses = Collections.unmodifiableList(this.remoteAddresses);
-		this.remotePort = remotePort;
-		this.path = path;
-		this.sessionId = sessionId;
-		this.params = params;
-		log.debug("Generated session id: {}", sessionId);
-	}
+    /**
+     * Creates a new base connection with the given parameters.
+     *
+     * @param type
+     *            Connection type
+     * @param host
+     *            Host
+     * @param remoteAddress
+     *            Remote address
+     * @param remotePort
+     *            Remote port
+     * @param path
+     *            Scope path on server
+     * @param sessionId
+     *            Session id
+     * @param params
+     *            Params passed from client
+     */
+    @ConstructorProperties({ "type", "host", "remoteAddress", "remotePort", "path", "sessionId" })
+    public BaseConnection(String type, String host, String remoteAddress, int remotePort, String path, String sessionId, Map<String, Object> params) {
+        log.debug("New BaseConnection - type: {} host: {} remoteAddress: {} remotePort: {} path: {} sessionId: {}", new Object[] { type, host, remoteAddress, remotePort, path, sessionId });
+        log.debug("Params: {}", params);
+        this.type = type;
+        this.host = host;
+        this.remoteAddress = remoteAddress;
+        this.remoteAddresses = new ArrayList<String>(1);
+        this.remoteAddresses.add(remoteAddress);
+        this.remoteAddresses = Collections.unmodifiableList(this.remoteAddresses);
+        this.remotePort = remotePort;
+        this.path = path;
+        this.sessionId = sessionId;
+        this.params = params;
+        log.debug("Generated session id: {}", sessionId);
+    }
 
-	/** {@inheritDoc} */
-	public void addListener(IConnectionListener listener) {
-		this.connectionListeners.add(listener);
-	}
+    /** {@inheritDoc} */
+    public void addListener(IConnectionListener listener) {
+        this.connectionListeners.add(listener);
+    }
 
-	/** {@inheritDoc} */
-	public void removeListener(IConnectionListener listener) {
-		this.connectionListeners.remove(listener);
-	}
+    /** {@inheritDoc} */
+    public void removeListener(IConnectionListener listener) {
+        this.connectionListeners.remove(listener);
+    }
 
-	/**
-	 * @return lock for changing state operations
-	 */
-	public Semaphore getLock() {
-		return writeLock;
-	}
+    /**
+     * @return lock for changing state operations
+     */
+    public Semaphore getLock() {
+        return writeLock;
+    }
 
-	/**
-	 * Initializes client
-	 * @param client        Client bound to connection
-	 */
-	public void initialize(IClient client) {
-		if (log.isDebugEnabled()) {
-			log.debug("initialize - client: {}", client);
-		}
-		if (this.client != null && this.client instanceof Client && !this.client.equals(client)) {
-			// unregister old client
-			if (log.isTraceEnabled()) {
-				log.trace("Unregistering previous client: {}", this.client);
-			}
-			((Client) this.client).unregister(this, false);
-		}
-		this.client = client;
-		if (this.client instanceof Client && !((Client) this.client).isRegistered(this)) {
-			// register new client
-			if (log.isTraceEnabled()) {
-				log.trace("Registering client: {}", this.client);
-			}
-			((Client) this.client).register(this);
-		}
-	}
+    /**
+     * Initializes client
+     * 
+     * @param client
+     *            Client bound to connection
+     */
+    public void initialize(IClient client) {
+        if (log.isDebugEnabled()) {
+            log.debug("initialize - client: {}", client);
+        }
+        if (this.client != null && this.client instanceof Client && !this.client.equals(client)) {
+            // unregister old client
+            if (log.isTraceEnabled()) {
+                log.trace("Unregistering previous client: {}", this.client);
+            }
+            ((Client) this.client).unregister(this, false);
+        }
+        this.client = client;
+        if (this.client instanceof Client && !((Client) this.client).isRegistered(this)) {
+            // register new client
+            if (log.isTraceEnabled()) {
+                log.trace("Registering client: {}", this.client);
+            }
+            ((Client) this.client).register(this);
+        }
+    }
 
-	/**
-	 *
-	 * @return type
-	 */
-	public String getType() {
-		return type;
-	}
+    /**
+     *
+     * @return type
+     */
+    public String getType() {
+        return type;
+    }
 
-	/**
-	 *
-	 * @return host
-	 */
-	public String getHost() {
-		return host;
-	}
+    /**
+     *
+     * @return host
+     */
+    public String getHost() {
+        return host;
+    }
 
-	/**
-	 *
-	 * @return remote address
-	 */
-	public String getRemoteAddress() {
-		return remoteAddress;
-	}
+    /**
+     *
+     * @return remote address
+     */
+    public String getRemoteAddress() {
+        return remoteAddress;
+    }
 
-	/**
-	 * @return remote address
-	 */
-	public List<String> getRemoteAddresses() {
-		return remoteAddresses;
-	}
+    /**
+     * @return remote address
+     */
+    public List<String> getRemoteAddresses() {
+        return remoteAddresses;
+    }
 
-	/**
-	 *
-	 * @return remote port
-	 */
-	public int getRemotePort() {
-		return remotePort;
-	}
+    /**
+     *
+     * @return remote port
+     */
+    public int getRemotePort() {
+        return remotePort;
+    }
 
-	/**
-	 *
-	 * @return path
-	 */
-	public String getPath() {
-		return path;
-	}
+    /**
+     *
+     * @return path
+     */
+    public String getPath() {
+        return path;
+    }
 
-	/**
-	 *
-	 * @return session id
-	 */
-	public String getSessionId() {
-		return sessionId;
-	}
+    /**
+     *
+     * @return session id
+     */
+    public String getSessionId() {
+        return sessionId;
+    }
 
-	/**
-	 * Return connection parameters
-	 * 
-	 * @return connection parameters
-	 */
-	public Map<String, Object> getConnectParams() {
-		return Collections.unmodifiableMap(params);
-	}
+    /**
+     * Return connection parameters
+     * 
+     * @return connection parameters
+     */
+    public Map<String, Object> getConnectParams() {
+        return Collections.unmodifiableMap(params);
+    }
 
-	/** {@inheritDoc} */
-	public void setClient(IClient client) {
-		this.client = client;
-	}
+    /** {@inheritDoc} */
+    public void setClient(IClient client) {
+        this.client = client;
+    }
 
-	/** {@inheritDoc} */
-	public IClient getClient() {
-		return client;
-	}
+    /** {@inheritDoc} */
+    public IClient getClient() {
+        return client;
+    }
 
-	/**
-	 * Check whether connection is alive
-	 * 
-	 * @return       true if connection is bound to scope, false otherwise
-	 */
-	public boolean isConnected() {
-		//log.debug("Connected: {}", (scope != null));
-		return scope != null;
-	}
-	
-	/**
-	 * Connect to another scope on server
-	 * @param newScope     New scope
-	 * @return             true on success, false otherwise
-	 */
-	public boolean connect(IScope newScope) {
-		return connect(newScope, null);
-	}
+    /**
+     * Check whether connection is alive
+     * 
+     * @return true if connection is bound to scope, false otherwise
+     */
+    public boolean isConnected() {
+        //log.debug("Connected: {}", (scope != null));
+        return scope != null;
+    }
 
-	/**
-	 * Connect to another scope on server with given parameters
-	 * @param newScope        New scope
-	 * @param params          Parameters to connect with
-	 * @return                true on success, false otherwise
-	 */
-	public boolean connect(IScope newScope, Object[] params) {
-		if (log.isDebugEnabled()) {
-			log.debug("Connect Params: {}", params);
-			if (params != null) {
-				for (Object e : params) {
-					log.debug("Param: {}", e);
-				}
-			}
-		}
-		// disconnect from old scope(s), then reconnect to new scopes. 
-		// this is necessary because there may be an intersection between the hierarchies.
-		//if (scope != null) {
-		//	scope.disconnect(this);
-		//}
-		scope = (Scope) newScope;
-		return scope.connect(this, params);
-	}
+    /**
+     * Connect to another scope on server
+     * 
+     * @param newScope
+     *            New scope
+     * @return true on success, false otherwise
+     */
+    public boolean connect(IScope newScope) {
+        return connect(newScope, null);
+    }
 
-	/**
-	 * Return the current scope.
-	 * 
-	 * @return scope
-	 */
-	public IScope getScope() {
-		return scope;
-	}
+    /**
+     * Connect to another scope on server with given parameters
+     * 
+     * @param newScope
+     *            New scope
+     * @param params
+     *            Parameters to connect with
+     * @return true on success, false otherwise
+     */
+    public boolean connect(IScope newScope, Object[] params) {
+        if (log.isDebugEnabled()) {
+            log.debug("Connect Params: {}", params);
+            if (params != null) {
+                for (Object e : params) {
+                    log.debug("Param: {}", e);
+                }
+            }
+        }
+        // disconnect from old scope(s), then reconnect to new scopes. 
+        // this is necessary because there may be an intersection between the hierarchies.
+        //if (scope != null) {
+        //	scope.disconnect(this);
+        //}
+        scope = (Scope) newScope;
+        return scope.connect(this, params);
+    }
 
-	/**
-	 *  Closes connection
-	 */
-	public void close() {
-		if (closed || scope == null) {
-			log.debug("Close, not connected nothing to do");
-			return;
-		}
-		closed = true;
-		log.debug("Close, disconnect from scope, and children");
-		try {
-			// unregister all child scopes first
-			for (IBasicScope basicScope : basicScopes) {
-				unregisterBasicScope(basicScope);
-			}
-		} catch (Exception err) {
-			log.error("Error while unregistering basic scopes", err);
-		}
-		// disconnect
-		if (scope != null) {
-			try {
-				scope.disconnect(this);
-			} catch (Exception err) {
-				log.error("Error while disconnecting from scope: {}. {}", scope, err);
-			}
-			scope = null;
-		}
-		// unregister client
-		if (client != null && client instanceof Client) {
-			((Client) client).unregister(this);
-		}
-		// alert our listeners
-		if (connectionListeners != null) {
-			for (IConnectionListener listener : connectionListeners) {
-				listener.notifyDisconnected(this);
-			}
-			connectionListeners.clear();
-			connectionListeners = null;
-		}
-	}
+    /**
+     * Return the current scope.
+     * 
+     * @return scope
+     */
+    public IScope getScope() {
+        return scope;
+    }
 
-	/**
-	 * Notified on event
-	 * @param event       Event
-	 */
-	public void notifyEvent(IEvent event) {
-		log.debug("Event notify was not handled: {}", event);
-	}
+    /**
+     * Closes connection
+     */
+    public void close() {
+        if (closed || scope == null) {
+            log.debug("Close, not connected nothing to do");
+            return;
+        }
+        closed = true;
+        log.debug("Close, disconnect from scope, and children");
+        try {
+            // unregister all child scopes first
+            for (IBasicScope basicScope : basicScopes) {
+                unregisterBasicScope(basicScope);
+            }
+        } catch (Exception err) {
+            log.error("Error while unregistering basic scopes", err);
+        }
+        // disconnect
+        if (scope != null) {
+            try {
+                scope.disconnect(this);
+            } catch (Exception err) {
+                log.error("Error while disconnecting from scope: {}. {}", scope, err);
+            }
+            scope = null;
+        }
+        // unregister client
+        if (client != null && client instanceof Client) {
+            ((Client) client).unregister(this);
+        }
+        // alert our listeners
+        if (connectionListeners != null) {
+            for (IConnectionListener listener : connectionListeners) {
+                listener.notifyDisconnected(this);
+            }
+            connectionListeners.clear();
+            connectionListeners = null;
+        }
+    }
 
-	/**
-	 * Dispatches event
-	 * @param event       Event
-	 */
-	public void dispatchEvent(IEvent event) {
-		log.debug("Event notify was not dispatched: {}", event);
-	}
+    /**
+     * Notified on event
+     * 
+     * @param event
+     *            Event
+     */
+    public void notifyEvent(IEvent event) {
+        log.debug("Event notify was not handled: {}", event);
+    }
 
-	/**
-	 * Handles event
-	 * @param event        Event
-	 * @return             true if associated scope was able to handle event, false otherwise
-	 */
-	public boolean handleEvent(IEvent event) {
-		return getScope().handleEvent(event);
-	}
+    /**
+     * Dispatches event
+     * 
+     * @param event
+     *            Event
+     */
+    public void dispatchEvent(IEvent event) {
+        log.debug("Event notify was not dispatched: {}", event);
+    }
 
-	/**
-	 *
-	 * @return basic scopes
-	 */
-	public Iterator<IBasicScope> getBasicScopes() {
-		return basicScopes.iterator();
-	}
+    /**
+     * Handles event
+     * 
+     * @param event
+     *            Event
+     * @return true if associated scope was able to handle event, false otherwise
+     */
+    public boolean handleEvent(IEvent event) {
+        return getScope().handleEvent(event);
+    }
 
-	/**
-	 * Registers basic scope
-	 * @param basicScope      Basic scope to register
-	 */
-	public void registerBasicScope(IBroadcastScope basicScope) {
-		basicScopes.add(basicScope);
-		basicScope.addEventListener(this);
-	}
+    /**
+     *
+     * @return basic scopes
+     */
+    public Iterator<IBasicScope> getBasicScopes() {
+        return basicScopes.iterator();
+    }
 
-	/**
-	 * Registers basic scope
-	 * @param basicScope      Basic scope to register
-	 */
-	public void registerBasicScope(SharedObjectScope basicScope) {
-		basicScopes.add(basicScope);
-		basicScope.addEventListener(this);
-	}
+    /**
+     * Registers basic scope
+     * 
+     * @param basicScope
+     *            Basic scope to register
+     */
+    public void registerBasicScope(IBroadcastScope basicScope) {
+        basicScopes.add(basicScope);
+        basicScope.addEventListener(this);
+    }
 
-	/**
-	 * Unregister basic scope
-	 *
-	 * @param basicScope      Unregister basic scope
-	 */
-	public void unregisterBasicScope(IBasicScope basicScope) {
-		if (basicScope instanceof IBroadcastScope || basicScope instanceof SharedObjectScope) {
-			basicScopes.remove(basicScope);
-			basicScope.removeEventListener(this);
-		}
-	}
+    /**
+     * Registers basic scope
+     * 
+     * @param basicScope
+     *            Basic scope to register
+     */
+    public void registerBasicScope(SharedObjectScope basicScope) {
+        basicScopes.add(basicScope);
+        basicScope.addEventListener(this);
+    }
 
-	/**
-	 *
-	 * @return bytes read
-	 */
-	public abstract long getReadBytes();
+    /**
+     * Unregister basic scope
+     *
+     * @param basicScope
+     *            Unregister basic scope
+     */
+    public void unregisterBasicScope(IBasicScope basicScope) {
+        if (basicScope instanceof IBroadcastScope || basicScope instanceof SharedObjectScope) {
+            basicScopes.remove(basicScope);
+            basicScope.removeEventListener(this);
+        }
+    }
 
-	/**
-	 *
-	 * @return bytes written
-	 */
-	public abstract long getWrittenBytes();
+    /**
+     *
+     * @return bytes read
+     */
+    public abstract long getReadBytes();
 
-	/**
-	 *
-	 * @return messages read
-	 */
-	public long getReadMessages() {
-		return readMessages.get();
-	}
+    /**
+     *
+     * @return bytes written
+     */
+    public abstract long getWrittenBytes();
 
-	/**
-	 *
-	 * @return messages written
-	 */
-	public long getWrittenMessages() {
-		return writtenMessages.get();
-	}
+    /**
+     *
+     * @return messages read
+     */
+    public long getReadMessages() {
+        return readMessages.get();
+    }
 
-	/**
-	 *
-	 * @return dropped messages
-	 */
-	public long getDroppedMessages() {
-		return droppedMessages.get();
-	}
+    /**
+     *
+     * @return messages written
+     */
+    public long getWrittenMessages() {
+        return writtenMessages.get();
+    }
 
-	/**
-	 * Returns whether or not the reader is idle.
-	 * 
-	 * @return queued messages
-	 */
-	public boolean isReaderIdle() {
-		return false;
-	}
+    /**
+     *
+     * @return dropped messages
+     */
+    public long getDroppedMessages() {
+        return droppedMessages.get();
+    }
 
-	/**
-	 * Returns whether or not the writer is idle.
-	 * 
-	 * @return queued messages
-	 */
-	public boolean isWriterIdle() {
-		return false;
-	}
+    /**
+     * Returns whether or not the reader is idle.
+     * 
+     * @return queued messages
+     */
+    public boolean isReaderIdle() {
+        return false;
+    }
 
-	/**
-	 * Returns whether or not a connection is closed.
-	 * 
-	 * @return true if closed
-	 */
-	public boolean isClosed() {
-		return closed;
-	}
+    /**
+     * Returns whether or not the writer is idle.
+     * 
+     * @return queued messages
+     */
+    public boolean isWriterIdle() {
+        return false;
+    }
 
-	/**
-	 * Count of outgoing messages not yet written.
-	 * 
-	 * @return pending messages
-	 */
-	public long getPendingMessages() {
-		return 0;
-	}
+    /**
+     * Returns whether or not a connection is closed.
+     * 
+     * @return true if closed
+     */
+    public boolean isClosed() {
+        return closed;
+    }
 
-	/**
-	 * Count of outgoing video messages not yet written.
-	 * 
-	 * @param streamId the id you want to know about
-	 * @return pending messages for this streamId
-	 */
-	public long getPendingVideoMessages(Number streamId) {
-		return 0;
-	}
+    /**
+     * Count of outgoing messages not yet written.
+     * 
+     * @return pending messages
+     */
+    public long getPendingMessages() {
+        return 0;
+    }
 
-	/** {@inheritDoc} */
-	public long getClientBytesRead() {
-		return 0;
-	}
+    /**
+     * Count of outgoing video messages not yet written.
+     * 
+     * @param streamId
+     *            the id you want to know about
+     * @return pending messages for this streamId
+     */
+    public long getPendingVideoMessages(Number streamId) {
+        return 0;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = prime * sessionId.hashCode();
-		return result;
-	}
+    /** {@inheritDoc} */
+    public long getClientBytesRead() {
+        return 0;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		return sessionId.equals(((BaseConnection) obj).getSessionId());
-	}
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = prime * sessionId.hashCode();
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        return sessionId.equals(((BaseConnection) obj).getSessionId());
+    }
 
 }

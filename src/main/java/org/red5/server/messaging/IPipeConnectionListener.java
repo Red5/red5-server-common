@@ -19,9 +19,7 @@
 package org.red5.server.messaging;
 
 /**
- * A listener that wants to listen to events when
- * provider/consumer connects to or disconnects from
- * a specific pipe.
+ * A listener that wants to listen to events when provider/consumer connects to or disconnects from a specific pipe.
  * 
  * @author The Red5 Project
  * @author Steven Gong (steven.gong@gmail.com)
@@ -29,7 +27,9 @@ package org.red5.server.messaging;
 public interface IPipeConnectionListener {
     /**
      * Pipe connection event handler
-     * @param event        Pipe connection event
+     * 
+     * @param event
+     *            Pipe connection event
      */
     void onPipeConnectionEvent(PipeConnectionEvent event);
 }

@@ -27,54 +27,54 @@ import java.util.Map;
  */
 public final class PluginDescriptor {
 
-	private String pluginName;
+    private String pluginName;
 
-	private String pluginType;
+    private String pluginType;
 
-	private String method;
+    private String method;
 
-	private String methodReturnType;
-	
-	private Map<String, Object> properties;
+    private String methodReturnType;
 
-	public String getPluginName() {
-		return pluginName;
-	}
+    private Map<String, Object> properties;
 
-	public void setPluginName(String pluginName) {
-		this.pluginName = pluginName;
-	}
+    public String getPluginName() {
+        return pluginName;
+    }
 
-	public String getPluginType() {
-		return pluginType;
-	}
+    public void setPluginName(String pluginName) {
+        this.pluginName = pluginName;
+    }
 
-	public void setPluginType(String pluginType) {
-		this.pluginType = pluginType;
-	}
+    public String getPluginType() {
+        return pluginType;
+    }
 
-	public String getMethod() {
-		return method;
-	}
+    public void setPluginType(String pluginType) {
+        this.pluginType = pluginType;
+    }
 
-	public void setMethod(String method) {
-		this.method = method;
-	}
+    public String getMethod() {
+        return method;
+    }
 
-	public String getMethodReturnType() {
-		return methodReturnType;
-	}
+    public void setMethod(String method) {
+        this.method = method;
+    }
 
-	public void setMethodReturnType(String methodReturnType) {
-		this.methodReturnType = methodReturnType;
-	}
+    public String getMethodReturnType() {
+        return methodReturnType;
+    }
 
-	public Map<String, Object> getProperties() {
-		return properties;
-	}
+    public void setMethodReturnType(String methodReturnType) {
+        this.methodReturnType = methodReturnType;
+    }
 
-	public void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
-	}
+    public Map<String, Object> getProperties() {
+        return properties;
+    }
+
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
 
 }

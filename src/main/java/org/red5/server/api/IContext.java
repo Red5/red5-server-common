@@ -27,126 +27,118 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
 /**
- * The current context, this object basically wraps the Spring context
- * or in the case of the .Net version, any similar system.
+ * The current context, this object basically wraps the Spring context or in the case of the .Net version, any similar system.
  * 
  */
 public interface IContext extends ResourcePatternResolver {
 
-	public static final String ID = "red5.context";
+    public static final String ID = "red5.context";
 
-	/**
-	 * Getter for application context
-	 *
-	 * @return  Application context
-	 */
-	ApplicationContext getApplicationContext();
+    /**
+     * Getter for application context
+     *
+     * @return Application context
+     */
+    ApplicationContext getApplicationContext();
 
-	// public IScopeResolver getScopeResolver();
-	/**
-	 * Get client registry. Client registry is a place where all clients are
-	 * registred.
-	 * 
-	 * @return	Client registry object
-	 */
-	IClientRegistry getClientRegistry();
+    // public IScopeResolver getScopeResolver();
+    /**
+     * Get client registry. Client registry is a place where all clients are registred.
+     * 
+     * @return Client registry object
+     */
+    IClientRegistry getClientRegistry();
 
-	/**
-	 * Returns service invoker object. Service invokers are objects that make
-	 * service calls to client side NetConnection objects.
-	 * 
-	 * @return		Service invoker object
-	 */
-	IServiceInvoker getServiceInvoker();
+    /**
+     * Returns service invoker object. Service invokers are objects that make service calls to client side NetConnection objects.
+     * 
+     * @return Service invoker object
+     */
+    IServiceInvoker getServiceInvoker();
 
-	/**
-	 * Returns persistence store object, a storage for persistent objects like
-	 * persistent SharedObjects.
-	 * 
-	 * @return	Persistence store object
-	 */
-	IPersistenceStore getPersistanceStore();
+    /**
+     * Returns persistence store object, a storage for persistent objects like persistent SharedObjects.
+     * 
+     * @return Persistence store object
+     */
+    IPersistenceStore getPersistanceStore();
 
-	/**
-	 * Returns scope handler (object that handle all actions related to the
-	 * scope) by path. See {@link IScopeHandler} for details.
-	 * 
-	 * @param path
-	 *            Path of scope handler
-	 * @return		Scope handler
-	 */
-	IScopeHandler lookupScopeHandler(String path);
+    /**
+     * Returns scope handler (object that handle all actions related to the scope) by path. See {@link IScopeHandler} for details.
+     * 
+     * @param path
+     *            Path of scope handler
+     * @return Scope handler
+     */
+    IScopeHandler lookupScopeHandler(String path);
 
-	/**
-	 * Returns scope by path. You can think of IScope as of tree items, used to
-	 * separate context and resources between users. See {@link IScope} for more
-	 * details.
-	 * 
-	 * @param path
-	 *            Path of scope
-	 * @return		IScope object
-	 */
-	IScope resolveScope(String path);
+    /**
+     * Returns scope by path. You can think of IScope as of tree items, used to separate context and resources between users. See {@link IScope} for more details.
+     * 
+     * @param path
+     *            Path of scope
+     * @return IScope object
+     */
+    IScope resolveScope(String path);
 
-	/**
-	 * Returns scope by path from given root. You can think of IScope as of tree
-	 * items, used to separate context and resources between users.
-	 * See {@link IScope} for more details.
-	 * 
-	 * @param root
-	 *            Root to start from
-	 * @param path
-	 *            Path of scope
-	 * @return		IScope object
-	 */
-	IScope resolveScope(IScope root, String path);
+    /**
+     * Returns scope by path from given root. You can think of IScope as of tree items, used to separate context and resources between users. See {@link IScope} for more details.
+     * 
+     * @param root
+     *            Root to start from
+     * @param path
+     *            Path of scope
+     * @return IScope object
+     */
+    IScope resolveScope(IScope root, String path);
 
-	/**
-	 * Returns global scope reference
-	 * 
-	 * @return	global scope reference
-	 */
-	IGlobalScope getGlobalScope();
+    /**
+     * Returns global scope reference
+     * 
+     * @return global scope reference
+     */
+    IGlobalScope getGlobalScope();
 
-	/**
-	 * Returns service by name. 
-	 * 
-	 * @param serviceName
-	 *            Name of service
-	 * @return				Service object
-	 */
-	Object lookupService(String serviceName);
+    /**
+     * Returns service by name.
+     * 
+     * @param serviceName
+     *            Name of service
+     * @return Service object
+     */
+    Object lookupService(String serviceName);
 
-	/**
-	 * Returns bean by ID
-	 * 
-	 * @param beanId
-	 *            Bean ID
-	 * @return			Given bean instance
-	 */
-	Object getBean(String beanId);
+    /**
+     * Returns bean by ID
+     * 
+     * @param beanId
+     *            Bean ID
+     * @return Given bean instance
+     */
+    Object getBean(String beanId);
 
-	/**
-	 * Returns true if the context contains a certain bean,
-	 * false otherwise.
-	 * @param beanId	The name of the bean to find. 
-	 * @return	True if the bean exists, false otherwise. 
-	 */
-	boolean hasBean(String beanId);
+    /**
+     * Returns true if the context contains a certain bean, false otherwise.
+     * 
+     * @param beanId
+     *            The name of the bean to find.
+     * @return True if the bean exists, false otherwise.
+     */
+    boolean hasBean(String beanId);
 
-	/**
-	 * Returns core service by bean id
-	 * 
-	 * @param beanId
-	 *            Bean ID
-	 * @return			Core service
-	 */
-	Object getCoreService(String beanId);
+    /**
+     * Returns core service by bean id
+     * 
+     * @param beanId
+     *            Bean ID
+     * @return Core service
+     */
+    Object getCoreService(String beanId);
 
-	/**
-	 * Returns IMappingStrategy object
-	 * 
-	 * @return	IMappingStrategy object
-	 */
-	public IMappingStrategy getMappingStrategy();
+    /**
+     * Returns IMappingStrategy object
+     * 
+     * @return IMappingStrategy object
+     */
+    public IMappingStrategy getMappingStrategy();
 }

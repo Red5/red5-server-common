@@ -32,272 +32,282 @@ import org.red5.server.api.service.IServiceCall;
  * @author Luke Hubbard, Codegent Ltd (luke@codegent.com)
  */
 public class Call implements IServiceCall, Externalizable {
-	
-	private static final long serialVersionUID = -3699712251588013875L;
 
-	/**
-	 * Pending status constant
-	 */
-	public static final byte STATUS_PENDING = 0x01;
+    private static final long serialVersionUID = -3699712251588013875L;
 
-	/**
-	 * Success result constant
-	 */
-	public static final byte STATUS_SUCCESS_RESULT = 0x02;
+    /**
+     * Pending status constant
+     */
+    public static final byte STATUS_PENDING = 0x01;
 
-	/**
-	 * Returned value is null constant
-	 */
-	public static final byte STATUS_SUCCESS_NULL = 0x03;
+    /**
+     * Success result constant
+     */
+    public static final byte STATUS_SUCCESS_RESULT = 0x02;
 
-	/**
-	 * Service returns no value constant
-	 */
-	public static final byte STATUS_SUCCESS_VOID = 0x04;
+    /**
+     * Returned value is null constant
+     */
+    public static final byte STATUS_SUCCESS_NULL = 0x03;
 
-	/**
-	 * Service not found constant
-	 */
-	public static final byte STATUS_SERVICE_NOT_FOUND = 0x10;
+    /**
+     * Service returns no value constant
+     */
+    public static final byte STATUS_SUCCESS_VOID = 0x04;
 
-	/**
-	 * Service's method not found constant
-	 */
-	public static final byte STATUS_METHOD_NOT_FOUND = 0x11;
+    /**
+     * Service not found constant
+     */
+    public static final byte STATUS_SERVICE_NOT_FOUND = 0x10;
 
-	/**
-	 * Access denied constant
-	 */
-	public static final byte STATUS_ACCESS_DENIED = 0x12;
+    /**
+     * Service's method not found constant
+     */
+    public static final byte STATUS_METHOD_NOT_FOUND = 0x11;
 
-	/**
-	 * Exception on invocation constant
-	 */
-	public static final byte STATUS_INVOCATION_EXCEPTION = 0x13;
+    /**
+     * Access denied constant
+     */
+    public static final byte STATUS_ACCESS_DENIED = 0x12;
 
-	/**
-	 * General exception constant
-	 */
-	public static final byte STATUS_GENERAL_EXCEPTION = 0x14;
+    /**
+     * Exception on invocation constant
+     */
+    public static final byte STATUS_INVOCATION_EXCEPTION = 0x13;
 
-	/**
-	 * The application for this service is currently shutting down
-	 */
-	public static final byte STATUS_APP_SHUTTING_DOWN = 0x15;
+    /**
+     * General exception constant
+     */
+    public static final byte STATUS_GENERAL_EXCEPTION = 0x14;
 
-	/**
-	 * The remote method cannot be invoked because the client is not connected. NOTE that it is possible
-	 * that this error is returned in the situation where the method has been invoked on the server the connection
-	 * has failed before the result returned could be read. There is no way to establish whether this has happened.
-	 */
-	public static final byte STATUS_NOT_CONNECTED = 0x20;
+    /**
+     * The application for this service is currently shutting down
+     */
+    public static final byte STATUS_APP_SHUTTING_DOWN = 0x15;
 
-	/**
-	 * Service name
-	 */
-	protected String serviceName;
+    /**
+     * The remote method cannot be invoked because the client is not connected. NOTE that it is possible that this error is returned in the situation where the method has been invoked on the server the connection has failed before the result returned could be read. There is no way to establish whether this has happened.
+     */
+    public static final byte STATUS_NOT_CONNECTED = 0x20;
 
-	/**
-	 * Service method name
-	 */
-	protected String serviceMethodName;
+    /**
+     * Service name
+     */
+    protected String serviceName;
 
-	/**
-	 * Call arguments
-	 */
-	protected Object[] arguments = null;
+    /**
+     * Service method name
+     */
+    protected String serviceMethodName;
 
-	/**
-	 * Call status, initial one is pending
-	 */
-	protected byte status = STATUS_PENDING;
+    /**
+     * Call arguments
+     */
+    protected Object[] arguments = null;
 
-	/**
-	 * Call exception if any, null by default
-	 */
-	protected Exception exception;
+    /**
+     * Call status, initial one is pending
+     */
+    protected byte status = STATUS_PENDING;
 
-	/**
-	 * Timestamp at which the call was deserialized.
-	 */
-	private long readTime;
+    /**
+     * Call exception if any, null by default
+     */
+    protected Exception exception;
 
-	/**
-	 * Timestamp at which the call was serialized.
-	 */
-	private long writeTime;
-	
-	public Call() {
-	}
+    /**
+     * Timestamp at which the call was deserialized.
+     */
+    private long readTime;
 
-	/**
-	 * Creates call from method name
-	 * @param method        Method name
-	 */
-	public Call(String method) {
-		serviceMethodName = method;
-	}
+    /**
+     * Timestamp at which the call was serialized.
+     */
+    private long writeTime;
 
-	/**
-	 * Creates call from method name and array of call parameters
-	 * @param method        Method name
-	 * @param args          Call parameters
-	 */
-	public Call(String method, Object[] args) {
-		serviceMethodName = method;
-		arguments = args;
-	}
+    public Call() {
+    }
 
-	/**
-	 * Creates call from given service name, method name and array of call parameters
-	 * @param name         Service name
-	 * @param method       Service method name
-	 * @param args         Call parameters
-	 */
-	public Call(String name, String method, Object[] args) {
-		serviceName = name;
-		serviceMethodName = method;
-		arguments = args;
-	}
+    /**
+     * Creates call from method name
+     * 
+     * @param method
+     *            Method name
+     */
+    public Call(String method) {
+        serviceMethodName = method;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public boolean isSuccess() {
-		return (status == STATUS_SUCCESS_RESULT) || (status == STATUS_SUCCESS_NULL) || (status == STATUS_SUCCESS_VOID);
-	}
+    /**
+     * Creates call from method name and array of call parameters
+     * 
+     * @param method
+     *            Method name
+     * @param args
+     *            Call parameters
+     */
+    public Call(String method, Object[] args) {
+        serviceMethodName = method;
+        arguments = args;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getServiceMethodName() {
-		return serviceMethodName;
-	}
+    /**
+     * Creates call from given service name, method name and array of call parameters
+     * 
+     * @param name
+     *            Service name
+     * @param method
+     *            Service method name
+     * @param args
+     *            Call parameters
+     */
+    public Call(String name, String method, Object[] args) {
+        serviceName = name;
+        serviceMethodName = method;
+        arguments = args;
+    }
 
-	/**
-	 * Setter for service method name
-	 *
-	 * @param serviceMethodName  New service method name value
-	 */
-	public void setServiceMethodName(String serviceMethodName) {
-		this.serviceMethodName = serviceMethodName;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isSuccess() {
+        return (status == STATUS_SUCCESS_RESULT) || (status == STATUS_SUCCESS_NULL) || (status == STATUS_SUCCESS_VOID);
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getServiceName() {
-		return serviceName;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public String getServiceMethodName() {
+        return serviceMethodName;
+    }
 
-	/**
-	 * Setter for service name
-	 *
-	 * @param serviceName  New service name value
-	 */
-	public void setServiceName(String serviceName) {
-		this.serviceName = serviceName;
-	}
+    /**
+     * Setter for service method name
+     *
+     * @param serviceMethodName
+     *            New service method name value
+     */
+    public void setServiceMethodName(String serviceMethodName) {
+        this.serviceMethodName = serviceMethodName;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public Object[] getArguments() {
-		return arguments;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public String getServiceName() {
+        return serviceName;
+    }
 
-	/**
-	 * Setter for arguments.
-	 *
-	 * @param args  Arguments.
-	 */
-	public void setArguments(Object[] args) {
-		arguments = args;
-	}
+    /**
+     * Setter for service name
+     *
+     * @param serviceName
+     *            New service name value
+     */
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public byte getStatus() {
-		return status;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public Object[] getArguments() {
+        return arguments;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void setStatus(byte status) {
-		this.status = status;
-	}
+    /**
+     * Setter for arguments.
+     *
+     * @param args
+     *            Arguments.
+     */
+    public void setArguments(Object[] args) {
+        arguments = args;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public long getReadTime() {
-		return readTime;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public byte getStatus() {
+        return status;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public long getWriteTime() {
-		return writeTime;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public void setStatus(byte status) {
+        this.status = status;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public Exception getException() {
-		return exception;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public long getReadTime() {
+        return readTime;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public void setException(Exception exception) {
-		this.exception = exception;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public long getWriteTime() {
+        return writeTime;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder("Service: ");
-		sb.append(serviceName);
-		sb.append(" Method: ");
-		sb.append(serviceMethodName);
-		if (arguments != null) {
-			sb.append(" Num Params: ");
-			sb.append(arguments.length);
-			for (int i = 0; i < arguments.length; i++) {
-				sb.append(' ');
-				sb.append(i);
-				sb.append(": ");
-				sb.append(arguments[i]);
-			}
-		} else {
-			sb.append(" No params");
-		}
-		return sb.toString();
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public Exception getException() {
+        return exception;
+    }
 
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		// keep a time of receipt
-		readTime = System.currentTimeMillis();
-		// read-in properties
-		serviceName = (String) in.readObject();
-		serviceMethodName = (String) in.readObject();
-		arguments = (Object[]) in.readObject();
-		status = in.readByte();
-		exception = (Exception) in.readObject();
-	}
+    /**
+     * {@inheritDoc}
+     */
+    public void setException(Exception exception) {
+        this.exception = exception;
+    }
 
-	public void writeExternal(ObjectOutput out) throws IOException {
-		// keep a time of receipt
-		writeTime = System.currentTimeMillis();
-		// write-out properties
-		out.writeObject(serviceName);
-		out.writeObject(serviceMethodName);
-		out.writeObject(arguments);
-		out.writeByte(status);
-		out.writeObject(exception);
-	}
+    /** {@inheritDoc} */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Service: ");
+        sb.append(serviceName);
+        sb.append(" Method: ");
+        sb.append(serviceMethodName);
+        if (arguments != null) {
+            sb.append(" Num Params: ");
+            sb.append(arguments.length);
+            for (int i = 0; i < arguments.length; i++) {
+                sb.append(' ');
+                sb.append(i);
+                sb.append(": ");
+                sb.append(arguments[i]);
+            }
+        } else {
+            sb.append(" No params");
+        }
+        return sb.toString();
+    }
+
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        // keep a time of receipt
+        readTime = System.currentTimeMillis();
+        // read-in properties
+        serviceName = (String) in.readObject();
+        serviceMethodName = (String) in.readObject();
+        arguments = (Object[]) in.readObject();
+        status = in.readByte();
+        exception = (Exception) in.readObject();
+    }
+
+    public void writeExternal(ObjectOutput out) throws IOException {
+        // keep a time of receipt
+        writeTime = System.currentTimeMillis();
+        // write-out properties
+        out.writeObject(serviceName);
+        out.writeObject(serviceMethodName);
+        out.writeObject(arguments);
+        out.writeByte(status);
+        out.writeObject(exception);
+    }
 }

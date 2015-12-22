@@ -25,13 +25,14 @@ import org.red5.server.messaging.IMessageOutput;
  * Service for consumer objects, used to get pushed messages at consumer endpoint.
  */
 public interface IConsumerService {
-	public static final String KEY = "consumerService";
+    public static final String KEY = "consumerService";
 
     /**
      * Handles pushed messages
      *
-     * @param stream       Client stream object
-     * @return             Message object
+     * @param stream
+     *            Client stream object
+     * @return Message object
      */
     IMessageOutput getConsumerOutput(IClientStream stream);
 }

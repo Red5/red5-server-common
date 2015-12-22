@@ -23,16 +23,16 @@ package org.red5.server.net.rtmp.message;
  */
 public interface Constants {
 
-	/**
-	 * Data originated from a file.
-	 */
-	public static final byte SOURCE_TYPE_VOD = 0x0;
+    /**
+     * Data originated from a file.
+     */
+    public static final byte SOURCE_TYPE_VOD = 0x0;
 
-	/**
-	 * Data originated from a live encoder or stream.
-	 */	
-	public static final byte SOURCE_TYPE_LIVE = 0x01;	
-	
+    /**
+     * Data originated from a live encoder or stream.
+     */
+    public static final byte SOURCE_TYPE_LIVE = 0x01;
+
     /**
      * Medium integer max value
      */
@@ -46,7 +46,7 @@ public interface Constants {
     /**
      * Abort message
      */
-    public static final byte TYPE_ABORT = 0x02;    
+    public static final byte TYPE_ABORT = 0x02;
 
     /**
      * Acknowledgment. Send every x bytes read by both sides.
@@ -83,18 +83,18 @@ public interface Constants {
      */
     public static final byte TYPE_VIDEO_DATA = 0x09;
 
-	// Unknown: 0x0A ...  0x0E
+    // Unknown: 0x0A ...  0x0E
 
     /**
      * AMF3 stream send
      */
     public static final byte TYPE_FLEX_STREAM_SEND = 0x0F;
-    
+
     /**
      * AMF3 shared object
      */
     public static final byte TYPE_FLEX_SHARED_OBJECT = 0x10;
-    
+
     /**
      * AMF3 message
      */
@@ -124,7 +124,7 @@ public interface Constants {
      * Aggregate data marker
      */
     public static final byte TYPE_AGGREGATE = 0x16;
-    
+
     /**
      * New header marker
      */

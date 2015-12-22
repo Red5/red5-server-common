@@ -44,175 +44,196 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  *
  * @author The Red5 Project
  */
-@ManagedResource(objectName="org.red5.server:type=ClientRegistry,name=default", description="ClientRegistry")
+@ManagedResource(objectName = "org.red5.server:type=ClientRegistry,name=default", description = "ClientRegistry")
 public class ClientRegistry implements IClientRegistry, ClientRegistryMXBean {
-	
-	private Logger log = LoggerFactory.getLogger(ClientRegistry.class);
-	
-	/**
-	 * Clients map
-	 */
-	private ConcurrentMap<String, IClient> clients = new ConcurrentHashMap<String, IClient>(6, 0.9f, 2);
 
-	/**
-	 *  Next client id
-	 */
-	private AtomicInteger nextId = new AtomicInteger(0);
+    private Logger log = LoggerFactory.getLogger(ClientRegistry.class);
 
-	/**
-	 * The identifier for this client registry
-	 */
-	private String name;
+    /**
+     * Clients map
+     */
+    private ConcurrentMap<String, IClient> clients = new ConcurrentHashMap<String, IClient>(6, 0.9f, 2);
 
-	public ClientRegistry() {
-	}
+    /**
+     * Next client id
+     */
+    private AtomicInteger nextId = new AtomicInteger(0);
 
-	//allows for setting a "name" to be used with jmx for lookup
-	public ClientRegistry(String name) {
-		this.name = name;
-		if (StringUtils.isNotBlank(this.name)) {
-			try {
-				MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-				ObjectName oName = new ObjectName("org.red5.server:type=ClientRegistry,name=" + name);
-		        mbeanServer.registerMBean(new StandardMBean(this, ClientRegistryMXBean.class, true), oName);
-			} catch (Exception e) {
-				//log.warn("Error on jmx registration", e);
-			}
-		}
-	}
+    /**
+     * The identifier for this client registry
+     */
+    private String name;
 
-	/**
-	 * Add client to registry
-	 * @param client           Client to add
-	 */
-	public void addClient(IClient client) {
-		addClient(client.getId(), client);
-	}
+    public ClientRegistry() {
+    }
 
-	/**
-	 * Add the client to the registry
-	 */
-	private void addClient(String id, IClient client) {
-		// check to see if the id already exists first
-		if (!hasClient(id)) {
-			clients.put(id, client);
-		} else {
-			log.debug("Client id: {} already registered", id);
-		}
-	}
+    //allows for setting a "name" to be used with jmx for lookup
+    public ClientRegistry(String name) {
+        this.name = name;
+        if (StringUtils.isNotBlank(this.name)) {
+            try {
+                MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+                ObjectName oName = new ObjectName("org.red5.server:type=ClientRegistry,name=" + name);
+                mbeanServer.registerMBean(new StandardMBean(this, ClientRegistryMXBean.class, true), oName);
+            } catch (Exception e) {
+                //log.warn("Error on jmx registration", e);
+            }
+        }
+    }
 
-	public Client getClient(String id) throws ClientNotFoundException {
-		Client result = (Client) clients.get(id);
-		if (result == null) {
-			throw new ClientNotFoundException(id);
-		}
-		return result;
-	}
+    /**
+     * Add client to registry
+     * 
+     * @param client
+     *            Client to add
+     */
+    public void addClient(IClient client) {
+        addClient(client.getId(), client);
+    }
 
-	/**
-	 * Returns a list of Clients.
-	 */
-	public ClientList<Client> getClientList() {
-		ClientList<Client> list = new ClientList<Client>();
-		for (IClient c : clients.values()) {
-			list.add((Client) c);
-		}
-		return list;
-	}
+    /**
+     * Add the client to the registry
+     */
+    private void addClient(String id, IClient client) {
+        // check to see if the id already exists first
+        if (!hasClient(id)) {
+            clients.put(id, client);
+        } else {
+            log.debug("Client id: {} already registered", id);
+        }
+    }
 
-	/**
-	 * Check if client registry contains clients.
-	 *
-	 * @return             <pre>True</pre> if clients exist, otherwise <pre>False</pre>
-	 */
-	protected boolean hasClients() {
-		return !clients.isEmpty();
-	}
+    public Client getClient(String id) throws ClientNotFoundException {
+        Client result = (Client) clients.get(id);
+        if (result == null) {
+            throw new ClientNotFoundException(id);
+        }
+        return result;
+    }
 
-	/**
-	 * Return collection of clients
-	 * @return             Collection of clients
-	 */
-	@SuppressWarnings("unchecked")
-	protected Collection<IClient> getClients() {
-		if (!hasClients()) {
-			// avoid creating new Collection object if no clients exist.
-			return Collections.EMPTY_SET;
-		}
-		return Collections.unmodifiableCollection(clients.values());
-	}
+    /**
+     * Returns a list of Clients.
+     */
+    public ClientList<Client> getClientList() {
+        ClientList<Client> list = new ClientList<Client>();
+        for (IClient c : clients.values()) {
+            list.add((Client) c);
+        }
+        return list;
+    }
 
-	/**
-	 * Check whether registry has client with given id
-	 *
-	 * @param id         Client id
-	 * @return           true if client with given id was register with this registry, false otherwise
-	 */
-	public boolean hasClient(String id) {
-		if (id == null) {
-			// null ids are not supported
-			return false;
-		}
-		return clients.containsKey(id);
-	}
+    /**
+     * Check if client registry contains clients.
+     *
+     * @return <pre>
+     * True
+     * </pre>
+     * 
+     *         if clients exist, otherwise
+     * 
+     *         <pre>
+     * False
+     * </pre>
+     */
+    protected boolean hasClients() {
+        return !clients.isEmpty();
+    }
 
-	/**
-	 * Return client by id
-	 *
-	 * @param id          Client id
-	 * @return            Client object associated with given id
-	 * @throws ClientNotFoundException if we can't find client
-	 */
-	public IClient lookupClient(String id) throws ClientNotFoundException {
-		return getClient(id);
-	}
+    /**
+     * Return collection of clients
+     * 
+     * @return Collection of clients
+     */
+    @SuppressWarnings("unchecked")
+    protected Collection<IClient> getClients() {
+        if (!hasClients()) {
+            // avoid creating new Collection object if no clients exist.
+            return Collections.EMPTY_SET;
+        }
+        return Collections.unmodifiableCollection(clients.values());
+    }
 
-	/**
-	 * Return client from next id with given params
-	 *
-	 * @param params                         Client params
-	 * @return                               Client object
-	 * @throws ClientNotFoundException if client not found
-	 * @throws ClientRejectedException if client rejected
-	 */
-	public IClient newClient(Object[] params) throws ClientNotFoundException, ClientRejectedException {
-		// derive client id from the connection params or use next
-		String id = nextId();
-		IClient client = new Client(id, this);
-		addClient(id, client);
-		return client;
-	}
+    /**
+     * Check whether registry has client with given id
+     *
+     * @param id
+     *            Client id
+     * @return true if client with given id was register with this registry, false otherwise
+     */
+    public boolean hasClient(String id) {
+        if (id == null) {
+            // null ids are not supported
+            return false;
+        }
+        return clients.containsKey(id);
+    }
 
-	/**
-	 * Return next client id
-	 * @return         Next client id
-	 */
-	public String nextId() {
-		String id = "-1";
-		do {
-			// when we reach max int, reset to zero
-			if (nextId.get() == Integer.MAX_VALUE) {
-				nextId.set(0);
-			}
-			id = String.format("%d", nextId.getAndIncrement());
-		} while (hasClient(id));
-		return id;
-	}
+    /**
+     * Return client by id
+     *
+     * @param id
+     *            Client id
+     * @return Client object associated with given id
+     * @throws ClientNotFoundException
+     *             if we can't find client
+     */
+    public IClient lookupClient(String id) throws ClientNotFoundException {
+        return getClient(id);
+    }
 
-	/**
-	 * Return previous client id
-	 * @return        Previous client id
-	 */
-	public String previousId() {
-		return String.format("%d", nextId.get());
-	}
+    /**
+     * Return client from next id with given params
+     *
+     * @param params
+     *            Client params
+     * @return Client object
+     * @throws ClientNotFoundException
+     *             if client not found
+     * @throws ClientRejectedException
+     *             if client rejected
+     */
+    public IClient newClient(Object[] params) throws ClientNotFoundException, ClientRejectedException {
+        // derive client id from the connection params or use next
+        String id = nextId();
+        IClient client = new Client(id, this);
+        addClient(id, client);
+        return client;
+    }
 
-	/**
-	 * Removes client from registry
-	 * @param client           Client to remove
-	 */
-	protected void removeClient(IClient client) {
-		clients.remove(client.getId());
-	}
+    /**
+     * Return next client id
+     * 
+     * @return Next client id
+     */
+    public String nextId() {
+        String id = "-1";
+        do {
+            // when we reach max int, reset to zero
+            if (nextId.get() == Integer.MAX_VALUE) {
+                nextId.set(0);
+            }
+            id = String.format("%d", nextId.getAndIncrement());
+        } while (hasClient(id));
+        return id;
+    }
+
+    /**
+     * Return previous client id
+     * 
+     * @return Previous client id
+     */
+    public String previousId() {
+        return String.format("%d", nextId.get());
+    }
+
+    /**
+     * Removes client from registry
+     * 
+     * @param client
+     *            Client to remove
+     */
+    protected void removeClient(IClient client) {
+        clients.remove(client.getId());
+    }
 
 }

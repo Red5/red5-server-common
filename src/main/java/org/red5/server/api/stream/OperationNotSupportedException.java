@@ -24,9 +24,9 @@ package org.red5.server.api.stream;
  */
 public class OperationNotSupportedException extends Exception {
 
-	/**
+    /**
 	 * 
 	 */
-	private static final long serialVersionUID = -6166602683688991431L;
+    private static final long serialVersionUID = -6166602683688991431L;
 
 }

@@ -29,23 +29,24 @@ import org.red5.server.api.IConnection;
 
 public interface IClientSharedObject extends ISharedObjectBase {
 
-	/**
-	 * Connect the shared object using the passed connection.
-	 * 
-	 * @param conn connect to connect to
-	 */
-	public void connect(IConnection conn);
-	
-	/**
-	 * Check if the shared object is connected to the server.
-	 * 
-	 * @return is connected
-	 */
-	public boolean isConnected();
-	
-	/**
-	 * Disconnect the shared object.
-	 */
-	public void disconnect();
-	
+    /**
+     * Connect the shared object using the passed connection.
+     * 
+     * @param conn
+     *            connect to connect to
+     */
+    public void connect(IConnection conn);
+
+    /**
+     * Check if the shared object is connected to the server.
+     * 
+     * @return is connected
+     */
+    public boolean isConnected();
+
+    /**
+     * Disconnect the shared object.
+     */
+    public void disconnect();
+
 }

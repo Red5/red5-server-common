@@ -25,35 +25,42 @@ import org.red5.server.net.rtmp.message.Packet;
  */
 public interface IRTMPHandler {
 
-	/**
-	 * Connection open event.
-	 * 
-	 * @param conn Connection
-	 */
-	public void connectionOpened(RTMPConnection conn);
+    /**
+     * Connection open event.
+     * 
+     * @param conn
+     *            Connection
+     */
+    public void connectionOpened(RTMPConnection conn);
 
-	/**
-	 * Message received.
-	 * 
-	 * @param conn Connection 
-	 * @param packet Packet containing an RTMP message
-	 * @throws Exception on exception
-	 */
-	public void messageReceived(RTMPConnection conn, Packet packet) throws Exception;
+    /**
+     * Message received.
+     * 
+     * @param conn
+     *            Connection
+     * @param packet
+     *            Packet containing an RTMP message
+     * @throws Exception
+     *             on exception
+     */
+    public void messageReceived(RTMPConnection conn, Packet packet) throws Exception;
 
-	/**
-	 * Message sent.
-	 * 
-	 * @param conn Connection
-	 * @param packet RTMP message
-	 */
-	public void messageSent(RTMPConnection conn, Packet packet);
+    /**
+     * Message sent.
+     * 
+     * @param conn
+     *            Connection
+     * @param packet
+     *            RTMP message
+     */
+    public void messageSent(RTMPConnection conn, Packet packet);
 
-	/**
-	 * Connection closed.
-	 * 
-	 * @param conn Connection
-	 */
-	public void connectionClosed(RTMPConnection conn);
+    /**
+     * Connection closed.
+     * 
+     * @param conn
+     *            Connection
+     */
+    public void connectionClosed(RTMPConnection conn);
 
 }

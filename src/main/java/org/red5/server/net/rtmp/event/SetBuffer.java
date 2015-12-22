@@ -11,73 +11,75 @@ import java.io.ObjectOutput;
  */
 public class SetBuffer extends Ping {
 
-	private static final long serialVersionUID = -6478248060425544924L;
-	
-	private int streamId;
-	
-	private int bufferLength;
-		
-	public SetBuffer() {
-		super();
-		this.eventType = Ping.CLIENT_BUFFER;
-	}
+    private static final long serialVersionUID = -6478248060425544924L;
 
-	public SetBuffer(int streamId, int bufferLength) {
-		this();
-		this.streamId = streamId;
-		this.bufferLength = bufferLength;
-	}
+    private int streamId;
 
-	/**
-	 * @return the streamId
-	 */
-	public int getStreamId() {
-		return streamId;
-	}
+    private int bufferLength;
 
-	/**
-	 * @param streamId the streamId to set
-	 */
-	public void setStreamId(int streamId) {
-		this.streamId = streamId;
-	}
+    public SetBuffer() {
+        super();
+        this.eventType = Ping.CLIENT_BUFFER;
+    }
 
-	/**
-	 * @return the bufferLength
-	 */
-	public int getBufferLength() {
-		return bufferLength;
-	}
+    public SetBuffer(int streamId, int bufferLength) {
+        this();
+        this.streamId = streamId;
+        this.bufferLength = bufferLength;
+    }
 
-	/**
-	 * @param bufferLength the bufferLength to set
-	 */
-	public void setBufferLength(int bufferLength) {
-		this.bufferLength = bufferLength;
-	}
+    /**
+     * @return the streamId
+     */
+    public int getStreamId() {
+        return streamId;
+    }
 
-	@Override
-	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		eventType = in.readShort();
-		streamId = in.readInt();
-		bufferLength = in.readInt();
-	}
+    /**
+     * @param streamId
+     *            the streamId to set
+     */
+    public void setStreamId(int streamId) {
+        this.streamId = streamId;
+    }
 
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		super.writeExternal(out);
-		out.writeShort(eventType);
-		out.writeInt(streamId);
-		out.writeInt(bufferLength);
-	}
+    /**
+     * @return the bufferLength
+     */
+    public int getBufferLength() {
+        return bufferLength;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "SetBuffer [streamId=" + streamId + ", bufferLength=" + bufferLength + "]";
-	}
-	
+    /**
+     * @param bufferLength
+     *            the bufferLength to set
+     */
+    public void setBufferLength(int bufferLength) {
+        this.bufferLength = bufferLength;
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        super.readExternal(in);
+        eventType = in.readShort();
+        streamId = in.readInt();
+        bufferLength = in.readInt();
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        super.writeExternal(out);
+        out.writeShort(eventType);
+        out.writeInt(streamId);
+        out.writeInt(bufferLength);
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "SetBuffer [streamId=" + streamId + ", bufferLength=" + bufferLength + "]";
+    }
+
 }

@@ -32,37 +32,38 @@ import org.slf4j.LoggerFactory;
  */
 public class StreamableFileFactory implements IStreamableFileFactory {
 
-	// Initialize Logging
-	public static Logger logger = LoggerFactory.getLogger(StreamableFileFactory.class);
+    // Initialize Logging
+    public static Logger logger = LoggerFactory.getLogger(StreamableFileFactory.class);
 
-	private Set<IStreamableFileService> services = new HashSet<IStreamableFileService>();
+    private Set<IStreamableFileService> services = new HashSet<IStreamableFileService>();
 
-	/**
-	 * Setter for services
-	 * 
-	 * @param services Set of streamable file services
-	 */
-	public void setServices(Set<IStreamableFileService> services) {
-		logger.debug("StreamableFileFactory set services");
-		this.services = services;
-	}
+    /**
+     * Setter for services
+     * 
+     * @param services
+     *            Set of streamable file services
+     */
+    public void setServices(Set<IStreamableFileService> services) {
+        logger.debug("StreamableFileFactory set services");
+        this.services = services;
+    }
 
-	/** {@inheritDoc} */
-	public IStreamableFileService getService(File fp) {
-		logger.debug("Get service for file: {}", fp.getName());
-		// Return first service that can handle the passed file
-		for (IStreamableFileService service : this.services) {
-			if (service.canHandle(fp)) {
-				logger.debug("Found service");
-				return service;
-			}
-		}
-		return null;
-	}
+    /** {@inheritDoc} */
+    public IStreamableFileService getService(File fp) {
+        logger.debug("Get service for file: {}", fp.getName());
+        // Return first service that can handle the passed file
+        for (IStreamableFileService service : this.services) {
+            if (service.canHandle(fp)) {
+                logger.debug("Found service");
+                return service;
+            }
+        }
+        return null;
+    }
 
-	/** {@inheritDoc} */
-	public Set<IStreamableFileService> getServices() {
-		logger.debug("StreamableFileFactory get services");
-		return services;
-	}
+    /** {@inheritDoc} */
+    public Set<IStreamableFileService> getServices() {
+        logger.debug("StreamableFileFactory get services");
+        return services;
+    }
 }

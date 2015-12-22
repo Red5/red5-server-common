@@ -22,130 +22,182 @@ package org.red5.server.api.stream;
  * Playlist
  */
 public interface IPlaylist {
-	/**
-	 * Add an item to the list.
-	 * 
-	 * @param item       Playlist item
-	 */
-	void addItem(IPlayItem item);
+    /**
+     * Add an item to the list.
+     * 
+     * @param item
+     *            Playlist item
+     */
+    void addItem(IPlayItem item);
 
-	/**
-	 * Add an item to specific index.
-	 * 
-	 * @param item       Playlist item
-	 * @param index      Index in list
-	 */
-	void addItem(IPlayItem item, int index);
+    /**
+     * Add an item to specific index.
+     * 
+     * @param item
+     *            Playlist item
+     * @param index
+     *            Index in list
+     */
+    void addItem(IPlayItem item, int index);
 
-	/**
-	 * Remove an item from list.
-	 * 
-	 * @param index      Index in list
-	 */
-	void removeItem(int index);
+    /**
+     * Remove an item from list.
+     * 
+     * @param index
+     *            Index in list
+     */
+    void removeItem(int index);
 
-	/**
-	 * Remove all items.
-	 */
-	void removeAllItems();
+    /**
+     * Remove all items.
+     */
+    void removeAllItems();
 
-	/**
+    /**
      * Return number of items in list
      *
-     * @return  Number of items in list
+     * @return Number of items in list
      */
     int getItemSize();
 
-	/**
-	 * Get currently playing item index.
-	 * @return       Currently playing item index.
-	 */
-	int getCurrentItemIndex();
+    /**
+     * Get currently playing item index.
+     * 
+     * @return Currently playing item index.
+     */
+    int getCurrentItemIndex();
 
     /**
      * Get currently playing item
-     * @return       Item
+     * 
+     * @return Item
      */
     IPlayItem getCurrentItem();
 
     /**
-	 * Get the item according to the index.
-	 * @param index  Item index
-	 * @return       Item at that index in list
-	 */
-	IPlayItem getItem(int index);
+     * Get the item according to the index.
+     * 
+     * @param index
+     *            Item index
+     * @return Item at that index in list
+     */
+    IPlayItem getItem(int index);
 
-	/**
-	 * Check if the playlist has more items after the currently
-	 * playing one.
-	 * 
-	 * @return <pre>true</pre> if more items are available, <pre>false</pre> otherwise
-	 */
-	boolean hasMoreItems();
-	
-	/**
-	 * Go for the previous played item.
-	 */
-	void previousItem();
+    /**
+     * Check if the playlist has more items after the currently playing one.
+     * 
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if more items are available,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    boolean hasMoreItems();
 
-	/**
-	 * Go for next item decided by controller logic.
-	 */
-	void nextItem();
+    /**
+     * Go for the previous played item.
+     */
+    void previousItem();
 
-	/**
-	 * Set the current item for playing.
-	 * 
-	 * @param index    Position in list
-	 */
-	void setItem(int index);
+    /**
+     * Go for next item decided by controller logic.
+     */
+    void nextItem();
 
-	/**
-	 * Whether items are randomly played.
-	 * 
-	 * @return         <pre>true</pre> if shuffle is on for this list, <pre>false</pre> otherwise
-	 */
-	boolean isRandom();
+    /**
+     * Set the current item for playing.
+     * 
+     * @param index
+     *            Position in list
+     */
+    void setItem(int index);
 
-	/**
-	 * Set whether items should be randomly played.
-	 * 
-	 * @param random   Shuffle flag
-	 */
-	void setRandom(boolean random);
+    /**
+     * Whether items are randomly played.
+     * 
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if shuffle is on for this list,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    boolean isRandom();
 
-	/**
-	 * Whether rewind the list.
-	 * 
-	 * @return         <pre>true</pre> if playlist is rewind on end, <pre>false</pre> otherwise
-	 */
-	boolean isRewind();
+    /**
+     * Set whether items should be randomly played.
+     * 
+     * @param random
+     *            Shuffle flag
+     */
+    void setRandom(boolean random);
 
-	/**
-	 * Set whether rewind the list.
-	 * 
-	 * @param rewind   New vallue for rewind flag
-	 */
-	void setRewind(boolean rewind);
+    /**
+     * Whether rewind the list.
+     * 
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if playlist is rewind on end,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    boolean isRewind();
 
-	/**
-	 * Whether repeat playing an item.
-	 * 
-	 * @return        <pre>true</pre> if repeat mode is on for this playlist, <pre>false</pre> otherwise
-	 */
-	boolean isRepeat();
+    /**
+     * Set whether rewind the list.
+     * 
+     * @param rewind
+     *            New vallue for rewind flag
+     */
+    void setRewind(boolean rewind);
 
-	/**
-	 * Set whether repeat playing an item.
-	 * 
-	 * @param repeat  New value for item playback repeat flag
-	 */
-	void setRepeat(boolean repeat);
+    /**
+     * Whether repeat playing an item.
+     * 
+     * @return <pre>
+     * true
+     * </pre>
+     * 
+     *         if repeat mode is on for this playlist,
+     * 
+     *         <pre>
+     * false
+     * </pre>
+     * 
+     *         otherwise
+     */
+    boolean isRepeat();
 
-	/**
-	 * Set list controller.
-	 * 
-	 * @param controller      Playlist controller
-	 */
-	void setPlaylistController(IPlaylistController controller);
+    /**
+     * Set whether repeat playing an item.
+     * 
+     * @param repeat
+     *            New value for item playback repeat flag
+     */
+    void setRepeat(boolean repeat);
+
+    /**
+     * Set list controller.
+     * 
+     * @param controller
+     *            Playlist controller
+     */
+    void setPlaylistController(IPlaylistController controller);
 }
