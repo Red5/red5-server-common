@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,17 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 
     /** {@inheritDoc} */
     public void connectionOpened(RTMPConnection conn) {
-        log.trace("connectionOpened - conn: {} state: {}", conn, conn.getState());
+        if (log.isTraceEnabled()) {
+            log.trace("connectionOpened - conn: {} state: {}", conn, conn.getState());
+        }
         conn.open();
+        // start the wait for handshake
+        conn.startWaitForHandshake();
     }
 
     /** {@inheritDoc} */
     public void messageReceived(RTMPConnection conn, Packet packet) throws Exception {
-        log.trace("Connection: {}", conn.getSessionId());
+        log.trace("messageReceived connection: {}", conn.getSessionId());
         if (conn != null) {
             IRTMPEvent message = null;
             try {

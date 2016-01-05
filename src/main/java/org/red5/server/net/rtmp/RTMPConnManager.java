@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,9 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
                         log.trace("Decoder lock - permits: {} queue length: {}", conn.decoderLock.availablePermits(), conn.decoderLock.getQueueLength());
                         log.trace("Encoder lock - permits: {} queue length: {}", conn.encoderLock.availablePermits(), conn.encoderLock.getQueueLength());
                         log.trace("Client streams: {} used: {}", conn.getStreams().size(), conn.getUsedStreamCount());
-                        log.trace("Attributes: {}", conn.getAttributes());
+                        if (!conn.getAttributes().isEmpty()) {
+                            log.trace("Attributes: {}", conn.getAttributes());
+                        }
                         Iterator<IBasicScope> scopes = conn.getBasicScopes();
                         while (scopes.hasNext()) {
                             IBasicScope scope = scopes.next();
@@ -102,12 +104,12 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
                             log.trace("Managed session count: {}", session.getService().getManagedSessionCount());
                         }
                         // check for rtmps native connection and allow more time
-                        String rtmpsState = (String) session.getAttribute("rtmps.state");
+                        String rtmpsState = (String) session.getAttribute(RTMPConnection.RTMPS_STATE);
                         if (rtmpsState != null && rtmpsState.equals("SESSION_SECURED")) {
-                            // don't allow more than 3 minutes
-                            if (ioTime <= 180000L) {
+                            // don't allow more than a minute
+                            if (ioTime <= 60000L) {
                                 if (log.isTraceEnabled()) {
-                                    log.trace("RTMPS secured session detected that is less than 3 minutes old, resetting I/O time");
+                                    log.trace("RTMPS secured session detected that is less than a minute old, resetting I/O time");
                                 }
                                 ioTime = 0L;
                             }
@@ -172,8 +174,6 @@ public class RTMPConnManager implements IConnectionManager<RTMPConnection>, Appl
                     conn.setScheduler((ThreadPoolTaskScheduler) applicationContext.getBean("rtmpScheduler"));
                 }
                 log.trace("Connection created: {}", conn);
-                // start the wait for handshake
-                conn.startWaitForHandshake();
             } catch (Exception ex) {
                 log.warn("Exception creating connection", ex);
             }

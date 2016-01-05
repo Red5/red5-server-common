@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,58 +46,63 @@ public class RTMPEIoFilter extends IoFilterAdapter {
 
     @Override
     public void messageReceived(NextFilter nextFilter, IoSession session, Object obj) throws Exception {
+        RTMP rtmp = null;
         String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-        log.trace("Session id: {}", sessionId);
-        RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-        RTMP rtmp = conn.getState();
-        //if there is a handshake on the session, ensure the type has been set
-        if (session.containsAttribute(RTMPConnection.RTMP_HANDSHAKE)) {
-            log.trace("Handshake exists on the session");
-            //get the handshake from the session
-            RTMPHandshake handshake = (RTMPHandshake) session.getAttribute(RTMPConnection.RTMP_HANDSHAKE);
-            int handshakeType = handshake.getHandshakeType();
-            if (handshakeType == 0) {
-                log.trace("Handshake type is not currently set");
-                // holds the handshake type, default is un-encrypted
-                byte handshakeByte = RTMPConnection.RTMP_NON_ENCRYPTED;
-                //get the current message
-                if (obj instanceof IoBuffer) {
-                    IoBuffer message = (IoBuffer) obj;
-                    message.mark();
-                    handshakeByte = message.get();
-                    message.reset();
-                }
-                //set the type
-                handshake.setHandshakeType(handshakeByte);
-                //set on the rtmp state
-                rtmp.setEncrypted(handshakeByte == RTMPConnection.RTMP_ENCRYPTED ? true : false);
-            } else if (handshakeType == 3) {
-                if (rtmp.getState() == RTMP.STATE_CONNECTED) {
-                    log.debug("In connected state");
-                    // remove handshake from session now that we are connected
-                    session.removeAttribute(RTMPConnection.RTMP_HANDSHAKE);
-                    log.debug("Using non-encrypted communications");
-                }
-            } else if (handshakeType == 6) {
-                // ensure we have received enough bytes to be encrypted
-                long readBytesCount = conn.getReadBytes();
-                long writeBytesCount = conn.getWrittenBytes();
-                log.trace("Bytes read: {} written: {}", readBytesCount, writeBytesCount);
-                // don't remove the handshake when using RTMPE until we've written all the handshake data
-                if (writeBytesCount >= (Constants.HANDSHAKE_SIZE * 2)) {
-                    //if we are connected and doing encryption, add the ciphers
-                    log.debug("Assumed to be in a connected state");
-                    // remove handshake from session now that we are connected
-                    session.removeAttribute(RTMPConnection.RTMP_HANDSHAKE);
-                    log.debug("Using encrypted communications");
-                    //make sure they are not already on the session
-                    if (session.containsAttribute(RTMPConnection.RTMPE_CIPHER_IN)) {
-                        log.debug("Ciphers already exist on the session");
-                    } else {
-                        log.debug("Adding ciphers to the session");
-                        session.setAttribute(RTMPConnection.RTMPE_CIPHER_IN, handshake.getCipherIn());
-                        session.setAttribute(RTMPConnection.RTMPE_CIPHER_OUT, handshake.getCipherOut());
+        if (sessionId != null) {
+            log.trace("Session id: {}", sessionId);
+            RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+            rtmp = conn.getState();
+            // if there is a handshake on the session, ensure the type has been set
+            if (session.containsAttribute(RTMPConnection.RTMP_HANDSHAKE)) {
+                log.trace("Handshake exists on the session");
+                // get the handshake from the session
+                RTMPHandshake handshake = (RTMPHandshake) session.getAttribute(RTMPConnection.RTMP_HANDSHAKE);
+                int handshakeType = handshake.getHandshakeType();
+                if (handshakeType == 0) {
+                    log.trace("Handshake type is not currently set");
+                    // holds the handshake type, default is un-encrypted
+                    byte handshakeByte = RTMPConnection.RTMP_NON_ENCRYPTED;
+                    // get the current message
+                    if (obj instanceof IoBuffer) {
+                        IoBuffer message = (IoBuffer) obj;
+                        message.mark();
+                        handshakeByte = message.get();
+                        message.reset();
                     }
+                    // set the type
+                    handshake.setHandshakeType(handshakeByte);
+                    // set on the rtmp state
+                    rtmp.setEncrypted(handshakeByte == RTMPConnection.RTMP_ENCRYPTED ? true : false);
+                } else if (handshakeType == 3) {
+                    if (rtmp.getState() == RTMP.STATE_CONNECTED) {
+                        log.debug("In connected state");
+                        // remove handshake from session now that we are connected
+                        session.removeAttribute(RTMPConnection.RTMP_HANDSHAKE);
+                        log.debug("Using non-encrypted communications");
+                    }
+                } else if (handshakeType == 6) {
+                    // ensure we have received enough bytes to be encrypted
+                    long readBytesCount = conn.getReadBytes();
+                    long writeBytesCount = conn.getWrittenBytes();
+                    log.trace("Bytes read: {} written: {}", readBytesCount, writeBytesCount);
+                    // don't remove the handshake when using RTMPE until we've written all the handshake data
+                    if (writeBytesCount >= (Constants.HANDSHAKE_SIZE * 2)) {
+                        // if we are connected and doing encryption, add the ciphers
+                        log.debug("Assumed to be in a connected state");
+                        // remove handshake from session now that we are connected
+                        session.removeAttribute(RTMPConnection.RTMP_HANDSHAKE);
+                        log.debug("Using encrypted communications");
+                        // make sure they are not already on the session
+                        if (session.containsAttribute(RTMPConnection.RTMPE_CIPHER_IN)) {
+                            log.debug("Ciphers already exist on the session");
+                        } else {
+                            log.debug("Adding ciphers to the session");
+                            session.setAttribute(RTMPConnection.RTMPE_CIPHER_IN, handshake.getCipherIn());
+                            session.setAttribute(RTMPConnection.RTMPE_CIPHER_OUT, handshake.getCipherOut());
+                        }
+                    }
+                } else {
+                    log.warn("Unexpected handshake type: {} for session: {}", handshakeType, sessionId);
                 }
             }
         }
@@ -108,13 +113,13 @@ public class RTMPEIoFilter extends IoFilterAdapter {
             if (rtmp.getState() == RTMP.STATE_HANDSHAKE) {
                 // ensure there are enough bytes to skip
                 if (message.limit() >= Constants.HANDSHAKE_SIZE) {
-                    //skip the first 1536
+                    // skip the first 1536
                     byte[] handshakeReply = new byte[Constants.HANDSHAKE_SIZE];
                     message.get(handshakeReply);
                     // TODO verify reply, for now just set to connected
                     rtmp.setState(RTMP.STATE_CONNECTED);
                 } else {
-                    log.warn("There may be a network issue on this RTMPE connection: {}", conn);
+                    log.warn("There may be a network issue on this RTMPE session: {}", sessionId);
                     return;
                 }
             }
@@ -140,7 +145,7 @@ public class RTMPEIoFilter extends IoFilterAdapter {
     @Override
     public void filterWrite(NextFilter nextFilter, IoSession session, WriteRequest request) throws Exception {
         Cipher cipher = (Cipher) session.getAttribute(RTMPConnection.RTMPE_CIPHER_OUT);
-        if (cipher != null) { //may want to verify handshake is complete as well
+        if (cipher != null) { // may want to verify handshake is complete as well
             IoBuffer message = (IoBuffer) request.getMessage();
             if (!message.hasRemaining()) {
                 // Ignore empty buffers

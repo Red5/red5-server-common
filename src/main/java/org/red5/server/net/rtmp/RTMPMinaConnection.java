@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
             IoFutureListener<CloseFuture> listener = new IoFutureListener<CloseFuture>() {
                 public void operationComplete(CloseFuture future) {
                     if (future.isClosed()) {
-                        log.info("Connection is closed: ", getSessionId());
+                        log.info("Connection is closed: {}", getSessionId());
                         if (log.isTraceEnabled()) {
                             log.trace("Session id - local: {} session: {}", getSessionId(), (String) ioSession.removeAttribute(RTMPConnection.RTMP_SESSION_ID));
                         }

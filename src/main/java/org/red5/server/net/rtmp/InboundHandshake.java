@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,15 @@ import org.red5.server.net.rtmp.message.Constants;
  */
 public class InboundHandshake extends RTMPHandshake {
 
+    private ThreadLocal<IoBuffer> buffer = new ThreadLocal<IoBuffer>() {
+
+        @Override
+        protected IoBuffer initialValue() {
+            return IoBuffer.allocate(1536);
+        }
+
+    };
+
     public InboundHandshake() {
         super();
     }
@@ -47,20 +56,35 @@ public class InboundHandshake extends RTMPHandshake {
      *            incoming RTMP bytes
      * @return outgoing handshake
      */
-    public IoBuffer doHandshake(IoBuffer input) {
-        log.trace("doHandshake: {}", input);
+    public IoBuffer doHandshake(IoBuffer in) {
+        log.trace("doHandshake: {}", in);
+        // ensure the type is set
+        if (handshakeType == 0 && in.limit() > 1) {
+            in.mark();
+            setHandshakeType(in.get());
+            in.reset();
+        }
+        // buffer the input if we dont get the expected amount of bytes
+        IoBuffer input = buffer.get();
+        input.put(in.array());
+        // if there isn't enough data to complete the handshake, return null
+        if (input.position() < Constants.HANDSHAKE_SIZE) {
+            return null;
+        }
+        input.flip();
+        log.info("Handshake buffer is ready");
         if (log.isDebugEnabled()) {
             log.debug("Player encryption byte: {}", handshakeType);
             byte[] bIn = input.array();
             log.debug("Detecting flash player version {},{},{},{}", new Object[] { (bIn[4] & 0x0ff), (bIn[5] & 0x0ff), (bIn[6] & 0x0ff), (bIn[7] & 0x0ff) });
-            //if the 5th byte is 0 then dont generate new-style handshake
+            // if the 5th byte is 0 then dont generate new-style handshake
             if (log.isTraceEnabled()) {
                 log.trace("First few bytes (in): {},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}", new Object[] { bIn[0], bIn[1], bIn[2], bIn[3], bIn[4], bIn[5], bIn[6], bIn[7], bIn[8], bIn[9], bIn[10], bIn[11], bIn[12], bIn[13], bIn[14], bIn[15] });
-                //client version hex
+                // client version hex
                 byte[] ver = new byte[4];
                 System.arraycopy(bIn, 4, ver, 0, 4);
                 log.trace("Version string: {}", Hex.encodeHexString(ver));
-                //dump
+                // dump
                 byte[] buf = new byte[KEY_LENGTH];
                 System.arraycopy(bIn, 0, buf, 0, KEY_LENGTH);
                 log.trace("Hex: {}", Hex.encodeHexString(buf));
@@ -73,10 +97,10 @@ public class InboundHandshake extends RTMPHandshake {
         if (versionByte == 0) {
             return generateUnversionedHandshake(input);
         }
-        //create output buffer
+        // create output buffer
         IoBuffer output = IoBuffer.allocate(HANDSHAKE_SIZE_SERVER);
         input.mark();
-        //make sure this is a client we can communicate with
+        // make sure this is a client we can communicate with
         if (validate(input)) {
             log.debug("Valid RTMP client detected");
         } else {
@@ -85,7 +109,7 @@ public class InboundHandshake extends RTMPHandshake {
         input.reset();
         log.debug("Using new style handshake");
         input.mark();
-        //create all the dh stuff and add to handshake bytes
+        // create all the dh stuff and add to handshake bytes
         prepareResponse(input);
         input.reset();
         if (handshakeType == RTMPConnection.RTMP_ENCRYPTED) {
@@ -119,16 +143,16 @@ public class InboundHandshake extends RTMPHandshake {
             cipherOut.update(dummyBytes);
         }
         input.mark();
-        //create the server digest
+        // create the server digest
         int serverDigestOffset = getDigestOffset(handshakeBytes);
         byte[] tempBuffer = new byte[Constants.HANDSHAKE_SIZE - DIGEST_LENGTH];
         System.arraycopy(handshakeBytes, 0, tempBuffer, 0, serverDigestOffset);
         System.arraycopy(handshakeBytes, serverDigestOffset + DIGEST_LENGTH, tempBuffer, serverDigestOffset, Constants.HANDSHAKE_SIZE - serverDigestOffset - DIGEST_LENGTH);
-        //calculate the hash
+        // calculate the hash
         byte[] tempHash = calculateHMAC_SHA256(tempBuffer, GENUINE_FMS_KEY, 36);
-        //add the digest 
+        // add the digest 
         System.arraycopy(tempHash, 0, handshakeBytes, serverDigestOffset, DIGEST_LENGTH);
-        //compute the challenge digest
+        // compute the challenge digest
         byte[] inputBuffer = new byte[Constants.HANDSHAKE_SIZE - DIGEST_LENGTH];
         //log.debug("Before get: {}", input.position());
         input.get(inputBuffer);
@@ -138,13 +162,13 @@ public class InboundHandshake extends RTMPHandshake {
         input.position(keyChallengeIndex);
         input.get(challengeKey, 0, DIGEST_LENGTH);
         input.reset();
-        //compute key
+        // compute key
         tempHash = calculateHMAC_SHA256(challengeKey, GENUINE_FMS_KEY, 68);
-        //generate hash
+        // generate hash
         byte[] randBytes = new byte[Constants.HANDSHAKE_SIZE - DIGEST_LENGTH];
         random.nextBytes(randBytes);
         byte[] lastHash = calculateHMAC_SHA256(randBytes, tempHash, DIGEST_LENGTH);
-        //set handshake with encryption type 
+        // set handshake with encryption type 
         output.put(handshakeType);
         output.put(handshakeBytes);
         output.put(randBytes);
@@ -157,6 +181,8 @@ public class InboundHandshake extends RTMPHandshake {
             System.arraycopy(bOut, 0, buf, 0, KEY_LENGTH);
             log.trace("Hex: {}", Hex.encodeHexString(buf));
         }
+        // reset the thread local
+        buffer.set(null);
         return output;
     }
 
@@ -192,20 +218,20 @@ public class InboundHandshake extends RTMPHandshake {
     @Override
     protected void createHandshakeBytes() {
         handshakeBytes = new byte[Constants.HANDSHAKE_SIZE];
-        //timestamp
+        // timestamp
         handshakeBytes[0] = 0;
         handshakeBytes[1] = 0;
         handshakeBytes[2] = 0;
         handshakeBytes[3] = 0;
-        //version (0x01020304)
+        // version (0x01020304)
         handshakeBytes[4] = 1;
         handshakeBytes[5] = 2;
         handshakeBytes[6] = 3;
         handshakeBytes[7] = 4;
-        //fill the rest with random bytes
+        // fill the rest with random bytes
         byte[] rndBytes = new byte[Constants.HANDSHAKE_SIZE - 8];
         random.nextBytes(rndBytes);
-        //copy random bytes into our handshake array
+        // copy random bytes into our handshake array
         System.arraycopy(rndBytes, 0, handshakeBytes, 8, (Constants.HANDSHAKE_SIZE - 8));
     }
 
@@ -215,23 +241,23 @@ public class InboundHandshake extends RTMPHandshake {
      * @param input
      */
     private void prepareResponse(IoBuffer input) {
-        //put the clients input into a byte array
+        // put the clients input into a byte array
         byte[] inputBuffer = new byte[input.limit()];
         input.get(inputBuffer);
-        //get the clients dh offset
+        // get the clients dh offset
         int clientDHOffset = getDHOffset(inputBuffer);
         log.trace("Incoming DH offset: {}", clientDHOffset);
-        //get the clients public key
+        // get the clients public key
         outgoingPublicKey = new byte[KEY_LENGTH];
         System.arraycopy(inputBuffer, clientDHOffset, outgoingPublicKey, 0, KEY_LENGTH);
-        //get the servers dh offset
+        // get the servers dh offset
         int serverDHOffset = getDHOffset(handshakeBytes);
         log.trace("Outgoing DH offset: {}", serverDHOffset);
-        //create keypair
+        // create keypair
         KeyPair keys = generateKeyPair();
-        //get public key
+        // get public key
         incomingPublicKey = getPublicKey(keys);
-        //add to handshake bytes
+        // add to handshake bytes
         System.arraycopy(incomingPublicKey, 0, handshakeBytes, serverDHOffset, KEY_LENGTH);
     }
 
@@ -245,7 +271,7 @@ public class InboundHandshake extends RTMPHandshake {
     @Override
     public boolean validate(IoBuffer input) {
         byte[] pBuffer = new byte[input.remaining()];
-        //put all the input bytes into our buffer
+        // put all the input bytes into our buffer
         input.get(pBuffer, 0, input.remaining());
         if (validateScheme(pBuffer, 0)) {
             validationScheme = 0;
@@ -274,14 +300,11 @@ public class InboundHandshake extends RTMPHandshake {
                 log.error("Unknown scheme: {}", scheme);
         }
         log.debug("Scheme: {} client digest offset: {}", scheme, digestOffset);
-
         byte[] tempBuffer = new byte[Constants.HANDSHAKE_SIZE - DIGEST_LENGTH];
         System.arraycopy(pBuffer, 0, tempBuffer, 0, digestOffset);
         System.arraycopy(pBuffer, digestOffset + DIGEST_LENGTH, tempBuffer, digestOffset, Constants.HANDSHAKE_SIZE - digestOffset - DIGEST_LENGTH);
-
         byte[] tempHash = calculateHMAC_SHA256(tempBuffer, GENUINE_FP_KEY, 30);
         log.debug("Temp: {}", Hex.encodeHexString(tempHash));
-
         boolean result = true;
         for (int i = 0; i < DIGEST_LENGTH; i++) {
             //log.trace("Digest: {} Temp: {}", (pBuffer[digestOffset + i] & 0x0ff), (tempHash[i] & 0x0ff));
@@ -290,7 +313,6 @@ public class InboundHandshake extends RTMPHandshake {
                 break;
             }
         }
-
         return result;
     }
 

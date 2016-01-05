@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
     public void sessionCreated(IoSession session) throws Exception {
         log.debug("Session created");
         // add rtmpe filter
-        session.getFilterChain().addFirst("rtmpeFilter", new RTMPEIoFilter());
+        session.getFilterChain().addLast("rtmpeFilter", new RTMPEIoFilter());
         // add protocol filter next
         session.getFilterChain().addLast("protocolFilter", new ProtocolCodecFilter(codecFactory));
         // create a connection
@@ -109,59 +109,44 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
         }
     }
 
-    /**
-     * Handle raw buffer receiving event.
-     *
-     * @param in
-     *            Data buffer
-     * @param session
-     *            I/O session, that is, connection between two endpoints
-     */
-    protected void rawBufferRecieved(IoBuffer in, IoSession session) {
-        if (log.isTraceEnabled()) {
-            log.trace("rawBufferRecieved: {}", in);
-        }
-        String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-        log.trace("Session id: {}", sessionId);
-        RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-        RTMPHandshake handshake = (RTMPHandshake) session.getAttribute(RTMPConnection.RTMP_HANDSHAKE);
-        if (handshake != null) {
-            if (conn.getStateCode() != RTMP.STATE_HANDSHAKE) {
-                log.warn("Raw buffer after handshake, something odd going on");
-            }
-            log.debug("Handshake - server phase 1 - size: {}", in.remaining());
-            IoBuffer out = handshake.doHandshake(in);
-            if (out != null) {
-                log.trace("Output: {}", out);
-                session.write(out);
-                //if we are connected and doing encryption, add the ciphers
-                if (conn.getStateCode() == RTMP.STATE_CONNECTED) {
-                    // remove handshake from session now that we are connected
-                    // if we are using encryption then put the ciphers in the session
-                    if (handshake.getHandshakeType() == RTMPConnection.RTMP_ENCRYPTED) {
-                        log.debug("Adding ciphers to the session");
-                        session.setAttribute(RTMPConnection.RTMPE_CIPHER_IN, handshake.getCipherIn());
-                        session.setAttribute(RTMPConnection.RTMPE_CIPHER_OUT, handshake.getCipherOut());
-                    }
-                }
-            }
-        } else {
-            log.warn("Handshake was not found for this connection: {}", conn);
-            log.debug("Session: {}", session.getId());
-        }
-    }
-
     /** {@inheritDoc} */
     @Override
     public void messageReceived(IoSession session, Object message) throws Exception {
         String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
         log.trace("Message received on session: {} id: {}", session.getId(), sessionId);
-        if (message instanceof IoBuffer) {
-            rawBufferRecieved((IoBuffer) message, session);
-        } else {
-            log.trace("Session id: {}", sessionId);
-            RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-            if (conn != null) {
+        RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+        if (conn != null) {
+            if (message instanceof IoBuffer) {
+                RTMPHandshake handshake = (RTMPHandshake) session.getAttribute(RTMPConnection.RTMP_HANDSHAKE);
+                if (handshake != null) {
+                    //if (conn.getStateCode() != RTMP.STATE_HANDSHAKE) {
+                    //    log.warn("Raw buffer after handshake, something odd going on");
+                    //}
+                    IoBuffer in = (IoBuffer) message;
+                    log.debug("Handshake - server phase 1 - size: {}", in.remaining());
+                    IoBuffer out = handshake.doHandshake(in);
+                    if (out != null) {
+                        if (log.isTraceEnabled()) {
+                            log.trace("Output: {}", out);
+                        }
+                        session.write(out);
+                        //if we are connected and doing encryption, add the ciphers
+                        if (conn.getStateCode() == RTMP.STATE_CONNECTED) {
+                            // remove handshake from session now that we are connected
+                            // if we are using encryption then put the ciphers in the session
+                            if (handshake.getHandshakeType() == RTMPConnection.RTMP_ENCRYPTED) {
+                                log.debug("Adding ciphers to the session");
+                                session.setAttribute(RTMPConnection.RTMPE_CIPHER_IN, handshake.getCipherIn());
+                                session.setAttribute(RTMPConnection.RTMPE_CIPHER_OUT, handshake.getCipherOut());
+                            }
+                        }
+                    } else {
+                        log.debug("Not enough data to complete phase 1");
+                    }
+                } else {
+                    log.warn("Handshake was not found for this connection: {}", conn);
+                }
+            } else {
                 byte state = conn.getStateCode();
                 // checking the state before allowing a task to be created will hopefully prevent rejected task exceptions
                 if (state != RTMP.STATE_DISCONNECTING && state != RTMP.STATE_DISCONNECTED) {
@@ -169,10 +154,10 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
                 } else {
                     log.info("Ignoring received message on {} due to state: {}", sessionId, RTMP.states[state]);
                 }
-            } else {
-                log.warn("Connection was not found for {}, force closing", sessionId);
-                forceClose(session);
             }
+        } else {
+            log.warn("Connection was not found for {}, force closing", sessionId);
+            forceClose(session);
         }
     }
 
@@ -181,18 +166,20 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
     public void messageSent(IoSession session, Object message) throws Exception {
         String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
         log.trace("Message sent on session: {} id: {}", session.getId(), sessionId);
-        RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-        if (conn != null) {
-            byte state = conn.getStateCode();
-            if (state != RTMP.STATE_DISCONNECTING && state != RTMP.STATE_DISCONNECTED) {
-                if (message instanceof Packet) {
-                    handler.messageSent(conn, (Packet) message);
-                } else {
-                    log.debug("Message was not of Packet type; its type: {}", message != null ? message.getClass().getName() : "null");
+        if (sessionId != null) {
+            RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+            if (conn != null) {
+                byte state = conn.getStateCode();
+                if (state != RTMP.STATE_DISCONNECTING && state != RTMP.STATE_DISCONNECTED) {
+                    if (message instanceof Packet) {
+                        handler.messageSent(conn, (Packet) message);
+                    } else {
+                        log.debug("Message was not of Packet type; its type: {}", message != null ? message.getClass().getName() : "null");
+                    }
                 }
+            } else {
+                log.warn("Destination connection was null, it is already disposed. Session id: {}", sessionId);
             }
-        } else {
-            log.warn("Destination connection was null, it is already disposed. Session id: {}", sessionId);
         }
     }
 
@@ -240,8 +227,10 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
     private void cleanSession(final IoSession session, boolean immediately) {
         // clean up
         final String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-        log.debug("Forcing close on session: {} id: {}", session.getId(), sessionId);
-        log.debug("Session closing: {}", session.isClosing());
+        if (log.isDebugEnabled()) {
+            log.debug("Forcing close on session: {} id: {}", session.getId(), sessionId);
+            log.debug("Session closing: {}", session.isClosing());
+        }
         // get the write request queue
         final WriteRequestQueue writeQueue = session.getWriteRequestQueue();
         if (writeQueue != null && !writeQueue.isEmpty(session)) {
@@ -263,8 +252,11 @@ public class RTMPMinaIoHandler extends IoHandlerAdapter {
                 future.removeListener(this);
                 for (Object key : session.getAttributeKeys()) {
                     Object obj = session.getAttribute(key);
+                    log.debug("{}: {}", key, obj);
                     if (obj != null) {
-                        log.debug("Attribute: {}", obj.getClass().getName());
+                        if (log.isTraceEnabled()) {
+                            log.trace("Attribute: {}", obj.getClass().getName());
+                        }
                         if (obj instanceof IoProcessor) {
                             log.debug("Flushing session in processor");
                             ((IoProcessor) obj).flush(session);

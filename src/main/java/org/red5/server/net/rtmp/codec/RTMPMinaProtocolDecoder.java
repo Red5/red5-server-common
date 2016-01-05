@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,57 +44,62 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
 
     /** {@inheritDoc} */
     public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws ProtocolCodecException {
-        // create a buffer and store it on the session
-        IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
-        if (buf == null) {
-            buf = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
-            buf.setAutoExpand(true);
-            session.setAttribute("buffer", buf);
-        }
-        buf.put(in);
-        buf.flip();
-        // get the connection from the session
-        String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-        log.trace("Session id: {}", sessionId);
-        // connection verification routine
-        RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-        RTMPConnection connLocal = (RTMPConnection) Red5.getConnectionLocal();
-        if (connLocal == null || !conn.getSessionId().equals(connLocal.getSessionId())) {
-            if (log.isDebugEnabled() && connLocal != null) {
-                log.debug("Connection local didn't match session");
+        // if we're using RTMPS and the session isn't secure yet, just push the data unmodified
+        if (session.containsAttribute(RTMPConnection.RTMPS_STATE) && "SESSION_UNSECURED".equals(session.getAttribute(RTMPConnection.RTMPS_STATE))) {
+            log.debug("skipping decode on unsecured session");
+            out.write(in);
+        } else {
+            // create a buffer and store it on the session
+            IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
+            if (buf == null) {
+                buf = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
+                buf.setAutoExpand(true);
+                session.setAttribute("buffer", buf);
             }
-        }
-        // set the connection to local if its referred to by this session
-        Red5.setConnectionLocal(conn);
-        // get the connections decoder lock
-        final Semaphore lock = conn.getDecoderLock();
-        try {
-            // acquire the decoder lock
-            log.trace("Decoder lock acquiring.. {}", conn.getSessionId());
-            lock.acquire();
-            log.trace("Decoder lock acquired {}", conn.getSessionId());
-            // construct any objects from the decoded bugger
-            List<?> objects = decoder.decodeBuffer(conn, buf);
-            if (objects != null) {
-                for (Object object : objects) {
-                    out.write(object);
+            buf.put(in);
+            buf.flip();
+            // get the connection from the session
+            String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
+            log.trace("Session id: {}", sessionId);
+            // connection verification routine
+            RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+            RTMPConnection connLocal = (RTMPConnection) Red5.getConnectionLocal();
+            if (connLocal == null || !conn.getSessionId().equals(connLocal.getSessionId())) {
+                if (log.isDebugEnabled() && connLocal != null) {
+                    log.debug("Connection local didn't match session");
                 }
             }
-        } catch (Exception e) {
-            log.error("Error during decode", e);
-        } finally {
-            log.trace("Decoder lock releasing.. {}", conn.getSessionId());
-            lock.release();
-            // clear local
-            Red5.setConnectionLocal(null);
+            // set the connection to local if its referred to by this session
+            Red5.setConnectionLocal(conn);
+            // get the connections decoder lock
+            final Semaphore lock = conn.getDecoderLock();
+            try {
+                // acquire the decoder lock
+                log.trace("Decoder lock acquiring.. {}", conn.getSessionId());
+                lock.acquire();
+                log.trace("Decoder lock acquired {}", conn.getSessionId());
+                // construct any objects from the decoded bugger
+                List<?> objects = decoder.decodeBuffer(conn, buf);
+                if (objects != null) {
+                    for (Object object : objects) {
+                        out.write(object);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error during decode", e);
+            } finally {
+                log.trace("Decoder lock releasing.. {}", conn.getSessionId());
+                lock.release();
+                // clear local
+                Red5.setConnectionLocal(null);
+            }
         }
     }
 
     /**
      * Sets the RTMP protocol decoder.
      * 
-     * @param decoder
-     *            RTMP decoder
+     * @param decoder RTMP decoder
      */
     public void setDecoder(RTMPProtocolDecoder decoder) {
         this.decoder = decoder;

@@ -1,7 +1,7 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
  * 
- * Copyright 2006-2015 by respective authors (see below). All rights reserved.
+ * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,60 +45,66 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
 
     /** {@inheritDoc} */
     public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws ProtocolCodecException {
-        // get the connection from the session
-        String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
-        log.trace("Session id: {}", sessionId);
-        RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-        if (conn != null) {
-            RTMPConnection prev = null;
-            // look for and compare the connection local; set it from the session
-            if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
-                log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
-                // keep track of conn we're replacing
-                prev = (RTMPConnection) Red5.getConnectionLocal();
-                // replace conn with the one from the session id lookup
-                Red5.setConnectionLocal(conn);
-            }
-            Boolean interrupted = false;
-            Semaphore lock = conn.getEncoderLock();
-            try {
-                // acquire the encoder lock
-                log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
-                lock.acquire();
-                log.trace("Encoder lock acquired {}", conn.getSessionId());
-                // get the buffer
-                final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
-                if (buf != null) {
-                    int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
-                    log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
-                    if (buf.remaining() <= targetChunkSize * 2) {
-                        log.trace("Writing output data");
-                        out.write(buf);
-                    } else {
-                        int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
-                        log.trace("Wrote {} chunks", sentChunks);
-                    }
-                } else {
-                    log.trace("Response buffer was null after encoding");
-                }
-            } catch (InterruptedException ex) {
-                log.error("InterruptedException during encode", ex);
-                interrupted = true;
-            } catch (Exception ex) {
-                log.error("Exception during encode", ex);
-            } finally {
-                log.trace("Encoder lock releasing.. {}", conn.getSessionId());
-                lock.release();
-                if (interrupted && log.isInfoEnabled()) {
-                    log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
-                }
-            }
-            // set connection local back to previous value
-            if (prev != null) {
-                Red5.setConnectionLocal(prev);
-            }
+        // if we're using RTMPS and the session isn't secure yet, just push the data unmodified
+        if (session.containsAttribute(RTMPConnection.RTMPS_STATE) && "SESSION_UNSECURED".equals(session.getAttribute(RTMPConnection.RTMPS_STATE))) {
+            log.debug("skipping encode on unsecured session");
+            out.write(message);
         } else {
-            log.debug("Connection is no longer available for encoding, may have been closed already");
+            // get the connection from the session
+            String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
+            log.trace("Session id: {}", sessionId);
+            RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+            if (conn != null) {
+                RTMPConnection prev = null;
+                // look for and compare the connection local; set it from the session
+                if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
+                    log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
+                    // keep track of conn we're replacing
+                    prev = (RTMPConnection) Red5.getConnectionLocal();
+                    // replace conn with the one from the session id lookup
+                    Red5.setConnectionLocal(conn);
+                }
+                Boolean interrupted = false;
+                Semaphore lock = conn.getEncoderLock();
+                try {
+                    // acquire the encoder lock
+                    log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
+                    lock.acquire();
+                    log.trace("Encoder lock acquired {}", conn.getSessionId());
+                    // get the buffer
+                    final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
+                    if (buf != null) {
+                        int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
+                        log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
+                        if (buf.remaining() <= targetChunkSize * 2) {
+                            log.trace("Writing output data");
+                            out.write(buf);
+                        } else {
+                            int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
+                            log.trace("Wrote {} chunks", sentChunks);
+                        }
+                    } else {
+                        log.trace("Response buffer was null after encoding");
+                    }
+                } catch (InterruptedException ex) {
+                    log.error("InterruptedException during encode", ex);
+                    interrupted = true;
+                } catch (Exception ex) {
+                    log.error("Exception during encode", ex);
+                } finally {
+                    log.trace("Encoder lock releasing.. {}", conn.getSessionId());
+                    lock.release();
+                    if (interrupted && log.isInfoEnabled()) {
+                        log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
+                    }
+                }
+                // set connection local back to previous value
+                if (prev != null) {
+                    Red5.setConnectionLocal(prev);
+                }
+            } else {
+                log.debug("Connection is no longer available for encoding, may have been closed already");
+            }
         }
     }
 
