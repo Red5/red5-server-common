@@ -89,7 +89,8 @@ import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.util.concurrent.ListenableFutureTask;
 
 /**
- * RTMP connection. Stores information about client streams, data transfer channels, pending RPC calls, bandwidth configuration, AMF encoding type (AMF0/AMF3), connection state (is alive, last ping time and ping result) and session.
+ * RTMP connection. Stores information about client streams, data transfer channels, pending RPC calls, bandwidth configuration, AMF
+ * encoding type (AMF0/AMF3), connection state (is alive, last ping time and ping result) and session.
  */
 public abstract class RTMPConnection extends BaseConnection implements IStreamCapableConnection, IServiceCapableConnection, IReceivedMessageTaskQueueListener {
 
@@ -110,6 +111,18 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * Marker byte for encrypted RTMP data.
      */
     public static final byte RTMP_ENCRYPTED = (byte) 0x06;
+
+    /**
+     * Marker byte for encrypted RTMP data XTEA.
+     * http://en.wikipedia.org/wiki/XTEA
+     */
+    public static final byte RTMP_ENCRYPTED_XTEA = (byte) 0x08;
+
+    /**
+     * Marker byte for encrypted RTMP data using Blowfish.
+     * http://en.wikipedia.org/wiki/Blowfish_(cipher)
+     */
+    public static final byte RTMP_ENCRYPTED_BLOWFISH = (byte) 0x09;
 
     /**
      * Cipher for RTMPE input
@@ -997,8 +1010,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     }
 
     /**
-     * When the connection has been closed, notify any remaining pending service calls that they have failed because the connection is broken. Implementors of IPendingServiceCallback may only deduce from this notification that it was not possible to read a result for this service call. It is possible that (1) the service call was never written to the service, or (2) the service call was written to the service and
-     * although the remote method was invoked, the connection failed before the result could be read, or (3) although the remote method was invoked on the service, the service implementor detected the failure of the connection and performed only partial processing. The caller only knows that it cannot be confirmed that the callee has invoked the service call and returned a result.
+     * When the connection has been closed, notify any remaining pending service calls that they have failed because the connection is
+     * broken. Implementors of IPendingServiceCallback may only deduce from this notification that it was not possible to read a result for
+     * this service call. It is possible that (1) the service call was never written to the service, or (2) the service call was written to
+     * the service and although the remote method was invoked, the connection failed before the result could be read, or (3) although the
+     * remote method was invoked on the service, the service implementor detected the failure of the connection and performed only partial
+     * processing. The caller only knows that it cannot be confirmed that the callee has invoked the service call and returned a result.
      */
     public void sendPendingServiceCallsCloseError() {
         if (!pendingCalls.isEmpty()) {

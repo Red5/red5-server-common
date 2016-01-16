@@ -73,14 +73,14 @@ public class RTMPEIoFilter extends IoFilterAdapter {
                     handshake.setHandshakeType(handshakeByte);
                     // set on the rtmp state
                     rtmp.setEncrypted(handshakeByte == RTMPConnection.RTMP_ENCRYPTED ? true : false);
-                } else if (handshakeType == 3) {
+                } else if (handshakeType == RTMPConnection.RTMP_NON_ENCRYPTED) {
                     if (rtmp.getState() == RTMP.STATE_CONNECTED) {
                         log.debug("In connected state");
                         // remove handshake from session now that we are connected
                         session.removeAttribute(RTMPConnection.RTMP_HANDSHAKE);
                         log.debug("Using non-encrypted communications");
                     }
-                } else if (handshakeType == 6) {
+                } else if (handshakeType == RTMPConnection.RTMP_ENCRYPTED) {
                     // ensure we have received enough bytes to be encrypted
                     long readBytesCount = conn.getReadBytes();
                     long writeBytesCount = conn.getWrittenBytes();

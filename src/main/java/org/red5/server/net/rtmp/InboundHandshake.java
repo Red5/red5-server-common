@@ -28,6 +28,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.api.Red5;
 import org.red5.server.net.rtmp.message.Constants;
+import org.slf4j.LoggerFactory;
 
 /**
  * Performs handshaking for server connections.
@@ -47,6 +48,7 @@ public class InboundHandshake extends RTMPHandshake {
 
     public InboundHandshake() {
         super();
+        log = LoggerFactory.getLogger(InboundHandshake.class);
     }
 
     /**
@@ -57,16 +59,21 @@ public class InboundHandshake extends RTMPHandshake {
      * @return outgoing handshake
      */
     public IoBuffer doHandshake(IoBuffer in) {
-        log.trace("doHandshake: {}", in);
+        if (log.isTraceEnabled()) {
+            log.trace("doHandshake: {}", in);
+        }
         // ensure the type is set
         if (handshakeType == 0 && in.limit() > 1) {
-            in.mark();
+            //in.mark();
             setHandshakeType(in.get());
-            in.reset();
+            //in.reset();
         }
         // buffer the input if we dont get the expected amount of bytes
         IoBuffer input = buffer.get();
-        input.put(in.array());
+        input.put(in);
+        if (log.isTraceEnabled()) {
+            log.trace("Handshake: {}", Hex.encodeHexString(input.array()));
+        }
         // if there isn't enough data to complete the handshake, return null
         if (input.position() < Constants.HANDSHAKE_SIZE) {
             return null;
@@ -74,7 +81,7 @@ public class InboundHandshake extends RTMPHandshake {
         input.flip();
         log.info("Handshake buffer is ready");
         if (log.isDebugEnabled()) {
-            log.debug("Player encryption byte: {}", handshakeType);
+            log.debug("Player handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
             byte[] bIn = input.array();
             log.debug("Detecting flash player version {},{},{},{}", new Object[] { (bIn[4] & 0x0ff), (bIn[5] & 0x0ff), (bIn[6] & 0x0ff), (bIn[7] & 0x0ff) });
             // if the 5th byte is 0 then dont generate new-style handshake
@@ -224,10 +231,10 @@ public class InboundHandshake extends RTMPHandshake {
         handshakeBytes[2] = 0;
         handshakeBytes[3] = 0;
         // version (0x01020304)
-        handshakeBytes[4] = 1;
-        handshakeBytes[5] = 2;
-        handshakeBytes[6] = 3;
-        handshakeBytes[7] = 4;
+        handshakeBytes[4] = 3;
+        handshakeBytes[5] = 5;
+        handshakeBytes[6] = 1;
+        handshakeBytes[7] = 1;
         // fill the rest with random bytes
         byte[] rndBytes = new byte[Constants.HANDSHAKE_SIZE - 8];
         random.nextBytes(rndBytes);
@@ -264,15 +271,14 @@ public class InboundHandshake extends RTMPHandshake {
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param input
-     *            input buffer
+     * @param input handshake bytes from the client
      * @return true if client used a supported validation scheme, false if unsupported
      */
     @Override
     public boolean validate(IoBuffer input) {
-        byte[] pBuffer = new byte[input.remaining()];
+        byte[] pBuffer = new byte[Constants.HANDSHAKE_SIZE];
         // put all the input bytes into our buffer
-        input.get(pBuffer, 0, input.remaining());
+        input.slice().get(pBuffer);
         if (validateScheme(pBuffer, 0)) {
             validationScheme = 0;
             log.debug("Selected scheme: 0");
