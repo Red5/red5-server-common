@@ -151,7 +151,9 @@ public class StreamService implements IStreamService {
     }
 
     /**
-     * Close stream. This method can close both IClientBroadcastStream (coming from Flash Player to Red5) and ISubscriberStream (from Red5 to Flash Player). Corresponding application handlers (streamSubscriberClose, etc.) are called as if close was initiated by Flash Player.
+     * Close stream. This method can close both IClientBroadcastStream (coming from Flash Player to Red5) and ISubscriberStream (from Red5
+     * to Flash Player). Corresponding application handlers (streamSubscriberClose, etc.) are called as if close was initiated by Flash
+     * Player.
      * 
      * It is recommended to remember stream id in application handlers, ex.:
      * 
@@ -172,7 +174,8 @@ public class StreamService implements IStreamService {
      * }
      * </pre>
      * 
-     * When stream is closed, corresponding NetStream status will be sent to stream provider / consumers. Implementation is based on Red5's StreamService.close()
+     * When stream is closed, corresponding NetStream status will be sent to stream provider / consumers. Implementation is based on Red5's
+     * StreamService.close()
      * 
      * @param conn
      *            client connection
@@ -278,11 +281,17 @@ public class StreamService implements IStreamService {
      * @param name
      *            - The name of a recorded file, or the identifier for live data. If
      * @param start
-     *            - The start time, in seconds. Allowed values are -2, -1, 0, or a positive number. The default value is -2, which looks for a live stream, then a recorded stream, and if it finds neither, opens a live stream. If -1, plays only a live stream. If 0 or a positive number, plays a recorded stream, beginning start seconds in.
+     *            - The start time, in seconds. Allowed values are -2, -1, 0, or a positive number. The default value is -2, which looks for
+     *            a live stream, then a recorded stream, and if it finds neither, opens a live stream. If -1, plays only a live stream. If 0
+     *            or a positive number, plays a recorded stream, beginning start seconds in.
      * @param length
-     *            - The duration of the playback, in seconds. Allowed values are -1, 0, or a positive number. The default value is -1, which plays a live or recorded stream until it ends. If 0, plays a single frame that is start seconds from the beginning of a recorded stream. If a positive number, plays a live or recorded stream for length seconds.
+     *            - The duration of the playback, in seconds. Allowed values are -1, 0, or a positive number. The default value is -1, which
+     *            plays a live or recorded stream until it ends. If 0, plays a single frame that is start seconds from the beginning of a
+     *            recorded stream. If a positive number, plays a live or recorded stream for length seconds.
      * @param reset
-     *            - Whether to clear a playlist. The default value is 1 or true, which clears any previous play calls and plays name immediately. If 0 or false, adds the stream to a playlist. If 2, maintains the playlist and returns all stream messages at once, rather than at intervals. If 3, clears the playlist and returns all stream messages at once.
+     *            - Whether to clear a playlist. The default value is 1 or true, which clears any previous play calls and plays name
+     *            immediately. If 0 or false, adds the stream to a playlist. If 2, maintains the playlist and returns all stream messages at
+     *            once, rather than at intervals. If 3, clears the playlist and returns all stream messages at once.
      */
     public void play(String name, int start, int length, Object reset) {
         if (reset instanceof Boolean) {
@@ -354,14 +363,20 @@ public class StreamService implements IStreamService {
                     }
                     // instance a new stream for the stream id
                     stream = streamConn.newPlaylistSubscriberStream(streamId);
-                    if (log.isTraceEnabled()) {
-                        log.trace("Created stream: {} for stream id: {}", stream, streamId);
+                    if (stream != null) {
+                        if (log.isTraceEnabled()) {
+                            log.trace("Created stream: {} for stream id: {}", stream, streamId);
+                        }
+                        stream.setBroadcastStreamPublishName(name);
+                        stream.start();
+                        created = true;
+                    } else {
+                        log.warn("Stream was null for id: {}", streamId);
+                        // throw the ex so the ns fail will go out
+                        throw new Exception("Stream creation failed for name: " + name + " id: " + streamId);
                     }
-                    stream.setBroadcastStreamPublishName(name);
-                    stream.start();
-                    created = true;
                 } catch (Exception e) {
-                    log.warn("Unable to start playing stream " + name, e);
+                    log.warn("Unable to start playing stream: {}", name, e);
                     sendNSFailed(streamConn, StatusCodes.NS_FAILED, "Unable to start playing stream", name, streamId);
                     return;
                 }
@@ -506,9 +521,12 @@ public class StreamService implements IStreamService {
      * 	 		SWITCH : String = "switch" - Switches from playing one stream to another stream, typically with streams of the same content.
      * </pre>
      * 
-     * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_actionscript.html">ActionScript guide to dynamic streaming</a>
-     * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_advanced_pt1.html">Dynamic streaming in Flash Media Server - Part 1: Overview of the new capabilities</a>
-     * @see <a href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStreamPlayTransitions.html">NetStreamPlayTransitions</a>
+     * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_actionscript.html">ActionScript guide to dynamic
+     *      streaming</a>
+     * @see <a href="http://www.adobe.com/devnet/flashmediaserver/articles/dynstream_advanced_pt1.html">Dynamic streaming in Flash Media
+     *      Server - Part 1: Overview of the new capabilities</a>
+     * @see <a
+     *      href="http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/net/NetStreamPlayTransitions.html">NetStreamPlayTransitions</a>
      * @param playOptions
      *            play options
      */

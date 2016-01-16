@@ -136,7 +136,8 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     }
 
     /**
-     * Creates a play engine based on current services (scheduling service, consumer service, and provider service). This method is useful during unit testing.
+     * Creates a play engine based on current services (scheduling service, consumer service, and provider service). This method is useful
+     * during unit testing.
      */
     PlayEngine createEngine(ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService) {
         engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService).build();
@@ -527,23 +528,31 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public void receiveVideo(boolean receive) {
-        boolean receiveVideo = engine.receiveVideo(receive);
-        if (!receiveVideo && receive) {
-            //video has been re-enabled
-            seekToCurrentPlayback();
+        if (engine != null) {
+            boolean receiveVideo = engine.receiveVideo(receive);
+            if (!receiveVideo && receive) {
+                // video has been re-enabled
+                seekToCurrentPlayback();
+            }
+        } else {
+            log.debug("PlayEngine was null, receiveVideo cannot be modified");
         }
     }
 
     /** {@inheritDoc} */
     public void receiveAudio(boolean receive) {
-        //check if engine currently receives audio, returns previous value
-        boolean receiveAudio = engine.receiveAudio(receive);
-        if (receiveAudio && !receive) {
-            //send a blank audio packet to reset the player
-            engine.sendBlankAudio(true);
-        } else if (!receiveAudio && receive) {
-            //do a seek	
-            seekToCurrentPlayback();
+        if (engine != null) {
+            // check if engine currently receives audio, returns previous value
+            boolean receiveAudio = engine.receiveAudio(receive);
+            if (receiveAudio && !receive) {
+                // send a blank audio packet to reset the player
+                engine.sendBlankAudio(true);
+            } else if (!receiveAudio && receive) {
+                // do a seek	
+                seekToCurrentPlayback();
+            }
+        } else {
+            log.debug("PlayEngine was null, receiveAudio cannot be modified");
         }
     }
 
