@@ -41,7 +41,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
      * Encoding type.
      */
     public static enum Encoding {
-        AMF0, AMF3, WEBSOCKET, SOCKETIO, RTP, SRTP
+        AMF0, AMF3, WEBSOCKET, SOCKETIO, RTP, SRTP, RAW
     };
 
     /**
@@ -76,74 +76,32 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     /**
      * Initialize the connection.
      * 
-     * @param client
-     *            Client object associated with connection
+     * @param client Client object associated with connection
      */
     public void initialize(IClient client);
 
     /**
      * Try to connect to the scope.
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
-     * @param scope
-     *            Scope object
+     * @return true on success, false otherwise
+     * @param scope Scope object
      */
     public boolean connect(IScope scope);
 
     /**
      * Try to connect to the scope with a list of connection parameters.
      * 
-     * @param params
-     *            Connections parameters
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
-     * @param scope
-     *            Scope object
+     * @param params Connections parameters
+     * @return true on success, false otherwise
+     * @param scope Scope object
      */
     public boolean connect(IScope scope, Object[] params);
 
     /**
-     * Is the client connected to the scope. Result depends on connection type,
+     * Is the client connected to the scope. Result depends on connection type, true for persistent and polling connections,
+     * false for transient.
      * 
-     * <pre>
-     * true
-     * </pre>
-     * 
-     * for persistent and polling connections,
-     * 
-     * <pre>
-     * false
-     * </pre>
-     * 
-     * for transient.
-     * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if the connection is persistent or polling, otherwise
-     * 
-     *         <pre>
-     * false
+     * @return true if the connection is persistent or polling, otherwise false
      * </pre>
      */
     public boolean isConnected();
@@ -163,8 +121,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     /**
      * Sets the Client.
      * 
-     * @param client
-     *            client
+     * @param client client
      */
     public void setClient(IClient client);
 
@@ -211,13 +168,7 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     public String getPath();
 
     /**
-     * Get the session id, this may be
-     * 
-     * <pre>
-     * null
-     * </pre>
-     * 
-     * .
+     * Get the session id, this may be null.
      * 
      * @return Session id
      */
@@ -302,24 +253,21 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     /**
      * Sets the bandwidth using a mbit/s value.
      * 
-     * @param mbits
-     *            target
+     * @param mbits target
      */
     public void setBandwidth(int mbits);
 
     /**
      * Adds a listener to this object
      * 
-     * @param listener
-     *            connection listener
+     * @param listener connection listener
      */
     public void addListener(IConnectionListener listener);
 
     /**
      * Removes the listener from this object
      * 
-     * @param listener
-     *            connection listener
+     * @param listener connection listener
      */
     public void removeListener(IConnectionListener listener);
 
@@ -333,9 +281,15 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     /**
      * Sets the current stream id.
      * 
-     * @param id
-     *            stream id
+     * @param id stream id
      */
     public void setStreamId(Number id);
+
+    /**
+     * Returns the protocol type for this connection. eg. rtmp, rtmpt, http
+     * 
+     * @return protocol type
+     */
+    public String getProtocol();
 
 }

@@ -46,21 +46,14 @@ public interface IClientStream extends IStream {
     /**
      * Get connection containing the stream.
      * 
-     * @return the connection object or
-     * 
-     *         <pre>
-     * null
-     * </pre>
-     * 
-     *         if the connection is no longer active
+     * @return the connection object or null if the connection is no longer active
      */
     IStreamCapableConnection getConnection();
 
     /**
      * Set the buffer duration for this stream as requested by the client.
      * 
-     * @param bufferTime
-     *            duration in ms the client wants to buffer
+     * @param bufferTime duration in ms the client wants to buffer
      */
     void setClientBufferDuration(int bufferTime);
 
@@ -74,8 +67,7 @@ public interface IClientStream extends IStream {
     /**
      * Set the published stream name that this client is consuming.
      *
-     * @param streamName
-     *            of stream being consumed
+     * @param streamName of stream being consumed
      */
     void setBroadcastStreamPublishName(String streamName);
 

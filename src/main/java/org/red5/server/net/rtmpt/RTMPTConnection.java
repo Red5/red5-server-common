@@ -26,7 +26,6 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.DummySession;
 import org.apache.mina.core.session.IoSession;
 import org.red5.logging.Red5LoggerFactory;
-import org.red5.server.net.rtmp.InboundHandshake;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.RTMPHandshake;
 import org.red5.server.net.rtmp.codec.RTMP;
@@ -90,8 +89,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
     /** Constructs a new RTMPTConnection */
     RTMPTConnection() {
         super(POLLING);
-        // create a DummySession for the HTTP-based connection to allow our Mina
-        // based system happy
+        // create a DummySession for the HTTP-based connection to allow our Mina based system happy
         ioSession = new DummySession();
         ioSession.setAttribute(RTMPConnection.RTMP_SESSION_ID, sessionId);
     }
@@ -153,8 +151,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
     /**
      * Handle raw buffer receiving event.
      * 
-     * @param message
-     *            Data buffer
+     * @param message Data buffer
      */
     public void handleMessageReceived(IoBuffer message) {
         log.trace("handleMessageReceived (raw buffer) - {}", sessionId);
@@ -162,11 +159,15 @@ public class RTMPTConnection extends BaseRTMPTConnection {
             log.warn("Raw buffer after handshake, something odd going on");
         }
         log.debug("Writing handshake reply, handskake size: {}", message.remaining());
-        RTMPHandshake shake = new InboundHandshake();
-        shake.setHandshakeType(RTMPConnection.RTMP_NON_ENCRYPTED);
-        writeRaw(shake.doHandshake(message));
+        RTMPHandshake handshake;
+        try {
+            handshake = (RTMPHandshake) Class.forName("org.red5.server.net.rtmp.InboundHandshake").newInstance();
+            writeRaw(handshake.doHandshake(message));
+        } catch (Exception e) {
+            log.warn("Exception handling handshake", e);
+        }
         // clean up
-        ((IoBuffer) message).free();
+        message.free();
         message = null;
     }
 
@@ -235,8 +236,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
     /**
      * Set the servlet that created the connection.
      * 
-     * @param servlet
-     *            rtmp servlet
+     * @param servlet rtmp servlet
      */
     protected void setServlet(RTMPTServlet servlet) {
         this.servlet = servlet;
@@ -245,8 +245,7 @@ public class RTMPTConnection extends BaseRTMPTConnection {
     /**
      * Setter for servlet request.
      * 
-     * @param request
-     *            Servlet request
+     * @param request Servlet request
      */
     public void setServletRequest(HttpServletRequest request) {
         if (request.getLocalPort() == 80) {
@@ -309,6 +308,11 @@ public class RTMPTConnection extends BaseRTMPTConnection {
      */
     public Long getLastDataReceived() {
         return tsLastDataReceived;
+    }
+
+    @Override
+    public String getProtocol() {
+        return "rtmpt";
     }
 
 }

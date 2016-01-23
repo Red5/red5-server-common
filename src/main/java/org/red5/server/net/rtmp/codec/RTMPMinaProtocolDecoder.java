@@ -29,7 +29,6 @@ import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.red5.server.api.Red5;
 import org.red5.server.net.rtmp.RTMPConnManager;
 import org.red5.server.net.rtmp.RTMPConnection;
-import org.red5.server.net.rtmp.message.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,15 +48,6 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
             log.debug("skipping decode on unsecured session");
             out.write(in);
         } else {
-            // create a buffer and store it on the session
-            IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
-            if (buf == null) {
-                buf = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
-                buf.setAutoExpand(true);
-                session.setAttribute("buffer", buf);
-            }
-            buf.put(in);
-            buf.flip();
             // get the connection from the session
             String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
             log.trace("Session id: {}", sessionId);
@@ -79,7 +69,7 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
                 lock.acquire();
                 log.trace("Decoder lock acquired {}", conn.getSessionId());
                 // construct any objects from the decoded bugger
-                List<?> objects = decoder.decodeBuffer(conn, buf);
+                List<?> objects = decoder.decodeBuffer(conn, in);
                 if (objects != null) {
                     for (Object object : objects) {
                         out.write(object);

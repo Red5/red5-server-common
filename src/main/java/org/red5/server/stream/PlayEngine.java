@@ -70,7 +70,6 @@ import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
-import org.red5.server.net.rtmpt.RTMPTConnection;
 import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.stream.message.ResetMessage;
 import org.red5.server.stream.message.StatusMessage;
@@ -1790,16 +1789,13 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 doPushMessage(audioMessage);
                 audioMessage.getBody().release();
             }
-
             if (!messageSent && subscriberStream.getState() == StreamState.PLAYING) {
-                boolean isRTMPTPlayback = subscriberStream.getConnection() instanceof RTMPTConnection;
-
+                boolean isRTMPTPlayback = subscriberStream.getConnection().getProtocol().equals("rtmpt");
                 // send all frames from last keyframe up to requested position and fill client buffer
                 if (sendCheckVideoCM(msgIn)) {
                     final long clientBuffer = subscriberStream.getClientBufferDuration();
                     IMessage msg = null;
                     int msgSent = 0;
-
                     do {
                         try {
                             msg = msgIn != null ? msgIn.pullMessage() : null;

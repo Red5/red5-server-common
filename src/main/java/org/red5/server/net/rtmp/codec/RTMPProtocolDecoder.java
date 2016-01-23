@@ -75,7 +75,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
-    protected static Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+    protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -84,10 +84,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decode all available objects in buffer.
      * 
-     * @param conn
-     *            RTMP connection
-     * @param buffer
-     *            IoBuffer of data to be decoded
+     * @param conn RTMP connection
+     * @param buffer IoBuffer of data to be decoded
      * @return a list of decoded objects, may be empty if nothing could be decoded
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
@@ -135,14 +133,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 // close connection because we can't parse data from it
                 conn.close();
             } catch (Exception ex) {
-                // catch any non-handshake exception in the decoding
-                // close the connection
+                // catch any non-handshake exception in the decoding; close the connection
                 log.warn("Closing connection because decoding failed: {}", conn, ex);
                 // clear the buffer to eliminate memory leaks when we can't parse protocol
                 buffer.clear();
                 // close connection because we can't parse data from it
                 conn.close();
             } finally {
+                if (log.isTraceEnabled()) {
+                    log.trace("decodeBuffer - post decode input buffer position: {}", buffer.position());
+                }
                 buffer.compact();
             }
         } else {
@@ -154,15 +154,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes the buffer data.
      * 
-     * @param conn
-     *            RTMP connection
-     * @param state
-     *            Stores state for the protocol, ProtocolState is just a marker interface
-     * @param in
-     *            IoBuffer of data to be decoded
-     * @return one of three possible values: 1. null : the object could not be decoded, or some data was skipped, just continue 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 3. Object : something was decoded, continue
-     * @throws ProtocolException
-     *             on error
+     * @param conn RTMP connection
+     * @param state Stores state for the protocol, ProtocolState is just a marker interface
+     * @param in IoBuffer of data to be decoded
+     * @return one of three possible values: 
+     * <pre>
+     * 1. null : the object could not be decoded, or some data was skipped, just continue 
+     * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
+     * 3. Object : something was decoded, continue
+     * </pre>
+     * @throws ProtocolException on error
      */
     public Object decode(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) throws ProtocolException {
         if (log.isTraceEnabled()) {
@@ -266,12 +267,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes an IoBuffer into a Packet.
      * 
-     * @param conn
-     *            Connection
-     * @param state
-     *            RTMP protocol state
-     * @param in
-     *            IoBuffer
+     * @param conn Connection
+     * @param state RTMP protocol state
+     * @param in IoBuffer
      * @return Packet
      */
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
@@ -399,8 +397,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 rtmp.setReadChunkSize(chunkSizeMsg.getSize());
             } else if (message instanceof Abort) {
                 log.debug("Abort packet detected");
-                // The client is aborting a message; reset the packet
-                // because the next chunk on that stream will start a new packet.
+                // The client is aborting a message; reset the packet because the next chunk on that stream will start a new packet.
                 Abort abort = (Abort) message;
                 rtmp.setLastReadPacket(abort.getChannelId(), null);
                 packet = null;
@@ -417,10 +414,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes packet header.
      * 
-     * @param in
-     *            Input IoBuffer
-     * @param lastHeader
-     *            Previous header
+     * @param in Input IoBuffer
+     * @param lastHeader Previous header
      * @return Decoded header
      */
     public Header decodeHeader(IoBuffer in, Header lastHeader) {
@@ -523,12 +518,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes RTMP message event.
      * 
-     * @param conn
-     *            RTMP connection
-     * @param header
-     *            RTMP header
-     * @param in
-     *            Input IoBuffer
+     * @param conn RTMP connection
+     * @param header RTMP header
+     * @param in Input IoBuffer
      * @return RTMP event
      */
     public IRTMPEvent decodeMessage(RTMPConnection conn, Header header, IoBuffer in) {
@@ -602,8 +594,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes server bandwidth.
      * 
-     * @param in
-     *            IoBuffer
+     * @param in IoBuffer
      * @return RTMP event
      */
     private IRTMPEvent decodeServerBW(IoBuffer in) {
@@ -613,8 +604,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes client bandwidth.
      * 
-     * @param in
-     *            Byte buffer
+     * @param in Byte buffer
      * @return RTMP event
      */
     private IRTMPEvent decodeClientBW(IoBuffer in) {
@@ -681,12 +671,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Perform the actual decoding of the shared object contents.
      * 
-     * @param so
-     *            Shared object message
-     * @param in
-     *            input buffer
+     * @param so Shared object message
+     * @param in input buffer
      * @param input
-     *            input
      */
     protected void doDecodeSharedObject(SharedObjectMessage so, IoBuffer in, Input input) {
         // Parse request body
@@ -773,12 +760,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decode a Notify.
      * 
-     * @param encoding
-     *            encoding
-     * @param in
-     *            input buffer
+     * @param encoding encoding
+     * @param in input buffer
      * @param header
-     *            header
      * @return decoded notify result
      */
     public Notify decodeNotify(Encoding encoding, IoBuffer in, Header header) {
@@ -899,8 +883,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes ping event.
      * 
-     * @param in
-     *            IoBuffer
+     * @param in IoBuffer
      * @return Ping event
      */
     public Ping decodePing(IoBuffer in) {
@@ -953,8 +936,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes stream meta data, to include onMetaData, onCuePoint, and onFI.
      * 
-     * @param in
-     *            input buffer
+     * @param in input buffer
      * @return Notify
      */
     @SuppressWarnings("unchecked")
@@ -1053,8 +1035,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes FlexMessage event.
      * 
-     * @param in
-     *            IoBuffer
+     * @param in IoBuffer
      * @return FlexMessage event
      */
     public FlexMessage decodeFlexMessage(IoBuffer in) {
@@ -1138,19 +1119,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Checks if the passed action is a reserved stream method.
      * 
-     * @param action
-     *            Action to check
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if passed action is a reserved stream method,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param action Action to check
+     * @return true if passed action is a reserved stream method, false otherwise
      */
     private boolean isStreamCommand(String action) {
         switch (StreamAction.getEnum(action)) {

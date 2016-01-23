@@ -71,7 +71,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPProtocolEncoder implements Constants, IEventEncoder {
 
-    protected static Logger log = LoggerFactory.getLogger(RTMPProtocolEncoder.class);
+    protected Logger log = LoggerFactory.getLogger(RTMPProtocolEncoder.class);
 
     /**
      * Tolerance (in milliseconds) for late media on streams. A set of levels based on this value will be determined.

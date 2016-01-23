@@ -69,8 +69,7 @@ public class RTMPDecodeState {
     /**
      * Specifies buffer decoding amount
      * 
-     * @param amount
-     *            Buffer decoding amount
+     * @param amount Buffer decoding amount
      */
     public void bufferDecoding(int amount) {
         decoderState = DECODER_BUFFER;
@@ -87,19 +86,8 @@ public class RTMPDecodeState {
     /**
      * Checks whether remaining buffer size is greater or equal than buffer amount and so if it makes sense to start decoding.
      * 
-     * @param remaining
-     *            Remaining buffer size
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if there is data to decode,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param remaining Remaining buffer size
+     * @return true if there is data to decode, false otherwise
      */
     public boolean canStartDecoding(int remaining) {
         return remaining >= decoderBufferAmount;
@@ -116,17 +104,7 @@ public class RTMPDecodeState {
     /**
      * Checks whether decoding is complete.
      *
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if decoding has finished,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if decoding has finished, false otherwise
      */
     public boolean hasDecodedObject() {
         return (decoderState == DECODER_OK);
@@ -135,17 +113,7 @@ public class RTMPDecodeState {
     /**
      * Checks whether decoding process can be continued.
      *
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if decoding can be continued,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if decoding can be continued, false otherwise
      */
     public boolean canContinueDecoding() {
         return (decoderState != DECODER_BUFFER);

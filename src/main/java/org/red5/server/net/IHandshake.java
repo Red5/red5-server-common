@@ -29,5 +29,8 @@ public interface IHandshake {
 
     public IoBuffer doHandshake(IoBuffer input);
 
-    public boolean validate(IoBuffer input);
+    public boolean validate(byte[] handshake);
+
+    public boolean useEncryption();
+
 }

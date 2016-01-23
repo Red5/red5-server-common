@@ -125,6 +125,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     public static final byte RTMP_ENCRYPTED_BLOWFISH = (byte) 0x09;
 
     /**
+     * Unknown type 0x0a, seen on youtube
+     */
+    public static final byte RTMP_ENCRYPTED_UNK = (byte) 0x0a;
+
+    /**
      * Cipher for RTMPE input
      */
     public static final String RTMPE_CIPHER_IN = "rtmpe.cipher.in";
@@ -555,12 +560,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Initialize connection.
      * 
-     * @param host
-     *            Connection host
-     * @param path
-     *            Connection path
-     * @param params
-     *            Params passed from client
+     * @param host Connection host
+     * @param path Connection path
+     * @param params Params passed from client
      */
     public void setup(String host, String path, Map<String, Object> params) {
         this.host = host;
@@ -599,8 +601,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Checks whether channel is used.
      * 
-     * @param channelId
-     *            Channel id
+     * @param channelId Channel id
      * @return true if channel is in use, false otherwise
      */
     public boolean isChannelUsed(int channelId) {
@@ -610,8 +611,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Return channel by id.
      * 
-     * @param channelId
-     *            Channel id
+     * @param channelId Channel id
      * @return Channel by id
      */
     public Channel getChannel(int channelId) {
@@ -625,8 +625,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Closes channel.
      * 
-     * @param channelId
-     *            Channel id
+     * @param channelId Channel id
      */
     public void closeChannel(int channelId) {
         Channel chan = channels.remove(channelId);
@@ -661,11 +660,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 break;
             }
         }
-
         if (d == MAX_RESERVED_STREAMS) {
             throw new IndexOutOfBoundsException("Unable to reserve new stream");
         }
-
         return d;
     }
 
@@ -683,8 +680,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Returns whether or not a given stream id is valid.
      * 
-     * @param streamId
-     *            stream id
+     * @param streamId stream id
      * @return true if its valid, false if its invalid
      */
     public boolean isValidStreamId(Number streamId) {
@@ -858,8 +854,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * Creates output stream object from stream id. Output stream consists of audio, video, and data channels.
      * 
      * @see org.red5.server.stream.OutputStream
-     * @param streamId
-     *            Stream id
+     * @param streamId Stream id
      * @return Output stream object
      */
     public OutputStream createOutputStream(Number streamId) {
@@ -879,10 +874,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Specify name, connection, scope and etc for stream
      *
-     * @param streamId
-     *            Stream id
-     * @param stream
-     *            Stream
+     * @param streamId Stream id
+     * @param stream Stream
      */
     private void customizeStream(Number streamId, AbstractClientStream stream) {
         Integer buffer = streamBuffers.get(streamId.doubleValue());
@@ -971,7 +964,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             deferredResults.clear();
             pendingVideos.clear();
             streamBuffers.clear();
-
             if (log.isTraceEnabled()) {
                 // dump memory stats
                 log.trace("Memory at close - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
@@ -986,8 +978,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Dispatches event
      * 
-     * @param event
-     *            Event
+     * @param event Event
      */
     @Override
     public void dispatchEvent(IEvent event) {
@@ -1080,16 +1071,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Write packet.
      * 
-     * @param out
-     *            Packet
+     * @param out Packet
      */
     public abstract void write(Packet out);
 
     /**
      * Write raw byte buffer.
      * 
-     * @param out
-     *            IoBuffer
+     * @param out IoBuffer
      */
     public abstract void writeRaw(IoBuffer out);
 
@@ -1111,8 +1100,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Read number of received bytes.
      * 
-     * @param bytes
-     *            Number of bytes
+     * @param bytes Number of bytes
      */
     public void receivedBytesRead(int bytes) {
         if (log.isDebugEnabled()) {
@@ -1147,10 +1135,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Register pending call (remote function call that is yet to finish).
      * 
-     * @param invokeId
-     *            Deferred operation id
-     * @param call
-     *            Call service
+     * @param invokeId Deferred operation id
+     * @param call Call service
      */
     public void registerPendingCall(int invokeId, IPendingServiceCall call) {
         pendingCalls.put(invokeId, call);
@@ -1242,8 +1228,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Get pending call service by id.
      * 
-     * @param invokeId
-     *            Pending call service id
+     * @param invokeId Pending call service id
      * @return Pending call service object
      */
     public IPendingServiceCall getPendingCall(int invokeId) {
@@ -1253,8 +1238,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Retrieves and removes the pending call service by id.
      * 
-     * @param invokeId
-     *            Pending call service id
+     * @param invokeId Pending call service id
      * @return Pending call service object
      */
     public IPendingServiceCall retrievePendingCall(int invokeId) {
@@ -1273,8 +1257,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Mark message as being written.
      * 
-     * @param message
-     *            Message to mark
+     * @param message Message to mark
      */
     protected void writingMessage(Packet message) {
         if (message.getMessage() instanceof VideoData) {
@@ -1345,8 +1328,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Handle the incoming message.
      * 
-     * @param message
-     *            message
+     * @param message message
      */
     public void handleMessageReceived(Packet message) {
         if (log.isTraceEnabled()) {
@@ -1490,8 +1472,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Mark message as sent.
      * 
-     * @param message
-     *            Message to mark
+     * @param message Message to mark
      */
     public void messageSent(Packet message) {
         if (message.getMessage() instanceof VideoData) {
@@ -1536,14 +1517,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Send a shared object message.
      * 
-     * @param name
-     *            shared object name
-     * @param currentVersion
-     *            the current version
-     * @param persistent
-     *            toggle
-     * @param events
-     *            shared object events
+     * @param name shared object name
+     * @param currentVersion the current version
+     * @param persistent toggle
+     * @param events shared object events
      */
     public void sendSharedObjectMessage(String name, int currentVersion, boolean persistent, ConcurrentLinkedQueue<ISharedObjectEvent> events) {
         // create a new sync message for every client to avoid concurrent access through multiple threads
@@ -1581,8 +1558,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Marks that ping back was received.
      * 
-     * @param pong
-     *            Ping object
+     * @param pong Ping object
      */
     public void pingReceived(Ping pong) {
         long now = System.currentTimeMillis();
@@ -1622,8 +1598,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Setter for ping interval.
      * 
-     * @param pingInterval
-     *            Interval in ms to ping clients. Set to 0 to disable ghost detection code.
+     * @param pingInterval Interval in ms to ping clients. Set to 0 to disable ghost detection code.
      */
     public void setPingInterval(int pingInterval) {
         this.pingInterval = pingInterval;
@@ -1632,8 +1607,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Setter for maximum inactivity.
      * 
-     * @param maxInactivity
-     *            Maximum time in ms after which a client is disconnected in case of inactivity.
+     * @param maxInactivity Maximum time in ms after which a client is disconnected in case of inactivity.
      */
     public void setMaxInactivity(int maxInactivity) {
         this.maxInactivity = maxInactivity;
@@ -1647,8 +1621,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Sets the scheduler.
      * 
-     * @param scheduler
-     *            scheduling service / thread executor
+     * @param scheduler scheduling service / thread executor
      */
     public void setScheduler(ThreadPoolTaskScheduler scheduler) {
         this.scheduler = scheduler;
@@ -1681,8 +1654,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Thread pool for guarding deadlocks
      * 
-     * @param deadlockGuardScheduler
-     *            the deadlockGuardScheduler to set
+     * @param deadlockGuardScheduler the deadlockGuardScheduler to set
      */
     public void setDeadlockGuardScheduler(ThreadPoolTaskScheduler deadlockGuardScheduler) {
         this.deadlockGuardScheduler = deadlockGuardScheduler;
@@ -1691,8 +1663,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Registers deferred result.
      * 
-     * @param result
-     *            Result to register
+     * @param result Result to register
      */
     public void registerDeferredResult(DeferredResult result) {
         deferredResults.add(result);
@@ -1701,8 +1672,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Unregister deferred result
      * 
-     * @param result
-     *            Result to unregister
+     * @param result Result to unregister
      */
     public void unregisterDeferredResult(DeferredResult result) {
         deferredResults.remove(result);
@@ -1715,8 +1685,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Set maximum time to wait for valid handshake in milliseconds.
      * 
-     * @param maxHandshakeTimeout
-     *            Maximum time in milliseconds
+     * @param maxHandshakeTimeout Maximum time in milliseconds
      */
     public void setMaxHandshakeTimeout(int maxHandshakeTimeout) {
         this.maxHandshakeTimeout = maxHandshakeTimeout;
@@ -1794,6 +1763,20 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         this.reservedStreamsConcurrencyLevel = reservedStreamsConcurrencyLevel;
     }
 
+    /**
+     * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
+     * 
+     * @param executorQueueSizeToDropAudioPackets queue size
+     */
+    public void setExecutorQueueSizeToDropAudioPackets(Integer executorQueueSizeToDropAudioPackets) {
+        this.executorQueueSizeToDropAudioPackets = executorQueueSizeToDropAudioPackets;
+    }
+
+    @Override
+    public String getProtocol() {
+        return "rtmp";
+    }
+
     /** {@inheritDoc} */
     @Override
     public String toString() {
@@ -1804,16 +1787,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             Object[] args = new Object[] { getClass().getSimpleName(), getRemoteAddress(), getReadBytes(), getWrittenBytes(), getSessionId(), RTMP.states[getStateCode()] };
             return String.format("%1$s from %2$s (in: %3$s out: %4$s) session: %5$s state: %6$s", args);
         }
-    }
-
-    /**
-     * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
-     * 
-     * @param executorQueueSizeToDropAudioPackets
-     *            queue size
-     */
-    public void setExecutorQueueSizeToDropAudioPackets(Integer executorQueueSizeToDropAudioPackets) {
-        this.executorQueueSizeToDropAudioPackets = executorQueueSizeToDropAudioPackets;
     }
 
     /**

@@ -19,14 +19,15 @@
 package org.red5.server.net.rtmp;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Security;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.crypto.Cipher;
@@ -38,7 +39,8 @@ import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.mina.core.buffer.IoBuffer;
+import org.bouncycastle.crypto.engines.BlowfishEngine;
+import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.red5.server.net.IHandshake;
 import org.red5.server.net.rtmp.message.Constants;
@@ -46,7 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Generates and validates the RTMP handshake response for Flash Players. Client versions equal to or greater than Flash 9,0,124,0 require a nonzero value as the fifth byte of the handshake request.
+ * Generates and validates the RTMP handshake response for Flash Players. Client versions equal to or greater than Flash 9,0,124,0 require
+ * a nonzero value as the fifth byte of the handshake request.
  * 
  * @author Jacinto Shy II (jacinto.m.shy@ieee.org)
  * @author Steven Zimmer (stevenlzimmer@gmail.com)
@@ -59,12 +62,12 @@ public abstract class RTMPHandshake implements IHandshake {
 
     protected Logger log = LoggerFactory.getLogger(RTMPHandshake.class);
 
-    public static String[] HANDSHAKE_TYPES = {"", "", "", "RTMP", "", "", "RTMPE", "", "RTMPE XTEA", "RTMPE BLOWFISH"};
+    public final static String[] HANDSHAKE_TYPES = {"Undefined0", "Undefined1", "Undefined2", "RTMP", "Undefined4", "Undefined5", "RTMPE", "Undefined7", "RTMPE XTEA", "RTMPE BLOWFISH"};
 
     //for old style handshake
     public static byte[] HANDSHAKE_PAD_BYTES;
 
-    protected static final byte[] GENUINE_FMS_KEY = { 
+    public static final byte[] GENUINE_FMS_KEY = { 
         (byte) 0x47, (byte) 0x65, (byte) 0x6e, (byte) 0x75, (byte) 0x69, (byte) 0x6e, (byte) 0x65, (byte) 0x20, (byte) 0x41, (byte) 0x64, (byte) 0x6f, (byte) 0x62,
         (byte) 0x65, (byte) 0x20, (byte) 0x46, (byte) 0x6c,
         (byte) 0x61, (byte) 0x73, (byte) 0x68, (byte) 0x20, (byte) 0x4d, (byte) 0x65, (byte) 0x64, (byte) 0x69, (byte) 0x61, (byte) 0x20, (byte) 0x53, (byte) 0x65,
@@ -75,7 +78,7 @@ public abstract class RTMPHandshake implements IHandshake {
         (byte) 0x93, (byte) 0xb8, (byte) 0xe6, (byte) 0x36,
         (byte) 0xcf, (byte) 0xeb, (byte) 0x31, (byte) 0xae };
 
-    protected static final byte[] GENUINE_FP_KEY = {
+    public static final byte[] GENUINE_FP_KEY = {
         (byte) 0x47, (byte) 0x65, (byte) 0x6E, (byte) 0x75, (byte) 0x69, (byte) 0x6E, (byte) 0x65, (byte) 0x20, (byte) 0x41, (byte) 0x64, (byte) 0x6F, (byte) 0x62,
         (byte) 0x65, (byte) 0x20, (byte) 0x46, (byte) 0x6C,
         (byte) 0x61, (byte) 0x73, (byte) 0x68, (byte) 0x20, (byte) 0x50, (byte) 0x6C, (byte) 0x61, (byte) 0x79, (byte) 0x65, (byte) 0x72, (byte) 0x20, (byte) 0x30,
@@ -102,6 +105,44 @@ public abstract class RTMPHandshake implements IHandshake {
         (byte) 0x1f, (byte) 0xe6, (byte) 0x49, (byte) 0x28, (byte) 0x66, (byte) 0x51, (byte) 0xec, (byte) 0xe6, (byte) 0x53, (byte) 0x81,
         (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
+    /** XTEA keys for RTMPE (RTMP type 0x08) - 16 x 4 */
+    protected static final int[][] XTEA_KEYS = {
+        {0xbff034b2, 0x11d9081f, 0xccdfb795, 0x748de732},
+        {0x086a5eb6, 0x1743090e, 0x6ef05ab8, 0xfe5a39e2},
+        {0x7b10956f, 0x76ce0521, 0x2388a73a, 0x440149a1},
+        {0xa943f317, 0xebf11bb2, 0xa691a5ee, 0x17f36339},
+        {0x7a30e00a, 0xb529e22c, 0xa087aea5, 0xc0cb79ac},
+        {0xbdce0c23, 0x2febdeff, 0x1cfaae16, 0x1123239d},
+        {0x55dd3f7b, 0x77e7e62e, 0x9bb8c499, 0xc9481ee4},
+        {0x407bb6b4, 0x71e89136, 0xa7aebf55, 0xca33b839},
+        {0xfcf6bdc3, 0xb63c3697, 0x7ce4f825, 0x04d959b2},
+        {0x28e091fd, 0x41954c4c, 0x7fb7db00, 0xe3a066f8},
+        {0x57845b76, 0x4f251b03, 0x46d45bcd, 0xa2c30d29},
+        {0x0acceef8, 0xda55b546, 0x03473452, 0x5863713b},
+        {0xb82075dc, 0xa75f1fee, 0xd84268e8, 0xa72a44cc},
+        {0x07cf6e9e, 0xa16d7b25, 0x9fa7ae6c, 0xd92f5629},
+        {0xfeb1eae4, 0x8c8c3ce1, 0x4e0064a7, 0x6a387c2a},
+        {0x893a9427, 0xcc3013a2, 0xf106385b, 0xa829f927}};
+
+    /** Blowfish keys for RTMPE (RTMP type 0x09) - 16 x 24 */
+    protected static final byte[][] BLOWFISH_KEYS = { 
+        { (byte) 0x79, (byte) 0x34, (byte) 0x77, (byte) 0x4c, (byte) 0x67, (byte) 0xd1, (byte) 0x38, (byte) 0x3a, (byte) 0xdf, (byte) 0xb3, (byte) 0x56, (byte) 0xbe, (byte) 0x8b, (byte) 0x7b, (byte) 0xd0, (byte) 0x24, (byte) 0x38, (byte) 0xe0, (byte) 0x73, (byte) 0x58, (byte) 0x41, (byte) 0x5d, (byte) 0x69, (byte) 0x67 }, 
+        { (byte) 0x46, (byte) 0xf6, (byte) 0xb4, (byte) 0xcc, (byte) 0x01, (byte) 0x93, (byte) 0xe3, (byte) 0xa1, (byte) 0x9e, (byte) 0x7d, (byte) 0x3c, (byte) 0x65, (byte) 0x55, (byte) 0x86, (byte) 0xfd, (byte) 0x09, (byte) 0x8f, (byte) 0xf7, (byte) 0xb3, (byte) 0xc4, (byte) 0x6f, (byte) 0x41, (byte) 0xca, (byte) 0x5c }, 
+        { (byte) 0x1a, (byte) 0xe7, (byte) 0xe2, (byte) 0xf3, (byte) 0xf9, (byte) 0x14, (byte) 0x79, (byte) 0x94, (byte) 0xc0, (byte) 0xd3, (byte) 0x97, (byte) 0x43, (byte) 0x08, (byte) 0x7b, (byte) 0xb3, (byte) 0x84, (byte) 0x43, (byte) 0x2f, (byte) 0x9d, (byte) 0x84, (byte) 0x3f, (byte) 0x21, (byte) 0x01, (byte) 0x9b }, 
+        { (byte) 0xd3, (byte) 0xe3, (byte) 0x54, (byte) 0xb0, (byte) 0xf7, (byte) 0x1d, (byte) 0xf6, (byte) 0x2b, (byte) 0x5a, (byte) 0x43, (byte) 0x4d, (byte) 0x04, (byte) 0x83, (byte) 0x64, (byte) 0x3e, (byte) 0x0d, (byte) 0x59, (byte) 0x2f, (byte) 0x61, (byte) 0xcb, (byte) 0xb1, (byte) 0x6a, (byte) 0x59, (byte) 0x0d }, 
+        { (byte) 0xc8, (byte) 0xc1, (byte) 0xe9, (byte) 0xb8, (byte) 0x16, (byte) 0x56, (byte) 0x99, (byte) 0x21, (byte) 0x7b, (byte) 0x5b, (byte) 0x36, (byte) 0xb7, (byte) 0xb5, (byte) 0x9b, (byte) 0xdf, (byte) 0x06, (byte) 0x49, (byte) 0x2c, (byte) 0x97, (byte) 0xf5, (byte) 0x95, (byte) 0x48, (byte) 0x85, (byte) 0x7e }, 
+        { (byte) 0xeb, (byte) 0xe5, (byte) 0xe6, (byte) 0x2e, (byte) 0xa4, (byte) 0xba, (byte) 0xd4, (byte) 0x2c, (byte) 0xf2, (byte) 0x16, (byte) 0xe0, (byte) 0x8f, (byte) 0x66, (byte) 0x23, (byte) 0xa9, (byte) 0x43, (byte) 0x41, (byte) 0xce, (byte) 0x38, (byte) 0x14, (byte) 0x84, (byte) 0x95, (byte) 0x00, (byte) 0x53 }, 
+        { (byte) 0x66, (byte) 0xdb, (byte) 0x90, (byte) 0xf0, (byte) 0x3b, (byte) 0x4f, (byte) 0xf5, (byte) 0x6f, (byte) 0xe4, (byte) 0x9c, (byte) 0x20, (byte) 0x89, (byte) 0x35, (byte) 0x5e, (byte) 0xd2, (byte) 0xb2, (byte) 0xc3, (byte) 0x9e, (byte) 0x9f, (byte) 0x7f, (byte) 0x63, (byte) 0xb2, (byte) 0x28, (byte) 0x81 }, 
+        { (byte) 0xbb, (byte) 0x20, (byte) 0xac, (byte) 0xed, (byte) 0x2a, (byte) 0x04, (byte) 0x6a, (byte) 0x19, (byte) 0x94, (byte) 0x98, (byte) 0x9b, (byte) 0xc8, (byte) 0xff, (byte) 0xcd, (byte) 0x93, (byte) 0xef, (byte) 0xc6, (byte) 0x0d, (byte) 0x56, (byte) 0xa7, (byte) 0xeb, (byte) 0x13, (byte) 0xd9, (byte) 0x30 }, 
+        { (byte) 0xbc, (byte) 0xf2, (byte) 0x43, (byte) 0x82, (byte) 0x09, (byte) 0x40, (byte) 0x8a, (byte) 0x87, (byte) 0x25, (byte) 0x43, (byte) 0x6d, (byte) 0xe6, (byte) 0xbb, (byte) 0xa4, (byte) 0xb9, (byte) 0x44, (byte) 0x58, (byte) 0x3f, (byte) 0x21, (byte) 0x7c, (byte) 0x99, (byte) 0xbb, (byte) 0x3f, (byte) 0x24 }, 
+        { (byte) 0xec, (byte) 0x1a, (byte) 0xaa, (byte) 0xcd, (byte) 0xce, (byte) 0xbd, (byte) 0x53, (byte) 0x11, (byte) 0xd2, (byte) 0xfb, (byte) 0x83, (byte) 0xb6, (byte) 0xc3, (byte) 0xba, (byte) 0xab, (byte) 0x4f, (byte) 0x62, (byte) 0x79, (byte) 0xe8, (byte) 0x65, (byte) 0xa9, (byte) 0x92, (byte) 0x28, (byte) 0x76 }, 
+        { (byte) 0xc6, (byte) 0x0c, (byte) 0x30, (byte) 0x03, (byte) 0x91, (byte) 0x18, (byte) 0x2d, (byte) 0x7b, (byte) 0x79, (byte) 0xda, (byte) 0xe1, (byte) 0xd5, (byte) 0x64, (byte) 0x77, (byte) 0x9a, (byte) 0x12, (byte) 0xc5, (byte) 0xb1, (byte) 0xd7, (byte) 0x91, (byte) 0x4f, (byte) 0x96, (byte) 0x4c, (byte) 0xa3 }, 
+        { (byte) 0xd7, (byte) 0x7c, (byte) 0x2a, (byte) 0xbf, (byte) 0xa6, (byte) 0xe7, (byte) 0x85, (byte) 0x7c, (byte) 0x45, (byte) 0xad, (byte) 0xff, (byte) 0x12, (byte) 0x94, (byte) 0xd8, (byte) 0xde, (byte) 0xa4, (byte) 0x5c, (byte) 0x3d, (byte) 0x79, (byte) 0xa4, (byte) 0x44, (byte) 0x02, (byte) 0x5d, (byte) 0x22 }, 
+        { (byte) 0x16, (byte) 0x19, (byte) 0x0d, (byte) 0x81, (byte) 0x6a, (byte) 0x4c, (byte) 0xc7, (byte) 0xf8, (byte) 0xb8, (byte) 0xf9, (byte) 0x4e, (byte) 0xcd, (byte) 0x2c, (byte) 0x9e, (byte) 0x90, (byte) 0x84, (byte) 0xb2, (byte) 0x08, (byte) 0x25, (byte) 0x60, (byte) 0xe1, (byte) 0x1e, (byte) 0xae, (byte) 0x18 }, 
+        { (byte) 0xe9, (byte) 0x7c, (byte) 0x58, (byte) 0x26, (byte) 0x1b, (byte) 0x51, (byte) 0x9e, (byte) 0x49, (byte) 0x82, (byte) 0x60, (byte) 0x61, (byte) 0xfc, (byte) 0xa0, (byte) 0xa0, (byte) 0x1b, (byte) 0xcd, (byte) 0xf5, (byte) 0x05, (byte) 0xd6, (byte) 0xa6, (byte) 0x6d, (byte) 0x07, (byte) 0x88, (byte) 0xa3 }, 
+        { (byte) 0x2b, (byte) 0x97, (byte) 0x11, (byte) 0x8b, (byte) 0xd9, (byte) 0x4e, (byte) 0xd9, (byte) 0xdf, (byte) 0x20, (byte) 0xe3, (byte) 0x9c, (byte) 0x10, (byte) 0xe6, (byte) 0xa1, (byte) 0x35, (byte) 0x21, (byte) 0x11, (byte) 0xf9, (byte) 0x13, (byte) 0x0d, (byte) 0x0b, (byte) 0x24, (byte) 0x65, (byte) 0xb2 }, 
+        { (byte) 0x53, (byte) 0x6a, (byte) 0x4c, (byte) 0x54, (byte) 0xac, (byte) 0x8b, (byte) 0x9b, (byte) 0xb8, (byte) 0x97, (byte) 0x29, (byte) 0xfc, (byte) 0x60, (byte) 0x2c, (byte) 0x5b, (byte) 0x3a, (byte) 0x85, (byte) 0x68, (byte) 0xb5, (byte) 0xaa, (byte) 0x6a, (byte) 0x44, (byte) 0xcd, (byte) 0x3f, (byte) 0xa7 }};
+    
     protected static final BigInteger DH_MODULUS = new BigInteger(1, DH_MODULUS_BYTES);
 
     protected static final BigInteger DH_BASE = BigInteger.valueOf(2);
@@ -124,9 +165,6 @@ public abstract class RTMPHandshake implements IHandshake {
 
     protected byte[] handshakeBytes;
 
-    // validation scheme
-    protected int validationScheme = 0;
-
     // servers public key
     protected byte[] incomingPublicKey;
 
@@ -136,7 +174,11 @@ public abstract class RTMPHandshake implements IHandshake {
     // swf verification bytes
     protected byte[] swfVerificationBytes;
 
-    private Mac hmacSHA256;
+    // handshake algorithm / validation scheme
+    protected int algorithm = 1;
+
+    // start as an fp of at least version 9.0.115.0
+    protected boolean fp9Handshake = true;
 
     static {
         //get security provider
@@ -144,58 +186,52 @@ public abstract class RTMPHandshake implements IHandshake {
     }
 
     public RTMPHandshake() {
-        log.trace("Handshake ctor");
-        try {
-            hmacSHA256 = Mac.getInstance("HmacSHA256");
-        } catch (SecurityException e) {
-            log.error("Security exception when getting HMAC", e);
-        } catch (NoSuchAlgorithmException e) {
-            log.error("HMAC SHA256 does not exist");
-        }
+        this((byte) 0);
+    }
+
+    public RTMPHandshake(byte handshakeType) {
+        // set the handshake type
+        setHandshakeType(handshakeType);
+        // whether or not to use later handshake version
+        fp9Handshake = "true".equals(System.getProperty("use.fp9.handshake", "true"));
+        log.trace("Use fp9 handshake? {}", fp9Handshake);
         // create our handshake bytes
         createHandshakeBytes();
     }
 
     /**
-     * Calculates an HMAC SHA256 hash using a default key length.
+     * Prepare the ciphers.
      * 
-     * @param input
-     *            bytes
-     * @param key
-     *            key bytes
-     * @return hmac hashed bytes
+     * @param sharedSecret
      */
-    public byte[] calculateHMAC_SHA256(byte[] input, byte[] key) {
-        byte[] output = null;
+    protected void initRC4Encryption(byte[] sharedSecret) {
+        log.debug("Shared secret: {}", Hex.encodeHexString(sharedSecret));
+        // create output cipher
+        log.debug("Outgoing public key [{}]: {}", outgoingPublicKey.length, Hex.encodeHexString(outgoingPublicKey));
+        byte[] rc4keyOut = new byte[16];
+        calculateHMAC_SHA256(outgoingPublicKey, 0, outgoingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyOut, 0);
         try {
-            hmacSHA256.init(new SecretKeySpec(key, "HmacSHA256"));
-            output = hmacSHA256.doFinal(input);
-        } catch (InvalidKeyException e) {
-            log.error("Invalid key", e);
+            cipherOut = Cipher.getInstance("RC4");
+            cipherOut.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(rc4keyOut, "RC4"));
+        } catch (Exception e) {
+            log.warn("Encryption cipher creation failed", e);
         }
-        return output;
-    }
-
-    /**
-     * Calculates an HMAC SHA256 hash using a set key length.
-     * 
-     * @param input
-     *            bytes
-     * @param key
-     *            key bytes
-     * @param length
-     *            length
-     * @return hmac hashed bytes
-     */
-    public byte[] calculateHMAC_SHA256(byte[] input, byte[] key, int length) {
-        byte[] output = null;
+        // create input cipher
+        log.debug("Incoming public key [{}]: {}", incomingPublicKey.length, Hex.encodeHexString(incomingPublicKey));
+        byte[] rc4keyIn = new byte[16];
+        calculateHMAC_SHA256(incomingPublicKey, 0, incomingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyIn, 0);
         try {
-            hmacSHA256.init(new SecretKeySpec(key, 0, length, "HmacSHA256"));
-            output = hmacSHA256.doFinal(input);
-        } catch (InvalidKeyException e) {
-            log.error("Invalid key", e);
+            cipherIn = Cipher.getInstance("RC4");
+            cipherIn.init(Cipher.DECRYPT_MODE, new SecretKeySpec(rc4keyIn, "RC4"));
+        } catch (Exception e) {
+            log.warn("Decryption cipher creation failed", e);
         }
-        return output;
+        // update 'encoder / decoder state' for the RC4 keys both parties *pretend* as if handshake part 2 (1536 bytes) was encrypted
+        // effectively this hides / discards the first few bytes of encrypted session which is known to increase the secure-ness of RC4
+        // RC4 state is just a function of number of bytes processed so far that's why we just run 1536 arbitrary bytes through the keys below
+        byte[] dummyBytes = new byte[Constants.HANDSHAKE_SIZE];
+        cipherIn.update(dummyBytes);
+        cipherOut.update(dummyBytes);
     }
 
     /**
@@ -221,40 +257,27 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the public key for a given key pair.
      * 
-     * @param keyPair
-     *            key pair
+     * @param keyPair key pair
      * @return public key
      */
     protected byte[] getPublicKey(KeyPair keyPair) {
         DHPublicKey incomingPublicKey = (DHPublicKey) keyPair.getPublic();
         BigInteger dhY = incomingPublicKey.getY();
-        log.debug("Public key: {}", dhY);
-        byte[] result = dhY.toByteArray();
-        log.debug("Public key as bytes - length [{}]: {}", result.length, Hex.encodeHexString(result));
-        byte[] temp = new byte[KEY_LENGTH];
-        if (result.length < KEY_LENGTH) {
-            System.arraycopy(result, 0, temp, KEY_LENGTH - result.length, result.length);
-            result = temp;
-            log.debug("Padded public key length to 128");
-        } else if (result.length > KEY_LENGTH) {
-            System.arraycopy(result, result.length - KEY_LENGTH, temp, 0, KEY_LENGTH);
-            result = temp;
-            log.debug("Truncated public key length to 128");
+        if (log.isDebugEnabled()) {
+            log.debug("Public key: {}", Hex.encodeHexString(dhY.toByteArray()));
         }
-        return result;
+        return Arrays.copyOfRange(dhY.toByteArray(), 0, KEY_LENGTH);
     }
 
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param otherPublicKeyBytes
-     *            public key bytes
-     * @param agreement
-     *            key agreement
+     * @param publicKeyBytes public key bytes
+     * @param agreement key agreement
      * @return shared secret bytes if client used a supported validation scheme
      */
-    protected byte[] getSharedSecret(byte[] otherPublicKeyBytes, KeyAgreement agreement) {
-        BigInteger otherPublicKeyInt = new BigInteger(1, otherPublicKeyBytes);
+    protected byte[] getSharedSecret(byte[] publicKeyBytes, KeyAgreement agreement) {
+        BigInteger otherPublicKeyInt = new BigInteger(1, publicKeyBytes);
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("DH");
             KeySpec otherPublicKeySpec = new DHPublicKeySpec(otherPublicKeyInt, RTMPHandshake.DH_MODULUS, RTMPHandshake.DH_BASE);
@@ -276,126 +299,322 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param input
-     *            input buffer
+     * @param handshake
      * @return true if its a supported validation scheme, false if unsupported
      */
-    public abstract boolean validate(IoBuffer input);
+    public abstract boolean validate(byte[] handshake);
 
+    /**
+     * Calculates the digest given the its offset in the handshake data.
+     * 
+     * @param digestPos
+     * @param handshakeMessage
+     * @param handshakeOffset
+     * @param key
+     * @param keyLen
+     * @param digest contains the calculated digest
+     * @param digestOffset
+     */
+    public void calculateDigest(int digestPos, byte[] handshakeMessage, int handshakeOffset, byte[] key, int keyLen, byte[] digest, int digestOffset) {
+        if (log.isTraceEnabled()) {
+            log.trace("calculateDigest - digestPos: {} handshakeOffset: {} keyLen: {} digestOffset: {}", digestPos, handshakeOffset, keyLen, digestOffset);
+        }
+        int messageLen = Constants.HANDSHAKE_SIZE - DIGEST_LENGTH; // 1504
+        byte[] message = new byte[messageLen];
+        // copy bytes from handshake message starting at handshake offset into message start at index 0 and up-to digest position length
+        System.arraycopy(handshakeMessage, handshakeOffset, message, 0, digestPos);
+        // copy bytes from handshake message starting at handshake offset plus digest position plus digest length
+        // into message start at digest position and up-to message length minus digest position
+        System.arraycopy(handshakeMessage, handshakeOffset + digestPos + DIGEST_LENGTH, message, digestPos, messageLen - digestPos);
+        calculateHMAC_SHA256(message, 0, messageLen, key, keyLen, digest, digestOffset);
+    }
+
+    /**
+     * Verifies the digest.
+     * 
+     * @param digestPos
+     * @param handshakeMessage
+     * @param key
+     * @param keyLen
+     * @return true if valid and false otherwise
+     */
+    public boolean verifyDigest(int digestPos, byte[] handshakeMessage, byte[] key, int keyLen) {
+        if (log.isTraceEnabled()) {
+            log.trace("verifyDigest - digestPos: {} keyLen: {} handshake size: {} ", digestPos, keyLen, handshakeMessage.length);
+        }
+        byte[] calcDigest = new byte[DIGEST_LENGTH];
+        calculateDigest(digestPos, handshakeMessage, 0, key, keyLen, calcDigest, 0);
+        for (int i = 0; i < DIGEST_LENGTH; i++) {
+            if (handshakeMessage[digestPos + i] != calcDigest[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Calculates an HMAC SHA256 hash into the digest at the given offset.
+     * 
+     * @param message incoming bytes
+     * @param messageOffset
+     * @param messageLen
+     * @param key incoming key bytes
+     * @param keyLen
+     * @param digest
+     * @param digestOffset
+     */
+    public void calculateHMAC_SHA256(byte[] message, int messageOffset, int messageLen, byte[] key, int keyLen, byte[] digest, int digestOffset) {
+        if (log.isTraceEnabled()) {
+            log.trace("calculateHMAC_SHA256 - messageOffset: {} messageLen: {}", messageOffset, messageLen);
+            log.trace("calculateHMAC_SHA256 - message: {}", Hex.encodeHexString(Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen)));
+            log.trace("calculateHMAC_SHA256 - keyLen: {} key: {}", keyLen, Hex.encodeHexString(Arrays.copyOf(key, keyLen)));
+            log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
+        }
+        try {
+            Mac hmac = Mac.getInstance("HmacSHA256");
+            hmac.init(new SecretKeySpec(Arrays.copyOf(key, keyLen), "HmacSHA256"));
+            byte[] actualMessage = Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen);
+            byte[] calcDigest = hmac.doFinal(actualMessage);
+            //if (log.isTraceEnabled()) {
+            //    log.trace("Calculated digest: {}", Hex.encodeHexString(calcDigest));
+            //}
+            System.arraycopy(calcDigest, 0, digest, digestOffset, DIGEST_LENGTH);
+        } catch (InvalidKeyException e) {
+            log.error("Invalid key", e);
+        } catch (Exception e) {
+            log.error("Hash calculation failed", e);
+        }
+    }
+
+    /**
+     * Calculates the swf verification token.
+     * 
+     * @param handshakeMessage servers handshake bytes
+     * @param swfHash
+     * @param swfSize
+     */
+    public void calculateSwfVerification(byte[] handshakeMessage, byte[] swfHash, int swfSize) {
+        // SHA256 HMAC hash of decompressed SWF, key are the last 32 bytes of the server handshake
+        byte[] swfHashKey = new byte[DIGEST_LENGTH];
+        System.arraycopy(handshakeMessage, Constants.HANDSHAKE_SIZE - DIGEST_LENGTH, swfHashKey, 0, DIGEST_LENGTH);
+        byte[] bytesFromServerHash = new byte[DIGEST_LENGTH];
+        calculateHMAC_SHA256(swfHash, 0, swfHash.length, swfHashKey, DIGEST_LENGTH, bytesFromServerHash, 0);
+        // construct SWF verification pong payload
+        ByteBuffer swfv = ByteBuffer.allocate(42);
+        swfv.put((byte) 0x01);
+        swfv.put((byte) 0x01);
+        swfv.putInt(swfSize);
+        swfv.putInt(swfSize);
+        swfv.put(bytesFromServerHash);
+        swfv.flip();
+        swfVerificationBytes = new byte[42];
+        swfv.get(swfVerificationBytes);
+        log.debug("initialized swf verification response from swfSize: {} swfHash:\n{}\n{}", swfSize, Hex.encodeHexString(swfHash), Hex.encodeHexString(swfVerificationBytes));
+    }
+    
     /**
      * Returns the DH offset from an array of bytes.
      * 
-     * @param bytes
-     *            bytes
+     * @param algorithm validation algorithm
+     * @param handshake
+     * @param bufferOffset
      * @return DH offset
      */
-    protected int getDHOffset(byte[] bytes) {
-        int dhOffset = -1;
-        switch (validationScheme) {
+    public int getDHOffset(int algorithm, byte[] handshake, int bufferOffset) {
+        switch (algorithm) {
             case 1:
-                dhOffset = getDHOffset1(bytes);
-                break;
+                return getDHOffset2(handshake, bufferOffset);
             default:
-                log.debug("Scheme 0 will be used for DH offset");
             case 0:
-                dhOffset = getDHOffset0(bytes);
+                return getDHOffset1(handshake, bufferOffset);
         }
-        return dhOffset;
     }
 
     /**
      * Returns the DH byte offset.
      * 
-     * @param bytes
-     *            bytes
+     * @param handshake
+     * @param bufferOffset
      * @return dh offset
      */
-    protected int getDHOffset0(byte[] bytes) {
-        int offset = (bytes[1532] & 0x0ff) + (bytes[1533] & 0x0ff) + (bytes[1534] & 0x0ff) + (bytes[1535] & 0x0ff);
-        offset = offset % 632;
-        offset = offset + 772;
-        if (offset + KEY_LENGTH >= 1536) {
+    protected int getDHOffset1(byte[] handshake, int bufferOffset) {
+        bufferOffset += 1532;
+        int offset = handshake[bufferOffset] & 0xff; // & 0x0ff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        int res = (offset % 632) + 772;
+        if (res + KEY_LENGTH > 1531) {
             log.error("Invalid DH offset");
         }
-        return offset;
+        return res;
     }
 
     /**
      * Returns the DH byte offset.
      * 
-     * @param bytes
-     *            bytes
+     * @param handshake
+     * @param bufferOffset
      * @return dh offset
      */
-    protected int getDHOffset1(byte[] bytes) {
-        int offset = (bytes[768] & 0x0ff) + (bytes[769] & 0x0ff) + (bytes[770] & 0x0ff) + (bytes[771] & 0x0ff);
-        offset = offset % 632;
-        offset = offset + 8;
-        if (offset + KEY_LENGTH >= 1536) {
+    protected int getDHOffset2(byte[] handshake, int bufferOffset) {
+        bufferOffset += 768;
+        int offset = handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        int res = (offset % 632) + 8;
+        if (res + KEY_LENGTH > 767) {
             log.error("Invalid DH offset");
         }
-        return offset;
+        return res;
     }
 
     /**
      * Returns the digest offset using current validation scheme.
      * 
-     * @param pBuffer
-     *            bytes
+     * @param algorithm validation algorithm
+     * @param handshake
+     * @param bufferOffset
      * @return digest offset
      */
-    protected int getDigestOffset(byte[] pBuffer) {
-        int serverDigestOffset = -1;
-        switch (validationScheme) {
+    public int getDigestOffset(int algorithm, byte[] handshake, int bufferOffset) {
+        switch (algorithm) {
             case 1:
-                serverDigestOffset = getDigestOffset1(pBuffer);
-                break;
+                return getDigestOffset2(handshake, bufferOffset);
             default:
-                log.debug("Scheme 0 will be used for DH offset");
             case 0:
-                serverDigestOffset = getDigestOffset0(pBuffer);
+                return getDigestOffset1(handshake, bufferOffset);
         }
-        return serverDigestOffset;
     }
 
     /**
      * Returns a digest byte offset.
      * 
-     * @param pBuffer
-     *            source for digest data
+     * @param handshake
+     * @param bufferOffset
      * @return digest offset
      */
-    protected int getDigestOffset0(byte[] pBuffer) {
-        if (log.isTraceEnabled()) {
-            log.trace("Scheme 0 offset bytes {},{},{},{}", new Object[] { (pBuffer[8] & 0x0ff), (pBuffer[9] & 0x0ff), (pBuffer[10] & 0x0ff), (pBuffer[11] & 0x0ff) });
+    protected int getDigestOffset1(byte[] handshake, int bufferOffset) {
+        bufferOffset += 8;
+        int offset = handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        int res = (offset % 728) + 12;
+        if (res + DIGEST_LENGTH > 771) {
+            log.error("Invalid digest offset calc: {}", res);
         }
-        int offset = (pBuffer[8] & 0x0ff) + (pBuffer[9] & 0x0ff) + (pBuffer[10] & 0x0ff) + (pBuffer[11] & 0x0ff);
-        offset = offset % 728;
-        offset = offset + 12;
-        if (offset + DIGEST_LENGTH >= 1536) {
-            log.error("Invalid digest offset");
-        }
-        return offset;
+        return res;
     }
 
     /**
      * Returns a digest byte offset.
      * 
-     * @param pBuffer
-     *            source for digest data
+     * @param handshake
+     * @param bufferOffset
      * @return digest offset
      */
-    protected int getDigestOffset1(byte[] pBuffer) {
-        if (log.isTraceEnabled()) {
-            log.trace("Scheme 1 offset bytes {},{},{},{}", new Object[] { (pBuffer[772] & 0x0ff), (pBuffer[773] & 0x0ff), (pBuffer[774] & 0x0ff), (pBuffer[775] & 0x0ff) });
+    protected int getDigestOffset2(byte[] handshake, int bufferOffset) {
+        bufferOffset += 772;
+        int offset = handshake[bufferOffset] & 0xff; // & 0x0ff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        bufferOffset++;
+        offset += handshake[bufferOffset] & 0xff;
+        int res = Math.abs((offset % 728) + 776);
+        if (res + DIGEST_LENGTH > 1535) {
+            log.error("Invalid digest offset calc: {}", res);
         }
-        int offset = (pBuffer[772] & 0x0ff) + (pBuffer[773] & 0x0ff) + (pBuffer[774] & 0x0ff) + (pBuffer[775] & 0x0ff);
-        offset = offset % 728;
-        offset = offset + 776;
-        if (offset + DIGEST_LENGTH >= 1536) {
-            log.error("Invalid digest offset");
+        return res;
+    }
+
+    /**
+     * RTMPE type 8 uses XTEA on the regular signature http://en.wikipedia.org/wiki/XTEA
+     * 
+     * @param array
+     * @param offset
+     * @param keyid
+     */
+    public final static void getXteaSignature(byte[] array, int offset, int keyid) {
+        int num_rounds = 32;
+        int v0, v1, sum = 0, delta = 0x9E3779B9;
+        int[] k = XTEA_KEYS[keyid];
+        v0 = ByteBuffer.wrap(array, offset, 4).getInt();
+        v1 = ByteBuffer.wrap(array, offset + 4, 4).getInt();
+        for (int i = 0; i < num_rounds; i++) {
+            v0 += (((v1 << 4) ^ (v1 >> 5)) + v1) ^ (sum + k[sum & 3]);
+            sum += delta;
+            v1 += (((v0 << 4) ^ (v0 >> 5)) + v0) ^ (sum + k[(sum >> 11) & 3]);
         }
-        return offset;
+        ByteBuffer tmp = ByteBuffer.allocate(4);
+        tmp.putInt(v0);
+        tmp.flip();
+        System.arraycopy(tmp.array(), 0, array, offset, 4);
+        tmp.clear();
+        tmp.putInt(v1);
+        tmp.flip();
+        System.arraycopy(tmp.array(), 0, array, offset + 4, 4);
+    }
+
+    /**
+     * RTMPE type 9 uses Blowfish on the regular signature http://en.wikipedia.org/wiki/Blowfish_(cipher)
+     * 
+     * @param array
+     * @param offset
+     * @param keyid
+     */
+    public final static void getBlowfishSignature(byte[] array, int offset, int keyid) {
+        BlowfishEngine bf = new BlowfishEngine();
+        // need to use little endian
+        bf.init(true, new KeyParameter(BLOWFISH_KEYS[keyid]));
+        byte[] output = new byte[8];
+        bf.processBlock(array, offset, output, 0);
+        System.arraycopy(output, 0, array, offset, 8);
+    }
+
+    /**
+     * Returns whether or not a given handshake type is valid.
+     * 
+     * @param handshakeType
+     * @return true if valid and supported, false otherwise
+     */
+    public final static boolean validHandshakeType(byte handshakeType) {
+        switch (handshakeType) {
+            case RTMPConnection.RTMP_NON_ENCRYPTED:
+            case RTMPConnection.RTMP_ENCRYPTED:
+            case RTMPConnection.RTMP_ENCRYPTED_XTEA:
+            case RTMPConnection.RTMP_ENCRYPTED_BLOWFISH:
+            case RTMPConnection.RTMP_ENCRYPTED_UNK:
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether or not encryptions is in use.
+     * 
+     * @return true if handshake type is an encrypted type, false otherwise
+     */
+    public boolean useEncryption() {
+        switch (handshakeType) {
+            case RTMPConnection.RTMP_ENCRYPTED:
+            case RTMPConnection.RTMP_ENCRYPTED_XTEA:
+            case RTMPConnection.RTMP_ENCRYPTED_BLOWFISH:
+                return true;
+        }
+        return false;
     }
 
     /**
@@ -410,8 +629,7 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Sets the handshake type. Currently only two types are supported, plain and encrypted.
      * 
-     * @param handshakeType
-     *            handshake type
+     * @param handshakeType handshake type
      */
     public void setHandshakeType(byte handshakeType) {
         log.trace("Setting handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
