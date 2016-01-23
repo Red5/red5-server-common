@@ -208,21 +208,23 @@ public abstract class RTMPHandshake implements IHandshake {
         log.debug("Shared secret: {}", Hex.encodeHexString(sharedSecret));
         // create output cipher
         log.debug("Outgoing public key [{}]: {}", outgoingPublicKey.length, Hex.encodeHexString(outgoingPublicKey));
-        byte[] rc4keyOut = new byte[16];
+        byte[] rc4keyOut = new byte[32];
+        // digest is 32 bytes, but our key is 16
         calculateHMAC_SHA256(outgoingPublicKey, 0, outgoingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyOut, 0);
         try {
             cipherOut = Cipher.getInstance("RC4");
-            cipherOut.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(rc4keyOut, "RC4"));
+            cipherOut.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(rc4keyOut, 0, 16, "RC4"));
         } catch (Exception e) {
             log.warn("Encryption cipher creation failed", e);
         }
         // create input cipher
         log.debug("Incoming public key [{}]: {}", incomingPublicKey.length, Hex.encodeHexString(incomingPublicKey));
-        byte[] rc4keyIn = new byte[16];
+        // digest is 32 bytes, but our key is 16
+        byte[] rc4keyIn = new byte[32];
         calculateHMAC_SHA256(incomingPublicKey, 0, incomingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyIn, 0);
         try {
             cipherIn = Cipher.getInstance("RC4");
-            cipherIn.init(Cipher.DECRYPT_MODE, new SecretKeySpec(rc4keyIn, "RC4"));
+            cipherIn.init(Cipher.DECRYPT_MODE, new SecretKeySpec(rc4keyIn, 0, 16, "RC4"));
         } catch (Exception e) {
             log.warn("Decryption cipher creation failed", e);
         }
@@ -370,11 +372,12 @@ public abstract class RTMPHandshake implements IHandshake {
             log.trace("calculateHMAC_SHA256 - keyLen: {} key: {}", keyLen, Hex.encodeHexString(Arrays.copyOf(key, keyLen)));
             log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
         }
+        byte[] calcDigest;
         try {
             Mac hmac = Mac.getInstance("HmacSHA256");
             hmac.init(new SecretKeySpec(Arrays.copyOf(key, keyLen), "HmacSHA256"));
             byte[] actualMessage = Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen);
-            byte[] calcDigest = hmac.doFinal(actualMessage);
+            calcDigest = hmac.doFinal(actualMessage);
             //if (log.isTraceEnabled()) {
             //    log.trace("Calculated digest: {}", Hex.encodeHexString(calcDigest));
             //}
