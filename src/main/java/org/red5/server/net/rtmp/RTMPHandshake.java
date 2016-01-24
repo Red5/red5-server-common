@@ -148,7 +148,7 @@ public abstract class RTMPHandshake implements IHandshake {
 
     protected static final BigInteger DH_BASE = BigInteger.valueOf(2);
 
-    protected static final int HANDSHAKE_SIZE_SERVER = (Constants.HANDSHAKE_SIZE * 2) + 1;
+    protected static final int HANDSHAKE_SIZE_SERVER = (Constants.HANDSHAKE_SIZE * 2) + 1; // 3073
 
     protected static final int DIGEST_LENGTH = 32;
 
@@ -621,15 +621,6 @@ public abstract class RTMPHandshake implements IHandshake {
                 return true;
         }
         return false;
-    }
-
-    /**
-     * Creates the servers handshake bytes
-     * 
-     * @return handshake bytes
-     */
-    public byte[] getHandshakeBytes() {
-        return handshakeBytes;
     }
 
     /**
