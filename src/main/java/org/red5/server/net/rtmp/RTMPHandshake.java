@@ -42,6 +42,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.engines.BlowfishEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.BigIntegers;
 import org.red5.server.net.IHandshake;
 import org.red5.server.net.rtmp.message.Constants;
 import org.slf4j.Logger;
@@ -171,6 +172,9 @@ public abstract class RTMPHandshake implements IHandshake {
     // clients public key
     protected byte[] outgoingPublicKey;
 
+    // uncompressed swf size
+    protected int swfSize;
+
     // swf verification bytes
     protected byte[] swfVerificationBytes;
 
@@ -211,6 +215,7 @@ public abstract class RTMPHandshake implements IHandshake {
         byte[] rc4keyOut = new byte[32];
         // digest is 32 bytes, but our key is 16
         calculateHMAC_SHA256(outgoingPublicKey, 0, outgoingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyOut, 0);
+        log.debug("RC4 Out Key: {}", Hex.encodeHexString(Arrays.copyOfRange(rc4keyOut, 0, 16)));
         try {
             cipherOut = Cipher.getInstance("RC4");
             cipherOut.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(rc4keyOut, 0, 16, "RC4"));
@@ -222,18 +227,13 @@ public abstract class RTMPHandshake implements IHandshake {
         // digest is 32 bytes, but our key is 16
         byte[] rc4keyIn = new byte[32];
         calculateHMAC_SHA256(incomingPublicKey, 0, incomingPublicKey.length, sharedSecret, KEY_LENGTH, rc4keyIn, 0);
+        log.debug("RC4 In Key: {}", Hex.encodeHexString(Arrays.copyOfRange(rc4keyIn, 0, 16)));
         try {
             cipherIn = Cipher.getInstance("RC4");
             cipherIn.init(Cipher.DECRYPT_MODE, new SecretKeySpec(rc4keyIn, 0, 16, "RC4"));
         } catch (Exception e) {
             log.warn("Decryption cipher creation failed", e);
         }
-        // update 'encoder / decoder state' for the RC4 keys both parties *pretend* as if handshake part 2 (1536 bytes) was encrypted
-        // effectively this hides / discards the first few bytes of encrypted session which is known to increase the secure-ness of RC4
-        // RC4 state is just a function of number of bytes processed so far that's why we just run 1536 arbitrary bytes through the keys below
-        byte[] dummyBytes = new byte[Constants.HANDSHAKE_SIZE];
-        cipherIn.update(dummyBytes);
-        cipherOut.update(dummyBytes);
     }
 
     /**
@@ -249,6 +249,7 @@ public abstract class RTMPHandshake implements IHandshake {
             keyGen.initialize(keySpec);
             keyPair = keyGen.generateKeyPair();
             keyAgreement = KeyAgreement.getInstance("DH");
+            // key agreement is initialized with "this" ends private key
             keyAgreement.init(keyPair.getPrivate());
         } catch (Exception e) {
             log.error("Error generating keypair", e);
@@ -266,9 +267,11 @@ public abstract class RTMPHandshake implements IHandshake {
         DHPublicKey incomingPublicKey = (DHPublicKey) keyPair.getPublic();
         BigInteger dhY = incomingPublicKey.getY();
         if (log.isDebugEnabled()) {
-            log.debug("Public key: {}", Hex.encodeHexString(dhY.toByteArray()));
+            //log.debug("Public key: {}", Hex.encodeHexString(dhY.toByteArray()));
+            log.debug("Public key: {}", Hex.encodeHexString(BigIntegers.asUnsignedByteArray(dhY)));
         }
-        return Arrays.copyOfRange(dhY.toByteArray(), 0, KEY_LENGTH);
+        //return Arrays.copyOfRange(dhY.toByteArray(), 0, KEY_LENGTH);
+        return Arrays.copyOfRange(BigIntegers.asUnsignedByteArray(dhY), 0, KEY_LENGTH);
     }
 
     /**
@@ -374,7 +377,7 @@ public abstract class RTMPHandshake implements IHandshake {
         }
         byte[] calcDigest;
         try {
-            Mac hmac = Mac.getInstance("HmacSHA256");
+            Mac hmac = Mac.getInstance("Hmac-SHA256", BouncyCastleProvider.PROVIDER_NAME);
             hmac.init(new SecretKeySpec(Arrays.copyOf(key, keyLen), "HmacSHA256"));
             byte[] actualMessage = Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen);
             calcDigest = hmac.doFinal(actualMessage);
