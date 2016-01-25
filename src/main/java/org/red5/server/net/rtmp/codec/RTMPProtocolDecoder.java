@@ -174,10 +174,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             switch (connectionState) {
                 case RTMP.STATE_CONNECTED:
                     return decodePacket(conn, state, in);
-                case RTMP.STATE_CONNECT:
-                    return decodeHandshakeS1(conn, state, in);
-                case RTMP.STATE_HANDSHAKE:
-                    return decodeHandshakeS2(conn, state, in);
                 case RTMP.STATE_ERROR:
                 case RTMP.STATE_DISCONNECTING:
                 case RTMP.STATE_DISCONNECTED:
@@ -200,71 +196,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     }
 
     /**
-     * Decodes handshake message for step 1, RTMP.STATE_CONNECT.
-     * 
-     * @param conn
-     *            Connection
-     * @param state
-     *            protocol decode state
-     * @param in
-     *            IoBuffer
-     * @return IoBuffer
-     */
-    public IoBuffer decodeHandshakeS1(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
-        // first step: client has connected and handshaking is not complete
-        if (log.isDebugEnabled()) {
-            log.debug("decodeHandshake - state: {} buffer: {}", state, in);
-        }
-        // number of byte remaining in the buffer
-        int remaining = in.remaining();
-        if (remaining < HANDSHAKE_SIZE + 1) {
-            log.debug("Handshake init too small, buffering. remaining: {}", remaining);
-            state.bufferDecoding(HANDSHAKE_SIZE + 1);
-        } else {
-            final IoBuffer hs = IoBuffer.allocate(HANDSHAKE_SIZE);
-            in.get(); // skip the header byte
-            BufferUtils.put(hs, in, HANDSHAKE_SIZE);
-            hs.flip();
-            conn.setStateCode(RTMP.STATE_HANDSHAKE);
-            return hs;
-        }
-        return null;
-    }
-
-    /**
-     * Decodes handshake message for step 2, RTMP.STATE_HANDSHAKE.
-     * 
-     * @param conn
-     *            Connection
-     * @param state
-     *            protocol decode state
-     * @param in
-     *            IoBuffer
-     * @return IoBuffer
-     */
-    public IoBuffer decodeHandshakeS2(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
-        // second step: all handshake data received, collecting handshake reply data
-        log.debug("decodeHandshake - state: {} buffer: {}", state, in);
-        // number of byte remaining in the buffer
-        int remaining = in.remaining();
-        // TODO Paul: re-examine how remaining data is buffered between handshake reply and next message when using rtmpe
-        // connections sending partial tcp are getting dropped
-        log.debug("Handshake reply");
-        // how many bytes left to get
-        int required = state.getDecoderBufferAmount();
-        log.trace("Handshake reply - required: {} remaining: {}", required, remaining);
-        if (remaining < HANDSHAKE_SIZE) {
-            log.debug("Handshake reply too small, buffering. remaining: {}", remaining);
-            state.bufferDecoding(HANDSHAKE_SIZE);
-        } else {
-            in.skip(HANDSHAKE_SIZE);
-            conn.setStateCode(RTMP.STATE_CONNECTED);
-            state.continueDecoding();
-        }
-        return null;
-    }
-
-    /**
      * Decodes an IoBuffer into a Packet.
      * 
      * @param conn Connection
@@ -277,7 +208,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             log.trace("decodePacket - state: {} buffer: {}", state, in);
         }
         final int remaining = in.remaining();
-        // We need at least one byte
+        // at least one byte for valid decode
         if (remaining < 1) {
             state.bufferDecoding(1);
             return null;

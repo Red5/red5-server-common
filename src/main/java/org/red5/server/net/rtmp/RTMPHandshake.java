@@ -65,9 +65,6 @@ public abstract class RTMPHandshake implements IHandshake {
 
     public final static String[] HANDSHAKE_TYPES = {"Undefined0", "Undefined1", "Undefined2", "RTMP", "Undefined4", "Undefined5", "RTMPE", "Undefined7", "RTMPE XTEA", "RTMPE BLOWFISH"};
 
-    //for old style handshake
-    public static byte[] HANDSHAKE_PAD_BYTES;
-
     public static final byte[] GENUINE_FMS_KEY = { 
         (byte) 0x47, (byte) 0x65, (byte) 0x6e, (byte) 0x75, (byte) 0x69, (byte) 0x6e, (byte) 0x65, (byte) 0x20, (byte) 0x41, (byte) 0x64, (byte) 0x6f, (byte) 0x62,
         (byte) 0x65, (byte) 0x20, (byte) 0x46, (byte) 0x6c,
