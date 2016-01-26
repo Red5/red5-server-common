@@ -346,10 +346,8 @@ public abstract class RTMPHandshake implements IHandshake {
         }
         byte[] calcDigest = new byte[DIGEST_LENGTH];
         calculateDigest(digestPos, handshakeMessage, 0, key, keyLen, calcDigest, 0);
-        for (int i = 0; i < DIGEST_LENGTH; i++) {
-            if (handshakeMessage[digestPos + i] != calcDigest[i]) {
-                return false;
-            }
+        if (!Arrays.equals(Arrays.copyOfRange(handshakeMessage, digestPos, (digestPos + DIGEST_LENGTH)), calcDigest)) {
+            return false;
         }
         return true;
     }
