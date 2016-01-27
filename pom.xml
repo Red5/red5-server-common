@@ -230,36 +230,8 @@
                         <groupId>commons-codec</groupId>
                     </exclusion>
                     <exclusion>
-                        <artifactId>commons-collections</artifactId>
-                        <groupId>commons-collections</groupId>
-                    </exclusion>
-                    <exclusion>
                         <artifactId>commons-lang3</artifactId>
                         <groupId>org.apache.commons</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-aop</artifactId>
-                        <groupId>org.springframework</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-beans</artifactId>
-                        <groupId>org.springframework</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-core</artifactId>
-                        <groupId>org.springframework</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-context</artifactId>
-                        <groupId>org.springframework</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-context-support</artifactId>
-                        <groupId>org.springframework</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>spring-expression</artifactId>
-                        <groupId>org.springframework</groupId>
                     </exclusion>
                     <exclusion>
                         <artifactId>spring-web</artifactId>
@@ -344,14 +316,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
         </dependency>
         <dependency>
@@ -372,11 +336,6 @@
             <artifactId>commons-codec</artifactId>
             <groupId>commons-codec</groupId>
             <version>${commons-codec.version}</version>
-        </dependency>
-        <dependency>
-            <artifactId>commons-collections</artifactId>
-            <groupId>commons-collections</groupId>
-            <version>3.2.2</version>
         </dependency>
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
