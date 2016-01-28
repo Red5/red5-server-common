@@ -68,7 +68,7 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
                 Semaphore lock = conn.getEncoderLock();
                 try {
                     // acquire the encoder lock
-                    log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
+                    //log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
                     lock.acquire();
                     log.trace("Encoder lock acquired {}", conn.getSessionId());
                     // get the buffer

@@ -74,7 +74,7 @@ public abstract class RTMPHandshake implements IHandshake {
         (byte) 0xf0, (byte) 0xee, (byte) 0xc2, (byte) 0x4a, (byte) 0x80, (byte) 0x68, (byte) 0xbe, (byte) 0xe8, (byte) 0x2e, (byte) 0x00, (byte) 0xd0, (byte) 0xd1,
         (byte) 0x02, (byte) 0x9e, (byte) 0x7e, (byte) 0x57, (byte) 0x6e, (byte) 0xec, (byte) 0x5d, (byte) 0x2d, (byte) 0x29, (byte) 0x80, (byte) 0x6f, (byte) 0xab,
         (byte) 0x93, (byte) 0xb8, (byte) 0xe6, (byte) 0x36,
-        (byte) 0xcf, (byte) 0xeb, (byte) 0x31, (byte) 0xae };
+        (byte) 0xcf, (byte) 0xeb, (byte) 0x31, (byte) 0xae }; // 68
 
     public static final byte[] GENUINE_FP_KEY = {
         (byte) 0x47, (byte) 0x65, (byte) 0x6E, (byte) 0x75, (byte) 0x69, (byte) 0x6E, (byte) 0x65, (byte) 0x20, (byte) 0x41, (byte) 0x64, (byte) 0x6F, (byte) 0x62,
@@ -85,7 +85,7 @@ public abstract class RTMPHandshake implements IHandshake {
         (byte) 0xC2, (byte) 0x4A, (byte) 0x80, (byte) 0x68, (byte) 0xBE, (byte) 0xE8, (byte) 0x2E, (byte) 0x00, (byte) 0xD0, (byte) 0xD1, (byte) 0x02, (byte) 0x9E,
         (byte) 0x7E, (byte) 0x57, (byte) 0x6E, (byte) 0xEC,
         (byte) 0x5D, (byte) 0x2D, (byte) 0x29, (byte) 0x80, (byte) 0x6F, (byte) 0xAB, (byte) 0x93, (byte) 0xB8, (byte) 0xE6, (byte) 0x36, (byte) 0xCF, (byte) 0xEB,
-        (byte) 0x31, (byte) 0xAE };
+        (byte) 0x31, (byte) 0xAE }; // 62
 
     /** "Second Oakley Default Group" from RFC2409, section 6.2. */
     protected static final byte[] DH_MODULUS_BYTES = {
@@ -144,8 +144,6 @@ public abstract class RTMPHandshake implements IHandshake {
     protected static final BigInteger DH_MODULUS = new BigInteger(1, DH_MODULUS_BYTES);
 
     protected static final BigInteger DH_BASE = BigInteger.valueOf(2);
-
-    protected static final int HANDSHAKE_SIZE_SERVER = (Constants.HANDSHAKE_SIZE * 2) + 1; // 3073
 
     protected static final int DIGEST_LENGTH = 32;
 
@@ -264,10 +262,8 @@ public abstract class RTMPHandshake implements IHandshake {
         DHPublicKey incomingPublicKey = (DHPublicKey) keyPair.getPublic();
         BigInteger dhY = incomingPublicKey.getY();
         if (log.isDebugEnabled()) {
-            //log.debug("Public key: {}", Hex.encodeHexString(dhY.toByteArray()));
             log.debug("Public key: {}", Hex.encodeHexString(BigIntegers.asUnsignedByteArray(dhY)));
         }
-        //return Arrays.copyOfRange(dhY.toByteArray(), 0, KEY_LENGTH);
         return Arrays.copyOfRange(BigIntegers.asUnsignedByteArray(dhY), 0, KEY_LENGTH);
     }
 

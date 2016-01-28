@@ -141,9 +141,11 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 conn.close();
             } finally {
                 if (log.isTraceEnabled()) {
-                    log.trace("decodeBuffer - post decode input buffer position: {}", buffer.position());
+                    log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
                 }
-                buffer.compact();
+                if (buffer.remaining() > 0) {
+                    buffer.compact();
+                }
             }
         } else {
             log.error("Decoding buffer failed, no current connection!?");
@@ -215,8 +217,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         final int position = in.position();
         byte headerByte = in.get();
-        int headerValue;
-        int byteCount;
+        int headerValue, byteCount;
         if ((headerByte & 0x3f) == 0) {
             // Two byte header
             if (remaining < 2) {
