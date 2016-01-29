@@ -18,6 +18,7 @@
 
 package org.red5.server.net.rtmp.codec;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -27,7 +28,7 @@ import org.apache.mina.filter.codec.ProtocolCodecException;
 import org.apache.mina.filter.codec.ProtocolDecoderAdapter;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
 import org.red5.server.api.Red5;
-import org.red5.server.net.rtmp.RTMPConnManager;
+import org.red5.server.net.IConnectionManager;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +48,9 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
         String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
         log.trace("Session id: {}", sessionId);
         // connection verification routine
-        RTMPConnection conn = (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
+        @SuppressWarnings("unchecked")
+        IConnectionManager<RTMPConnection> connManager = (IConnectionManager<RTMPConnection>) ((WeakReference<?>) session.getAttribute(RTMPConnection.RTMP_CONN_MANAGER)).get();
+        RTMPConnection conn = (RTMPConnection) connManager.getConnectionBySessionId(sessionId);
         RTMPConnection connLocal = (RTMPConnection) Red5.getConnectionLocal();
         if (connLocal == null || !conn.getSessionId().equals(connLocal.getSessionId())) {
             if (log.isDebugEnabled() && connLocal != null) {

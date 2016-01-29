@@ -100,7 +100,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
     public static final String RTMP_HANDSHAKE = "rtmp.handshake";
 
-    public static final String RTMPS_STATE = "rtmps.state";
+    public static final String RTMP_CONN_MANAGER = "rtmp.connection.manager";
 
     /**
      * Marker byte for standard or non-encrypted RTMP data.

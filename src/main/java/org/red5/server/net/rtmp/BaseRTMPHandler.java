@@ -184,8 +184,6 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
             }
             // set as disconnected
             conn.setStateCode(RTMP.STATE_DISCONNECTED);
-            // remove from the manager
-            RTMPConnManager.getInstance().removeConnection(conn.getSessionId());
         }
         log.trace("connectionClosed: {}", conn);
     }

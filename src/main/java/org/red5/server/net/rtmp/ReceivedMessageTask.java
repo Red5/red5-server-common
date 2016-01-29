@@ -55,10 +55,6 @@ public final class ReceivedMessageTask implements Callable<Packet> {
 
     private ScheduledFuture<Runnable> deadlockFuture;
 
-    public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler) {
-        this(sessionId, packet, handler, (RTMPConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId));
-    }
-
     public ReceivedMessageTask(String sessionId, Packet packet, IRTMPHandler handler, RTMPConnection conn) {
         this.sessionId = sessionId;
         this.packet = packet;

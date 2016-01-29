@@ -112,6 +112,8 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
         super.close();
         log.debug("IO Session closing: {}", (ioSession != null ? ioSession.isClosing() : null));
         if (ioSession != null && !ioSession.isClosing()) {
+            // set a ref to ourself so that the handler can be notified when close future is done
+            final RTMPMinaConnection self = this;
             // close now, no flushing, no waiting
             final CloseFuture future = ioSession.close(true);
             log.debug("Connection close future: {}", future);
@@ -122,10 +124,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
                         if (log.isTraceEnabled()) {
                             log.trace("Session id - local: {} session: {}", getSessionId(), (String) ioSession.removeAttribute(RTMPConnection.RTMP_SESSION_ID));
                         }
-                        RTMPMinaConnection conn = (RTMPMinaConnection) RTMPConnManager.getInstance().getConnectionBySessionId(sessionId);
-                        if (conn != null) {
-                            handler.connectionClosed(conn);
-                        }
+                        handler.connectionClosed(self);
                     } else {
                         log.debug("Connection is not yet closed");
                     }
