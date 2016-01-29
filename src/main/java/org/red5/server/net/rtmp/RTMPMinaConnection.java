@@ -146,6 +146,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
      * 
      * @return MINA O/I session, connection between two end-points
      */
+    @Override
     public IoSession getIoSession() {
         return ioSession;
     }

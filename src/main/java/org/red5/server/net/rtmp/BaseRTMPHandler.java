@@ -18,9 +18,11 @@
 
 package org.red5.server.net.rtmp;
 
+import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.mina.core.session.IoSession;
 import org.red5.io.object.StreamAction;
 import org.red5.server.api.event.IEventDispatcher;
 import org.red5.server.api.service.IPendingServiceCall;
@@ -28,6 +30,7 @@ import org.red5.server.api.service.IPendingServiceCallback;
 import org.red5.server.api.service.IServiceCall;
 import org.red5.server.api.stream.IClientStream;
 import org.red5.server.net.ICommand;
+import org.red5.server.net.IConnectionManager;
 import org.red5.server.net.rtmp.codec.RTMP;
 import org.red5.server.net.rtmp.event.BytesRead;
 import org.red5.server.net.rtmp.event.ChunkSize;
@@ -119,9 +122,8 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                             }
                         }
                         break;
-                    case TYPE_NOTIFY: // like an invoke, but does not return
-                                      // anything and has a invoke / transaction
-                                      // id of 0
+                    case TYPE_NOTIFY: 
+                        // like an invoke, but does not return anything and has a invoke / transaction id of 0
                     case TYPE_FLEX_STREAM_SEND:
                         if (((Notify) message).getData() != null && stream != null) {
                             // Stream metadata
@@ -175,8 +177,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
     public void connectionClosed(RTMPConnection conn) {
         log.debug("connectionClosed: {}", conn.getSessionId());
         if (conn.getStateCode() != RTMP.STATE_DISCONNECTED) {
-            // inform any callbacks for pending calls that the connection is
-            // closed
+            // inform any callbacks for pending calls that the connection is closed
             conn.sendPendingServiceCallsCloseError();
             // close the connection
             if (conn.getStateCode() != RTMP.STATE_DISCONNECTING) {
@@ -184,6 +185,16 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
             }
             // set as disconnected
             conn.setStateCode(RTMP.STATE_DISCONNECTED);
+        }
+        IoSession session = conn.getIoSession();
+        if (session != null && session.containsAttribute(RTMPConnection.RTMP_CONN_MANAGER)) {
+            @SuppressWarnings("unchecked")
+            IConnectionManager<RTMPConnection> connManager = (IConnectionManager<RTMPConnection>) ((WeakReference<?>) session.getAttribute(RTMPConnection.RTMP_CONN_MANAGER)).get();
+            if (connManager != null) {
+                connManager.removeConnection(conn.getSessionId());
+            } else {
+                log.debug("Connection manager was not found in the session");
+            }
         }
         log.trace("connectionClosed: {}", conn);
     }

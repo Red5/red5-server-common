@@ -203,15 +203,7 @@ public class RTMPHandler extends BaseRTMPHandler {
      *            Service call
      * @param service
      *            Server-side service object
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if the call was performed, otherwise
-     * 
-     *         <pre>
-     * false
-     * </pre>
+     * @return true if the call was performed, otherwise false
      */
     private boolean invokeCall(RTMPConnection conn, IServiceCall call, Object service) {
         final IScope scope = conn.getScope();

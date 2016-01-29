@@ -364,11 +364,6 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
                 }
             }
         }
-        // disconnect from old scope(s), then reconnect to new scopes. 
-        // this is necessary because there may be an intersection between the hierarchies.
-        //if (scope != null) {
-        //	scope.disconnect(this);
-        //}
         scope = (Scope) newScope;
         return scope.connect(this, params);
     }
@@ -386,28 +381,30 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
      * Closes connection
      */
     public void close() {
-        if (closed || scope == null) {
-            log.debug("Close, not connected nothing to do");
+        if (closed) {
+            log.debug("Already closed, nothing to do");
             return;
         }
         closed = true;
-        log.debug("Close, disconnect from scope, and children");
-        try {
-            // unregister all child scopes first
-            for (IBasicScope basicScope : basicScopes) {
-                unregisterBasicScope(basicScope);
-            }
-        } catch (Exception err) {
-            log.error("Error while unregistering basic scopes", err);
-        }
-        // disconnect
         if (scope != null) {
+            log.debug("Close, disconnect from scope, and children");
             try {
-                scope.disconnect(this);
+                // unregister all child scopes first
+                for (IBasicScope basicScope : basicScopes) {
+                    unregisterBasicScope(basicScope);
+                }
             } catch (Exception err) {
-                log.error("Error while disconnecting from scope: {}. {}", scope, err);
+                log.error("Error while unregistering basic scopes", err);
             }
-            scope = null;
+            // disconnect
+            if (scope != null) {
+                try {
+                    scope.disconnect(this);
+                } catch (Exception err) {
+                    log.error("Error while disconnecting from scope: {}. {}", scope, err);
+                }
+                scope = null;
+            }
         }
         // unregister client
         if (client != null && client instanceof Client) {

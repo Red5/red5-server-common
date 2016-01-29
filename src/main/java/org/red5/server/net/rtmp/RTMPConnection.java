@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.mina.core.session.IoSession;
 import org.red5.server.BaseConnection;
 import org.red5.server.api.Red5;
 import org.red5.server.api.event.IEvent;
@@ -416,6 +417,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             log.trace("setStateCode: {} - {}", code, RTMP.states[code]);
         }
         state.setState(code);
+    }
+
+    public IoSession getIoSession() {
+        return null;
     }
 
     /**
@@ -944,7 +949,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                         if (log.isDebugEnabled()) {
                             log.debug("State: {}", RTMP.states[s]);
                         }
-                        state.setState(RTMP.STATE_DISCONNECTING);
+                        setStateCode(RTMP.STATE_DISCONNECTING);
                 }
             }
             Red5.setConnectionLocal(this);

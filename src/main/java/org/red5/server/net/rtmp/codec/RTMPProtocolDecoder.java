@@ -618,11 +618,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             }
             String key = null;
             Object value = null;
-
-            // if (log.isDebugEnabled())
-            // log.debug("type: "+SharedObjectTypeMapping.toString(type));
-
-            // SharedObjectEvent event = new SharedObjectEvent(,null,null);
             final int length = in.getInt();
             if (type == ISharedObjectEvent.Type.CLIENT_STATUS) {
                 // Status code
@@ -715,9 +710,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (log.isTraceEnabled()) {
             log.trace("Action: {} stream id: {}", action, header.getStreamId());
         }
-        //throw a runtime exception if there is no action
+        // throw a runtime exception if there is no action
         if (action != null) {
-            //TODO Handle NetStream.send? Where and how?
+            // TODO Handle NetStream.send? Where and how?
             if (header != null && header.getStreamId().doubleValue() != 0.0d && !isStreamCommand(action)) {
                 // don't decode "NetStream.send" requests
                 in.position(start);
@@ -777,7 +772,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // get the action
         String action = Deserializer.deserialize(input, String.class);
         if (log.isTraceEnabled()) {
-            log.trace("Action " + action);
+            log.trace("Action {}", action);
         }
         //throw a runtime exception if there is no action
         if (action != null) {
@@ -807,7 +802,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             invoke.setCall(call);
             return invoke;
         } else {
-            //TODO replace this with something better as time permits
+            // TODO replace this with something better as time permits
             throw new RuntimeException("Action was null");
         }
     }
@@ -875,20 +870,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public Notify decodeStreamMetadata(IoBuffer in) {
         Encoding encoding = ((RTMPConnection) Red5.getConnectionLocal()).getEncoding();
         Input input = null;
-
-        // check to see if the encoding is set to AMF3. 
-        // if it is then check to see if first byte is set to AMF0
+        // check the encoding, if its AMF3 check to see if first byte is set to AMF0
         byte amfVersion = 0x00;
         if (encoding == Encoding.AMF3) {
+            in.mark();
             amfVersion = in.get();
+            in.reset();
         }
-
-        // reset the position back to 0
-        in.position(0);
-
-        //make a pre-emptive copy of the incoming buffer here to prevent issues that occur fairly often
+        // make a pre-emptive copy of the incoming buffer here to prevent issues that occur fairly often
         IoBuffer copy = in.duplicate();
-
         if (encoding == Encoding.AMF0 || amfVersion != AMF.TYPE_AMF3_OBJECT) {
             input = new org.red5.io.amf.Input(copy);
         } else {
@@ -916,7 +906,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     params = (Map<Object, Object>) input.readObject(Object.class);
                 }
                 log.debug("Dataframe: {} params: {}", onCueOrOnMeta, params.toString());
-
                 IoBuffer buf = IoBuffer.allocate(1024);
                 buf.setAutoExpand(true);
                 Output out = new Output(buf);
@@ -925,7 +914,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 buf.flip();
                 Notify ret = new Notify(buf);
                 ret.setAction(onCueOrOnMeta);
-
                 return ret;
             } else if ("onFI".equals(setData)) {
                 // the onFI request contains 2 items relative to the publishing client application
@@ -1033,18 +1021,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     }
 
     public Notify decodeFlexStreamSend(IoBuffer in) {
-        // grab the initial limit
-        int limit = in.limit();
-
         // remove the first byte
-        in.position(1);
+        in.get();
+        // copy remaining to pos 0, reset mark, move to pos 0
         in.compact();
-        in.rewind();
-
-        // set the limit back to the original minus the one
-        // byte that we removed from the buffer
-        in.limit(limit - 1);
-
         return new FlexStreamSend(in.asReadOnlyBuffer());
     }
 
