@@ -268,7 +268,9 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
     /** {@inheritDoc} */
     @Override
     public boolean isConnected() {
-        log.debug("Connected: {}", (ioSession != null && ioSession.isConnected()));
+        if (log.isTraceEnabled()) {
+            log.trace("Connected: {}", (ioSession != null && ioSession.isConnected()));
+        }
         // XXX Paul: not sure isClosing is actually working as we expect here
         return super.isConnected() && (ioSession != null && ioSession.isConnected());
     }
@@ -277,7 +279,9 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
     @Override
     public boolean isIdle() {
         if (ioSession != null) {
-            log.debug("Connection idle - read: {} write: {}", ioSession.isReaderIdle(), ioSession.isWriterIdle());
+            if (log.isDebugEnabled()) {
+                log.debug("Connection idle - read: {} write: {}", ioSession.isReaderIdle(), ioSession.isWriterIdle());
+            }
             return super.isIdle() && ioSession.isBothIdle();
         }
         return super.isIdle();

@@ -53,12 +53,12 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
         IConnectionManager<RTMPConnection> connManager = (IConnectionManager<RTMPConnection>) ((WeakReference<?>) session.getAttribute(RTMPConnection.RTMP_CONN_MANAGER)).get();
         RTMPConnection conn = (RTMPConnection) connManager.getConnectionBySessionId(sessionId);
         if (conn != null) {
-            RTMPConnection prev = null;
             // look for and compare the connection local; set it from the session
-            if (!conn.equals((RTMPConnection) Red5.getConnectionLocal())) {
-                log.debug("Connection local ({}) didn't match io session ({})", (Red5.getConnectionLocal() != null ? Red5.getConnectionLocal().getSessionId() : "null"), sessionId);
-                // keep track of conn we're replacing
-                prev = (RTMPConnection) Red5.getConnectionLocal();
+            RTMPConnection localConn = (RTMPConnection) Red5.getConnectionLocal();
+            if (!conn.equals(localConn)) {
+                if (localConn != null) {
+                    log.debug("Connection local ({}) didn't match io session ({})", localConn.getSessionId(), sessionId);
+                }
                 // replace conn with the one from the session id lookup
                 Red5.setConnectionLocal(conn);
             }
@@ -97,8 +97,8 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
                 }
             }
             // set connection local back to previous value
-            if (prev != null) {
-                Red5.setConnectionLocal(prev);
+            if (localConn != null) {
+                Red5.setConnectionLocal(localConn);
             }
         } else {
             log.debug("Connection is no longer available for encoding, may have been closed already");

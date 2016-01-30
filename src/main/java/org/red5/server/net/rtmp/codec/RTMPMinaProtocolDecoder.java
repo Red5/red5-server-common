@@ -57,29 +57,35 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
                 log.debug("Connection local didn't match session");
             }
         }
-        // set the connection to local if its referred to by this session
-        Red5.setConnectionLocal(conn);
-        // get the connections decoder lock
-        final Semaphore lock = conn.getDecoderLock();
-        try {
-            // acquire the decoder lock
-            //log.trace("Decoder lock acquiring.. {}", conn.getSessionId());
-            lock.acquire();
-            log.trace("Decoder lock acquired {}", conn.getSessionId());
-            // construct any objects from the decoded bugger
-            List<?> objects = decoder.decodeBuffer(conn, in);
-            if (objects != null) {
-                for (Object object : objects) {
-                    out.write(object);
+        if (conn != null) {
+            // set the connection to local if its referred to by this session
+            Red5.setConnectionLocal(conn);
+            // get the connections decoder lock
+            final Semaphore lock = conn.getDecoderLock();
+            try {
+                // acquire the decoder lock
+                //log.trace("Decoder lock acquiring.. {}", sessionId);
+                lock.acquire();
+                log.trace("Decoder lock acquired {}", sessionId);
+                // construct any objects from the decoded bugger
+                List<?> objects = decoder.decodeBuffer(conn, in);
+                if (objects != null) {
+                    for (Object object : objects) {
+                        out.write(object);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Error during decode", e);
+            } finally {
+                log.trace("Decoder lock releasing.. {}", sessionId);
+                lock.release();
+                // clear local
+                Red5.setConnectionLocal(null);
             }
-        } catch (Exception e) {
-            log.error("Error during decode", e);
-        } finally {
-            log.trace("Decoder lock releasing.. {}", conn.getSessionId());
-            lock.release();
-            // clear local
-            Red5.setConnectionLocal(null);
+        } else {
+            log.debug("Closing and skipping decode for unregistered connection: {}", sessionId);
+            session.close(true);
+            log.debug("Session closing: {} reading: {} writing: {}", session.isClosing(), session.isReadSuspended(), session.isWriteSuspended());
         }
     }
 
