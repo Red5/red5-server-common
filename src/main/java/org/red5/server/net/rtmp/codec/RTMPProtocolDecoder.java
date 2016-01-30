@@ -757,12 +757,11 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
     /** {@inheritDoc} */
     public Invoke decodeInvoke(Encoding encoding, IoBuffer in) {
-        Invoke invoke = new Invoke();
-        int start = in.position();
-        Input input;
-        // for response, the action string and invokeId is always encoded as AMF0 we use the first byte to decide which encoding to use.
+        // for response, the action string and invokeId is always encoded as AMF0 we use the first byte to decide which encoding to use
+        in.mark();
         byte tmp = in.get();
-        in.position(start);
+        in.reset();
+        Input input;
         if (encoding == Encoding.AMF3 && tmp == AMF.TYPE_AMF3_OBJECT) {
             input = new org.red5.io.amf3.Input(in);
             ((org.red5.io.amf3.Input) input).enforceAMF3();
@@ -774,8 +773,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (log.isTraceEnabled()) {
             log.trace("Action {}", action);
         }
-        //throw a runtime exception if there is no action
+        // throw a runtime exception if there is no action
         if (action != null) {
+            Invoke invoke = new Invoke();
             invoke.setTransactionId(Deserializer.<Number> deserialize(input, Number.class).intValue());
             // now go back to the actual encoding to decode parameters
             if (encoding == Encoding.AMF3) {

@@ -57,7 +57,8 @@ public class ReflectionUtils {
     }
 
     /**
-     * Returns (method, params) for the given service or (null, null) if not method was found. XXX use ranking for method matching rather than exact type matching plus type conversion.
+     * Returns (method, params) for the given service or (null, null) if not method was found. XXX use ranking for method matching rather
+     * than exact type matching plus type conversion.
      * 
      * @param service
      *            Service
@@ -67,19 +68,22 @@ public class ReflectionUtils {
      *            Arguments
      * @return Method/params pairs
      */
+    @SuppressWarnings("unchecked")
     public static Object[] findMethodWithExactParameters(Object service, String methodName, Object[] args) {
         int numParams = (args == null) ? 0 : args.length;
+        log.trace("Args / parameters count: {}", numParams);
         Method method = null;
-        try {
-            //try to skip the listing of all the methods by checking for exactly what we want first
-            Class<?>[] params = ConversionUtils.convertParams(args);
-            if (log.isDebugEnabled()) {
-                for (Class<?> clazz : params) {
-                    log.debug("Parameter: {}", clazz);
-                }
+        // convert the args first
+        Object[] params = ConversionUtils.convertParams(args);
+        if (log.isDebugEnabled()) {
+            for (Object clazz : params) {
+                log.debug("Parameter: {}", clazz);
             }
-            method = service.getClass().getMethod(methodName, params);
-            log.debug("Exact method found (skipping list): {}", methodName);
+        }
+        // try to skip the listing of all the methods by checking for exactly what we want first
+        try {
+            method = service.getClass().getMethod(methodName, (Class<?>[]) params);
+            log.debug("Exact method found, skipping list: {}", methodName);
             return new Object[] { method, args };
         } catch (NoSuchMethodException nsme) {
             log.debug("Method not found using exact parameter types");
@@ -93,7 +97,6 @@ public class ReflectionUtils {
         } else if (methods.size() > 1) {
             log.debug("Multiple methods found with same name and parameter count; parameter conversion will be attempted in order.");
         }
-        Object[] params = null;
         // search for method with exact parameters
         for (int i = 0; i < methods.size(); i++) {
             method = methods.get(i);

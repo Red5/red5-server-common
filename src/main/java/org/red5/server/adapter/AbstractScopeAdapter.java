@@ -39,15 +39,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can start flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if scope is ready to be activated,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -56,15 +56,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can connect flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if connections to scope are allowed,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -73,15 +73,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can join flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if scope may be joined by users,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -90,15 +90,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can call service flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if remote service calls are allowed for the scope,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -107,15 +107,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can add child scope flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if scope is allowed to add child scopes,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -124,15 +124,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
     /**
      * Can handle event flag.
      * 
-     * <pre>
+     * <code>
      * true
-     * </pre>
+     * </code>
      * 
      * if events handling is allowed,
      * 
-     * <pre>
+     * <code>
      * false
-     * </pre>
+     * </code>
      * 
      * otherwise
      */
@@ -142,15 +142,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
      * Setter for can start flag.
      *
      * @param canStart
-     *            <pre>
+     *            <code>
      * true
-     * </pre>
+     * </code>
      * 
      *            if scope is ready to be activated,
      * 
-     *            <pre>
+     *            <code>
      * false
-     * </pre>
+     * </code>
      * 
      *            otherwise
      */
@@ -162,15 +162,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
      * Setter for can call service flag
      *
      * @param canCallService
-     *            <pre>
+     *            <code>
      * true
-     * </pre>
+     * </code>
      * 
      *            if remote service calls are allowed for the scope,
      * 
-     *            <pre>
+     *            <code>
      * false
-     * </pre>
+     * </code>
      * 
      *            otherwise
      */
@@ -183,15 +183,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
      * Setter for can connect flag
      *
      * @param canConnect
-     *            <pre>
+     *            <code>
      * true
-     * </pre>
+     * </code>
      * 
      *            if connections to scope are allowed,
      * 
-     *            <pre>
+     *            <code>
      * false
-     * </pre>
+     * </code>
      * 
      *            otherwise
      */
@@ -203,15 +203,15 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
      * Setter for 'can join' flag
      *
      * @param canJoin
-     *            <pre>
+     *            <code>
      * true
-     * </pre>
+     * </code>
      * 
      *            if scope may be joined by users,
      * 
-     *            <pre>
+     *            <code>
      * false
-     * </pre>
+     * </code>
      * 
      *            otherwise
      */

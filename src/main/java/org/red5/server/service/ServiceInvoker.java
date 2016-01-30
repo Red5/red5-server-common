@@ -45,9 +45,6 @@ import org.slf4j.LoggerFactory;
  */
 public class ServiceInvoker implements IServiceInvoker {
 
-    /**
-     * Logger
-     */
     private static final Logger log = LoggerFactory.getLogger(ServiceInvoker.class);
 
     /**
@@ -80,20 +77,21 @@ public class ServiceInvoker implements IServiceInvoker {
      * @return Service handler
      */
     private Object getServiceHandler(IScope scope, String serviceName) {
-        // Get application scope handler first
+        // get application scope handler first
         Object service = scope.getHandler();
         if (serviceName == null || serviceName.equals("")) {
-            // No service requested, return application scope handler
+            // no service requested, return application scope handler
+            log.trace("No service requested, return application scope handler: {}", service);
             return service;
         }
-        // Search service resolver that knows about service name
+        // search service resolver that knows about service name
         for (IServiceResolver resolver : serviceResolvers) {
             service = resolver.resolveService(scope, serviceName);
             if (service != null) {
                 return service;
             }
         }
-        // Requested service does not exist.
+        // requested service does not exist
         return null;
     }
 
@@ -168,11 +166,9 @@ public class ServiceInvoker implements IServiceInvoker {
                 }
             }
         }
-
         Object result = null;
         Method method = (Method) methodResult[0];
         Object[] params = (Object[]) methodResult[1];
-
         try {
             if (method.isAnnotationPresent(DeclarePrivate.class)) {
                 // Method may not be called by clients.

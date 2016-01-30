@@ -213,8 +213,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
             return "";
         } else {
             String host = parts[2];
-            // strip out default port in case the client added the port
-            // explicitly
+            // strip out default port in case the client added the port explicitly
             if (host.endsWith(":1935")) {
                 // remove default port from connection string
                 return host.substring(0, host.length() - 5);
