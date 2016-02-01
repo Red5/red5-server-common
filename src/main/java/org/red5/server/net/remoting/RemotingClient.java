@@ -188,7 +188,6 @@ public class RemotingClient implements IRemotingClient {
      * @param in
      *            Byte buffer with response data
      */
-    @SuppressWarnings("static-access")
     protected void processHeaders(IoBuffer in) {
         log.debug("RemotingClient processHeaders - buffer limit: {}", (in != null ? in.limit() : 0));
         int version = in.getUnsignedShort(); // skip
@@ -198,7 +197,7 @@ public class RemotingClient implements IRemotingClient {
         log.debug("Count: {}", count);
         Input input = new Input(in);
         for (int i = 0; i < count; i++) {
-            String name = input.getString(in);
+            String name = input.getString();
             //String name = deserializer.deserialize(input, String.class);
             log.debug("Name: {}", name);
             boolean required = (in.get() == 0x01);

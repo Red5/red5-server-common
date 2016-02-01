@@ -68,7 +68,6 @@ public class ReflectionUtils {
      *            Arguments
      * @return Method/params pairs
      */
-    @SuppressWarnings("unchecked")
     public static Object[] findMethodWithExactParameters(Object service, String methodName, Object[] args) {
         int numParams = (args == null) ? 0 : args.length;
         log.trace("Args / parameters count: {}", numParams);

@@ -29,6 +29,7 @@ import org.red5.server.net.rtmp.message.Constants;
  * @author Art Clarke (aclarke@xuggle.com)
  */
 public class RTMPUtils implements Constants {
+
     /**
      * Writes reversed integer to buffer.
      *

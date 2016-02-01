@@ -84,8 +84,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decode all available objects in buffer.
      * 
-     * @param conn RTMP connection
-     * @param buffer IoBuffer of data to be decoded
+     * @param conn
+     *            RTMP connection
+     * @param buffer
+     *            IoBuffer of data to be decoded
      * @return a list of decoded objects, may be empty if nothing could be decoded
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
@@ -156,16 +158,21 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes the buffer data.
      * 
-     * @param conn RTMP connection
-     * @param state Stores state for the protocol, ProtocolState is just a marker interface
-     * @param in IoBuffer of data to be decoded
-     * @return one of three possible values: 
-     * <pre>
+     * @param conn
+     *            RTMP connection
+     * @param state
+     *            Stores state for the protocol, ProtocolState is just a marker interface
+     * @param in
+     *            IoBuffer of data to be decoded
+     * @return one of three possible values:
+     * 
+     *         <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
      * </pre>
-     * @throws ProtocolException on error
+     * @throws ProtocolException
+     *             on error
      */
     public Object decode(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) throws ProtocolException {
         if (log.isTraceEnabled()) {
@@ -200,9 +207,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes an IoBuffer into a Packet.
      * 
-     * @param conn Connection
-     * @param state RTMP protocol state
-     * @param in IoBuffer
+     * @param conn
+     *            Connection
+     * @param state
+     *            RTMP protocol state
+     * @param in
+     *            IoBuffer
      * @return Packet
      */
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
@@ -219,7 +229,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         byte headerByte = in.get();
         int headerValue, byteCount;
         if ((headerByte & 0x3f) == 0) {
-            // Two byte header
+            // two byte header
             if (remaining < 2) {
                 in.position(position);
                 state.bufferDecoding(2);
@@ -228,7 +238,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             headerValue = (headerByte & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 2;
         } else if ((headerByte & 0x3f) == 1) {
-            // Three byte header
+            // three byte header
             if (remaining < 3) {
                 in.position(position);
                 state.bufferDecoding(3);
@@ -237,7 +247,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             headerValue = (headerByte & 0xff) << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 3;
         } else {
-            // Single byte header
+            // single byte header
             headerValue = headerByte & 0xff;
             byteCount = 1;
         }
@@ -246,7 +256,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             throw new ProtocolException("Bad channel id: " + channelId);
         }
         RTMP rtmp = conn.getState();
-        // Get the header size and length
+        // get the header size and length
         byte headerSize = RTMPUtils.decodeHeaderSize(headerValue, byteCount);
         int headerLength = RTMPUtils.getHeaderLength(headerSize);
         Header lastHeader = rtmp.getLastReadHeader(channelId);
@@ -276,7 +286,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength);
             return null;
         }
-        // Move the position back to the start
+        // move the position back to the start
         in.position(position);
         final Header header = decodeHeader(in, lastHeader);
         if (header == null) {
@@ -312,9 +322,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
             message.setHeader(packet.getHeader());
-            // Unfortunately flash will, especially when resetting a video stream with a new key frame, sometime 
-            // send an earlier time stamp.  To avoid dropping it, we just give it the minimal increment since the 
-            // last message.  But to avoid relative time stamps being mis-computed, we don't reset the header we stored.
+            // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
+            // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
+            // don't reset the header we stored.
             final Header lastReadHeader = rtmp.getLastReadPacketHeader(channelId);
             if (lastReadHeader != null && (message instanceof AudioData || message instanceof VideoData) && RTMPUtils.compareTimestamps(lastReadHeader.getTimer(), packet.getHeader().getTimer()) >= 0) {
                 log.trace("Non-monotonically increasing timestamps; type: {}; adjusting to {}; ts: {}; last: {}", new Object[] { header.getDataType(), lastReadHeader.getTimer() + 1, header.getTimer(), lastReadHeader.getTimer() });
@@ -346,8 +356,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes packet header.
      * 
-     * @param in Input IoBuffer
-     * @param lastHeader Previous header
+     * @param in
+     *            Input IoBuffer
+     * @param lastHeader
+     *            Previous header
      * @return Decoded header
      */
     public Header decodeHeader(IoBuffer in, Header lastHeader) {
@@ -358,15 +370,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         int headerValue;
         int byteCount = 1;
         if ((headerByte & 0x3f) == 0) {
-            // Two byte header
+            // two byte header
             headerValue = (headerByte & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 2;
         } else if ((headerByte & 0x3f) == 1) {
-            // Three byte header
+            // three byte header
             headerValue = (headerByte & 0xff) << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 3;
         } else {
-            // Single byte header
+            // single byte header
             headerValue = headerByte & 0xff;
             byteCount = 1;
         }
@@ -376,8 +388,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         header.setChannelId(channelId);
         if (headerSize != HEADER_NEW && lastHeader == null) {
             log.error("Last header null not new, headerSize: {}, channelId {}", headerSize, channelId);
-            //this will trigger an error status, which in turn will disconnect the "offending" flash player
-            //preventing a memory leak and bringing the whole server to its knees
+            // this will trigger an error status, which in turn will disconnect the "offending" flash player
+            // preventing a memory leak and bringing the whole server to its knees
             return null;
         }
         int timeValue;
@@ -450,9 +462,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes RTMP message event.
      * 
-     * @param conn RTMP connection
-     * @param header RTMP header
-     * @param in Input IoBuffer
+     * @param conn
+     *            RTMP connection
+     * @param header
+     *            RTMP header
+     * @param in
+     *            Input IoBuffer
      * @return RTMP event
      */
     public IRTMPEvent decodeMessage(RTMPConnection conn, Header header, IoBuffer in) {
@@ -526,7 +541,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes server bandwidth.
      * 
-     * @param in IoBuffer
+     * @param in
+     *            IoBuffer
      * @return RTMP event
      */
     private IRTMPEvent decodeServerBW(IoBuffer in) {
@@ -536,7 +552,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes client bandwidth.
      * 
-     * @param in Byte buffer
+     * @param in
+     *            Byte buffer
      * @return RTMP event
      */
     private IRTMPEvent decodeClientBW(IoBuffer in) {
@@ -603,8 +620,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Perform the actual decoding of the shared object contents.
      * 
-     * @param so Shared object message
-     * @param in input buffer
+     * @param so
+     *            Shared object message
+     * @param in
+     *            input buffer
      * @param input
      */
     protected void doDecodeSharedObject(SharedObjectMessage so, IoBuffer in, Input input) {
@@ -687,8 +706,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decode a Notify.
      * 
-     * @param encoding encoding
-     * @param in input buffer
+     * @param encoding
+     *            encoding
+     * @param in
+     *            input buffer
      * @param header
      * @return decoded notify result
      */
@@ -785,7 +806,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 input = new org.red5.io.amf.Input(in);
             }
             // get / set the parameters if there any
-            Object[] params = handleParameters(in, invoke, input);
+            Object[] params = in.hasRemaining() ? handleParameters(in, invoke, input) : new Object[0];
             // determine service information
             final int dotIndex = action.lastIndexOf('.');
             String serviceName = (dotIndex == -1) ? null : action.substring(0, dotIndex);
@@ -810,7 +831,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes ping event.
      * 
-     * @param in IoBuffer
+     * @param in
+     *            IoBuffer
      * @return Ping event
      */
     public Ping decodePing(IoBuffer in) {
@@ -863,7 +885,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes stream meta data, to include onMetaData, onCuePoint, and onFI.
      * 
-     * @param in input buffer
+     * @param in
+     *            input buffer
      * @return Notify
      */
     @SuppressWarnings("unchecked")
@@ -888,22 +911,22 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         //get the first datatype
         byte dataType = input.readDataType();
         if (dataType == DataTypes.CORE_STRING) {
-            String setData = input.readString(String.class);
+            String setData = input.readString();
             if ("@setDataFrame".equals(setData)) {
                 // get the second datatype
                 byte dataType2 = input.readDataType();
                 log.debug("Dataframe method type: {}", dataType2);
-                String onCueOrOnMeta = input.readString(String.class);
+                String onCueOrOnMeta = input.readString();
                 // get the params datatype
                 byte object = input.readDataType();
                 log.debug("Dataframe params type: {}", object);
                 Map<Object, Object> params;
                 if (object == DataTypes.CORE_MAP) {
                     // the params are sent as a Mixed-Array. Required to support the RTMP publish provided by ffmpeg/xuggler
-                    params = (Map<Object, Object>) input.readMap(null);
+                    params = (Map<Object, Object>) input.readMap();
                 } else {
                     // read the params as a standard object
-                    params = (Map<Object, Object>) input.readObject(Object.class);
+                    params = (Map<Object, Object>) input.readObject();
                 }
                 log.debug("Dataframe: {} params: {}", onCueOrOnMeta, params.toString());
                 IoBuffer buf = IoBuffer.allocate(1024);
@@ -925,10 +948,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     Map<Object, Object> params;
                     if (object == DataTypes.CORE_MAP) {
                         // the params are sent as a Mixed-Array
-                        params = (Map<Object, Object>) input.readMap(null);
+                        params = (Map<Object, Object>) input.readMap();
                     } else {
                         // read the params as a standard object
-                        params = (Map<Object, Object>) input.readObject(Object.class);
+                        params = (Map<Object, Object>) input.readObject();
                     }
                     log.debug("onFI params: {}", params.toString());
                 }
@@ -938,7 +961,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     byte object = input.readDataType();
                     log.debug("Params type: {}", object);
                     if (object == DataTypes.CORE_MAP) {
-                        Map<Object, Object> params = (Map<Object, Object>) input.readMap(null);
+                        Map<Object, Object> params = (Map<Object, Object>) input.readMap();
                         log.debug("Params: {}", params.toString());
                     } else {
                         log.debug("The unknown request was did not provide a parameter map");
@@ -955,7 +978,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes FlexMessage event.
      * 
-     * @param in IoBuffer
+     * @param in
+     *            IoBuffer
      * @return FlexMessage event
      */
     public FlexMessage decodeFlexMessage(IoBuffer in) {
@@ -965,7 +989,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // Encoding of message params can be mixed - some params may be in AMF0, others in AMF3,
         // but according to AMF3 spec, we should collect AMF3 references for the whole message body (through all params)
         org.red5.io.amf3.Input.RefStorage refStorage = new org.red5.io.amf3.Input.RefStorage();
-
         Input input = new org.red5.io.amf.Input(in);
         String action = Deserializer.deserialize(input, String.class);
         int transactionId = Deserializer.<Number> deserialize(input, Number.class).intValue();
@@ -1031,7 +1054,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Checks if the passed action is a reserved stream method.
      * 
-     * @param action Action to check
+     * @param action
+     *            Action to check
      * @return true if passed action is a reserved stream method, false otherwise
      */
     private boolean isStreamCommand(String action) {
@@ -1065,27 +1089,25 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     private Object[] handleParameters(IoBuffer in, Notify notify, Input input) {
         Object[] params = new Object[] {};
-        if (in.hasRemaining()) {
-            List<Object> paramList = new ArrayList<Object>();
-            final Object obj = Deserializer.deserialize(input, Object.class);
-            if (obj instanceof Map) {
-                // Before the actual parameters we sometimes (connect) get a map of parameters, this is usually null, but if set should be
-                // passed to the connection object.
-                @SuppressWarnings("unchecked")
-                final Map<String, Object> connParams = (Map<String, Object>) obj;
-                notify.setConnectionParams(connParams);
-            } else if (obj != null) {
-                paramList.add(obj);
-            }
-            while (in.hasRemaining()) {
-                paramList.add(Deserializer.deserialize(input, Object.class));
-            }
-            params = paramList.toArray();
-            if (log.isDebugEnabled()) {
-                log.debug("Num params: {}", paramList.size());
-                for (int i = 0; i < params.length; i++) {
-                    log.debug(" > {}: {}", i, params[i]);
-                }
+        List<Object> paramList = new ArrayList<Object>();
+        final Object obj = Deserializer.deserialize(input, Object.class);
+        if (obj instanceof Map) {
+            // Before the actual parameters we sometimes (connect) get a map of parameters, this is usually null, but if set should be
+            // passed to the connection object.
+            @SuppressWarnings("unchecked")
+            final Map<String, Object> connParams = (Map<String, Object>) obj;
+            notify.setConnectionParams(connParams);
+        } else if (obj != null) {
+            paramList.add(obj);
+        }
+        while (in.hasRemaining()) {
+            paramList.add(Deserializer.deserialize(input, Object.class));
+        }
+        params = paramList.toArray();
+        if (log.isDebugEnabled()) {
+            log.debug("Num params: {}", paramList.size());
+            for (int i = 0; i < params.length; i++) {
+                log.debug(" > {}: {}", i, params[i]);
             }
         }
         return params;
