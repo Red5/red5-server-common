@@ -165,8 +165,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            IoBuffer of data to be decoded
      * @return one of three possible values:
-     * 
-     *         <pre>
+     * <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
