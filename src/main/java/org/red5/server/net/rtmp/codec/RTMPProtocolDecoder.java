@@ -93,6 +93,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @return a list of decoded objects, may be empty if nothing could be decoded
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
+        if (log.isTraceEnabled()) {
+            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), buffer.position(), buffer.limit()))); // in.position() + in.remaining()
+        }
         // decoded results
         List<Object> result = null;
         if (conn != null) {
@@ -314,7 +317,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         int correction = 0;
-        for (int i = in.position(); i < readAmount; i += CHUNK_SIZE) {
+        //we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
+        for (int i = in.position(); i < in.position() + readAmount; i += CHUNK_SIZE) {
         	if (in.array()[i] == CHUNK_DELIMITER) {
         		i++;
         		correction++;
@@ -331,6 +335,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
+            //we have just decoded full buf, need to advance original IoBuffer
+            in.skip(correction + buf.position());
             message.setHeader(packet.getHeader());
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
             // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
