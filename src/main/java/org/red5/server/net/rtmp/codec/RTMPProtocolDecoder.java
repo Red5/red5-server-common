@@ -24,7 +24,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.mina.core.buffer.IoBuffer;
+import org.bouncycastle.util.Arrays;
 import org.red5.io.amf.AMF;
 import org.red5.io.amf.Output;
 import org.red5.io.amf3.AMF3;
@@ -216,7 +218,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         if (log.isTraceEnabled()) {
-            log.trace("decodePacket - state: {} buffer: {}", state, in);
+            //log.trace("decodePacket - state: {} buffer: {}", state, in);
+            log.trace("decodePacket: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit()))); // in.position() + in.remaining()
         }
         final int remaining = in.remaining();
         // at least one byte for valid decode
@@ -292,16 +295,17 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             throw new ProtocolException("Header is null, check for error");
         }
         rtmp.setLastReadHeader(channelId, header);
-        // check to see if this is a new packets or continue decoding an existing one
+        // check to see if this is a new packet or continue decoding an existing one
         Packet packet = rtmp.getLastReadPacket(channelId);
         if (packet == null) {
             packet = new Packet(header.clone());
             rtmp.setLastReadPacket(channelId, packet);
         }
-        final IoBuffer buf = packet.getData();
-        final int readRemaining = header.getSize() - buf.position();
-        final int chunkSize = rtmp.getReadChunkSize();
-        final int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
+        IoBuffer buf = packet.getData();
+        int readRemaining = header.getSize() - buf.position();
+        //int chunkSize = rtmp.getReadChunkSize();
+        //int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
+        int readAmount = readRemaining;
         if (in.remaining() < readAmount) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
             // skip the position back to the start
@@ -309,7 +313,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength + readAmount);
             return null;
         }
-        BufferUtils.put(buf, in, readAmount);
+        buf.put(in.array(), in.position(), readAmount);
+        //BufferUtils.put(buf, in, readAmount);
         if (buf.position() < header.getSize()) {
             state.continueDecoding();
             return null;
@@ -363,7 +368,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Header decodeHeader(IoBuffer in, Header lastHeader) {
         if (log.isTraceEnabled()) {
-            log.trace("decodeHeader - lastHeader: {} buffer: {}", lastHeader, in);
+            //log.trace("decodeHeader - lastHeader: {} buffer: {}", lastHeader, in);
+            log.trace("decodeHeader: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
+            log.trace("lastHeader: {}", lastHeader);
         }
         byte headerByte = in.get();
         int headerValue;

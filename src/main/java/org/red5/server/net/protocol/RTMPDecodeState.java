@@ -53,6 +53,11 @@ public class RTMPDecodeState {
      */
     private byte decoderState = DECODER_OK;
 
+    /**
+     * Names for the states.
+     */
+    private static final String[] names = new String[]{"Ok", "Continue", "Buffer"};
+
     public RTMPDecodeState(String sessionId) {
         this.sessionId = sessionId;
     }
@@ -139,7 +144,7 @@ public class RTMPDecodeState {
      */
     @Override
     public String toString() {
-        return "RTMPDecodeState [sessionId=" + sessionId + ", decoderState=" + decoderState + ", decoderBufferAmount=" + decoderBufferAmount + "]";
+        return "RTMPDecodeState [sessionId=" + sessionId + ", decoderState=" + names[decoderState] + ", decoderBufferAmount=" + decoderBufferAmount + "]";
     }
 
 }
