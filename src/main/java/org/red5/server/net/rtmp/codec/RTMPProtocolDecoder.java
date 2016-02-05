@@ -34,7 +34,6 @@ import org.red5.io.object.DataTypes;
 import org.red5.io.object.Deserializer;
 import org.red5.io.object.Input;
 import org.red5.io.object.StreamAction;
-import org.red5.io.utils.BufferUtils;
 import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
 import org.red5.server.net.protocol.HandshakeFailedException;
