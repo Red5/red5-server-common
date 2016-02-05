@@ -75,8 +75,9 @@ import org.slf4j.LoggerFactory;
  * RTMP protocol decoder.
  */
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
-
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+    private static final int CHUNK_SIZE = 0x80;
+    private static final byte CHUNK_DELIMITER = (byte)0xC3;
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -312,9 +313,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength + readAmount);
             return null;
         }
-        buf.put(in.array(), in.position(), readAmount);
-        //BufferUtils.put(buf, in, readAmount);
-        if (buf.position() < header.getSize()) {
+        int correction = 0;
+        for (int i = in.position(); i < readAmount; i += CHUNK_SIZE) {
+        	if (in.array()[i] == CHUNK_DELIMITER) {
+        		i++;
+        		correction++;
+        	}
+    		buf.put(in.array(), i, Math.min(CHUNK_SIZE, in.position() + readAmount + correction - i));
+        }
+        if (buf.position() < header.getSize() - correction) {
             state.continueDecoding();
             return null;
         }
