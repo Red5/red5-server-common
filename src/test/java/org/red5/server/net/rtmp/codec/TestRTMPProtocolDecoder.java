@@ -58,9 +58,95 @@ public class TestRTMPProtocolDecoder {
         
         RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
         Packet pkt = dec.decodePacket(conn, state, p0);
-        log.debug("Packet #1: {} state: {}", pkt, state);
+        log.debug("Packet #0: {} state: {}", pkt, state);
+
         pkt = dec.decodePacket(conn, state, p1);
+        log.debug("Packet #1: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p2);
         log.debug("Packet #2: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p3);
+        log.debug("Packet #3: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p4);
+        log.debug("Packet #4: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p5);
+        log.debug("Packet #5: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p6);
+        log.debug("Packet #6: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p7);
+        log.debug("Packet #7: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p8);
+        log.debug("Packet #8: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p9);
+        log.debug("Packet #9: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p10);
+        log.debug("Packet #10: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p11);
+        log.debug("Packet #11: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p12);
+        log.debug("Packet #12: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p13);
+        log.debug("Packet #13: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p14);
+        log.debug("Packet #14: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p15);
+        log.debug("Packet #15: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p16);
+        log.debug("Packet #16: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p17);
+        log.debug("Packet #17: {} state: {}", pkt, state);
+
+        pkt = dec.decodePacket(conn, state, p18);
+        log.debug("Packet #18: {} state: {}", pkt, state);
+
+        /*
+
+IoBuffer p15 = IoBuffer.wrap(IOUtils.hexStringToByteArray("
+
+42 000000 00000a 04
+000300000000000013 88 //parsed first packet in the buffer
+
+83002961
+02000c63726561746553747265616d00401000000000000005430000000000221402000c64656c657465"));
+
+
+IoBuffer p16 = IoBuffer.wrap(IOUtils.hexStringToByteArray("
+
+83002961
+02000c63726561746553747265616d00401000000000000005 //parsed second packet in the buffer
+
+430000000000221402000c64656c657465"));
+
+IoBuffer p17 = IoBuffer.wrap(IOUtils.hexStringToByteArray("
+
+43 000000 000022 14
+02000c64656c657465 //we try to parse third packet, but there has not enough bytes: we need 34 bytes, but we have received just 9; we'll wait them in the next buffer
+));
+
+IoBuffer p18 = IoBuffer.wrap(IOUtils.hexStringToByteArray("
+//we have set position and limit for the buffer incorrectly, so we have just got the same buffer with position set to 9,
+//i.e. we have skipped header (see p15) "42 000000 00000a 04" and 9 bytes, that has been received in p17
+88 83002961
+02000c63726561746553747265616d00401000000000000005
+430000000000221402000c64656c657465"));
+//So this packet should not be decoded
+
+         */
     }
 
     @Test

@@ -22,14 +22,17 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecException;
 import org.apache.mina.filter.codec.ProtocolDecoderAdapter;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.bouncycastle.util.Arrays;
 import org.red5.server.api.Red5;
 import org.red5.server.net.IConnectionManager;
 import org.red5.server.net.rtmp.RTMPConnection;
+import org.red5.server.net.rtmp.message.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +63,21 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
         if (conn != null) {
             // set the connection to local if its referred to by this session
             Red5.setConnectionLocal(conn);
+
+            // create a buffer and store it on the session
+            IoBuffer buf = (IoBuffer) session.getAttribute("buffer");
+            if (buf == null) {
+                buf = IoBuffer.allocate(in.limit());
+                buf.setAutoExpand(true);
+                session.setAttribute("buffer", buf);
+            }
+            buf.put(in);
+            buf.flip();
+
+            log.trace("Buffer before: {}", Hex.encodeHexString(Arrays.copyOfRange(buf.array(), buf.position(), buf.limit())));
+            log.trace("Buffers info before: buf.position {}, buf.limit {}, buf.remaining {}",
+                new Object[] {buf.position(), buf.limit(), buf.remaining()});
+
             // get the connections decoder lock
             final Semaphore lock = conn.getDecoderLock();
             try {
@@ -68,7 +86,7 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
                 lock.acquire();
                 log.trace("Decoder lock acquired {}", sessionId);
                 // construct any objects from the decoded bugger
-                List<?> objects = decoder.decodeBuffer(conn, in);
+                List<?> objects = decoder.decodeBuffer(conn, buf);
                 if (objects != null) {
                     for (Object object : objects) {
                         out.write(object);
@@ -82,6 +100,10 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
                 // clear local
                 Red5.setConnectionLocal(null);
             }
+
+            log.trace("Buffer after: {}", Hex.encodeHexString(Arrays.copyOfRange(buf.array(), buf.position(), buf.limit())));
+            log.trace("Buffers info after: buf.position {}, buf.limit {}, buf.remaining {}",
+                    new Object[] {buf.position(), buf.limit(), buf.remaining()});
         } else {
             log.debug("Closing and skipping decode for unregistered connection: {}", sessionId);
             session.close(true);

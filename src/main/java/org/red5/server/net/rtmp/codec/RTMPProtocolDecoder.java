@@ -102,7 +102,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 result = new LinkedList<Object>();
                 // get the local decode state
                 RTMPDecodeState state = conn.getDecoderState();
-                log.trace("{}", state);
+                log.trace("RTMP decode state {}", state);
                 if (!conn.getSessionId().equals(state.getSessionId())) {
                     log.warn("Session decode overlap: {} != {}", conn.getSessionId(), state.getSessionId());
                 }
@@ -147,9 +147,11 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 if (log.isTraceEnabled()) {
                     log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
                 }
-                if (buffer.remaining() > 0) {
-                    buffer.compact();
-                }
+                log.trace("Buffers info before compact: in.position {}, in.limit {}, in.remaining {}",
+                        new Object[] {buffer.position(), buffer.limit(), buffer.remaining()});
+                buffer.compact();
+                log.trace("Buffers info after compact: in.position {}, in.limit {}, in.remaining {}",
+                        new Object[] {buffer.position(), buffer.limit(), buffer.remaining()});
             }
         } else {
             log.error("Decoding buffer failed, no current connection!?");
@@ -219,7 +221,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            log.trace("decodePacket: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit()))); // in.position() + in.remaining()
+            log.trace("decodePacket: limit {},  {}", in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit()))); // in.position() + in.remaining()
         }
         final int remaining = in.remaining();
         // at least one byte for valid decode
@@ -303,9 +305,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         IoBuffer buf = packet.getData();
         int readRemaining = header.getSize() - buf.position();
-        //int chunkSize = rtmp.getReadChunkSize();
-        //int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
-        int readAmount = readRemaining;
+        int chunkSize = rtmp.getReadChunkSize();
+        int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
         if (in.remaining() < readAmount) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
             // skip the position back to the start
@@ -313,8 +314,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength + readAmount);
             return null;
         }
-        buf.put(in.array(), in.position(), readAmount);
-        //BufferUtils.put(buf, in, readAmount);
+        log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] {in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize()});
+        BufferUtils.put(buf, in, readAmount);
         if (buf.position() < header.getSize()) {
             state.continueDecoding();
             return null;
@@ -788,7 +789,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         in.mark();
         byte tmp = in.get();
         in.reset();
-        Input input;
+		Input input;
         if (encoding == Encoding.AMF3 && tmp == AMF.TYPE_AMF3_OBJECT) {
             input = new org.red5.io.amf3.Input(in);
             ((org.red5.io.amf3.Input) input).enforceAMF3();
