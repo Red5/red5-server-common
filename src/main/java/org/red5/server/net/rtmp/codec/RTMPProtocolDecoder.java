@@ -34,7 +34,6 @@ import org.red5.io.object.DataTypes;
 import org.red5.io.object.Deserializer;
 import org.red5.io.object.Input;
 import org.red5.io.object.StreamAction;
-import org.red5.io.utils.BufferUtils;
 import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
 import org.red5.server.net.protocol.HandshakeFailedException;
@@ -78,6 +77,12 @@ import org.slf4j.LoggerFactory;
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+
+    // initial chunk size
+    private static final int CHUNK_SIZE = 0x80;
+
+    // chunk delimiter
+    private static final byte CHUNK_DELIMITER = (byte) 0xC3;
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -317,8 +322,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize() });
-        BufferUtils.put(buf, in, readAmount);
-        if (buf.position() < header.getSize()) {
+        int correction = 0;
+        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
+        for (int i = in.position(); i < in.position() + readAmount; i += CHUNK_SIZE) {
+            if (in.array()[i] == CHUNK_DELIMITER) {
+                i++;
+                correction++;
+            }
+            buf.put(in.array(), i, Math.min(CHUNK_SIZE, in.position() + readAmount + correction - i));
+        }
+        if (buf.position() < header.getSize() - correction) {
             state.continueDecoding();
             return null;
         }
@@ -328,6 +341,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
+            // we have just decoded full buf, need to advance original IoBuffer
+            in.skip(correction + buf.position());
             message.setHeader(packet.getHeader());
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
             // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
