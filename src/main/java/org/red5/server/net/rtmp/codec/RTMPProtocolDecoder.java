@@ -93,6 +93,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @return a list of decoded objects, may be empty if nothing could be decoded
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
+        if (log.isTraceEnabled()) {
+            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), buffer.position(), buffer.limit())));
+        }
         // decoded results
         List<Object> result = null;
         if (conn != null) {
@@ -102,7 +105,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 result = new LinkedList<Object>();
                 // get the local decode state
                 RTMPDecodeState state = conn.getDecoderState();
-                log.trace("{}", state);
+                log.trace("RTMP decode state {}", state);
                 if (!conn.getSessionId().equals(state.getSessionId())) {
                     log.warn("Session decode overlap: {} != {}", conn.getSessionId(), state.getSessionId());
                 }
@@ -167,7 +170,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            IoBuffer of data to be decoded
      * @return one of three possible values:
-     * <pre>
+     * 
+     *         <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
@@ -219,7 +223,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            log.trace("decodePacket: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit()))); // in.position() + in.remaining()
+            log.trace("decodePacket: limit {}, {}", in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
         }
         final int remaining = in.remaining();
         // at least one byte for valid decode
@@ -303,9 +307,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         IoBuffer buf = packet.getData();
         int readRemaining = header.getSize() - buf.position();
-        //int chunkSize = rtmp.getReadChunkSize();
-        //int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
-        int readAmount = readRemaining;
+        int chunkSize = rtmp.getReadChunkSize();
+        int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
         if (in.remaining() < readAmount) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
             // skip the position back to the start
@@ -313,8 +316,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength + readAmount);
             return null;
         }
-        buf.put(in.array(), in.position(), readAmount);
-        //BufferUtils.put(buf, in, readAmount);
+        log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize() });
+        BufferUtils.put(buf, in, readAmount);
         if (buf.position() < header.getSize()) {
             state.continueDecoding();
             return null;
