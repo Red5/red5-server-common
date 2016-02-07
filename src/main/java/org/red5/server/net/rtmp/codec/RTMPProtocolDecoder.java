@@ -75,9 +75,14 @@ import org.slf4j.LoggerFactory;
  * RTMP protocol decoder.
  */
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
+
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+
+    // initial chunk size
     private static final int CHUNK_SIZE = 0x80;
-    private static final byte CHUNK_DELIMITER = (byte)0xC3;
+
+    // chunk delimiter
+    private static final byte CHUNK_DELIMITER = (byte) 0xC3;
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -94,7 +99,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
         if (log.isTraceEnabled()) {
-            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), buffer.position(), buffer.limit()))); // in.position() + in.remaining()
+            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), buffer.position(), buffer.limit())));
         }
         // decoded results
         List<Object> result = null;
@@ -105,7 +110,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 result = new LinkedList<Object>();
                 // get the local decode state
                 RTMPDecodeState state = conn.getDecoderState();
-                log.trace("{}", state);
+                log.trace("RTMP decode state {}", state);
                 if (!conn.getSessionId().equals(state.getSessionId())) {
                     log.warn("Session decode overlap: {} != {}", conn.getSessionId(), state.getSessionId());
                 }
@@ -170,7 +175,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            IoBuffer of data to be decoded
      * @return one of three possible values:
-     * <pre>
+     * 
+     *         <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
@@ -222,7 +228,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            log.trace("decodePacket: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit()))); // in.position() + in.remaining()
+            log.trace("decodePacket: limit {}, {}", in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
         }
         final int remaining = in.remaining();
         // at least one byte for valid decode
@@ -306,9 +312,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         IoBuffer buf = packet.getData();
         int readRemaining = header.getSize() - buf.position();
-        //int chunkSize = rtmp.getReadChunkSize();
-        //int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
-        int readAmount = readRemaining;
+        int chunkSize = rtmp.getReadChunkSize();
+        int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
         if (in.remaining() < readAmount) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
             // skip the position back to the start
@@ -316,14 +321,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             state.bufferDecoding(headerLength + readAmount);
             return null;
         }
+        log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize() });
         int correction = 0;
-        //we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
+        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
         for (int i = in.position(); i < in.position() + readAmount; i += CHUNK_SIZE) {
-        	if (in.array()[i] == CHUNK_DELIMITER) {
-        		i++;
-        		correction++;
-        	}
-    		buf.put(in.array(), i, Math.min(CHUNK_SIZE, in.position() + readAmount + correction - i));
+            if (in.array()[i] == CHUNK_DELIMITER) {
+                i++;
+                correction++;
+            }
+            buf.put(in.array(), i, Math.min(CHUNK_SIZE, in.position() + readAmount + correction - i));
         }
         if (buf.position() < header.getSize() - correction) {
             state.continueDecoding();
@@ -335,7 +341,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
-            //we have just decoded full buf, need to advance original IoBuffer
+            // we have just decoded full buf, need to advance original IoBuffer
             in.skip(correction + buf.position());
             message.setHeader(packet.getHeader());
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,

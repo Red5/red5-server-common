@@ -620,7 +620,9 @@ public abstract class RTMPHandshake implements IHandshake {
      * @param handshakeType handshake type
      */
     public void setHandshakeType(byte handshakeType) {
-        log.trace("Setting handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
+        if (log.isTraceEnabled()) {
+            log.trace("Setting handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
+        }
         this.handshakeType = handshakeType;
     }
 
