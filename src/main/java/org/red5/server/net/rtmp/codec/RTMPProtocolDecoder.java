@@ -78,9 +78,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
 
-    // initial chunk size
-    private static final int CHUNK_SIZE = 0x80;
-
     // chunk delimiter
     private static final byte CHUNK_DELIMITER = (byte) 0xC3;
 
@@ -313,7 +310,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         IoBuffer buf = packet.getData();
         int readRemaining = header.getSize() - buf.position();
         int chunkSize = rtmp.getReadChunkSize();
-        int readAmount = (readRemaining > chunkSize) ? chunkSize : readRemaining;
+        int readAmount = buf.limit(); //buf was created with limit equals to the packet data size
         if (in.remaining() < readAmount) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
             // skip the position back to the start
@@ -324,12 +321,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize() });
         int correction = 0;
         // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
-        for (int i = in.position(); i < in.position() + readAmount; i += CHUNK_SIZE) {
+        for (int i = in.position(); i < in.position() + readAmount; i += chunkSize) {
             if (in.array()[i] == CHUNK_DELIMITER) {
                 i++;
                 correction++;
             }
-            buf.put(in.array(), i, Math.min(CHUNK_SIZE, in.position() + readAmount + correction - i));
+            buf.put(in.array(), i, Math.min(chunkSize, in.position() + readAmount + correction - i));
         }
         if (buf.position() < header.getSize() - correction) {
             state.continueDecoding();
