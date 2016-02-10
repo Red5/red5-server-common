@@ -432,7 +432,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                     disconnectOnReturn = true;
                 }
                 // Evaluate request for AMF3 encoding
-                if (Integer.valueOf(3).equals(params.get("objectEncoding"))) {
+                if (new Double(3d).equals(params.get("objectEncoding"))) {
                     if (call instanceof IPendingServiceCall) {
                         Object pcResult = ((IPendingServiceCall) call).getResult();
                         Map<String, Object> result;
