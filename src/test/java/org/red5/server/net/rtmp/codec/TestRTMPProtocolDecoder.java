@@ -1,5 +1,6 @@
 package org.red5.server.net.rtmp.codec;
 
+import static org.junit.Assert.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.red5.io.utils.IOUtils;
 import org.red5.server.net.protocol.RTMPDecodeState;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.RTMPMinaConnection;
+import org.red5.server.net.rtmp.event.Invoke;
 import org.red5.server.net.rtmp.message.Packet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,13 @@ public class TestRTMPProtocolDecoder {
         p00.position(1536);
         RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
         List<Object> objs = dec.decodeBuffer(conn, p00);
-        log.debug("Objects #19: {}", objs);
+        log.debug("Objects #00: {}", objs);
+        assertNotNull("Objects should not be null", objs);
+        assertFalse("Objects should not be empty", objs.isEmpty());
+        assertEquals("Method should be 'connect'", "connect",  ((Invoke)((Packet)objs.get(0)).getMessage()).getCall().getServiceMethodName());
+        IoBuffer p01 = IoBuffer.wrap(IOUtils.hexStringToByteArray("030000000001431400000000020007636f6e6e656374003ff0000000000000030003617070020003766f640008666c61736856657202000e4c4e582032302c302c302c323836000673776655726c020036687474703a2f2f6c6f63616c686f73743a353038302f766f642f6d696e69706c617965722e7377662f5b5b44594e414d49435d5d2f320005746355c3726c02001972746d703a2f2f6c6f63616c686f73743a313933352f766f640004667061640100000c6361706162696c697469657300406de00000000000000b617564696f436f646563730040abee0000000000000b766964656f436f6465637300406f800000000000000d766964656f46756e6374696f6e003ff00000000000c30000077061676555726c02001a687474703a2f2f6c6f63616c686f73743a353038302f766f642f000e6f626a656374456e636f64696e6700400800000000000000000902fffe410000040500000000009896800300003100001a11000000000002000c63726561746553747265616d00400000000000000005"));
+        objs = dec.decodeBuffer(conn, p01);
+        log.debug("Objects #01: {}", objs);
     }
 
     @Test
