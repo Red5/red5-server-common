@@ -63,7 +63,7 @@
         <quartz.version>2.2.2</quartz.version>
         <bc.version>1.53</bc.version>
         <junit.version>4.12</junit.version>
-        <tomcat.version>8.0.30</tomcat.version>
+        <tomcat.version>8.0.32</tomcat.version>
         <commons-codec.version>1.10</commons-codec.version>
         <httpclient.version>4.5.1</httpclient.version>
         <httpcore.version>4.4.4</httpcore.version>
