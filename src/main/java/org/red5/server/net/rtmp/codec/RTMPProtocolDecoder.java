@@ -19,6 +19,7 @@
 package org.red5.server.net.rtmp.codec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +27,6 @@ import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.mina.core.buffer.IoBuffer;
-import org.bouncycastle.util.Arrays;
 import org.red5.io.amf.AMF;
 import org.red5.io.amf.Output;
 import org.red5.io.amf3.AMF3;
@@ -316,15 +316,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
+        int totalChunked = 0;
         do {
 	        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
 	        int chunked = 0;
 	        int chunkBytePos = in.indexOf(CHUNK_DELIMITER);
 	        if (chunkBytePos == -1) {
-	            chunkBytePos = in.limit();
-	            chunked = 0;
+	            chunkBytePos = position + headerLength + totalChunked + buf.limit();
 	        } else {
 	            chunked = 1;
+	            totalChunked++;
 	        }
 	        log.trace("Chunk pos: {}", chunkBytePos);
 	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos);
