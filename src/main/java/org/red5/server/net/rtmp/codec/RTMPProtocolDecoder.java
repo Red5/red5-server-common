@@ -316,63 +316,35 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
-        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
-        int chunked = 0;
-        int chunkBytePos = in.indexOf(CHUNK_DELIMITER);
-        if (chunkBytePos == -1) {
-            chunkBytePos = in.limit();
-            chunked = 0;
-        } else {
-            chunked = 1;
-        }
-        log.trace("Chunk pos: {}", chunkBytePos);
-        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos); 
-        log.trace("Chunk: {}", Hex.encodeHexString(chunk));
-        // add the chunk of packet data into the packet buffer
-        buf.put(chunk);
-        // advance input past chunk delimiter
-        in.skip(chunk.length + chunked);
-        log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
-        // how much is left to read from the input
-        readRemaining = header.getSize() - buf.position();
-        log.trace("readRemaining 2: {}", readRemaining);
-        if (readRemaining > in.remaining()) {
-            // not enough data, indicate that more is needed
-            state.continueDecoding();
-            return null;
-        } else if (readRemaining > 0) {
-            log.trace("Input has enough to complete the packet: {}", in.remaining());
-            // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
-            chunkBytePos = in.indexOf(CHUNK_DELIMITER);
-            if (chunkBytePos == -1) {
-                chunkBytePos = in.limit();
-                chunked = 0;
-            } else {
-                chunked = 1;
-            }
-            log.trace("Chunk pos: {}", chunkBytePos);
-            chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos); 
-            log.trace("Chunk: {}", Hex.encodeHexString(chunk));
-            // add the chunk of packet data into the packet buffer
-            buf.put(chunk);
-            // advance input past chunk delimiter
-            in.skip(chunk.length + chunked);
-            log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
-            // how much is left to read from the input
-            readRemaining = header.getSize() - buf.position();
-            log.trace("readRemaining 3: {}", readRemaining);
-            if (readRemaining > 0) {
-                chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + readRemaining); 
-                log.trace("Chunk: {}", Hex.encodeHexString(chunk));
-                // add the chunk of packet data into the packet buffer
-                buf.put(chunk);
-                // advance input past what we read
-                in.skip(readRemaining);
-                // how much is left to read from the input
-                readRemaining = header.getSize() - buf.position();
-                log.trace("readRemaining 4: {}", readRemaining);
-            }
-        }
+        do {
+	        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
+	        int chunked = 0;
+	        int chunkBytePos = in.indexOf(CHUNK_DELIMITER);
+	        if (chunkBytePos == -1) {
+	            chunkBytePos = in.limit();
+	            chunked = 0;
+	        } else {
+	            chunked = 1;
+	        }
+	        log.trace("Chunk pos: {}", chunkBytePos);
+	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos);
+	        if (log.isTraceEnabled()) {
+	        	log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+	        }
+	        // add the chunk of packet data into the packet buffer
+	        buf.put(chunk);
+	        // advance input past chunk delimiter
+	        in.skip(chunk.length + chunked);
+	        log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
+	        // how much is left to read from the input
+	        readRemaining = header.getSize() - buf.position();
+	        log.trace("readRemaining 2: {}", readRemaining);
+	        if (readRemaining > in.remaining()) {
+	            // not enough data, indicate that more is needed
+	            state.continueDecoding();
+	            return null;
+	        }
+        } while (readRemaining > 0);
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
