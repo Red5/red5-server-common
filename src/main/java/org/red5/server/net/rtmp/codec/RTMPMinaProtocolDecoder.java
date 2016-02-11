@@ -83,10 +83,14 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
                 log.trace("Decoder lock acquired {}", sessionId);
                 // construct any objects from the decoded bugger
                 List<?> objects = decoder.decodeBuffer(conn, buf);
+                log.trace("Decoded: {}", objects);
                 if (objects != null) {
+                    int writeCount = 0;
                     for (Object object : objects) {
                         out.write(object);
+                        writeCount++;
                     }
+                    log.trace("Wrote {} objects", writeCount);
                 }
             } catch (Exception e) {
                 log.error("Error during decode", e);

@@ -36,7 +36,6 @@ import org.red5.io.object.Input;
 import org.red5.io.object.StreamAction;
 import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
-import org.red5.server.net.protocol.HandshakeFailedException;
 import org.red5.server.net.protocol.ProtocolException;
 import org.red5.server.net.protocol.RTMPDecodeState;
 import org.red5.server.net.rtmp.RTMPConnection;
@@ -134,13 +133,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                         break;
                     }
                 }
-            } catch (HandshakeFailedException hfe) {
-                // close the connection
-                log.warn("Closing connection because decoding failed during handshake: {}", conn, hfe);
-                // clear buffer if something is wrong in protocol decoding
-                buffer.clear();
-                // close connection because we can't parse data from it
-                conn.close();
             } catch (Exception ex) {
                 // catch any non-handshake exception in the decoding; close the connection
                 log.warn("Closing connection because decoding failed: {}", conn, ex);
@@ -152,9 +144,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 if (log.isTraceEnabled()) {
                     log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
                 }
-                if (buffer.remaining() > 0) {
-                    buffer.compact();
-                }
+                buffer.compact();
             }
         } else {
             log.error("Decoding buffer failed, no current connection!?");
@@ -300,47 +290,92 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (header == null) {
             throw new ProtocolException("Header is null, check for error");
         }
+        // store the header based on its channel id
         rtmp.setLastReadHeader(channelId, header);
         // check to see if this is a new packet or continue decoding an existing one
         Packet packet = rtmp.getLastReadPacket(channelId);
         if (packet == null) {
+            // create a new packet
             packet = new Packet(header.clone());
+            // store the packet based on its channel id
             rtmp.setLastReadPacket(channelId, packet);
         }
+        // get the packet data
         IoBuffer buf = packet.getData();
+        // the number of bytes left to complete the packet
         int readRemaining = header.getSize() - buf.position();
-        int chunkSize = rtmp.getReadChunkSize();
-        int readAmount = buf.limit(); //buf was created with limit equals to the packet data size
-        if (in.remaining() < readAmount) {
-            log.debug("Chunk too small, buffering ({},{})", in.remaining(), readAmount);
-            // skip the position back to the start
-            in.position(position);
-            state.bufferDecoding(headerLength + readAmount);
+        log.trace("readRemaining: {}", readRemaining);
+        //int chunkSize = rtmp.getReadChunkSize();
+        //log.trace("chunkSize: {}", chunkSize);
+        int readAmount = buf.limit(); // buf was created with limit equals to the packet data size
+        log.trace("readAmount: {}", readAmount);
+        if (in.remaining() < readRemaining) {
+            log.debug("Chunk too small, buffering ({},{})", in.remaining(), readRemaining);
+            // how much more data we need to continue?
+            state.bufferDecoding(readRemaining);
             return null;
         }
-        log.trace("Source buffer limit: {}, position: {}, readAmount: {}, chunkSize: {}, readRemaining: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), readAmount, chunkSize, readRemaining, buf.position(), header.getSize() });
-        int correction = 0;
+        log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
         // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
-        for (int i = in.position(); i < in.position() + readAmount; i += chunkSize) {
-            if (in.array()[i] == CHUNK_DELIMITER) {
-                i++;
-                correction++;
-            }
-            buf.put(in.array(), i, Math.min(chunkSize, in.position() + readAmount + correction - i));
+        int chunked = 0;
+        int chunkBytePos = in.indexOf(CHUNK_DELIMITER);
+        if (chunkBytePos == -1) {
+            chunkBytePos = in.limit();
+            chunked = 0;
+        } else {
+            chunked = 1;
         }
-        if (buf.position() < header.getSize() - correction) {
+        log.trace("Chunk pos: {}", chunkBytePos);
+        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos); 
+        log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+        // add the chunk of packet data into the packet buffer
+        buf.put(chunk);
+        // advance input past chunk delimiter
+        in.skip(chunk.length + chunked);
+        log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
+        // how much is left to read from the input
+        readRemaining = header.getSize() - buf.position();
+        log.trace("readRemaining 2: {}", readRemaining);
+        if (readRemaining > in.remaining()) {
+            // not enough data, indicate that more is needed
             state.continueDecoding();
             return null;
-        }
-        if (buf.position() > header.getSize()) {
-            log.warn("Packet size expanded from {} to {} ({})", new Object[] { (header.getSize()), buf.position(), header });
+        } else if (readRemaining > 0) {
+            log.trace("Input has enough to complete the packet: {}", in.remaining());
+            // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
+            chunkBytePos = in.indexOf(CHUNK_DELIMITER);
+            if (chunkBytePos == -1) {
+                chunkBytePos = in.limit();
+                chunked = 0;
+            } else {
+                chunked = 1;
+            }
+            log.trace("Chunk pos: {}", chunkBytePos);
+            chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos); 
+            log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+            // add the chunk of packet data into the packet buffer
+            buf.put(chunk);
+            // advance input past chunk delimiter
+            in.skip(chunk.length + chunked);
+            log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
+            // how much is left to read from the input
+            readRemaining = header.getSize() - buf.position();
+            log.trace("readRemaining 3: {}", readRemaining);
+            if (readRemaining > 0) {
+                chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + readRemaining); 
+                log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+                // add the chunk of packet data into the packet buffer
+                buf.put(chunk);
+                // advance input past what we read
+                in.skip(readRemaining);
+                // how much is left to read from the input
+                readRemaining = header.getSize() - buf.position();
+                log.trace("readRemaining 4: {}", readRemaining);
+            }
         }
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
-            // we have just decoded full buf, need to advance original IoBuffer
-            in.skip(correction + buf.position());
-            message.setHeader(packet.getHeader());
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
             // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
             // don't reset the header we stored.
@@ -358,10 +393,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 rtmp.setReadChunkSize(chunkSizeMsg.getSize());
             } else if (message instanceof Abort) {
                 log.debug("Abort packet detected");
-                // The client is aborting a message; reset the packet because the next chunk on that stream will start a new packet.
+                // client is aborting a message, reset the packet because the next chunk will start a new packet
                 Abort abort = (Abort) message;
-                rtmp.setLastReadPacket(abort.getChannelId(), null);
                 packet = null;
+                rtmp.setLastReadPacket(abort.getChannelId(), packet);
             }
             // collapse the time stamps on the last packet so that it works right for chunk type 3 later
             lastHeader = rtmp.getLastReadHeader(channelId);
@@ -552,6 +587,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 message = decodeUnknown(dataType, in);
                 break;
         }
+        // add the header to the message
+        message.setHeader(header);
         return message;
     }
 
