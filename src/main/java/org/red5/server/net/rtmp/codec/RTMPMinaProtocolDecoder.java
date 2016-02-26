@@ -104,7 +104,7 @@ public class RTMPMinaProtocolDecoder extends ProtocolDecoderAdapter {
             log.trace("Buffers info after: buf.position {}, buf.limit {}, buf.remaining {}", new Object[] { buf.position(), buf.limit(), buf.remaining() });
         } else {
             log.debug("Closing and skipping decode for unregistered connection: {}", sessionId);
-            session.close(true);
+            session.closeNow();
             log.debug("Session closing: {} reading: {} writing: {}", session.isClosing(), session.isReadSuspended(), session.isWriteSuspended());
         }
     }
