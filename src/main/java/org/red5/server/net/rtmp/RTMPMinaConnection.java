@@ -115,7 +115,7 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
             // set a ref to ourself so that the handler can be notified when close future is done
             final RTMPMinaConnection self = this;
             // close now, no flushing, no waiting
-            final CloseFuture future = ioSession.close(true);
+            final CloseFuture future = ioSession.closeNow();
             log.debug("Connection close future: {}", future);
             IoFutureListener<CloseFuture> listener = new IoFutureListener<CloseFuture>() {
                 public void operationComplete(CloseFuture future) {

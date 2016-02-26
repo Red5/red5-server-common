@@ -217,79 +217,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
             log.trace("decodePacket: limit {}, {}", in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
         }
-        final int remaining = in.remaining();
-        // at least one byte for valid decode
-        if (remaining < 1) {
-            state.bufferDecoding(1);
-            return null;
-        }
         final int position = in.position();
-        byte headerByte = in.get();
-        int headerValue, byteCount;
-        if ((headerByte & 0x3f) == 0) {
-            // two byte header
-            if (remaining < 2) {
-                in.position(position);
-                state.bufferDecoding(2);
-                return null;
-            }
-            headerValue = (headerByte & 0xff) << 8 | (in.get() & 0xff);
-            byteCount = 2;
-        } else if ((headerByte & 0x3f) == 1) {
-            // three byte header
-            if (remaining < 3) {
-                in.position(position);
-                state.bufferDecoding(3);
-                return null;
-            }
-            headerValue = (headerByte & 0xff) << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
-            byteCount = 3;
-        } else {
-            // single byte header
-            headerValue = headerByte & 0xff;
-            byteCount = 1;
-        }
-        final int channelId = RTMPUtils.decodeChannelId(headerValue, byteCount);
-        if (channelId < 0) {
-            throw new ProtocolException("Bad channel id: " + channelId);
-        }
         RTMP rtmp = conn.getState();
-        // get the header size and length
-        byte headerSize = RTMPUtils.decodeHeaderSize(headerValue, byteCount);
-        int headerLength = RTMPUtils.getHeaderLength(headerSize);
-        Header lastHeader = rtmp.getLastReadHeader(channelId);
-        headerLength += byteCount - 1;
-        switch (headerSize) {
-            case HEADER_NEW:
-            case HEADER_SAME_SOURCE:
-            case HEADER_TIMER_CHANGE:
-                if (remaining >= headerLength) {
-                    int timeValue = RTMPUtils.readUnsignedMediumInt(in);
-                    if (timeValue == 0xffffff) {
-                        headerLength += 4;
-                    }
-                }
-                break;
-            case HEADER_CONTINUE:
-                if (lastHeader != null && lastHeader.getExtendedTimestamp() != 0) {
-                    headerLength += 4;
-                }
-                break;
-            default:
-                throw new ProtocolException("Unexpected header size " + headerSize + " check for error");
-        }
-        if (remaining < headerLength) {
-            log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
+        final Header header = decodeHeader(state, in, rtmp);
+        if (header == null) {
             in.position(position);
-            state.bufferDecoding(headerLength);
             return null;
         }
-        // move the position back to the start
-        in.position(position);
-        final Header header = decodeHeader(in, lastHeader);
-        if (header == null) {
-            throw new ProtocolException("Header is null, check for error");
-        }
+        int headerLength = in.position() - position;
+        final int channelId = header.getChannelId();
         // store the header based on its channel id
         rtmp.setLastReadHeader(channelId, header);
         // check to see if this is a new packet or continue decoding an existing one
@@ -372,7 +308,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 rtmp.setLastReadPacket(abort.getChannelId(), packet);
             }
             // collapse the time stamps on the last packet so that it works right for chunk type 3 later
-            lastHeader = rtmp.getLastReadHeader(channelId);
+            Header lastHeader = rtmp.getLastReadHeader(channelId);
             lastHeader.setTimerBase(header.getTimer());
         } finally {
             rtmp.setLastReadPacket(channelId, null);
@@ -389,36 +325,59 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *            Previous header
      * @return Decoded header
      */
-    public Header decodeHeader(IoBuffer in, Header lastHeader) {
+    public Header decodeHeader(RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
         if (log.isTraceEnabled()) {
-            //log.trace("decodeHeader - lastHeader: {} buffer: {}", lastHeader, in);
             log.trace("decodeHeader: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
-            log.trace("lastHeader: {}", lastHeader);
+        }
+        final int remaining = in.remaining();
+        // at least one byte for valid decode
+        if (remaining < 1) {
+            state.bufferDecoding(1);
+            return null;
         }
         byte headerByte = in.get();
-        int headerValue;
-        int byteCount = 1;
+        int headerValue, byteCount = 1;
         if ((headerByte & 0x3f) == 0) {
             // two byte header
+            if (remaining < 2) {
+                state.bufferDecoding(2);
+                return null;
+            }
             headerValue = (headerByte & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 2;
         } else if ((headerByte & 0x3f) == 1) {
             // three byte header
+            if (remaining < 3) {
+                state.bufferDecoding(3);
+                return null;
+            }
             headerValue = (headerByte & 0xff) << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
             byteCount = 3;
         } else {
             // single byte header
             headerValue = headerByte & 0xff;
-            byteCount = 1;
         }
         final int channelId = RTMPUtils.decodeChannelId(headerValue, byteCount);
-        final int headerSize = RTMPUtils.decodeHeaderSize(headerValue, byteCount);
+        if (channelId < 0) {
+            throw new ProtocolException("Bad channel id: " + channelId);
+        }
+        final byte headerSize = RTMPUtils.decodeHeaderSize(headerValue, byteCount);
+        Header lastHeader = rtmp.getLastReadHeader(channelId);
+        if (log.isTraceEnabled()) {
+            log.trace("lastHeader: {}", lastHeader);
+        }
         Header header = new Header();
         header.setChannelId(channelId);
         if (headerSize != HEADER_NEW && lastHeader == null) {
-            log.error("Last header null not new, headerSize: {}, channelId {}", headerSize, channelId);
             // this will trigger an error status, which in turn will disconnect the "offending" flash player
             // preventing a memory leak and bringing the whole server to its knees
+            throw new ProtocolException(String.format("Last header null not new, headerSize: %s, channelId %s", headerSize, channelId));
+        }
+        int headerLength = RTMPUtils.getHeaderLength(headerSize);
+        headerLength += byteCount - 1;
+        if (remaining < headerLength) {
+            log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
+            state.bufferDecoding(headerLength);
             return null;
         }
         int timeValue;
@@ -481,8 +440,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 }
                 break;
             default:
-                log.error("Unexpected header size: {}", headerSize);
-                return null;
+            	throw new ProtocolException(String.format("Unexpected header size: %s", headerSize));
         }
         log.trace("CHUNK, D, {}, {}", header, headerSize);
         return header;
