@@ -247,6 +247,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         log.trace("readAmount: {}", readAmount);
         if (in.remaining() < readRemaining) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readRemaining);
+            //we need to move back position so header will be available during another decode round
+            in.position(in.position() - headerLength);
             // how much more data we need to continue?
             state.bufferDecoding(readRemaining);
             return null;
