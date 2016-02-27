@@ -195,7 +195,7 @@ public class Packet implements Externalizable {
     /**
      * Set the expiration time.
      * 
-     * @param expirationTime
+     * @param expirationTime new expiration time to set
      */
     public void setExpirationTime(long expirationTime) {
         this.expirationTime = expirationTime;

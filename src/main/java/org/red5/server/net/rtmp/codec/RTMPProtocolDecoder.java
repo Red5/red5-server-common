@@ -326,10 +326,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes packet header.
      * 
+     * @param state
+     *            RTMP decode state
      * @param in
      *            Input IoBuffer
-     * @param lastHeader
-     *            Previous header
+     * @param rtmp
+     *            RTMP object to get last header
      * @return Decoded header
      */
     public Header decodeHeader(RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
@@ -621,6 +623,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            input buffer
      * @param input
+     *            Input object to be processed
      */
     protected void doDecodeSharedObject(SharedObjectMessage so, IoBuffer in, Input input) {
         // Parse request body
@@ -707,6 +710,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            input buffer
      * @param header
+     *            Header object to get necessary info
      * @return decoded notify result
      */
     public Notify decodeNotify(Encoding encoding, IoBuffer in, Header header) {
