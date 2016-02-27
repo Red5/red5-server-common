@@ -102,7 +102,6 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
      * false for transient.
      * 
      * @return true if the connection is persistent or polling, otherwise false
-     * </pre>
      */
     public boolean isConnected();
 

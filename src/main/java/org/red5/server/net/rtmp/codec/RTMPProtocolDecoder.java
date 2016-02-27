@@ -213,11 +213,11 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @return Packet
      */
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
+        final int position = in.position();
         if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            log.trace("decodePacket: limit {}, {}", in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
+            log.trace("decodePacket: limit {}, position {}, {}", in.limit(), position, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
         }
-        final int position = in.position();
         RTMP rtmp = conn.getState();
         final Header header = decodeHeader(state, in, rtmp);
         if (header == null) {
@@ -247,6 +247,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         log.trace("readAmount: {}", readAmount);
         if (in.remaining() < readRemaining) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readRemaining);
+            //we need to move back position so header will be available during another decode round
+            in.position(position);
             // how much more data we need to continue?
             state.bufferDecoding(readRemaining);
             return null;
@@ -256,12 +258,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         do {
 	        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
 	        int chunked = 0;
-	        int chunkBytePos = in.indexOf(CHUNK_DELIMITER);
-	        if (chunkBytePos == -1) {
-	            chunkBytePos = position + headerLength + totalChunked + buf.limit();
-	        } else {
+	        int maxPos = position + headerLength + totalChunked + buf.limit();
+	        int chunkBytePos = in.position() + rtmp.getReadChunkSize();
+	        chunkBytePos = chunkBytePos > maxPos ? maxPos - 1 : chunkBytePos;
+	        byte chunkDelimiterByte = in.get(chunkBytePos);
+	        if (CHUNK_DELIMITER == chunkDelimiterByte) {
 	            chunked = 1;
 	            totalChunked++;
+	        } else {
+	            chunkBytePos = maxPos;
 	        }
 	        log.trace("Chunk pos: {}", chunkBytePos);
 	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos);
@@ -277,7 +282,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 	        readRemaining = header.getSize() - buf.position();
 	        log.trace("readRemaining 2: {}", readRemaining);
 	        if (readRemaining > in.remaining()) {
-	            // not enough data, indicate that more is needed
+	            log.debug("Not enough data, more is needed ({},{})", in.remaining(), readRemaining);
+	            //we need to move back position so header will be available during another decode round
+	            in.position(position);
 	            state.continueDecoding();
 	            return null;
 	        }
@@ -319,10 +326,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes packet header.
      * 
+     * @param state
+     *            RTMP decode state
      * @param in
      *            Input IoBuffer
-     * @param lastHeader
-     *            Previous header
+     * @param rtmp
+     *            RTMP object to get last header
      * @return Decoded header
      */
     public Header decodeHeader(RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
@@ -614,6 +623,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            input buffer
      * @param input
+     *            Input object to be processed
      */
     protected void doDecodeSharedObject(SharedObjectMessage so, IoBuffer in, Input input) {
         // Parse request body
@@ -700,6 +710,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @param in
      *            input buffer
      * @param header
+     *            Header object to get necessary info
      * @return decoded notify result
      */
     public Notify decodeNotify(Encoding encoding, IoBuffer in, Header header) {

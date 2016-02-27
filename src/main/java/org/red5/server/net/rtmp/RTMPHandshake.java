@@ -201,7 +201,7 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Prepare the ciphers.
      * 
-     * @param sharedSecret
+     * @param sharedSecret shared secret byte sequence
      */
     protected void initRC4Encryption(byte[] sharedSecret) {
         log.debug("Shared secret: {}", Hex.encodeHexString(sharedSecret));
@@ -297,7 +297,7 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param handshake
+     * @param handshake handshake byte sequence
      * @return true if its a supported validation scheme, false if unsupported
      */
     public abstract boolean validate(byte[] handshake);
@@ -305,13 +305,13 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Calculates the digest given the its offset in the handshake data.
      * 
-     * @param digestPos
-     * @param handshakeMessage
-     * @param handshakeOffset
-     * @param key
-     * @param keyLen
+     * @param digestPos digest position
+     * @param handshakeMessage handshake message
+     * @param handshakeOffset handshake message offset
+     * @param key contains the key
+     * @param keyLen the length of the key
      * @param digest contains the calculated digest
-     * @param digestOffset
+     * @param digestOffset digest offset
      */
     public void calculateDigest(int digestPos, byte[] handshakeMessage, int handshakeOffset, byte[] key, int keyLen, byte[] digest, int digestOffset) {
         if (log.isTraceEnabled()) {
@@ -330,10 +330,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Verifies the digest.
      * 
-     * @param digestPos
-     * @param handshakeMessage
-     * @param key
-     * @param keyLen
+     * @param digestPos digest position
+     * @param handshakeMessage handshake message
+     * @param key contains the key
+     * @param keyLen the length of the key
      * @return true if valid and false otherwise
      */
     public boolean verifyDigest(int digestPos, byte[] handshakeMessage, byte[] key, int keyLen) {
@@ -352,12 +352,12 @@ public abstract class RTMPHandshake implements IHandshake {
      * Calculates an HMAC SHA256 hash into the digest at the given offset.
      * 
      * @param message incoming bytes
-     * @param messageOffset
-     * @param messageLen
+     * @param messageOffset message offset
+     * @param messageLen message length
      * @param key incoming key bytes
-     * @param keyLen
-     * @param digest
-     * @param digestOffset
+     * @param keyLen the length of the key
+     * @param digest contains the calculated digest
+     * @param digestOffset digest offset
      */
     public void calculateHMAC_SHA256(byte[] message, int messageOffset, int messageLen, byte[] key, int keyLen, byte[] digest, int digestOffset) {
         if (log.isTraceEnabled()) {
@@ -387,8 +387,8 @@ public abstract class RTMPHandshake implements IHandshake {
      * Calculates the swf verification token.
      * 
      * @param handshakeMessage servers handshake bytes
-     * @param swfHash
-     * @param swfSize
+     * @param swfHash hash of swf
+     * @param swfSize size of swf
      */
     public void calculateSwfVerification(byte[] handshakeMessage, byte[] swfHash, int swfSize) {
         // SHA256 HMAC hash of decompressed SWF, key are the last 32 bytes of the server handshake
@@ -413,8 +413,8 @@ public abstract class RTMPHandshake implements IHandshake {
      * Returns the DH offset from an array of bytes.
      * 
      * @param algorithm validation algorithm
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return DH offset
      */
     public int getDHOffset(int algorithm, byte[] handshake, int bufferOffset) {
@@ -430,8 +430,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the DH byte offset.
      * 
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return dh offset
      */
     protected int getDHOffset1(byte[] handshake, int bufferOffset) {
@@ -453,8 +453,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the DH byte offset.
      * 
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return dh offset
      */
     protected int getDHOffset2(byte[] handshake, int bufferOffset) {
@@ -477,8 +477,8 @@ public abstract class RTMPHandshake implements IHandshake {
      * Returns the digest offset using current validation scheme.
      * 
      * @param algorithm validation algorithm
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return digest offset
      */
     public int getDigestOffset(int algorithm, byte[] handshake, int bufferOffset) {
@@ -494,8 +494,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns a digest byte offset.
      * 
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return digest offset
      */
     protected int getDigestOffset1(byte[] handshake, int bufferOffset) {
@@ -517,8 +517,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns a digest byte offset.
      * 
-     * @param handshake
-     * @param bufferOffset
+     * @param handshake handshake sequence
+     * @param bufferOffset buffer offset
      * @return digest offset
      */
     protected int getDigestOffset2(byte[] handshake, int bufferOffset) {
@@ -540,9 +540,9 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * RTMPE type 8 uses XTEA on the regular signature http://en.wikipedia.org/wiki/XTEA
      * 
-     * @param array
-     * @param offset
-     * @param keyid
+     * @param array array to get signature
+     * @param offset offset to start from
+     * @param keyid ID of XTEA key
      */
     public final static void getXteaSignature(byte[] array, int offset, int keyid) {
         int num_rounds = 32;
@@ -568,9 +568,9 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * RTMPE type 9 uses Blowfish on the regular signature http://en.wikipedia.org/wiki/Blowfish_(cipher)
      * 
-     * @param array
-     * @param offset
-     * @param keyid
+     * @param array array to get signature
+     * @param offset offset to start from
+     * @param keyid ID of XTEA key
      */
     public final static void getBlowfishSignature(byte[] array, int offset, int keyid) {
         BlowfishEngine bf = new BlowfishEngine();
@@ -584,7 +584,7 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns whether or not a given handshake type is valid.
      * 
-     * @param handshakeType
+     * @param handshakeType the type of handshake
      * @return true if valid and supported, false otherwise
      */
     public final static boolean validHandshakeType(byte handshakeType) {

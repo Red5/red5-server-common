@@ -91,6 +91,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
      * @param message
      *            the message to be pushed to consumers
      * @throws IOException
+     *            In case IOException of some sort is occured
      */
     public void pushMessage(IMessage message) throws IOException {
         if (log.isDebugEnabled()) {
