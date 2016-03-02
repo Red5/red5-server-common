@@ -15,22 +15,15 @@
         </encoder>
     </appender>
 -->
-    <root>
-        <level value="WARN" />
+    <root level="TRACE">
         <appender-ref ref="CONSOLE" />
 <!-- 
         <appender-ref ref="FILE" />
 -->
     </root>
 <!-- 
-    <logger name="org.springframework">
-        <level value="INFO" />
-    </logger>
-    <logger name="org.apache">
-        <level value="INFO" />
-    </logger>
+    <logger name="org.springframework" level="INFO" />
+    <logger name="org.apache" level="INFO" />
 -->
-    <logger name="org.quartz">
-        <level value="OFF" />
-    </logger>
+    <logger name="org.quartz" level="OFF" />
 </configuration>
