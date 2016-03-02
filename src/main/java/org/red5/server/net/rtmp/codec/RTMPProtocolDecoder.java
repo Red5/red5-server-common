@@ -57,6 +57,7 @@ import org.red5.server.net.rtmp.event.ServerBW;
 import org.red5.server.net.rtmp.event.SetBuffer;
 import org.red5.server.net.rtmp.event.Unknown;
 import org.red5.server.net.rtmp.event.VideoData;
+import org.red5.server.net.rtmp.message.ChunkHeader;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
@@ -76,9 +77,6 @@ import org.slf4j.LoggerFactory;
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
-
-    // chunk delimiter
-    private static final byte CHUNK_DELIMITER = (byte) 0xC3;
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -219,12 +217,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             log.trace("decodePacket: limit {}, position {}, {}", in.limit(), position, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
         }
         RTMP rtmp = conn.getState();
-        final Header header = decodeHeader(state, in, rtmp);
+        final ChunkHeader chh = ChunkHeader.read(in);
+        final Header header = decodeHeader(chh, state, in, rtmp);
         if (header == null) {
             in.position(position);
             return null;
         }
-        int headerLength = in.position() - position;
         final int channelId = header.getChannelId();
         // store the header based on its channel id
         rtmp.setLastReadHeader(channelId, header);
@@ -241,10 +239,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // the number of bytes left to complete the packet
         int readRemaining = header.getSize() - buf.position();
         log.trace("readRemaining: {}", readRemaining);
-        //int chunkSize = rtmp.getReadChunkSize();
-        //log.trace("chunkSize: {}", chunkSize);
-        int readAmount = buf.limit(); // buf was created with limit equals to the packet data size
-        log.trace("readAmount: {}", readAmount);
         if (in.remaining() < readRemaining) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), readRemaining);
             //we need to move back position so header will be available during another decode round
@@ -254,41 +248,25 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
-        int totalChunked = 0;
+        //read next chunk
         do {
-	        // we will fill the buffer chunk by chunk skipping any CHUNK_DELIMITER found
-	        int chunked = 0;
-	        int maxPos = position + headerLength + totalChunked + buf.limit();
-	        int chunkBytePos = in.position() + rtmp.getReadChunkSize();
-	        chunkBytePos = chunkBytePos > maxPos ? maxPos - 1 : chunkBytePos;
-	        byte chunkDelimiterByte = in.get(chunkBytePos);
-	        if (CHUNK_DELIMITER == chunkDelimiterByte) {
-	            chunked = 1;
-	            totalChunked++;
-	        } else {
-	            chunkBytePos = maxPos;
-	        }
-	        log.trace("Chunk pos: {}", chunkBytePos);
-	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), chunkBytePos);
-	        if (log.isTraceEnabled()) {
-	        	log.trace("Chunk: {}", Hex.encodeHexString(chunk));
-	        }
-	        // add the chunk of packet data into the packet buffer
+	        int length = Math.min(buf.remaining(), rtmp.getReadChunkSize());
+	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
+            if (log.isTraceEnabled()) {
+                log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+            }
+	        in.skip(length);
 	        buf.put(chunk);
-	        // advance input past chunk delimiter
-	        in.skip(chunk.length + chunked);
-	        log.trace("In pos: {} buf pos: {}", in.position(), buf.position());
-	        // how much is left to read from the input
-	        readRemaining = header.getSize() - buf.position();
-	        log.trace("readRemaining 2: {}", readRemaining);
-	        if (readRemaining > in.remaining()) {
-	            log.debug("Not enough data, more is needed ({},{})", in.remaining(), readRemaining);
-	            //we need to move back position so header will be available during another decode round
-	            in.position(position);
-	            state.continueDecoding();
-	            return null;
+	        if (buf.remaining() > 0) {
+	            ChunkHeader h = ChunkHeader.read(in);
+	            if (h.getChannelId() != channelId) {
+	                log.trace("We found mixed message");
+	                //TODO this need to be handled differently
+	                in.position(in.position() - h.getSize());
+	                decodePacket(conn, state, in);
+	            }
 	        }
-        } while (readRemaining > 0);
+        } while (buf.remaining() > 0);
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
@@ -334,43 +312,13 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *            RTMP object to get last header
      * @return Decoded header
      */
-    public Header decodeHeader(RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
+    public Header decodeHeader(ChunkHeader chh, RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
         if (log.isTraceEnabled()) {
             log.trace("decodeHeader: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
         }
         final int remaining = in.remaining();
-        // at least one byte for valid decode
-        if (remaining < 1) {
-            state.bufferDecoding(1);
-            return null;
-        }
-        byte headerByte = in.get();
-        int headerValue, byteCount = 1;
-        if ((headerByte & 0x3f) == 0) {
-            // two byte header
-            if (remaining < 2) {
-                state.bufferDecoding(2);
-                return null;
-            }
-            headerValue = (headerByte & 0xff) << 8 | (in.get() & 0xff);
-            byteCount = 2;
-        } else if ((headerByte & 0x3f) == 1) {
-            // three byte header
-            if (remaining < 3) {
-                state.bufferDecoding(3);
-                return null;
-            }
-            headerValue = (headerByte & 0xff) << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
-            byteCount = 3;
-        } else {
-            // single byte header
-            headerValue = headerByte & 0xff;
-        }
-        final int channelId = RTMPUtils.decodeChannelId(headerValue, byteCount);
-        if (channelId < 0) {
-            throw new ProtocolException("Bad channel id: " + channelId);
-        }
-        final byte headerSize = RTMPUtils.decodeHeaderSize(headerValue, byteCount);
+        final int channelId = chh.getChannelId();
+        final byte headerSize = chh.getFormat();
         Header lastHeader = rtmp.getLastReadHeader(channelId);
         if (log.isTraceEnabled()) {
             log.trace("lastHeader: {}", lastHeader);
@@ -383,7 +331,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             throw new ProtocolException(String.format("Last header null not new, headerSize: %s, channelId %s", headerSize, channelId));
         }
         int headerLength = RTMPUtils.getHeaderLength(headerSize);
-        headerLength += byteCount - 1;
+        headerLength += chh.getSize() - 1;
         if (remaining < headerLength) {
             log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
             state.bufferDecoding(headerLength);
@@ -449,7 +397,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 }
                 break;
             default:
-            	throw new ProtocolException(String.format("Unexpected header size: %s", headerSize));
+                throw new ProtocolException(String.format("Unexpected header size: %s", headerSize));
         }
         log.trace("CHUNK, D, {}, {}", header, headerSize);
         return header;
