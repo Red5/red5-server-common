@@ -62,10 +62,9 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         RTMPConnection conn = new RTMPMinaConnection();
         conn.getState().setState(RTMP.STATE_CONNECTED);
         conn.setHandler(this);
-        conn.getState().setLastReadHeader(2, new Header()); //TODO hardcoded, so test will not fail
-        conn.getState().setLastReadHeader(3, new Header()); //TODO hardcoded, so test will not fail
-        conn.getState().setLastReadHeader(4, new Header()); //TODO hardcoded, so test will not fail
-        conn.getState().setLastReadHeader(12, new Header()); //TODO hardcoded, so test will not fail
+        for (int i = 0; i < 13; ++i) {
+            conn.getState().setLastReadHeader(i, new Header()); //TODO hardcoded, so test will not fail
+        }
         int idx = 0;
         for (IoBuffer p : new IoBuffer[] {
                 IoBuffer.wrap(IOUtils.hexStringToByteArray("4300120c0000191402000c63726561746553747265616d00400800000000000005"))
@@ -76,6 +75,32 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
                         + "eb584a82022a4aab5c0d3ccf732381d8568f05399f98b47eb22b1a714aa116482deab090420000000000040100000101c4e3d6aed29dc420b24cd22897"
                         + "948f0d68c12e16b640bc736918d278b5956c2d44e358010e8ff699b91bd73716ecd70b891b3791263b9d380554dccec61646ad51dd5e9ed429a3a4a2b0"
                         + "51066394111179fbe53f6562f3f461cd49fb1b6b662e79535391f32d29668e3494a211ff442e2de649475ba8e480f6de4ef5b73dff6d3356"))
+                , IoBuffer.wrap(IOUtils.hexStringToByteArray("8400002e6a5f2bd5e6b81389f5bcd79c93cf8dc82fcde9abd1af033d756343a53488344bd53c15f9202ac59"
+                        + "299268794caa179534a2132b68a1da926f5da1ad3566d43223d99437a65ba4f829395c95c94f11838650cb6169785929758aded8b6da3ac86ba422805e"
+                        + "cf6ebfc0ecfa8d37a2fde5f7feaa919b154c9136251a8a4aa09753616608175d6aa9b6995a1b89a8472118833d8a6eab81572fdde05ed5f21364cd97a6"
+                        + "a7abc24c6fcef545e2d2553b3152384afd567957b749125404821853a388400a2597955cb538137a5b79eab101599c9e71ad7c5d6db1039a1274771d2c"
+                        + "eb2cd95eb8ac9befed41d2a79c34b630afc146979b549eaf9d50d952895f63b56ba504600008e0005010932000084074202becac8c293f8c2c3b658622"
+                        + "5827a0342932209024ad6308162a489b0c0336fe9de14fe139c3630dcd66b622a6e0892b6c9673ce3a23ce9f3e7db683bcd42b304e2bc951c296bad8b8"
+                        + "2f8d0e8abc3d8d271005414b939d278939dd98396c2906fffc41e6cede4d1138362cc1708f4247c30771f80acc29423a3214f3e478350dd11a6353fd95"
+                        + "ae16f4157ed26c0f412c29e347a7e9f6ba6a6a994b262cd7535d3cf13e7f4f4cea6ce4e276c1878257c4ae1567630569ee959f17be28cf26064404905e"
+                        + "a16a9db4a4c1633da1cb4d1fa03443cf1d3a9c1b8810a784e74ed3d189363379ec459a1cd27059851e8065a48359a23fd911974c8902087c674e893e90"
+                        + "b24977641c286330b314b360d50b3a7c559d70af3a18359d17b413b79d17c7857f80ad25141621a9d3ac946706625e367789865cd02dd9abda5ad36c0b"
+                        + "02bed04e90e56d4d5c456f72f43f49c870f05f8094f17f4e8859e40889d7c056030ffc9de4024ca472461a14af4621d3408e702b6b3307214f6215d102"
+                        + "b35b38784f982b063a06bb5334c201c8ac5e0ddbf89fc6868d831e02f59a8b23de824852e4b9185d74d0838c9cdde42ce360c740e191a853d9180373fe"
+                        + "a5905ca943bd662110c561b31c0c0e0ab380da7fc2a6c262d18a104def5a489af528a9e14f60380c3d9fe48a00adbc48a25db7122e4689071098101861"
+                        + "0a318649d6bbb4089c64214068e853d1da031095162e115e167286848c5229a0529675108471b5de14f2b71c3ac92fa0eee340c740b29ab460982b74f0"
+                        + "d81907fc3209224c42c3220712ad9594ed3a08b5bd1b96f5a17085be34229640bb4a5c046b69aeaec8124a3510b0e148e61e01c0b890a732a6ade87c78"
+                        + "4fa30f1721063ffc5d8573a9f1b1c8984d84b296365952241988f045702b8d226c43582a6f943867bd5d869a7254fc8902e0a7f74f66a509f172ae9684"
+                        + "a0c83f9b85291b88915150ac29e1c62288cd0e34725a889f288488d0369ff91a0fec4fbc5ae74682e0a17cc4408c186874d82446f596b66b170118e233"
+                        + "614f1069ec2160d9625312cdda23a602790a22152f301c64fa45ccc60c27c04d1ba240543511d2b6df077dc85a88640dd80850fa2c0a18dcd6c0cacd4d"
+                        + "88fcd3da04c15fc19b61a0238d443c98a04314c0dc06b2878dacd2c23cea36c02042c15c35480c940f4eb189c3cc4dc1a27ac254fd69a2db187853f899"
+                        + "3afca21a7321e09c15a59a95938de276b4840b21e831d02c994e81195f48c29edf4ca764190ff328aae09c21f6825318ce242b061608ff160636046414"
+                        + "bb02fb8ce836effd2b1c60ce6d5ef53b1c56d830c05c27c9d606414f0b0ac119e1787220d25b3195dbd68a38d778b1e1d6b5ab022854142db0685f9822"
+                        + "6b68da2663538884a300a7a146b1c6162af268051846e8c2b06280832d6be1c8653476048c618582fde872329ee8d029f352ea4e44a1422292a6342ff2"
+                        + "b641840306960cffd32c3da0436394c9ad0d8300a796a6ab0b574c6160ddda03c49ff015490d9d0a7f3bbc01fcc304d46e31ffba0c27ea86e8191beac9"
+                        + "8dc16053ce26b418e7f150a744602650ea227ab7b15b6052d1760bc29e8da4637c4b0f60dd191e8343050186fe0699fae01dc480d2c27563014f27659e"
+                        + "b5630154ad06e19286dff5fa22034c052f18d3214f593616c467b06c2d95a44fc11c088bc14f962903b9d6fb0a1819e1442bc220a7b1437780d061c085"
+                        + "b01488dde8dd4ea0b55fbd89076673ba16853fa38601907f7a20f4f45c1a3fe06b7f96a9623efbdd44f06360948c4"))
                 })
         {
             objs = dec.decodeBuffer(conn, p);
