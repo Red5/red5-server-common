@@ -251,6 +251,14 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         //read next chunk
         do {
 	        int length = Math.min(buf.remaining(), rtmp.getReadChunkSize());
+	        if (in.remaining() < length) {
+	            log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
+	            // how much more data we need to continue?
+	            state.bufferDecoding(in.position() + length);
+	            //we need to move back position so header will be available during another decode round
+	            in.position(position);
+	            return null;
+	        }
 	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
             if (log.isTraceEnabled()) {
                 log.trace("chunkSize={}, length={}, chunk: {}", rtmp.getReadChunkSize(), length, Hex.encodeHexString(chunk));

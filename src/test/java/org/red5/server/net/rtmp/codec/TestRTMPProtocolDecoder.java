@@ -65,6 +65,7 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         conn.getState().setLastReadHeader(2, new Header()); //TODO hardcoded, so test will not fail
         conn.getState().setLastReadHeader(3, new Header()); //TODO hardcoded, so test will not fail
         conn.getState().setLastReadHeader(4, new Header()); //TODO hardcoded, so test will not fail
+        conn.getState().setLastReadHeader(12, new Header()); //TODO hardcoded, so test will not fail
         int idx = 0;
         for (IoBuffer p : new IoBuffer[] {
                 IoBuffer.wrap(IOUtils.hexStringToByteArray("4300120c0000191402000c63726561746553747265616d00400800000000000005"))
