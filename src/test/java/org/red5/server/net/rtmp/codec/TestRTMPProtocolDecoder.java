@@ -65,15 +65,23 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         conn.getState().setLastReadHeader(2, new Header()); //TODO hardcoded, so test will not fail
         conn.getState().setLastReadHeader(3, new Header()); //TODO hardcoded, so test will not fail
         conn.getState().setLastReadHeader(4, new Header()); //TODO hardcoded, so test will not fail
+        conn.getState().setLastReadHeader(12, new Header()); //TODO hardcoded, so test will not fail
+        int idx = 0;
         for (IoBuffer p : new IoBuffer[] {
                 IoBuffer.wrap(IOUtils.hexStringToByteArray("4300120c0000191402000c63726561746553747265616d00400800000000000005"))
-                , IoBuffer.wrap(IOUtils.hexStringToByteArray("4200000000000a0400030000000000001388830014d302000c63726561746553747265616d00401000000000000005430000000000221402000c64656c65746553747265616d00000000000000000005003ff0000000000000"))
-                , IoBuffer.wrap(IOUtils.hexStringToByteArray("04007dc400010108010000006a42a5b3b597d08decc518618c31c688880821841022226eaaaaaaaaaafeffffffffffffffffffffe17384c5790bb1ae48f4812ff082e31ce7381ccecffdfdff7f16a61525c7586c145624279c6d15b8ca145c5b11a396dc1ea405aaeb584a82022a4aab5c0d3ccf732381d8568f05399f98b47eb22b1a714aa116482deab090420000000000040100000101c4e3d6aed29dc420b24cd22897948f0d68c12e16b640bc736918d278b5956c2d44e358010e8ff699b91bd73716ecd70b891b3791263b9d380554dccec61646ad51dd5e9ed429a3a4a2b051066394111179fbe53f6562f3f461cd49fb1b6b662e79535391f32d29668e3494a211ff442e2de649475ba8e480f6de4ef5b73dff6d3356"))
+                , IoBuffer.wrap(IOUtils.hexStringToByteArray("4200000000000a0400030000000000001388830014d302000c63726561746553747265616d0040100000000"
+                        + "0000005430000000000221402000c64656c65746553747265616d00000000000000000005003ff0000000000000"))
+                , IoBuffer.wrap(IOUtils.hexStringToByteArray("04007dc400010108010000006a42a5b3b597d08decc518618c31c688880821841022226eaaaaaaaaaafeff"
+                        + "ffffffffffffffffffe17384c5790bb1ae48f4812ff082e31ce7381ccecffdfdff7f16a61525c7586c145624279c6d15b8ca145c5b11a396dc1ea405aa"
+                        + "eb584a82022a4aab5c0d3ccf732381d8568f05399f98b47eb22b1a714aa116482deab090420000000000040100000101c4e3d6aed29dc420b24cd22897"
+                        + "948f0d68c12e16b640bc736918d278b5956c2d44e358010e8ff699b91bd73716ecd70b891b3791263b9d380554dccec61646ad51dd5e9ed429a3a4a2b0"
+                        + "51066394111179fbe53f6562f3f461cd49fb1b6b662e79535391f32d29668e3494a211ff442e2de649475ba8e480f6de4ef5b73dff6d3356"))
                 })
         {
             objs = dec.decodeBuffer(conn, p);
             log.debug("Objects #02: {}", objs);
             assertFalse("Objects should not be empty", objs.isEmpty());
+            assertEquals("Buffer should be empty [idx = " + idx++ + "]", p.capacity(), p.remaining());
         }
     }
 

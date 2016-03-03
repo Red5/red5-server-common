@@ -251,21 +251,35 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         //read next chunk
         do {
 	        int length = Math.min(buf.remaining(), rtmp.getReadChunkSize());
+	        if (in.remaining() < length) {
+	            log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
+	            // how much more data we need to continue?
+	            state.bufferDecoding(in.position() + length);
+	            //we need to move back position so header will be available during another decode round
+	            in.position(position);
+	            return null;
+	        }
 	        byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
             if (log.isTraceEnabled()) {
-                log.trace("Chunk: {}", Hex.encodeHexString(chunk));
+                log.trace("chunkSize={}, length={}, chunk: {}", rtmp.getReadChunkSize(), length, Hex.encodeHexString(chunk));
             }
 	        in.skip(length);
 	        buf.put(chunk);
-	        if (buf.remaining() > 0) {
-	            ChunkHeader h = ChunkHeader.read(in);
-	            if (h.getChannelId() != channelId) {
-	                log.trace("We found mixed message");
-	                //TODO this need to be handled differently
-	                in.position(in.position() - h.getSize());
-	                decodePacket(conn, state, in);
-	            }
-	        }
+            if (buf.remaining() > 0) {
+                ChunkHeader h = ChunkHeader.read(in);
+                if (h.getChannelId() != channelId) {
+                    log.trace("We found mixed message");
+                    //TODO this need to be handled differently
+                    in.position(in.position() - h.getSize());
+                    decodePacket(conn, state, in);
+                    ChunkHeader h1 = ChunkHeader.read(in);
+                    if (h1.getChannelId() == channelId && h1.getFormat() == HEADER_CONTINUE) {
+                        //we can continue
+                    } else {
+                        //FIXME TODO we need to handle it somehow
+                    }
+                }
+            }
         } while (buf.remaining() > 0);
         buf.flip();
         try {
