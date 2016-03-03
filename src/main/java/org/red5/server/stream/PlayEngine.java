@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -122,7 +123,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /**
      * timestamp of first sent packet
      */
-    private int streamStartTS;
+    private AtomicInteger streamStartTS = new AtomicInteger(-1);
 
     private IPlayItem currentItem;
 
@@ -525,7 +526,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         //change state
         subscriberStream.setState(StreamState.PLAYING);
         streamOffset = 0;
-        streamStartTS = -1;
+        streamStartTS.set(-1);
         if (msgIn != null && msgOut != null) {
             // get the stream so that we can grab any metadata and decoder configs
             IBroadcastStream stream = (IBroadcastStream) ((IBroadcastScope) msgIn).getClientBroadcastStream();
@@ -627,10 +628,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      */
     private final IMessage playVOD(boolean withReset, long itemLength) throws IOException {
         IMessage msg = null;
-        //change state
+        // change state
         subscriberStream.setState(StreamState.PLAYING);
         streamOffset = 0;
-        streamStartTS = -1;
+        streamStartTS.set(-1);
         if (withReset) {
             releasePendingMessage();
         }
@@ -1027,37 +1028,35 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 event.setTimestamp(messageIn.getBody().getTimestamp());
                 break;
         }
-
-        // Create the RTMP Message to send. Make sure to propagate the source type
-        // so that the connection can decide to drop packets if the connection
-        // is congested for LIVE streams.
+        // Create the RTMP Message to send. Make sure to propagate the source type so that the connection can decide to drop packets
+        // if the connection is congested for LIVE streams.
         RTMPMessage messageOut = RTMPMessage.build(event, messageIn.getBody().getSourceType());
         //get the current timestamp from the message
         int ts = messageOut.getBody().getTimestamp();
         if (log.isTraceEnabled()) {
-            log.trace("sendMessage: streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS, currentItem.getLength(), streamOffset, ts });
+            log.trace("sendMessage: streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS.get(), currentItem.getLength(), streamOffset, ts });
             final long delta = System.currentTimeMillis() - playbackStart;
             log.trace("clientBufferDetails: timestamp {} delta {} buffered {}", new Object[] { lastMessageTs, delta, lastMessageTs - delta });
         }
-        // don't reset streamStartTS to 0 for live streams 
-        if ((streamStartTS == -1 && (ts > 0 || playDecision != 0)) || streamStartTS > ts) {
+        // don't reset streamStartTS to 0 for live streams
+        if ((ts > 0 || playDecision != 0) || streamStartTS.get() > ts) {
             log.debug("sendMessage: resetting streamStartTS");
-            streamStartTS = ts;
+            streamStartTS.compareAndSet(-1, ts);
             messageOut.getBody().setTimestamp(0);
         }
-        //relative timestamp adjustment for live streams
-        if (playDecision == 0 && streamStartTS > 0) {
-            //subtract the offset time of when the stream started playing for the client
-            ts -= streamStartTS;
+        // relative timestamp adjustment for live streams
+        if (playDecision == 0 && streamStartTS.get() > 0) {
+            // subtract the offset time of when the stream started playing for the client
+            ts -= streamStartTS.get();
             messageOut.getBody().setTimestamp(ts);
             if (log.isTraceEnabled()) {
-                log.trace("sendMessage (updated): streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS, currentItem.getLength(), streamOffset, ts });
+                log.trace("sendMessage (updated): streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS.get(), currentItem.getLength(), streamOffset, ts });
             }
         }
-        if (streamStartTS > -1 && currentItem.getLength() >= 0) {
-            int duration = ts - streamStartTS;
+        if (streamStartTS.get() > -1 && currentItem.getLength() >= 0) {
+            int duration = ts - streamStartTS.get();
             if (duration - streamOffset >= currentItem.getLength()) {
-                // Sent enough data to client
+                // sent enough data to client
                 stop();
                 return;
             }
@@ -1089,7 +1088,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             RTMPMessage recordedMsg = RTMPMessage.build(recorded);
             doPushMessage(recordedMsg);
         }
-
         Ping begin = new Ping();
         begin.setEventType(Ping.STREAM_BEGIN);
         begin.setValue2(streamId);
