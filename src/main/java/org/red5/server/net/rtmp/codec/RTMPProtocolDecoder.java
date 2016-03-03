@@ -92,8 +92,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @return a list of decoded objects, may be empty if nothing could be decoded
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
+        final int position = buffer.position();
         if (log.isTraceEnabled()) {
-            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), buffer.position(), buffer.limit())));
+            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
         }
         // decoded results
         List<Object> result = null;
@@ -132,6 +133,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     }
                 }
             } catch (Exception ex) {
+                log.warn("Failed to decodeBuffer:: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize()
+                        , Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
                 // catch any non-handshake exception in the decoding; close the connection
                 log.warn("Closing connection because decoding failed: {}", conn, ex);
                 // clear the buffer to eliminate memory leaks when we can't parse protocol
@@ -236,6 +239,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         // get the packet data
         IoBuffer buf = packet.getData();
+        buf.position(0);//TODO update the logic! let's start from the beginning
         // the number of bytes left to complete the packet
         int readRemaining = header.getSize() - buf.position();
         log.trace("readRemaining: {}", readRemaining);
