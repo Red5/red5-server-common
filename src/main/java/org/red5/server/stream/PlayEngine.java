@@ -1039,7 +1039,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             log.trace("clientBufferDetails: timestamp {} delta {} buffered {}", new Object[] { lastMessageTs, delta, lastMessageTs - delta });
         }
         // don't reset streamStartTS to 0 for live streams
-        if ((ts > 0 || playDecision != 0) || streamStartTS.get() > ts) {
+        if ((streamStartTS.get() == -1 && (ts > 0 || playDecision != 0)) || streamStartTS.get() > ts) {
             log.debug("sendMessage: resetting streamStartTS");
             streamStartTS.compareAndSet(-1, ts);
             messageOut.getBody().setTimestamp(0);
