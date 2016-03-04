@@ -263,6 +263,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
+            if (log.isTraceEnabled()) {
+                log.trace("Decoded message: {}", message);
+            }
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
             // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
             // don't reset the header we stored.
