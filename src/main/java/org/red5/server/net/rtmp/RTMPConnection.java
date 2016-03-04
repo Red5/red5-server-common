@@ -287,7 +287,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Maximum time in milliseconds to wait for a valid handshake.
      */
-    private int maxHandshakeTimeout = 5000;
+    private int maxHandshakeTimeout = 10000;
 
     /**
      * Maximum time in milliseconds allowed to process received message
