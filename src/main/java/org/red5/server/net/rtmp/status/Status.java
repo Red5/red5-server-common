@@ -73,7 +73,7 @@ public class Status implements StatusCodes, ICustomSerializable, Externalizable 
     /**
      * Id of client
      */
-    protected Number clientid;
+    protected Number clientid = -1d;
 
     /** Constructs a new Status. */
     public Status() {
