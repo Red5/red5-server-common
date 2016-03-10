@@ -134,6 +134,12 @@ public class Ping extends BaseEvent {
         this.value2 = value2;
     }
 
+    public Ping(short eventType, Number value2) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+    }
+
     public Ping(short eventType, int value2, int value3) {
         super(Type.SYSTEM);
         this.eventType = eventType;
@@ -141,7 +147,22 @@ public class Ping extends BaseEvent {
         this.value3 = value3;
     }
 
+    public Ping(short eventType, Number value2, int value3) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+        this.value3 = value3;
+    }
+
     public Ping(short eventType, int value2, int value3, int value4) {
+        super(Type.SYSTEM);
+        this.eventType = eventType;
+        this.value2 = value2;
+        this.value3 = value3;
+        this.value4 = value4;
+    }
+
+    public Ping(short eventType, Number value2, int value3, int value4) {
         super(Type.SYSTEM);
         this.eventType = eventType;
         this.value2 = value2;

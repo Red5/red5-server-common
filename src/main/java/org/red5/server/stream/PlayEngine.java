@@ -1888,7 +1888,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                             if (okayToSendMessage(body)) {
                                                 log.trace("ts: {}", rtmpMessage.getBody().getTimestamp());
                                                 sendMessage(rtmpMessage);
-                                                ((IStreamData<?>) body).getData().free();
+                                                IoBuffer data = ((IStreamData<?>) body).getData();
+                                                if (data != null) {
+                                                    data.free();
+                                                }
                                             } else {
                                                 pendingMessage = rtmpMessage;
                                             }

@@ -27,22 +27,20 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.protocol.ProtocolException;
 
 /**
- * RTMP chunk header
- * https://www.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf (5.3.1.1 page 12)
+ * RTMP chunk header https://www.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf (5.3.1.1 page 12)
  */
 public class ChunkHeader implements Constants, Cloneable, Externalizable {
-    private static final long serialVersionUID = 1L;
 
     /**
-     * chunk format
+     * Chunk format
      */
     private byte format;
-    
+
     /**
-     * chunk size
+     * Chunk size
      */
     private byte size;
-    
+
     /**
      * Channel
      */
@@ -66,7 +64,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     public void setFormat(byte format) {
         this.format = format;
     }
-    
+
     /**
      * Getter for channel id
      *
@@ -106,15 +104,15 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     }
 
     public static ChunkHeader read(IoBuffer in) {
-    	ChunkHeader h = new ChunkHeader();
         final int remaining = in.remaining();
         // at least one byte for valid decode
         if (remaining < 1) {
             throw new ProtocolException("Bad chunk header, at least 1 byte is expected");
         }
         byte headerByte = in.get();
-        //going to check highest 2 bits
-        h.format = (byte)((0b11000000 & headerByte) >> 6);
+        ChunkHeader h = new ChunkHeader();
+        // going to check highest 2 bits
+        h.format = (byte) ((0b11000000 & headerByte) >> 6);
         h.size = 1;
         h.channelId = 0x3F & headerByte;
         if ((headerByte & 0x3f) == 0) {
@@ -135,19 +133,19 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
             // single byte header
         }
         if (h.channelId < 0) {
-       		throw new ProtocolException("Bad channel id: " + h.channelId);
+            throw new ProtocolException("Bad channel id: " + h.channelId);
         }
         return h;
-	}
-    
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ChunkHeader)) {
-            return false;
+        if (other instanceof ChunkHeader) {
+            final ChunkHeader header = (ChunkHeader) other;
+            return (header.getChannelId() == channelId && header.getFormat() == format);
         }
-        final ChunkHeader header = (ChunkHeader) other;
-        return (header.getChannelId() == channelId && header.getFormat() == format);
+        return false;
     }
 
     /** {@inheritDoc} */
@@ -163,7 +161,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         format = in.readByte();
         channelId = in.readInt();
-        size = (byte)(channelId > 319 ? 3 : (channelId > 63 ? 2 : 1));
+        size = (byte) (channelId > 319 ? 3 : (channelId > 63 ? 2 : 1));
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -171,9 +169,6 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
         out.writeInt(channelId);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         // if its new and props are un-set, just return that message

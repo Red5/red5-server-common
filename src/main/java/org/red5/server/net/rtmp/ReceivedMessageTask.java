@@ -142,6 +142,37 @@ public final class ReceivedMessageTask implements Callable<Packet> {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((sessionId == null) ? 0 : sessionId.hashCode());
+        result = prime * result + packet.getHeader().hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ReceivedMessageTask other = (ReceivedMessageTask) obj;
+        if (sessionId == null) {
+            if (other.sessionId != null) {
+                return false;
+            }
+        } else if (!sessionId.equals(other.sessionId)) {
+            return false;
+        }
+        if (!packet.getHeader().equals(other.packet.getHeader())) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "[sessionId: " + sessionId + "; packetNumber: " + packetNumber + "; processing: " + processing.get() + "]";
     }

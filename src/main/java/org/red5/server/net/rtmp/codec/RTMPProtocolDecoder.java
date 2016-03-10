@@ -18,6 +18,7 @@
 
 package org.red5.server.net.rtmp.codec;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -133,8 +134,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     }
                 }
             } catch (Exception ex) {
-                log.warn("Failed to decodeBuffer:: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize()
-                        , Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
+                log.warn("Failed to decodeBuffer: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize(),
+                        Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
                 // catch any non-handshake exception in the decoding; close the connection
                 log.warn("Closing connection because decoding failed: {}", conn, ex);
                 // clear the buffer to eliminate memory leaks when we can't parse protocol
@@ -164,7 +165,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *            IoBuffer of data to be decoded
      * @return one of three possible values:
      * 
-     *         <pre>
+     * <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
@@ -222,8 +223,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         RTMP rtmp = conn.getState();
         final ChunkHeader chh = ChunkHeader.read(in);
         final Header header = decodeHeader(chh, state, in, rtmp);
-        if (header == null) {
-            in.position(position);
+        if (header == null || header.isEmpty()) {
+            // ensure we dont simply have a buffer full of zeros
+            byte[] tmp = Arrays.copyOfRange(in.array(), position, in.limit());
+            BigInteger bi = new BigInteger(tmp);
+            if (bi.intValue() == 0) {
+                log.debug("Buffer seems to contain nothing but zeros, reset position to limit");
+                in.position(in.limit());
+            } else {
+                in.position(position);
+            }
             return null;
         }
         final int channelId = header.getChannelId();
@@ -321,8 +330,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (log.isTraceEnabled()) {
             log.trace("lastHeader: {}", lastHeader);
         }
-        Header header = new Header();
-        header.setChannelId(channelId);
         if (headerSize != HEADER_NEW && lastHeader == null) {
             // this will trigger an error status, which in turn will disconnect the "offending" flash player
             // preventing a memory leak and bringing the whole server to its knees
@@ -336,6 +343,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             return null;
         }
         int timeValue;
+        Header header = new Header();
+        header.setChannelId(channelId);
         switch (headerSize) {
             case HEADER_NEW:
                 // an absolute time value

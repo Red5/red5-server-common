@@ -196,6 +196,23 @@ public class Header implements Constants, Cloneable, Externalizable {
         return timerBase;
     }
 
+    public boolean isEmpty() {
+        return !((channelId + dataType + size + streamId.doubleValue()) > 0d);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + channelId;
+        result = prime * result + dataType;
+        result = prime * result + size;
+        result = prime * result + streamId.intValue();
+        result = prime * result + getTimer();
+        result = prime * result + extendedTimestamp;
+        return result;
+    }
+
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object other) {
@@ -246,10 +263,10 @@ public class Header implements Constants, Cloneable, Externalizable {
     @Override
     public String toString() {
         // if its new and props are un-set, just return that message
-        if ((channelId + dataType + size + streamId.doubleValue()) > 0d) {
-            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extendedTimestamp=" + extendedTimestamp + "]";
-        } else {
+        if (isEmpty()) {
             return "empty";
+        } else {
+            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extendedTimestamp=" + extendedTimestamp + "]";
         }
     }
 
