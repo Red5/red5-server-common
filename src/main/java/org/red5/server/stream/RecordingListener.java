@@ -1,14 +1,14 @@
 /*
  * RED5 Open Source Flash Server - https://github.com/Red5/
- * 
+ *
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import org.springframework.core.io.Resource;
 
 /**
  * Stream listener for recording stream events to a file.
- * 
+ *
  * @author Paul Gregoire (mondain@gmail.com)
  */
 public class RecordingListener implements IRecordingListener {
@@ -93,9 +93,15 @@ public class RecordingListener implements IRecordingListener {
      */
     private final BlockingQueue<CachedEvent> queue = new LinkedBlockingQueue<CachedEvent>(8192);
 
+
+    /**
+    * The instance holding the queued processQueue() calls
+    **/
+    private EventQueueJob eqj;
+
     /**
      * Get the file we'd be recording to based on scope and given name.
-     * 
+     *
      * @param scope
      *            scope
      * @param name
@@ -219,7 +225,8 @@ public class RecordingListener implements IRecordingListener {
     /** {@inheritDoc} */
     public void start() {
         // start the worker
-        eventQueueJobName = scheduler.addScheduledJob(3000, new EventQueueJob());
+        eqj = new EventQueueJob();
+        eventQueueJobName = scheduler.addScheduledJob(3000, eqj);
     }
 
     /** {@inheritDoc} */
@@ -231,10 +238,17 @@ public class RecordingListener implements IRecordingListener {
             if (queue.isEmpty()) {
                 log.debug("Event queue was empty on stop");
             } else {
-                log.debug("Event queue was not empty on stop, processing...");
-                do {
+                if (!eqj.processing.get()){
+                  log.debug("Event queue was not empty on stop and it's not processing, processing...");
+                  do {
                     processQueue();
-                } while (!queue.isEmpty());
+                  } while (!queue.isEmpty());
+                }else{
+                  log.debug("Event queue was not empty on stop but it's in processing, waiting...");
+                  do {
+                  } while (!queue.isEmpty());
+                }
+                log.debug("Processing done, event queue empty, moving on");
             }
             recordingConsumer.uninit();
         } else {
@@ -353,7 +367,7 @@ public class RecordingListener implements IRecordingListener {
 
     private class EventQueueJob implements IScheduledJob {
 
-        private AtomicBoolean processing = new AtomicBoolean(false);
+        public AtomicBoolean processing = new AtomicBoolean(false);
 
         public void execute(ISchedulingService service) {
             if (processing.compareAndSet(false, true)) {
