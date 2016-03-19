@@ -699,6 +699,12 @@ public abstract class RTMPHandshake implements IHandshake {
     public void addBuffer(IoBuffer in) {
         byte[] tmp = new byte[in.remaining()];
         in.get(tmp);
+        if (log.isDebugEnabled()) {
+            log.debug("addBuffer - pos: {} limit: {} remain: {}", buffer.position(), buffer.limit(), buffer.remaining());
+        }
+        if (buffer.remaining() == 0) {
+            buffer.clear();
+        }
         buffer.put(tmp);
     }
 
