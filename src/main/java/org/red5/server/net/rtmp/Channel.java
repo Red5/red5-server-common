@@ -72,6 +72,7 @@ public class Channel {
      * Closes channel with this id on RTMP connection.
      */
     public void close() {
+        log.debug("Closing channel: {}", id);
         connection.closeChannel(id);
     }
 

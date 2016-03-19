@@ -86,10 +86,11 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
         log.debug("Connect scope: {}", newScope);
         boolean success = super.connect(newScope, params);
         if (success) {
+            final Channel two = getChannel(2);
             // tell the flash player how fast we want data and how fast we shall send it
-            getChannel(2).write(new ServerBW(defaultServerBandwidth));
+            two.write(new ServerBW(defaultServerBandwidth));
             // second param is the limit type (0=hard,1=soft,2=dynamic)
-            getChannel(2).write(new ClientBW(defaultClientBandwidth, (byte) limitType));
+            two.write(new ClientBW(defaultClientBandwidth, (byte) limitType));
             // if the client is null for some reason, skip the jmx registration
             if (client != null) {
                 // perform bandwidth detection

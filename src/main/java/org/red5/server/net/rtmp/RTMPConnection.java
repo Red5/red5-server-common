@@ -354,7 +354,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
     /**
      * Packet sequence number
-     * */
+     */
     private final AtomicLong packetSequence = new AtomicLong();
 
     /**
@@ -639,10 +639,21 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      *            Channel id
      */
     public void closeChannel(int channelId) {
+        if (log.isTraceEnabled()) {
+            log.trace("closeChannel: {}", channelId);
+        }
         Channel chan = channels.remove(channelId);
+        if (log.isTraceEnabled()) {
+            log.trace("channel: {} for id: {}", chan, channelId);
+            if (chan == null) {
+                log.trace("Channels: {}", channels);
+            }
+        }
         ReceivedMessageTaskQueue queue = tasksByChannels.remove(channelId);
         if (queue != null) {
             queue.removeAllTasks();
+        } else if (log.isTraceEnabled()) {
+            log.trace("No task queue for id: {}", channelId);
         }
         if (log.isDebugEnabled()) {
             log.debug("Closing / removing channel: {}", chan);

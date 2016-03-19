@@ -226,7 +226,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
             final Ping pingMessage = (Ping) message;
             if (pingMessage.getEventType() == Ping.STREAM_PLAYBUFFER_CLEAR) {
                 // client buffer cleared, make sure to reset timestamps for this stream
-                final int channel = conn.getChannelIdForStreamId(pingMessage.getValue2()); //(4 + ((pingMessage.getValue2().intValue() - 1) * 5));
+                final int channel = conn.getChannelIdForStreamId(pingMessage.getValue2());
                 log.trace("Ping stream id: {} channel id: {}", pingMessage.getValue2(), channel);
                 conn.getState().clearLastTimestampMapping(channel, channel + 1, channel + 2);
             }

@@ -18,7 +18,6 @@
 
 package org.red5.server.net.rtmp.codec;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -63,12 +62,15 @@ import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
 import org.red5.server.net.rtmp.message.SharedObjectTypeMapping;
+import org.red5.server.net.rtmp.status.Status;
+import org.red5.server.net.rtmp.status.StatusCodes;
 import org.red5.server.service.Call;
 import org.red5.server.service.PendingCall;
 import org.red5.server.so.FlexSharedObjectMessage;
 import org.red5.server.so.ISharedObjectEvent;
 import org.red5.server.so.ISharedObjectMessage;
 import org.red5.server.so.SharedObjectMessage;
+import org.red5.server.stream.StreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +80,9 @@ import org.slf4j.LoggerFactory;
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
     protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+
+    // close when header errors occur
+    protected boolean closeOnHeaderError = false;
 
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
@@ -186,7 +191,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 case RTMP.STATE_DISCONNECTING:
                 case RTMP.STATE_DISCONNECTED:
                     // throw away any remaining input data:
-                    in.position(in.limit());
+                    in.clear();
                     return null;
                 default:
                     throw new IllegalStateException("Invalid RTMP state: " + connectionState);
@@ -218,21 +223,34 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         final int position = in.position();
         if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            log.trace("decodePacket: limit {}, position {}, {}", in.limit(), position, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
+            //log.trace("decodePacket: position {}, limit {}, {}", position, in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
+            log.trace("decodePacket: position {}, limit {}", position, in.limit());
         }
         RTMP rtmp = conn.getState();
         final ChunkHeader chh = ChunkHeader.read(in);
         final Header header = decodeHeader(chh, state, in, rtmp);
         if (header == null || header.isEmpty()) {
-            // ensure we dont simply have a buffer full of zeros
-            byte[] tmp = Arrays.copyOfRange(in.array(), position, in.limit());
-            BigInteger bi = new BigInteger(tmp);
-            if (bi.intValue() == 0) {
-                log.debug("Buffer seems to contain nothing but zeros, reset position to limit");
-                in.position(in.limit());
-            } else {
-                in.position(position);
+            if (log.isTraceEnabled()) {
+                log.trace("Header was null or empty - chh: {}", chh);
             }
+            // ensure we dont simply have a buffer full of zeros
+//            byte[] tmp = Arrays.copyOfRange(in.array(), position, in.limit());
+//            BigInteger bi = new BigInteger(tmp);
+//            if (bi.intValue() == 0) {
+//                log.debug("Buffer seems to contain nothing but zeros, reset position to limit");
+//                in.position(in.limit());
+//            } else {
+//                in.position(position);
+//            }
+            // clear / compact the input and close the channel
+            in.clear();
+            in.compact();
+            // get the channel id
+            int channelId = chh.getChannelId();
+            // send a NetStream.Failed message
+            StreamService.sendNetStreamStatus(conn, StatusCodes.NS_FAILED, "Bad data on channel: " + channelId, "no-name", Status.ERROR, conn.getStreamIdForChannelId(channelId));
+            // close the channel on which the issue occurred, until we find a way to exclude the current data
+            conn.closeChannel(channelId);
             return null;
         }
         final int channelId = header.getChannelId();
@@ -243,32 +261,41 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (packet == null) {
             // create a new packet
             packet = new Packet(header.clone());
+            if (log.isTraceEnabled()) {
+                log.trace("Cloned header: {}", packet.getHeader());
+            }
             // store the packet based on its channel id
             rtmp.setLastReadPacket(channelId, packet);
         }
         // get the packet data
         IoBuffer buf = packet.getData();
-        log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
-        //read chunk
+        if (log.isTraceEnabled()) {
+            log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
+        }
+        // read chunk
         int length = Math.min(buf.remaining(), rtmp.getReadChunkSize());
         if (in.remaining() < length) {
             log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
             // how much more data we need to continue?
             state.bufferDecoding(in.position() - position + length);
-            //we need to move back position so header will be available during another decode round
+            // we need to move back position so header will be available during another decode round
             in.position(position);
             return null;
         }
+        // get the chunk from our input
         byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
         if (log.isTraceEnabled()) {
-            log.trace("chunkSize={}, length={}, chunk: {}", rtmp.getReadChunkSize(), length, Hex.encodeHexString(chunk));
+            log.trace("Read chunkSize: {}, length: {}, chunk: {}", rtmp.getReadChunkSize(), length, Hex.encodeHexString(chunk));
         }
+        // move the position
         in.skip(length);
+        // put the chunk into the packet
         buf.put(chunk);
         if (buf.hasRemaining()) {
             log.trace("Packet is incomplete ({},{})", buf.remaining(), buf.limit());
             return null;
         }
+        // flip so we can read / decode the packet data inot a message
         buf.flip();
         try {
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
@@ -321,7 +348,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Header decodeHeader(ChunkHeader chh, RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
         if (log.isTraceEnabled()) {
-            log.trace("decodeHeader: {}", Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
+            //log.trace("decodeHeader - chh: {} input: {}", chh, Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
+            log.trace("decodeHeader - chh: {}", chh);
         }
         final int remaining = in.remaining();
         final int channelId = chh.getChannelId();
@@ -330,13 +358,25 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (log.isTraceEnabled()) {
             log.trace("lastHeader: {}", lastHeader);
         }
+        // got a non-new header for a channel which has no last-read header
         if (headerSize != HEADER_NEW && lastHeader == null) {
-            // this will trigger an error status, which in turn will disconnect the "offending" flash player
-            // preventing a memory leak and bringing the whole server to its knees
-            throw new ProtocolException(String.format("Last header null not new, headerSize: %s, channelId %s", headerSize, channelId));
+            String detail = String.format("Last header null: %s, channelId %s", Header.HeaderType.values()[headerSize], channelId);
+            log.debug("{}", detail);
+            // if the op prefers to exit or kill the connection, we should allow based on configuration param
+            if (closeOnHeaderError) {
+                // this will trigger an error status, which in turn will disconnect the "offending" flash player
+                // preventing a memory leak and bringing the whole server to its knees
+                throw new ProtocolException(detail);
+            } else {
+                // we need to skip the current channel data and continue until a new header is sent
+                return null;
+            }
         }
         int headerLength = RTMPUtils.getHeaderLength(headerSize);
         headerLength += chh.getSize() - 1;
+        if (log.isTraceEnabled()) {
+            log.trace("headerLength: {}", headerLength);
+        }
         if (remaining < headerLength) {
             log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
             state.bufferDecoding(headerLength);
@@ -1004,6 +1044,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // copy remaining to pos 0, reset mark, move to pos 0
         in.compact();
         return new FlexStreamSend(in.asReadOnlyBuffer());
+    }
+
+    /**
+     * Sets whether or not a header error on any channel should result in a closed connection.
+     * 
+     * @param closeOnHeaderError
+     */
+    public void setCloseOnHeaderError(boolean closeOnHeaderError) {
+        this.closeOnHeaderError = closeOnHeaderError;
     }
 
     /**

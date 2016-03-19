@@ -24,11 +24,6 @@ package org.red5.server.net.protocol;
 public class RTMPDecodeState {
 
     /**
-     * Session id to which this decoding state belongs.
-     */
-    public String sessionId;
-
-    /**
      * Decoding finished successfully state constant.
      */
     public static byte DECODER_OK = 0x00;
@@ -42,6 +37,11 @@ public class RTMPDecodeState {
      * Decoder is buffering state constant.
      */
     public static byte DECODER_BUFFER = 0x02;
+
+    /**
+     * Session id to which this decoding state belongs.
+     */
+    public final String sessionId;
 
     /**
      * Classes like the RTMP state object will extend this marker interface.
@@ -129,14 +129,6 @@ public class RTMPDecodeState {
      */
     public String getSessionId() {
         return sessionId;
-    }
-
-    /**
-     * @param sessionId
-     *            the sessionId to set
-     */
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
     }
 
     /* (non-Javadoc)

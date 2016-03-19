@@ -94,7 +94,7 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
                 source = conn;
                 SharedObjectMessage msg = new SharedObjectMessage(name, 0, isPersistent());
                 msg.addEvent(new SharedObjectEvent(Type.SERVER_CONNECT, null, null));
-                Channel c = ((RTMPConnection) conn).getChannel((byte) 3);
+                Channel c = ((RTMPConnection) conn).getChannel(3);
                 c.write(msg);
             } else {
                 throw new UnsupportedOperationException("Already connected");
@@ -109,7 +109,7 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
         if (isConnected()) {
             SharedObjectMessage msg = new SharedObjectMessage(name, 0, isPersistent());
             msg.addEvent(new SharedObjectEvent(Type.SERVER_DISCONNECT, null, null));
-            Channel c = ((RTMPConnection) source).getChannel((byte) 3);
+            Channel c = ((RTMPConnection) source).getChannel(3);
             c.write(msg);
             notifyDisconnect();
             initialSyncReceived = false;

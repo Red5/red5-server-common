@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.List;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -11,6 +14,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.io.utils.IOUtils;
+import org.red5.server.net.protocol.RTMPDecodeState;
+import org.red5.server.net.rtmp.Channel;
 import org.red5.server.net.rtmp.IRTMPHandler;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.RTMPMinaConnection;
@@ -165,6 +170,34 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         }
     }
 
+    @Test
+    public void decodeBigPacket() throws Exception {
+        log.debug("\n decodeBigPacket");
+        RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
+        RTMPConnection conn = new RTMPMinaConnection();
+        conn.getState().setState(RTMP.STATE_CONNECTED);
+        conn.setHandler(this);
+        Channel six = conn.getChannel(6);
+        log.trace("Channel six? {}", six);
+        RTMPDecodeState state = conn.getDecoderState();
+        
+        IoBuffer in = IoBuffer.allocate(0);
+        in.setAutoExpand(true);
+        fillBufferFromStringData(in, "bigpacket.dat");
+        int loops = 0;
+        int packetCount = 0;
+        do {
+            log.debug("Start buffer - pos: {} limit: {} remaining: {}", in.position(), in.limit(), in.remaining());
+            Packet pkt = dec.decodePacket(conn, state, in);
+            if (pkt != null) {
+                log.debug("Decoded: {}", pkt);
+                packetCount++;
+            }
+            log.debug("End buffer - pos: {} limit: {} remaining: {}", in.position(), in.limit(), in.remaining());
+        } while (in.hasRemaining() && loops++ < 25);
+        log.info("Decoded packet count: {}", packetCount);
+    }
+    
     @Override
     public void connectionOpened(RTMPConnection conn) {
         log.debug("connectionOpened - conn: {}", conn);
@@ -183,6 +216,21 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
     @Override
     public void connectionClosed(RTMPConnection conn) {
         log.debug("connectionClosed - conn: {}", conn);
+    }
+
+    private void fillBufferFromStringData(IoBuffer buf, String byteDumpFile) throws Exception {
+        File f = new File(String.format("%s/target/test-classes/%s", System.getProperty("user.dir"), byteDumpFile));
+        BufferedReader in = new BufferedReader(new FileReader(f));
+        try {
+            String line = null;
+            while ((line = in.readLine()) != null) {
+                buf.put(IOUtils.hexStringToByteArray(line));
+            }
+            buf.flip();
+            log.debug("Filled buffer: {}", buf);
+        } finally {
+            in.close();
+        }
     }
 
 }
