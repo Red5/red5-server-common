@@ -8,6 +8,7 @@
             <level>INFO</level>
         </filter>
     </appender>
+<!-- 
     <appender class="ch.qos.logback.core.FileAppender" name="FILE">
         <File>target/test.log</File>
         <Append>false</Append>
@@ -16,9 +17,12 @@
             </pattern>
         </encoder>
     </appender>
+ -->
     <root level="TRACE">
         <appender-ref ref="CONSOLE" />
+<!-- 
         <appender-ref ref="FILE" />
+ -->
     </root>
     <!-- <logger name="org.springframework" level="INFO" /> <logger name="org.apache" 
         level="INFO" /> -->
