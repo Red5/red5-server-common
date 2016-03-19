@@ -628,7 +628,11 @@ public abstract class RTMPHandshake implements IHandshake {
      */
     public void setHandshakeType(byte handshakeType) {
         if (log.isTraceEnabled()) {
-            log.trace("Setting handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
+            if (handshakeType < HANDSHAKE_TYPES.length) {
+                log.trace("Setting handshake type: {}", HANDSHAKE_TYPES[handshakeType]);
+            } else {
+                log.trace("Invalid handshake type: {}", handshakeType);
+            }
         }
         this.handshakeType = handshakeType;
     }
