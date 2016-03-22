@@ -139,8 +139,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     }
                 }
             } catch (Exception ex) {
-                log.warn("Failed to decodeBuffer: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize(),
-                        Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
+                log.warn("Failed to decodeBuffer: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize(), Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
                 // catch any non-handshake exception in the decoding; close the connection
                 log.warn("Closing connection because decoding failed: {}", conn, ex);
                 // clear the buffer to eliminate memory leaks when we can't parse protocol
@@ -170,7 +169,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *            IoBuffer of data to be decoded
      * @return one of three possible values:
      * 
-     * <pre>
+     *         <pre>
      * 1. null : the object could not be decoded, or some data was skipped, just continue 
      * 2. ProtocolState : the decoder was unable to decode the whole object, refer to the protocol state 
      * 3. Object : something was decoded, continue
@@ -226,56 +225,88 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             //log.trace("decodePacket: position {}, limit {}, {}", position, in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
             log.trace("decodePacket: position {}, limit {}", position, in.limit());
         }
+        // get RTMP state holder
         RTMP rtmp = conn.getState();
-        final ChunkHeader chh = ChunkHeader.read(in);
-        final Header header = decodeHeader(chh, state, in, rtmp);
+        // get chunk header (a chunk header varies from 1-3 bytes)
+        ChunkHeader chunkHeader = rtmp.getChunkHeader();
+        if (chunkHeader == null) {
+            if (log.isTraceEnabled()) {
+                log.trace("No decoded chunk header available");
+            }
+            try {
+                // read the chunk header
+                chunkHeader = ChunkHeader.read(in);
+                // store the chunk header
+                rtmp.setChunkHeader(chunkHeader);
+            } catch (ProtocolException pe) {
+                log.warn("Chunk header read exception", pe);
+                // back up the position so next read gets the rest
+                in.position(position);
+                return null;
+            }
+        }
+        // represents "packet" header length via "format" only 1 byte in the chunk header is needed here
+        int headerLength = RTMPUtils.getHeaderLength(chunkHeader.getFormat());
+        if (in.remaining() < headerLength) {
+            log.debug("Not enough data available for the packet header to decode - required: {} remaining: {} ", headerLength, in.remaining());
+            return null;
+        }
+        // get the channel id
+        int channelId = chunkHeader.getChannelId();
+        // decode the header based on the current chunked header data, channel id is needed here so thats 1-3 bytes of chunk header
+        Header header = rtmp.getLastReadHeader(channelId);
+        if (header == null) {
+            if (log.isTraceEnabled()) {
+                log.trace("No decoded header available");
+            }
+            // decode the packet header
+            header = decodeHeader(chunkHeader, state, in, rtmp);
+            if (header != null) {
+                // store the header based on its channel id
+                rtmp.setLastReadHeader(channelId, header);
+            }
+        }
+        // if the header is null here, we have issues
         if (header == null || header.isEmpty()) {
             if (log.isTraceEnabled()) {
-                log.trace("Header was null or empty - chh: {}", chh);
+                log.trace("Header was null or empty - chh: {}", chunkHeader);
             }
-            // ensure we dont simply have a buffer full of zeros
-//            byte[] tmp = Arrays.copyOfRange(in.array(), position, in.limit());
-//            BigInteger bi = new BigInteger(tmp);
-//            if (bi.intValue() == 0) {
-//                log.debug("Buffer seems to contain nothing but zeros, reset position to limit");
-//                in.position(in.limit());
-//            } else {
-//                in.position(position);
-//            }
             // clear / compact the input and close the channel
             in.clear();
             in.compact();
-            // get the channel id
-            int channelId = chh.getChannelId();
+            // clear the chunk header
+            rtmp.setChunkHeader(null);
             // send a NetStream.Failed message
             StreamService.sendNetStreamStatus(conn, StatusCodes.NS_FAILED, "Bad data on channel: " + channelId, "no-name", Status.ERROR, conn.getStreamIdForChannelId(channelId));
             // close the channel on which the issue occurred, until we find a way to exclude the current data
             conn.closeChannel(channelId);
             return null;
         }
-        final int channelId = header.getChannelId();
-        // store the header based on its channel id
-        rtmp.setLastReadHeader(channelId, header);
+        // get the size of our chunks
+        int readChunkSize = rtmp.getReadChunkSize();
+        // ensure theres enough data for the packet to decode
+//        int totalBytesRequired = header.getSize(); // + (header.getSize() / readChunkSize);
+//        if (in.remaining() <= totalBytesRequired) {
+//            log.debug("Not enough data available for the packet to decode - required: {} remaining: {}", totalBytesRequired, in.remaining());
+//            return null;
+//        }
         // check to see if this is a new packet or continue decoding an existing one
         Packet packet = rtmp.getLastReadPacket(channelId);
         if (packet == null) {
             // create a new packet
             packet = new Packet(header.clone());
-            if (log.isTraceEnabled()) {
-                log.trace("Cloned header: {}", packet.getHeader());
-            }
             // store the packet based on its channel id
             rtmp.setLastReadPacket(channelId, packet);
         }
         // get the packet data
         IoBuffer buf = packet.getData();
         if (log.isTraceEnabled()) {
-            log.trace("Source buffer limit: {}, position: {}, buf.position {}, header.getSize {}", new Object[] { in.limit(), in.position(), buf.position(), header.getSize() });
+            log.trace("Source buffer position: {}, limit: {}, packet-buf.position {}, packet size: {}", new Object[] { in.position(), in.limit(), buf.position(), header.getSize() });
         }
         // read chunk
-        int length = Math.min(buf.remaining(), rtmp.getReadChunkSize());
+        int length = Math.min(buf.remaining(), readChunkSize);
         if (in.remaining() < length) {
-            log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
+            log.trace("Chunk too small, buffering ({},{})", in.remaining(), length);
             // how much more data we need to continue?
             state.bufferDecoding(in.position() - position + length);
             // we need to move back position so header will be available during another decode round
@@ -285,7 +316,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // get the chunk from our input
         byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
         if (log.isTraceEnabled()) {
-            log.trace("Read chunkSize: {}, length: {}, chunk: {}", rtmp.getReadChunkSize(), length, Hex.encodeHexString(chunk));
+            log.trace("Read chunkSize: {}, length: {}, chunk: {}", readChunkSize, length, Hex.encodeHexString(chunk));
         }
         // move the position
         in.skip(length);
@@ -329,6 +360,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             lastHeader.setTimerBase(header.getTimer());
         } finally {
             rtmp.setLastReadPacket(channelId, null);
+            rtmp.setChunkHeader(null);
         }
         return packet;
     }
@@ -378,7 +410,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             log.trace("headerLength: {}", headerLength);
         }
         if (remaining < headerLength) {
-            log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
+            log.debug("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
             state.bufferDecoding(headerLength);
             return null;
         }
@@ -409,8 +441,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
                     header.setExtendedTimestamp(timeValue);
                 } else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-                    // header.setIsGarbage(true);
-                    log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
+                    log.trace("Audio with zero delta; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
                 }
                 header.setTimerBase(lastHeader.getTimerBase());
                 header.setTimerDelta(timeValue);
@@ -425,8 +456,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
                     header.setExtendedTimestamp(timeValue);
                 } else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-                    // header.setIsGarbage(true);
-                    log.trace("Audio with zero delta; setting to garbage; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
+                    log.trace("Audio with zero delta; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
                 }
                 header.setTimerBase(lastHeader.getTimerBase());
                 header.setTimerDelta(timeValue);

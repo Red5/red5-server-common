@@ -3,6 +3,7 @@ package org.red5.server.net.rtmp.codec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -171,6 +172,23 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
     }
 
     @Test
+    public void testDecodeBufferChunks() {
+        log.debug("\n testDecodeBufferChunks");
+        RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
+        List<Object> objs;
+        RTMPConnection conn = new RTMPMinaConnection();
+        conn.getState().setState(RTMP.STATE_CONNECTED);
+        conn.setHandler(this);
+        IoBuffer p00 = IoBuffer.wrap(IOUtils.hexStringToByteArray("030000000001531400000000020007636f6e6e656374003ff0000000000000030003617070020000000e6f626a656374456e636f64696e6700000000000000000000046670616401000008666c61736856657202001057494e2031312c322c3230322c3233350005746355726c02001b72746d703a2f2f36372e3136372e3136382e3138323a313933352f00c30b617564696f436f646563730040abee000000000000077061676555726c05000b636c7573746572506173730200086368616e67656d65000f70726976617465496e7374616e6365010000087075626c6963497002000d35342e3230392e32342e323138000a7075626c6963506f727400409e3c0000000000000d766964656fc346756e6374696f6e003ff0000000000000000470617468020000000c6361706162696c697469657300402e000000000000000673776655726c05000b766964656f436f64656373000000000000000000000009"));
+        objs = dec.decodeBuffer(conn, p00);
+        log.debug("Objects #00: {}", objs);
+        assertNotNull("Objects should not be null", objs);
+        assertFalse("Objects should not be empty", objs.isEmpty());
+        assertEquals("Method should be 'connect'", "connect", ((Invoke) ((Packet) objs.get(0)).getMessage()).getCall().getServiceMethodName());
+    }
+
+/*
+    @Test
     public void decodeBigPacket() throws Exception {
         log.debug("\n decodeBigPacket");
         RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
@@ -198,6 +216,43 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         log.info("Decoded packet count: {}", packetCount);
     }
     
+    @Test
+    public void decodeBigPacketInPieces() throws Exception {
+        log.debug("\n decodeBigPacketInPieces");
+        RTMPProtocolDecoder dec = new RTMPProtocolDecoder();
+        RTMPConnection conn = new RTMPMinaConnection();
+        conn.getState().setState(RTMP.STATE_CONNECTED);
+        conn.setHandler(this);
+        Channel six = conn.getChannel(6);
+        log.trace("Channel six? {}", six);
+        RTMPDecodeState state = conn.getDecoderState();
+        // tmp storage
+        IoBuffer tmp = IoBuffer.allocate(0);
+        tmp.setAutoExpand(true);
+        fillBufferFromStringData(tmp, "bigpacket.dat");
+        tmp.mark();
+        // actual input
+        IoBuffer b0 = IoBuffer.allocate(2);
+        tmp.setAutoExpand(true);
+        b0.put(tmp.get());
+        b0.flip();
+        Packet pkt = dec.decodePacket(conn, state, b0);
+        assertTrue(pkt == null);
+        tmp.reset();
+        // add the 2 bytes
+        IoBuffer b1 = IoBuffer.allocate(5);
+        b1.put(tmp.get());
+        b1.put(tmp.get());
+        b1.put(tmp.get());
+        b1.put(tmp.get());
+        b1.put(tmp.get());
+        b1.flip();
+        pkt = dec.decodePacket(conn, state, b1);
+        assertTrue(pkt == null);
+        
+    }
+*/
+
     @Override
     public void connectionOpened(RTMPConnection conn) {
         log.debug("connectionOpened - conn: {}", conn);

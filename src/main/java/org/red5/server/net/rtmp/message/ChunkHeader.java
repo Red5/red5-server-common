@@ -27,7 +27,10 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.protocol.ProtocolException;
 
 /**
- * RTMP chunk header https://www.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf (5.3.1.1 page 12)
+ * RTMP chunk header 
+ * <pre>
+ * rtmp_specification_1.0.pdf (5.3.1.1 page 12)
+ * </pre>
  */
 public class ChunkHeader implements Constants, Cloneable, Externalizable {
 
@@ -103,39 +106,47 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
         this.size = size;
     }
 
+    /**
+     * Read chunk header from the buffer.
+     * 
+     * @param in
+     * @return ChunkHeader instance
+     */
     public static ChunkHeader read(IoBuffer in) {
-        final int remaining = in.remaining();
-        // at least one byte for valid decode
-        if (remaining < 1) {
+        int remaining = in.remaining();
+        if (remaining > 0) {
+            byte headerByte = in.get();
+            ChunkHeader h = new ChunkHeader();
+            // going to check highest 2 bits
+            h.format = (byte) ((0b11000000 & headerByte) >> 6);
+            if ((headerByte & 0x3f) == 0) {
+                // two byte header
+                h.size = 2;
+                if (remaining < 2) {
+                    throw new ProtocolException("Bad chunk header, at least 2 bytes are expected");
+                }
+                h.channelId = h.channelId << 8 | (in.get() & 0xff);
+            } else if ((headerByte & 0x3f) == 1) {
+                // three byte header
+                h.size = 3;
+                if (remaining < 3) {
+                    throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
+                }
+                h.channelId = h.channelId << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
+            } else {
+                // single byte header
+                h.size = 1;
+                h.channelId = 0x3f & headerByte;
+            }
+            // check channel id is valid
+            if (h.channelId < 0) {
+                throw new ProtocolException("Bad channel id: " + h.channelId);
+            }
+            return h;
+        } else {
+            // at least one byte for valid decode
             throw new ProtocolException("Bad chunk header, at least 1 byte is expected");
         }
-        byte headerByte = in.get();
-        ChunkHeader h = new ChunkHeader();
-        // going to check highest 2 bits
-        h.format = (byte) ((0b11000000 & headerByte) >> 6);
-        h.size = 1;
-        h.channelId = 0x3F & headerByte;
-        if ((headerByte & 0x3f) == 0) {
-            // two byte header
-            if (remaining < 2) {
-                throw new ProtocolException("Bad chunk header, at least 2 bytes are expected");
-            }
-            h.channelId = h.channelId << 8 | (in.get() & 0xff);
-            h.size = 2;
-        } else if ((headerByte & 0x3f) == 1) {
-            // three byte header
-            if (remaining < 3) {
-                throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
-            }
-            h.channelId = h.channelId << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
-            h.size = 3;
-        } else {
-            // single byte header
-        }
-        if (h.channelId < 0) {
-            throw new ProtocolException("Bad channel id: " + h.channelId);
-        }
-        return h;
     }
 
     /** {@inheritDoc} */
