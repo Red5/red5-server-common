@@ -3,7 +3,6 @@ package org.red5.server.net.rtmp.codec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,8 +14,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.red5.io.utils.IOUtils;
-import org.red5.server.net.protocol.RTMPDecodeState;
-import org.red5.server.net.rtmp.Channel;
 import org.red5.server.net.rtmp.IRTMPHandler;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.RTMPMinaConnection;
@@ -273,6 +270,7 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
         log.debug("connectionClosed - conn: {}", conn);
     }
 
+    @SuppressWarnings("unused")
     private void fillBufferFromStringData(IoBuffer buf, String byteDumpFile) throws Exception {
         File f = new File(String.format("%s/target/test-classes/%s", System.getProperty("user.dir"), byteDumpFile));
         BufferedReader in = new BufferedReader(new FileReader(f));

@@ -22,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.red5.server.api.IConnection.Encoding;
-import org.red5.server.net.rtmp.message.ChunkHeader;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
 
@@ -109,12 +108,6 @@ public class RTMP {
     private Encoding encoding = Encoding.AMF0;
 
     /**
-     * Temporarily stored chunk header. This is for partial chunk headers which required more bytes than were 
-     * available at the time of initial parsing; mostly to determine the channel id to which it belongs.
-     */
-    private ChunkHeader chunkHeader;
-
-    /**
      * Creates RTMP object; essentially for storing session information.
      */
     public RTMP() {
@@ -192,23 +185,6 @@ public class RTMP {
         if (state == STATE_DISCONNECTED) {
             freeChannels();
         }
-    }
-
-    /**
-     * Get the temporary chunk header if it exists.
-     * 
-     * @return chunkHeader
-     */
-    public ChunkHeader getChunkHeader() {
-        return chunkHeader;
-    }
-
-    /**
-     * Set a temporary chunk header.
-     * @param chunkHeader
-     */
-    public void setChunkHeader(ChunkHeader chunkHeader) {
-        this.chunkHeader = chunkHeader;
     }
 
     /**
