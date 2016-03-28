@@ -371,7 +371,7 @@ public abstract class RTMPHandshake implements IHandshake {
             log.trace("calculateHMAC_SHA256 - messageOffset: {} messageLen: {}", messageOffset, messageLen);
             log.trace("calculateHMAC_SHA256 - message: {}", Hex.encodeHexString(Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen)));
             log.trace("calculateHMAC_SHA256 - keyLen: {} key: {}", keyLen, Hex.encodeHexString(Arrays.copyOf(key, keyLen)));
-            log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
+            //log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
         }
         byte[] calcDigest;
         try {
