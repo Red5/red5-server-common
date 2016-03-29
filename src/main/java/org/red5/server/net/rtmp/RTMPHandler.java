@@ -88,6 +88,11 @@ public class RTMPHandler extends BaseRTMPHandler {
     private boolean globalScopeConnectionAllowed;
 
     /**
+     * Whether or not unvalidated connections are allowed.
+     */
+    private boolean unvalidatedConnectionAllowed;
+
+    /**
      * Whether or not to dispatch stream actions to the current scope.
      */
     private boolean dispatchStreamActions;
@@ -118,6 +123,14 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     public void setGlobalScopeConnectionAllowed(boolean globalScopeConnectionAllowed) {
         this.globalScopeConnectionAllowed = globalScopeConnectionAllowed;
+    }
+
+    public boolean isUnvalidatedConnectionAllowed() {
+        return unvalidatedConnectionAllowed;
+    }
+
+    public void setUnvalidatedConnectionAllowed(boolean unvalidatedConnectionAllowed) {
+        this.unvalidatedConnectionAllowed = unvalidatedConnectionAllowed;
     }
 
     /**

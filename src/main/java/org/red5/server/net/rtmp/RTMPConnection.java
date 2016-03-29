@@ -406,6 +406,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         this.handler = handler;
     }
 
+    public IRTMPHandler getHandler() {
+        return handler;
+    }
+
     public RTMP getState() {
         return state;
     }
@@ -1036,7 +1040,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * processing. The caller only knows that it cannot be confirmed that the callee has invoked the service call and returned a result.
      */
     public void sendPendingServiceCallsCloseError() {
-        if (!pendingCalls.isEmpty()) {
+        if (pendingCalls != null && !pendingCalls.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("Connection calls pending: {}", pendingCalls.size());
             }
