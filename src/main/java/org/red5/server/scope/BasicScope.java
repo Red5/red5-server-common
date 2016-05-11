@@ -214,7 +214,13 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
      * {@inheritDoc}
      */
     public boolean isConnectionAllowed(IConnection conn) {
+        if (log.isDebugEnabled()) {
+            log.debug("isConnectionAllowed: {}", conn);
+        }
         if (securityHandlers != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("securityHandlers: {}", securityHandlers);
+            }
             // loop through the handlers
             for (IScopeSecurityHandler handler : securityHandlers) {
                 // if allowed continue to the next handler
@@ -234,6 +240,9 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
      * {@inheritDoc}
      */
     public boolean isScopeAllowed(IScope scope) {
+        if (log.isDebugEnabled()) {
+            log.debug("isScopeAllowed: {}", scope);
+        }
         if (securityHandlers != null) {
             // loop through the handlers
             for (IScopeSecurityHandler handler : securityHandlers) {
@@ -257,7 +266,11 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
         if (securityHandlers == null) {
             securityHandlers = new CopyOnWriteArraySet<>();
         }
-        securityHandlers.addAll(securityHandlers);
+        // add the specified set of security handlers
+        securityHandlers.addAll(handlers);
+        if (log.isDebugEnabled()) {
+            log.debug("securityHandlers: {}", securityHandlers);
+        }
     }
 
     /**

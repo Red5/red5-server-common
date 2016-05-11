@@ -18,9 +18,11 @@
 
 package org.red5.server.scope;
 
+import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.IScopeSecurityHandler;
+import org.slf4j.Logger;
 
 /**
  * Scope security handler providing positive results to any allow request.
@@ -29,17 +31,21 @@ import org.red5.server.api.scope.IScopeSecurityHandler;
  */
 public class ScopeSecurityHandler implements IScopeSecurityHandler {
 
+    private Logger log = Red5LoggerFactory.getLogger(this.getClass());
+
     protected boolean connectionAllowed = true;
 
     protected boolean scopeAllowed = true;
 
     @Override
     public boolean allowed(IConnection conn) {
+        log.debug("Allowing: {} connection: {}", connectionAllowed, conn);
         return connectionAllowed;
     }
 
     @Override
-    public boolean allowed(IScope conn) {
+    public boolean allowed(IScope scope) {
+        log.debug("Allowing: {} scope: {}", scopeAllowed, scope);
         return scopeAllowed;
     }
 
