@@ -83,11 +83,6 @@ public class RTMPHandler extends BaseRTMPHandler {
     protected IServer server;
 
     /**
-     * Whether or not global scope connections are allowed.
-     */
-    private boolean globalScopeConnectionAllowed;
-
-    /**
      * Whether or not unvalidated connections are allowed.
      */
     private boolean unvalidatedConnectionAllowed;
@@ -115,14 +110,6 @@ public class RTMPHandler extends BaseRTMPHandler {
      */
     public void setStatusObjectService(StatusObjectService statusObjectService) {
         this.statusObjectService = statusObjectService;
-    }
-
-    public boolean isGlobalScopeConnectionAllowed() {
-        return globalScopeConnectionAllowed;
-    }
-
-    public void setGlobalScopeConnectionAllowed(boolean globalScopeConnectionAllowed) {
-        this.globalScopeConnectionAllowed = globalScopeConnectionAllowed;
     }
 
     public boolean isUnvalidatedConnectionAllowed() {
@@ -334,70 +321,70 @@ public class RTMPHandler extends BaseRTMPHandler {
                         try {
                             // TODO optimize this to use Scope instead of Context
                             scope = context.resolveScope(global, path);
-                            // if global scope connection is not allowed, reject
-                            if (scope.getDepth() < 1 && !globalScopeConnectionAllowed) {
-                                call.setStatus(Call.STATUS_ACCESS_DENIED);
-                                if (call instanceof IPendingServiceCall) {
-                                    IPendingServiceCall pc = (IPendingServiceCall) call;
-                                    StatusObject status = getStatus(NC_CONNECT_REJECTED);
-                                    status.setDescription("Global scope connection disallowed on this server.");
-                                    pc.setResult(status);
-                                }
-                                disconnectOnReturn = true;
-                            }
                             if (scope != null) {
-                                if (log.isTraceEnabled()) {
-                                    log.trace("Connecting to: {}", scope);
-                                }
                                 if (log.isDebugEnabled()) {
                                     log.debug("Connecting to: {}", scope.getName());
                                     log.debug("Conn {}, scope {}, call {}", new Object[] { conn, scope, call });
                                     log.debug("Call args {}", call.getArguments());
                                 }
-                                boolean okayToConnect;
-                                try {
-                                    if (call.getArguments() != null) {
-                                        okayToConnect = conn.connect(scope, call.getArguments());
-                                    } else {
-                                        okayToConnect = conn.connect(scope);
-                                    }
-                                    if (okayToConnect) {
-                                        log.debug("Connected - {}", conn.getClient());
-                                        call.setStatus(Call.STATUS_SUCCESS_RESULT);
-                                        if (call instanceof IPendingServiceCall) {
-                                            IPendingServiceCall pc = (IPendingServiceCall) call;
-                                            //send fmsver and capabilities
-                                            StatusObject result = getStatus(NC_CONNECT_SUCCESS);
-                                            result.setAdditional("fmsVer", Red5.getFMSVersion());
-                                            result.setAdditional("capabilities", Red5.getCapabilities());
-                                            result.setAdditional("mode", Integer.valueOf(1));
-                                            result.setAdditional("data", Red5.getDataVersion());
-                                            pc.setResult(result);
+                                // if scope connection is allowed
+                                if (scope.isConnectionAllowed(conn)) {
+                                    // connections connect result
+                                    boolean connectSuccess;
+                                    try {
+                                        if (call.getArguments() != null) {
+                                            connectSuccess = conn.connect(scope, call.getArguments());
+                                        } else {
+                                            connectSuccess = conn.connect(scope);
                                         }
-                                        // Measure initial roundtrip time after connecting
-                                        conn.ping(new Ping(Ping.STREAM_BEGIN, 0, -1));
-                                        disconnectOnReturn = false;
-                                    } else {
-                                        log.debug("Connect failed");
+                                        if (connectSuccess) {
+                                            log.debug("Connected - {}", conn.getClient());
+                                            call.setStatus(Call.STATUS_SUCCESS_RESULT);
+                                            if (call instanceof IPendingServiceCall) {
+                                                IPendingServiceCall pc = (IPendingServiceCall) call;
+                                                //send fmsver and capabilities
+                                                StatusObject result = getStatus(NC_CONNECT_SUCCESS);
+                                                result.setAdditional("fmsVer", Red5.getFMSVersion());
+                                                result.setAdditional("capabilities", Red5.getCapabilities());
+                                                result.setAdditional("mode", Integer.valueOf(1));
+                                                result.setAdditional("data", Red5.getDataVersion());
+                                                pc.setResult(result);
+                                            }
+                                            // Measure initial roundtrip time after connecting
+                                            conn.ping(new Ping(Ping.STREAM_BEGIN, 0, -1));
+                                        } else {
+                                            log.debug("Connect failed");
+                                            call.setStatus(Call.STATUS_ACCESS_DENIED);
+                                            if (call instanceof IPendingServiceCall) {
+                                                IPendingServiceCall pc = (IPendingServiceCall) call;
+                                                pc.setResult(getStatus(NC_CONNECT_REJECTED));
+                                            }
+                                            disconnectOnReturn = true;
+                                        }
+                                    } catch (ClientRejectedException rejected) {
+                                        log.debug("Connect rejected");
                                         call.setStatus(Call.STATUS_ACCESS_DENIED);
                                         if (call instanceof IPendingServiceCall) {
                                             IPendingServiceCall pc = (IPendingServiceCall) call;
-                                            pc.setResult(getStatus(NC_CONNECT_REJECTED));
+                                            StatusObject status = getStatus(NC_CONNECT_REJECTED);
+                                            Object reason = rejected.getReason();
+                                            if (reason != null) {
+                                                status.setApplication(reason);
+                                                //should we set description?
+                                                status.setDescription(reason.toString());
+                                            }
+                                            pc.setResult(status);
                                         }
                                         disconnectOnReturn = true;
                                     }
-                                } catch (ClientRejectedException rejected) {
-                                    log.debug("Connect rejected");
+                                } else {
+                                    // connection to specified scope is not allowed
+                                    log.debug("Connect to specified scope is not allowed");
                                     call.setStatus(Call.STATUS_ACCESS_DENIED);
                                     if (call instanceof IPendingServiceCall) {
                                         IPendingServiceCall pc = (IPendingServiceCall) call;
                                         StatusObject status = getStatus(NC_CONNECT_REJECTED);
-                                        Object reason = rejected.getReason();
-                                        if (reason != null) {
-                                            status.setApplication(reason);
-                                            //should we set description?
-                                            status.setDescription(reason.toString());
-                                        }
+                                        status.setDescription(String.format("Connection to '%s' denied.", path));
                                         pc.setResult(status);
                                     }
                                     disconnectOnReturn = true;
