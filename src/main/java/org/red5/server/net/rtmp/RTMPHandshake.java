@@ -184,7 +184,7 @@ public abstract class RTMPHandshake implements IHandshake {
     protected IoBuffer buffer;
 
     static {
-        //get security provider
+        // add bouncycastle security provider
         Security.addProvider(new BouncyCastleProvider());
     }
 
