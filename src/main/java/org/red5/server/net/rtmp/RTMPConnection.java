@@ -488,10 +488,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 stopWaitForHandshake();
                 // once the handshake has completed, start needed jobs start the ping / pong keep-alive
                 startRoundTripMeasurement();
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Connect failed");
-                }
+            } else if (log.isDebugEnabled()) {
+                log.debug("Connect failed");
             }
             return success;
         } catch (ClientRejectedException e) {
@@ -513,7 +511,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         try {
             waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
         } catch (TaskRejectedException e) {
-            log.error("WaitForHandshake task was rejected for " + sessionId, e);
+            log.error("WaitForHandshake task was rejected for {}", sessionId, e);
         }
     }
 
@@ -542,10 +540,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 try {
                     keepAliveTask = scheduler.scheduleAtFixedRate(new KeepAliveTask(), pingInterval);
                     if (log.isDebugEnabled()) {
-                        log.debug("Keep alive scheduled for: {}", sessionId);
+                        log.debug("Keep alive scheduled for {}", sessionId);
                     }
                 } catch (Exception e) {
-                    log.error("Error creating keep alive job for: " + sessionId, e);
+                    log.error("Error creating keep alive job for {}", sessionId, e);
                 }
             }
         } else {
