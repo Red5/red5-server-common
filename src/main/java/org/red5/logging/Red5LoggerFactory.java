@@ -42,6 +42,12 @@ public class Red5LoggerFactory {
 
     static {
         DEBUG = Boolean.valueOf(System.getProperty("logback.debug", "false"));
+        try {
+            Logger logger = LoggerFactory.getILoggerFactory().getLogger(Logger.ROOT_LOGGER_NAME);
+            logger.debug("Red5LoggerFactory instanced by Thread: {}", Thread.currentThread().getName());
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     public static Logger getLogger(Class<?> clazz) {
@@ -127,7 +133,8 @@ public class Red5LoggerFactory {
             }
             logger = Red5LoggerFactory.getLogger(clazz, contextName);
             */
-        } else {
+        }
+        if (logger == null) {
             logger = LoggerFactory.getLogger(clazz);
         }
         return logger;
@@ -135,41 +142,7 @@ public class Red5LoggerFactory {
 
     @SuppressWarnings({ "rawtypes" })
     public static Logger getLogger(Class clazz, String contextName) {
-        if (DEBUG) {
-            System.out.printf("getLogger for: %s in context: %s thread: %s%n", clazz.getName(), contextName, Thread.currentThread().getName());
-        }
-        Logger logger = null;
-        if (useLogback) {
-            // disallow null context names
-            if (contextName == null) {
-                contextName = CoreConstants.DEFAULT_CONTEXT_NAME;
-            }
-            try {
-                ContextSelector selector = Red5LoggerFactory.getContextSelector();
-                // get the context for the given context name or default if null
-                LoggerContext context = selector.getLoggerContext(contextName);
-                // and if we get here, create context
-                if (context == null) {
-                    System.err.printf("No context named %s was found!%n", contextName);
-                }
-                // get the logger from the context or default context
-                if (context != null) {
-                    logger = context.getLogger(clazz);
-                    //System.out.printf("Application name: %s in context: %s%n", context.getProperty(KEY_APP_NAME), contextName);
-                }
-            } catch (Exception e) {
-                // no logback, use whatever logger is in-place
-                System.err.printf("Exception %s%n", e.getMessage());
-                e.printStackTrace();
-            }
-            if (logger == null) {
-                // no logback, use whatever logger is in-place
-                logger = LoggerFactory.getILoggerFactory().getLogger(Logger.ROOT_LOGGER_NAME);
-            }
-        } else {
-            logger = LoggerFactory.getLogger(clazz);
-        }
-        return logger;
+        return getLogger(clazz.getName(), contextName);
     }
 
     public static Logger getLogger(String name, String contextName) {
@@ -200,11 +173,8 @@ public class Red5LoggerFactory {
                 System.err.printf("Exception %s%n", e.getMessage());
                 e.printStackTrace();
             }
-            if (logger == null) {
-                // no logback, use whatever logger is in-place
-                logger = LoggerFactory.getILoggerFactory().getLogger(name);
-            }
-        } else {
+        }
+        if (logger == null) {
             logger = LoggerFactory.getLogger(name);
         }
         return logger;
