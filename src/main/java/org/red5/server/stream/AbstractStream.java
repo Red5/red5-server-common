@@ -29,7 +29,7 @@ import org.red5.server.api.stream.StreamState;
 import org.red5.server.net.rtmp.event.Notify;
 
 /**
- * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling meand, provides stream start and stop operations.
+ * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling, and provides stream start and stop operations.
  *
  * @see org.red5.server.api.stream.IStream
  */

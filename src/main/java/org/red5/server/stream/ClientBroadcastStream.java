@@ -596,8 +596,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                 subscriberStats.increment();
                 break;
             case PipeConnectionEvent.CONSUMER_DISCONNECT:
-                log.debug("Consumer disconnect");
-                log.debug("Consumer: {}", event.getSource().getClass().getName());
+                log.debug("Consumer disconnect: {}", event.getSource().getClass().getName());
                 subscriberStats.decrement();
                 break;
             default:
