@@ -309,15 +309,16 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         eventTime = rtmpEvent.getTimestamp();
                         log.trace("Video: {}", eventTime);
                     } else if (rtmpEvent instanceof Invoke) {
+                        Invoke invokeEvent = (Invoke) rtmpEvent;
+                        log.debug("Invoke action: {}", invokeEvent.getAction());
                         eventTime = rtmpEvent.getTimestamp();
-                        //do we want to return from here?
-                        //event / stream listeners will not be notified of invokes
+                        // event / stream listeners will not be notified of invokes
                         return;
                     } else if (rtmpEvent instanceof Notify) {
-                        // store the metadata
                         Notify notifyEvent = (Notify) rtmpEvent;
-                        log.debug("Notify action:{}", notifyEvent.getAction());
+                        log.debug("Notify action: {}", notifyEvent.getAction());
                         if (notifyEvent.getAction() != null && notifyEvent.getAction().equals("onMetaData")) {
+                            // store the metadata
                             try {
                                 log.debug("Setting metadata");
                                 metaData = notifyEvent.duplicate();
@@ -565,37 +566,37 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     @SuppressWarnings("unused")
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         switch (event.getType()) {
-            case PipeConnectionEvent.PROVIDER_CONNECT_PUSH:
+            case PROVIDER_CONNECT_PUSH:
                 log.debug("Provider connect");
                 if (event.getProvider() == this && event.getSource() != connMsgOut && (event.getParamMap() == null || !event.getParamMap().containsKey("record"))) {
-                    this.livePipe = (IPipe) event.getSource();
-                    log.debug("Provider: {}", this.livePipe.getClass().getName());
-                    for (IConsumer consumer : this.livePipe.getConsumers()) {
+                    livePipe = (IPipe) event.getSource();
+                    log.debug("Provider: {}", livePipe.getClass().getName());
+                    for (IConsumer consumer : livePipe.getConsumers()) {
                         subscriberStats.increment();
                     }
                 }
                 break;
-            case PipeConnectionEvent.PROVIDER_DISCONNECT:
+            case PROVIDER_DISCONNECT:
                 log.debug("Provider disconnect");
-                if (log.isDebugEnabled() && this.livePipe != null) {
-                    log.debug("Provider: {}", this.livePipe.getClass().getName());
+                if (log.isDebugEnabled() && livePipe != null) {
+                    log.debug("Provider: {}", livePipe.getClass().getName());
                 }
-                if (this.livePipe == event.getSource()) {
-                    this.livePipe = null;
+                if (livePipe == event.getSource()) {
+                    livePipe = null;
                 }
                 break;
-            case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
+            case CONSUMER_CONNECT_PUSH:
                 log.debug("Consumer connect");
                 IPipe pipe = (IPipe) event.getSource();
                 if (log.isDebugEnabled() && pipe != null) {
                     log.debug("Consumer: {}", pipe.getClass().getName());
                 }
-                if (this.livePipe == pipe) {
+                if (livePipe == pipe) {
                     notifyChunkSize();
                 }
                 subscriberStats.increment();
                 break;
-            case PipeConnectionEvent.CONSUMER_DISCONNECT:
+            case CONSUMER_DISCONNECT:
                 log.debug("Consumer disconnect: {}", event.getSource().getClass().getName());
                 subscriberStats.decrement();
                 break;

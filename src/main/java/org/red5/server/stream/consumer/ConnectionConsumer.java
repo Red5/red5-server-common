@@ -18,6 +18,8 @@
 
 package org.red5.server.stream.consumer;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.api.stream.IClientStream;
 import org.red5.server.messaging.IMessage;
@@ -85,7 +87,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
     /**
      * Whether or not the chunk size has been sent. This seems to be required for h264.
      */
-    private boolean chunkSizeSent;
+    private AtomicBoolean chunkSizeSent = new AtomicBoolean(false);
 
     /**
      * Create RTMP connection consumer for given connection and channels.
@@ -132,10 +134,8 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             StatusMessage statusMsg = (StatusMessage) message;
             data.sendStatus(statusMsg.getBody());
         } else if (message instanceof RTMPMessage) {
-            //make sure chunk size has been sent
-            if (!chunkSizeSent) {
-                sendChunkSize();
-            }
+            // make sure chunk size has been sent
+            sendChunkSize();
             // cast to rtmp message
             RTMPMessage rtmpMsg = (RTMPMessage) message;
             IRTMPEvent msg = rtmpMsg.getBody();
@@ -149,10 +149,10 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             // get the data type
             byte dataType = msg.getDataType();
             log.trace("Data type: {}", dataType);
-            //create a new header for the consumer
+            // create a new header for the consumer
             final Header header = new Header();
             header.setTimerBase(eventTime);
-            //data buffer
+            // data buffer
             IoBuffer buf = null;
             switch (dataType) {
                 case Constants.TYPE_AGGREGATE:
@@ -230,12 +230,8 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
 
     /** {@inheritDoc} */
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
-        switch (event.getType()) {
-            case PipeConnectionEvent.PROVIDER_DISCONNECT:
-                // XXX should put the channel release code in ConsumerService
-                closeChannels();
-                break;
-            default:
+        if (event.getType().equals(PipeConnectionEvent.EventType.PROVIDER_DISCONNECT)) {
+            closeChannels();
         }
     }
 
@@ -264,6 +260,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                 int newSize = (Integer) oobCtrlMsg.getServiceParamMap().get("chunkSize");
                 if (newSize != chunkSize) {
                     chunkSize = newSize;
+                    chunkSizeSent.set(false);
                     sendChunkSize();
                 }
             }
@@ -274,10 +271,11 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
      * Send the chunk size
      */
     private void sendChunkSize() {
-        log.debug("Sending chunk size: {}", chunkSize);
-        ChunkSize chunkSizeMsg = new ChunkSize(chunkSize);
-        conn.getChannel((byte) 2).write(chunkSizeMsg);
-        chunkSizeSent = true;
+        if (chunkSizeSent.compareAndSet(false, true)) {
+            log.debug("Sending chunk size: {}", chunkSize);
+            ChunkSize chunkSizeMsg = new ChunkSize(chunkSize);
+            conn.getChannel((byte) 2).write(chunkSizeMsg);
+        }
     }
 
     /**

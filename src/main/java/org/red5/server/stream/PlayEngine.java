@@ -851,7 +851,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             // XXX is clear ping required?
             //sendClearPing();
             InMemoryPushPushPipe out = (InMemoryPushPushPipe) msgOut.get();
-            if (msgOut != null) {
+            if (out != null) {
                 List<IConsumer> consumers = out.getConsumers();
                 // assume a list of 1 in most cases
                 if (log.isDebugEnabled()) {
@@ -1403,7 +1403,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /** {@inheritDoc} */
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         switch (event.getType()) {
-            case PipeConnectionEvent.PROVIDER_CONNECT_PUSH:
+            case PROVIDER_CONNECT_PUSH:
                 if (event.getProvider() != this) {
                     if (waitLiveJob != null) {
                         schedulingService.removeScheduledJob(waitLiveJob);
@@ -1412,19 +1412,19 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     sendPublishedStatus(currentItem);
                 }
                 break;
-            case PipeConnectionEvent.PROVIDER_DISCONNECT:
+            case PROVIDER_DISCONNECT:
                 if (pullMode) {
                     sendStopStatus(currentItem);
                 } else {
                     sendUnpublishedStatus(currentItem);
                 }
                 break;
-            case PipeConnectionEvent.CONSUMER_CONNECT_PULL:
+            case CONSUMER_CONNECT_PULL:
                 if (event.getConsumer() == this) {
                     pullMode = true;
                 }
                 break;
-            case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
+            case CONSUMER_CONNECT_PUSH:
                 if (event.getConsumer() == this) {
                     pullMode = false;
                 }

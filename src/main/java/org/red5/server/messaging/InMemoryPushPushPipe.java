@@ -54,7 +54,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
                 log.debug("Consumer subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), consumer, paramMap });
             }
             if (success) {
-                fireConsumerConnectionEvent(consumer, PipeConnectionEvent.CONSUMER_CONNECT_PUSH, paramMap);
+                fireConsumerConnectionEvent(consumer, PipeConnectionEvent.EventType.CONSUMER_CONNECT_PUSH, paramMap);
             }
             return success;
         } else {
@@ -70,7 +70,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
             log.debug("Provider subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), provider, paramMap });
         }
         if (success) {
-            fireProviderConnectionEvent(provider, PipeConnectionEvent.PROVIDER_CONNECT_PUSH, paramMap);
+            fireProviderConnectionEvent(provider, PipeConnectionEvent.EventType.PROVIDER_CONNECT_PUSH, paramMap);
         }
         return success;
     }
@@ -91,12 +91,11 @@ public class InMemoryPushPushPipe extends AbstractPipe {
      * @param message
      *            the message to be pushed to consumers
      * @throws IOException
-     *            In case IOException of some sort is occured
+     *            In case IOException of some sort is occurred
      */
     public void pushMessage(IMessage message) throws IOException {
         if (log.isDebugEnabled()) {
-            log.debug("pushMessage: {}", message);
-            log.debug("pushMessage - consumers: {}", consumers.size());
+            log.debug("pushMessage: {} to {} consumers", message, consumers.size());
         }
         for (IConsumer consumer : consumers) {
             try {

@@ -25,5 +25,7 @@ package org.red5.server.messaging;
  * @author Steven Gong (steven.gong@gmail.com)
  */
 public interface IPassive {
+
     public static final String KEY = IPassive.class.getName();
+
 }

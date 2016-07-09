@@ -33,7 +33,7 @@ public class AbstractMessage implements IMessage {
 
     protected String messageType;
 
-    protected Map<?, ?> extraHeaders = null;
+    protected Map<?, ?> extraHeaders;
 
     /** {@inheritDoc} */
     public String getMessageID() {

@@ -653,12 +653,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         }
         ReceivedMessageTaskQueue queue = tasksByChannels.remove(channelId);
         if (queue != null) {
+            if (isConnected()) {
+                // if connected, drain and process the tasks queued-up
+                log.debug("Processing remaining tasks at close for channel: {}", channelId);
+                processTasksQueue(queue);
+            }
             queue.removeAllTasks();
         } else if (log.isTraceEnabled()) {
             log.trace("No task queue for id: {}", channelId);
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Closing / removing channel: {}", chan);
         }
         chan = null;
     }

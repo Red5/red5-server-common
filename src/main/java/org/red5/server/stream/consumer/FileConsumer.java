@@ -406,7 +406,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      */
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         switch (event.getType()) {
-            case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
+            case CONSUMER_CONNECT_PUSH:
                 if (event.getConsumer() == this) {
                     Map<String, Object> paramMap = event.getParamMap();
                     if (paramMap != null) {
@@ -414,11 +414,11 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     }
                 }
                 break;
-            case PipeConnectionEvent.CONSUMER_DISCONNECT:
+            case CONSUMER_DISCONNECT:
                 if (event.getConsumer() != this) {
                     break;
                 }
-            case PipeConnectionEvent.PROVIDER_DISCONNECT:
+            case PROVIDER_DISCONNECT:
                 // we only support one provider at a time so releasing when provider disconnects uninit();
                 break;
             default:

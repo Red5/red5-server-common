@@ -98,7 +98,6 @@ public class ReceivedMessageTaskQueue {
         if (task != null && task.setProcessing()) {
             return task;
         }
-
         return null;
     }
 
@@ -147,7 +146,7 @@ public class ReceivedMessageTaskQueue {
             if (packet.isProcessed()) {
                 log.debug("DeadlockGuard skipping task for processed packet {}", task);
             } else if (packet.isExpired()) {
-                //I believe we also should try to interrupt thread
+                // try to interrupt thread
                 log.debug("DeadlockGuard skipping task for expired packet {}", task);
             } else {
                 // if the message task is not yet done or is not expired interrupt
@@ -163,7 +162,7 @@ public class ReceivedMessageTaskQueue {
                     log.debug("Unfinished task {} already interrupted", task);
                 }
             }
-            //remove this task from the queue in any case
+            // remove this task from the queue in any case
             removeTask(task);
         }
     }
