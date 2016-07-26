@@ -207,7 +207,9 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
      * @return Hostname from that URL
      */
     protected String getHostname(String url) {
-        log.debug("url: {}", url);
+        if (log.isDebugEnabled()) {
+            log.debug("getHostname - url: {}", url);
+        }
         String[] parts = url.split("/");
         if (parts.length == 2) {
             return "";

@@ -521,10 +521,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     private void stopWaitForHandshake() {
         if (waitForHandshakeTask != null) {
             boolean cancelled = waitForHandshakeTask.cancel(true);
-            if (cancelled) {
+            waitForHandshakeTask = null;
+            if (cancelled && log.isDebugEnabled()) {
                 log.debug("waitForHandshake was cancelled for {}", sessionId);
             }
-            waitForHandshakeTask = null;
         }
     }
 
@@ -538,7 +538,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                     log.debug("startRoundTripMeasurement - {}", sessionId);
                 }
                 try {
-                    keepAliveTask = scheduler.scheduleAtFixedRate(new KeepAliveTask(), pingInterval);
+                    // schedule with an initial delay of now + 2s to prevent ping messages during connect post processes
+                    keepAliveTask = scheduler.scheduleWithFixedDelay(new KeepAliveTask(), new Date(System.currentTimeMillis() + 2000L), pingInterval);
                     if (log.isDebugEnabled()) {
                         log.debug("Keep alive scheduled for {}", sessionId);
                     }
@@ -557,10 +558,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     private void stopRoundTripMeasurement() {
         if (keepAliveTask != null) {
             boolean cancelled = keepAliveTask.cancel(true);
-            if (cancelled) {
+            keepAliveTask = null;
+            if (cancelled && log.isDebugEnabled()) {
                 log.debug("Keep alive was cancelled for {}", sessionId);
             }
-            keepAliveTask = null;
         }
     }
 

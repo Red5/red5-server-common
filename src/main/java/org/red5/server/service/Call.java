@@ -86,7 +86,8 @@ public class Call implements IServiceCall, Externalizable {
     public static final byte STATUS_APP_SHUTTING_DOWN = 0x15;
 
     /**
-     * The remote method cannot be invoked because the client is not connected. NOTE that it is possible that this error is returned in the situation where the method has been invoked on the server the connection has failed before the result returned could be read. There is no way to establish whether this has happened.
+     * The remote method cannot be invoked because the client is not connected. NOTE that it is possible that this error is returned in the situation where
+     * the method has been invoked on the server the connection has failed before the result returned could be read. There is no way to establish whether this has happened.
      */
     public static final byte STATUS_NOT_CONNECTED = 0x20;
 
