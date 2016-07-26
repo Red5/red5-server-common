@@ -201,6 +201,11 @@
             <groupId>commons-beanutils</groupId>
             <version>${commons-beanutils.version}</version>
         </dependency>
+        <dependency> <!-- temporary dependency until beanutils 1.9.3 is not released -->
+            <artifactId>commons-collections</artifactId>
+            <groupId>commons-collections</groupId>
+            <version>${commons-collections.version}</version>
+        </dependency>
         <dependency>
             <artifactId>commons-codec</artifactId>
             <groupId>commons-codec</groupId>
