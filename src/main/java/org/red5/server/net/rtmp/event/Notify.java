@@ -171,9 +171,7 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Notify: ").append(call);
-        return sb.toString();
+        return String.format("Notify: %s", call);
     }
 
     /** {@inheritDoc} */
@@ -273,7 +271,6 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
 
     public void setAction(String onCueOrOnMeta) {
         this.action = onCueOrOnMeta;
-
     }
 
     public String getAction() {

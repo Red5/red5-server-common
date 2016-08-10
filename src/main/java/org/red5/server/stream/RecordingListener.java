@@ -91,7 +91,7 @@ public class RecordingListener implements IRecordingListener {
     /**
      * Queue to hold incoming stream event packets.
      */
-    private final BlockingQueue<CachedEvent> queue = new LinkedBlockingQueue<CachedEvent>(8192);
+    private final BlockingQueue<CachedEvent> queue = new LinkedBlockingQueue<>(8192);
 
 
     /**

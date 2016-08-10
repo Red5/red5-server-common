@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -172,7 +173,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      */
     private volatile Future<?> writerFuture;
 
-    private volatile boolean gotVideoKeyFrame;
+    private AtomicBoolean gotVideoKeyFrame = new AtomicBoolean(false);
 
     /**
      * Default ctor
@@ -223,16 +224,16 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             // if we're dealing with a FlexStreamSend IRTMPEvent, this avoids
             // relative timestamp calculations
             if (!(msg instanceof FlexStreamSend)) {
-                log.trace("Not FlexStreamSend type");
+                //log.trace("Not FlexStreamSend type");
                 lastTimestamp = timestamp;
             }
             // ensure that our first video frame written is a key frame
             if (msg instanceof VideoData) {
-                if (!gotVideoKeyFrame) {
+                if (!gotVideoKeyFrame.get()) {
                     VideoData video = (VideoData) msg;
                     if (video.getFrameType() == FrameType.KEYFRAME) {
                         log.debug("Got our first keyframe");
-                        gotVideoKeyFrame = true;
+                        gotVideoKeyFrame.set(true);
                     } else {
                         // skip this frame bail out
                         log.debug("Skipping video data since keyframe has not been written yet");
@@ -283,6 +284,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             }
         } else if (message instanceof ResetMessage) {
             startTimestamp = -1;
+        } else if (log.isDebugEnabled()) {
+            log.debug("Ignoring pushed message: {}", message);
         }
     }
 
@@ -404,6 +407,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      * @param event
      *            Pipe connection event
      */
+    @SuppressWarnings("incomplete-switch")
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         switch (event.getType()) {
             case CONSUMER_CONNECT_PUSH:
@@ -413,15 +417,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                         mode = (String) paramMap.get("mode");
                     }
                 }
-                break;
-            case CONSUMER_DISCONNECT:
-                if (event.getConsumer() != this) {
-                    break;
-                }
-            case PROVIDER_DISCONNECT:
-                // we only support one provider at a time so releasing when provider disconnects uninit();
-                break;
-            default:
                 break;
         }
     }
