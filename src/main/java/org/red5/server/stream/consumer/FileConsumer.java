@@ -159,7 +159,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     private int percentage = 25;
 
     /**
-     * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on their time stamp.
+     * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on
+     * their time stamp.
      */
     private boolean delayWrite = false;
 

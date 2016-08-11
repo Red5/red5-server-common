@@ -72,17 +72,7 @@ public interface IStreamableFileService {
      * 
      * @param file
      *            File object
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if file exist and has valid extension,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if file exist and has valid extension, false otherwise
      */
     public boolean canHandle(File file);
 
