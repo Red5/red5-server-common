@@ -64,7 +64,6 @@ import org.red5.server.net.rtmp.message.Packet;
 import org.red5.server.net.rtmp.message.SharedObjectTypeMapping;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
-import org.red5.server.service.Call;
 import org.red5.server.service.PendingCall;
 import org.red5.server.so.FlexSharedObjectMessage;
 import org.red5.server.so.ISharedObjectEvent;
@@ -482,7 +481,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 message = decodeFlexMessage(in);
                 break;
             case TYPE_INVOKE:
-                message = decodeInvoke(conn.getEncoding(), in);
+                message = decodeAction(conn.getEncoding(), in, header);
                 break;
             case TYPE_FLEX_STREAM_SEND:
                 if (log.isTraceEnabled()) {
@@ -497,10 +496,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 if (log.isTraceEnabled()) {
                     log.trace("Decoding notify on stream id: {}", header.getStreamId());
                 }
-                if (header.getStreamId().doubleValue() == 0.0d) {
-                    message = decodeNotify(conn.getEncoding(), in, header);
-                } else {
+                if (header.getStreamId().doubleValue() != 0.0d) {
                     message = decodeStreamData(in);
+                } else {
+                    message = decodeAction(conn.getEncoding(), in, header);
                 }
                 break;
             case TYPE_PING:
@@ -699,54 +698,18 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
     }
 
-    /** {@inheritDoc} */
-    public Notify decodeNotify(Encoding encoding, IoBuffer in) {
-        if (log.isDebugEnabled()) {
-            log.debug("decodeNotify: {}", encoding);
-        }
-        return decodeNotify(encoding, in, null);
-    }
-
     /**
-     * Decode a Notify.
+     * Decode the 'action' for a supplied an Invoke.
      * 
      * @param encoding
-     *            encoding
+     *            AMF encoding
      * @param in
-     *            input buffer
+     *            buffer
      * @param header
-     *            Header object to get necessary info
-     * @return decoded notify result
-     */
-    public Notify decodeNotify(Encoding encoding, IoBuffer in, Header header) {
-        if (log.isDebugEnabled()) {
-            log.debug("decodeNotify - encoding: {} header: {}", encoding, header);
-        }
-        // instance a new Notify
-        Notify notify = new Notify();
-        // throw a runtime exception if there is no action
-        return decodeAction(encoding, in, header, notify);
-    }
-
-    /** {@inheritDoc} */
-    public Invoke decodeInvoke(Encoding encoding, IoBuffer in) {
-        if (log.isDebugEnabled()) {
-            log.debug("decodeInvoke - encoding: {}", encoding);
-        }
-        // throw a runtime exception if there is no action
-        return (Invoke) decodeAction(encoding, in, null, null);
-    }
-
-    /**
-     * Decode the 'action' for a supplied Notify or Invoke.
-     * 
-     * @param encoding AMF encoding
-     * @param in buffer
-     * @param header data header
-     * @param notify the notify or invoke
+     *            data header
      * @return notify
      */
-    private Notify decodeAction(Encoding encoding, IoBuffer in, Header header, Notify notify) {
+    private Invoke decodeAction(Encoding encoding, IoBuffer in, Header header) {
         // for response, the action string and invokeId is always encoded as AMF0 we use the first byte to decide which encoding to use
         in.mark();
         byte tmp = in.get();
@@ -766,32 +729,14 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (log.isTraceEnabled()) {
             log.trace("Action: {}", action);
         }
-        if (notify == null) {
-            // instance an Invoke
-            notify = new Invoke();
-            // set the transaction id
-            ((Invoke) notify).setTransactionId(Deserializer.<Number> deserialize(input, Number.class).intValue());
-        } else {
-            if (log.isTraceEnabled()) {
-                log.trace("Stream id: {}", header.getStreamId());
-            }
-            if (header != null && header.getStreamId().doubleValue() != 0.0d && !isStreamCommand(action)) {
-                // don't decode "NetStream.send" requests
-                //in.position(start);
-                notify.setData(in.asReadOnlyBuffer());
-                return notify;
-            }
-            if (header == null || header.getStreamId().doubleValue() == 0.0d) {
-                int invokeId = Deserializer.<Number> deserialize(input, Number.class).intValue();
-                if (invokeId != 0) {
-                    throw new RuntimeException("Notify invoke / transaction id was non-zero");
-                }
-            }
-        }
+        // instance the invoke
+        Invoke invoke = new Invoke();
+        // set the transaction id
+        invoke.setTransactionId(Deserializer.<Number> deserialize(input, Number.class).intValue());
         // reset and decode parameters
         input.reset();
         // get / set the parameters if there any
-        Object[] params = in.hasRemaining() ? handleParameters(in, notify, input) : new Object[0];
+        Object[] params = in.hasRemaining() ? handleParameters(in, invoke, input) : new Object[0];
         // determine service information
         final int dotIndex = action.lastIndexOf('.');
         String serviceName = (dotIndex == -1) ? null : action.substring(0, dotIndex);
@@ -804,10 +749,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         if (serviceMethod.startsWith("@") || serviceMethod.startsWith("|")) {
             serviceMethod = serviceMethod.substring(1);
         }
-        // create the pending call for invoke or call for standard notify 
-        Call call = (notify instanceof Invoke) ? new PendingCall(serviceName, serviceMethod, params) : new Call(serviceName, serviceMethod, params);
-        notify.setCall(call);
-        return notify;
+        // create the pending call for invoke
+        PendingCall call = new PendingCall(serviceName, serviceMethod, params);
+        invoke.setCall(call);
+        return invoke;
     }
 
     /**
@@ -867,7 +812,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Decodes stream data, to include onMetaData, onCuePoint, and onFI.
      * 
-     * @param in input buffer
+     * @param in
+     *            input buffer
      * @return Notify
      */
     @SuppressWarnings("unchecked")
@@ -882,14 +828,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         log.trace("Encoding: {}", encoding);
         // set mark
         in.mark();
-        // create input
-        Input input = null;
+        // create input using AMF0 to start with
+        Input input = new org.red5.io.amf.Input(in);
         if (encoding == Encoding.AMF3) {
-            log.trace("Decoding using AMF3");
-            input = new org.red5.io.amf3.Input(in);
-        } else {
-            log.trace("Decoding using AMF0");
-            input = new org.red5.io.amf.Input(in);
+            log.trace("Client indicates its using AMF3");
         }
         //get the first datatype
         byte dataType = input.readDataType();
@@ -903,18 +845,28 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 String onCueOrOnMeta = input.readString();
                 // get the params datatype
                 byte object = input.readDataType();
+                if (object == DataTypes.CORE_SWITCH) {
+                    log.trace("Switching decoding to AMF3");
+                    input = new org.red5.io.amf3.Input(in);
+                    ((org.red5.io.amf3.Input) input).enforceAMF3();
+                    // re-read data type after switching decode
+                    object = input.readDataType();
+                }
                 log.debug("Dataframe params type: {}", object);
-                Map<Object, Object> params;
+                Map<Object, Object> params = Collections.EMPTY_MAP;
                 if (object == DataTypes.CORE_MAP) {
                     // the params are sent as a Mixed-Array. Required to support the RTMP publish provided by ffmpeg
                     params = (Map<Object, Object>) input.readMap();
                 } else if (object == DataTypes.CORE_ARRAY) {
                     params = (Map<Object, Object>) input.readArray(Object[].class);
-                    //params = new HashMap<>();
-                    //Object[] arr = (Object[]) input.readArray(Object[].class);
-                    //for (int a = 0; a < arr.length; a++) {
-                    //    params.put(a, arr[a]);
-                    //}
+                } else if (object == DataTypes.CORE_STRING) {
+                    // decode the string and drop-in as first map entry since we dont know how its encoded
+                    String str = input.readString();
+                    log.debug("String params: {}", str);
+                    params = new HashMap<>();
+                    params.put("0", str);
+                    //} else if (object == DataTypes.CORE_OBJECT) {
+                    //    params = (Map<Object, Object>) input.readObject();
                 } else {
                     try {
                         // read the params as a standard object
@@ -927,61 +879,74 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 if (log.isDebugEnabled()) {
                     log.debug("Dataframe: {} params: {}", onCueOrOnMeta, params.toString());
                 }
-                IoBuffer buf = IoBuffer.allocate(128);
+                IoBuffer buf = IoBuffer.allocate(64);
                 buf.setAutoExpand(true);
                 Output out = new Output(buf);
                 out.writeString(onCueOrOnMeta);
                 out.writeMap(params);
                 buf.flip();
-                // instance a notify
-                ret = new Notify(buf);
-                // set the action
-                ret.setAction(onCueOrOnMeta);
+                // instance a notify with action
+                ret = new Notify(buf, onCueOrOnMeta);
             } else {
-                if ("onFI".equals(action)) {
-                    // the onFI request contains 2 items relative to the publishing client application
-                    // sd = system date (12-07-2011)
-                    // st = system time (09:11:33.387)
-                    byte object = input.readDataType();
-                    log.debug("onFI params type: {}", object);
-                    if (log.isDebugEnabled()) {
-                        Map<Object, Object> params;
-                        if (object == DataTypes.CORE_MAP) {
-                            // the params are sent as a Mixed-Array
-                            params = (Map<Object, Object>) input.readMap();
-                        } else {
-                            // read the params as a standard object
-                            params = (Map<Object, Object>) input.readObject();
-                        }
-                        log.debug("onFI params: {}", params.toString());
-                    }
-                } else {
-                    log.info("Stream send: {}", action);
-                    if (log.isDebugEnabled()) {
-                        byte object = input.readDataType();
-                        log.debug("Params type: {}", object);
-                        if (object == DataTypes.CORE_MAP) {
-                            Map<Object, Object> params = (Map<Object, Object>) input.readMap();
-                            log.debug("Params: {}", params.toString());
-                        } else if (object == DataTypes.CORE_ARRAY) {
-                            Map<Object, Object> params = (Map<Object, Object>) input.readArray(Object[].class);
-                            log.debug("Params: {}", params);
-                        } else if (object == DataTypes.CORE_STRING) {
-                            String str = input.readString();
-                            log.debug("Params: {}", str);
-                        } else {
-                            log.debug("Stream send did not provide a parameter map");
-                            //Map<Object, Object> params = (Map<Object, Object>) input.readObject();
-                            //log.debug("Params: {}", params.toString());
-                        }
-                    }
+                byte object = input.readDataType();
+                if (object == DataTypes.CORE_SWITCH) {
+                    log.trace("Switching decoding to AMF3");
+                    input = new org.red5.io.amf3.Input(in);
+                    ((org.red5.io.amf3.Input) input).enforceAMF3();
+                    // re-read data type after switching decode
+                    object = input.readDataType();
                 }
+                // onFI
+                // the onFI request contains 2 items relative to the publishing client application
+                // sd = system date (12-07-2011) st = system time (09:11:33.387)
+                log.info("Stream send: {}", action);
+                Map<Object, Object> params = Collections.EMPTY_MAP;
+                log.debug("Params type: {}", object);
+                if (object == DataTypes.CORE_MAP) {
+                    params = (Map<Object, Object>) input.readMap();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Map params: {}", params.toString());
+                    }
+                } else if (object == DataTypes.CORE_ARRAY) {
+                    params = (Map<Object, Object>) input.readArray(Object[].class);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Array params: {}", params);
+                    }
+                } else if (object == DataTypes.CORE_STRING) {
+                    String str = input.readString();
+                    if (log.isDebugEnabled()) {
+                        log.debug("String params: {}", str);
+                    }
+                    params = new HashMap<>();
+                    params.put("0", str);
+                } else if (object == DataTypes.CORE_OBJECT) {
+                    params = (Map<Object, Object>) input.readObject();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Object params: {}", params);
+                    }
+                } else if (log.isDebugEnabled()) {
+                    log.debug("Stream send did not provide a parameter map");
+                }
+                // need to debug this further
+                /*
+                IoBuffer buf = IoBuffer.allocate(64);
+                buf.setAutoExpand(true);
+                Output out = null;
+                if (encoding == Encoding.AMF3) {
+                    out = new org.red5.io.amf3.Output(buf);
+                } else {
+                    out = new Output(buf);
+                }
+                out.writeString(action);
+                out.writeMap(params);
+                buf.flip();
+                // instance a notify with action
+                ret = new Notify(buf, action);
+                */
                 // go back to the beginning
                 in.reset();
-                // instance a notify
-                ret = new Notify(in.asReadOnlyBuffer());
-                // set the action
-                ret.setAction(action);
+                // instance a notify with action
+                ret = new Notify(in.asReadOnlyBuffer(), action);
             }
         } else {
             // go back to the beginning
@@ -1067,6 +1032,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * Sets whether or not a header error on any channel should result in a closed connection.
      * 
      * @param closeOnHeaderError
+     *            true to close on header decode errors
      */
     public void setCloseOnHeaderError(boolean closeOnHeaderError) {
         this.closeOnHeaderError = closeOnHeaderError;
@@ -1079,6 +1045,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *            Action to check
      * @return true if passed action is a reserved stream method, false otherwise
      */
+    @SuppressWarnings("unused")
     private boolean isStreamCommand(String action) {
         switch (StreamAction.getEnum(action)) {
             case CREATE_STREAM:

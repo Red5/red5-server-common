@@ -30,6 +30,7 @@ public interface IScopeSecurityHandler {
     /**
      * Determines whether or not a given connection is allowed.
      * 
+     * @param conn connection
      * @return true if allowed and false otherwise
      */
     boolean allowed(IConnection conn);
@@ -37,6 +38,7 @@ public interface IScopeSecurityHandler {
     /**
      * Determines whether or not a given scope is allowed.
      * 
+     * @param conn connection
      * @return true if allowed and false otherwise
      */
     boolean allowed(IScope conn);

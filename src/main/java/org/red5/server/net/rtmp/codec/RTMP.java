@@ -360,8 +360,8 @@ public class RTMP {
     /**
      * Sets the last "read" packet header for the given channel.
      * 
-     * @param channelId
-     * @param header
+     * @param channelId channel id
+     * @param header header
      */
     public void setLastReadPacketHeader(int channelId, Header header) {
         getChannelInfo(channelId).setReadPacketHeader(header);
@@ -370,7 +370,7 @@ public class RTMP {
     /**
      * Returns the last "read" packet header for the given channel.
      * 
-     * @param channelId
+     * @param channelId channel id
      * @return Header
      */
     public Header getLastReadPacketHeader(int channelId) {

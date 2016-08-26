@@ -63,7 +63,6 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
      * @param type Child scope type
      * @param name Child scope name
      * @return true if a child scope exists, otherwise false
-     * </pre>
      */
     public boolean hasChildScope(ScopeType type, String name);
 

@@ -109,7 +109,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     /**
      * Read chunk header from the buffer.
      * 
-     * @param in
+     * @param in buffer
      * @return ChunkHeader instance
      */
     public static ChunkHeader read(IoBuffer in) {

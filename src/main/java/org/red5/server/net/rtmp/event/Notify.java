@@ -84,6 +84,18 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
     }
 
     /**
+     * Create new notification event with given byte buffer and action.
+     * 
+     * @param data Byte buffer
+     * @param action Action / method
+     */
+    public Notify(IoBuffer data, String action) {
+        super(Type.STREAM_DATA);
+        this.data = data;
+        this.action = action;
+    }
+
+    /**
      * Create new notification event with given service call
      * 
      * @param call
@@ -171,7 +183,7 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return String.format("Notify: %s", call);
+        return call != null ? String.format("Notify: %s", call) : String.format("Notify action: %s", action);
     }
 
     /** {@inheritDoc} */
