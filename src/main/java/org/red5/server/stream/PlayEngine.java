@@ -1219,8 +1219,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      *
      */
     private void sendCompleteStatus() {
-        // TODO: find correct duration to send
-        sendOnPlayStatus(StatusCodes.NS_PLAY_COMPLETE, 1, bytesSent.get());
+        // may be the correct duration
+        int duration = (lastMessageTs > 0) ? Math.max(0, lastMessageTs - streamStartTS.get()) : 0;
+        if (log.isDebugEnabled()) {
+            log.debug("sendCompleteStatus - duration: {} bytes sent: {}", duration, bytesSent.get());
+        }
+        sendOnPlayStatus(StatusCodes.NS_PLAY_COMPLETE, duration, bytesSent.get());
     }
 
     /**
