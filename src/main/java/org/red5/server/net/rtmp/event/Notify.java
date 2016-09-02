@@ -180,10 +180,18 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         this.connectionParams = connectionParams;
     }
 
+    public void setAction(String onCueOrOnMeta) {
+        this.action = onCueOrOnMeta;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return call != null ? String.format("Notify: %s", call) : String.format("Notify action: %s", action);
+        return call != null ? String.format("%s: %s", getClass().getSimpleName(), call) : (action != null ? String.format("%s action: %s", getClass().getSimpleName(), action) : getClass().getSimpleName());
     }
 
     /** {@inheritDoc} */
@@ -242,11 +250,17 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
             data.setAutoExpand(true);
             SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
         }
+        if (log.isTraceEnabled()) {
+            log.trace("readExternal - transactionId: {} connectionParams: {} call: {}", transactionId, connectionParams, call);
+        }
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
+        if (log.isTraceEnabled()) {
+            log.trace("writeExternal - transactionId: {} connectionParams: {} call: {}", transactionId, connectionParams, call);
+        }
         out.writeObject(call);
         out.writeObject(connectionParams);
         out.writeInt(transactionId);
@@ -279,14 +293,6 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         ois.close();
         bais.close();
         return result;
-    }
-
-    public void setAction(String onCueOrOnMeta) {
-        this.action = onCueOrOnMeta;
-    }
-
-    public String getAction() {
-        return action;
     }
 
 }

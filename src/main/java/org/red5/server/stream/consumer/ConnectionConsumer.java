@@ -189,28 +189,37 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     break;
                 case Constants.TYPE_PING:
                     log.trace("Ping");
-                    Ping ping = new Ping((Ping) msg);
+                    Ping ping = (Ping) msg;
                     ping.setHeader(header);
                     conn.ping(ping);
                     break;
                 case Constants.TYPE_STREAM_METADATA:
-                    log.trace("Meta data");
-                    Notify notify = new Notify(((Notify) msg).getData().asReadOnlyBuffer());
+                    if (log.isTraceEnabled()) {
+                        log.trace("Meta data: {}", (Notify) msg);
+                    }
+                    //Notify notify = new Notify(((Notify) msg).getData().asReadOnlyBuffer());
+                    Notify notify = (Notify) msg;
                     notify.setHeader(header);
                     notify.setTimestamp(header.getTimer());
                     data.write(notify);
                     break;
                 case Constants.TYPE_FLEX_STREAM_SEND:
-                    log.trace("Flex stream send");
-                    // TODO: okay to send this also to AMF0 clients?
-                    FlexStreamSend send = new FlexStreamSend(((Notify) msg).getData().asReadOnlyBuffer());
+                    if (log.isTraceEnabled()) {
+                        log.trace("Flex stream send: {}", (Notify) msg);
+                    }
+                    FlexStreamSend send = null;
+                    if (msg instanceof FlexStreamSend) {
+                        send = (FlexStreamSend) msg;
+                    } else {
+                        send = new FlexStreamSend(((Notify) msg).getData().asReadOnlyBuffer());
+                    }
                     send.setHeader(header);
                     send.setTimestamp(header.getTimer());
                     data.write(send);
                     break;
                 case Constants.TYPE_BYTES_READ:
                     log.trace("Bytes read");
-                    BytesRead bytesRead = new BytesRead(((BytesRead) msg).getBytesRead());
+                    BytesRead bytesRead = (BytesRead) msg;
                     bytesRead.setHeader(header);
                     bytesRead.setTimestamp(header.getTimer());
                     conn.getChannel((byte) 2).write(bytesRead);

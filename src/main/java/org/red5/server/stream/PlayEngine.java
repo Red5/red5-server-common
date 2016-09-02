@@ -34,6 +34,7 @@ import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
 import org.red5.codec.StreamCodecInfo;
 import org.red5.io.amf.Output;
+import org.red5.io.utils.ObjectMap;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
@@ -320,6 +321,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     /**
      * Play stream
+     * 
+     * See: https://www.adobe.com/devnet/adobe-media-server/articles/dynstream_actionscript.html
      * 
      * @param item
      *            Playlist item
@@ -994,14 +997,17 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      *            The message to send.
      */
     private void doPushMessage(AbstractMessage message) {
-        log.trace("doPushMessage: {}", message.getMessageType());
+        if (log.isTraceEnabled()) {
+            String msgType = message.getMessageType();
+            log.trace("doPushMessage: {}", msgType);
+        }
         IMessageOutput out = msgOut.get();
         if (out != null) {
             try {
                 out.pushMessage(message);
                 if (message instanceof RTMPMessage) {
                     IRTMPEvent body = ((RTMPMessage) message).getBody();
-                    //update the last message sent's timestamp
+                    // update the last message sent's timestamp
                     lastMessageTs = body.getTimestamp();
                     IoBuffer streamData = null;
                     if (body instanceof IStreamData && (streamData = ((IStreamData<?>) body).getData()) != null) {
@@ -1166,30 +1172,35 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /**
      * Sends an onPlayStatus message.
      * 
+     * http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/events/NetDataEvent.html
+     * 
      * @param code
      * @param duration
      * @param bytes
      */
     private void sendOnPlayStatus(String code, int duration, long bytes) {
-        IoBuffer buf = IoBuffer.allocate(255);
+        if (log.isDebugEnabled()) {
+            log.debug("Sending onPlayStatus - code: {} duration: {} bytes: {}", code, duration, bytes);
+        }
+        // create the buffer
+        IoBuffer buf = IoBuffer.allocate(102);
         buf.setAutoExpand(true);
         Output out = new Output(buf);
         out.writeString("onPlayStatus");
-        Map<Object, Object> props = new HashMap<Object, Object>();
-        props.put("code", code);
-        props.put("level", "status");
-        props.put("duration", duration);
-        props.put("bytes", bytes);
+        ObjectMap<Object, Object> args = new ObjectMap<>();
+        args.put("code", code);
+        args.put("level", Status.STATUS);
+        args.put("duration", duration);
+        args.put("bytes", bytes);
         if (StatusCodes.NS_PLAY_TRANSITION_COMPLETE.equals(code)) {
-            props.put("details", currentItem.getName());
-            props.put("description", String.format("Transitioned to %s", currentItem.getName()));
-            props.put("clientId", streamId);
-            props.put("isFastPlay", false);
+            args.put("clientId", streamId);
+            args.put("details", currentItem.getName());
+            args.put("description", String.format("Transitioned to %s", currentItem.getName()));
+            args.put("isFastPlay", false);
         }
-        out.writeMap(props);
+        out.writeObject(args);
         buf.flip();
-
-        IRTMPEvent event = new Notify(buf);
+        Notify event = new Notify(buf, "onPlayStatus");
         if (lastMessageTs > 0) {
             event.setTimestamp(lastMessageTs);
         } else {

@@ -145,11 +145,11 @@ public class Packet implements Externalizable {
                 buffer.mark();
                 buffer.get(copy);
                 buffer.reset();
-                this.data = IoBuffer.wrap(copy);
+                data = IoBuffer.wrap(copy);
             } else {
                 log.trace("Buffer has no backing array, using ByteBuffer");
                 // fallback to ByteBuffer
-                this.data.put(buffer.buf()).flip();
+                data.put(buffer.buf()).flip();
             }
         }
     }

@@ -21,8 +21,6 @@ package org.red5.server.messaging;
 import java.io.IOException;
 import java.util.Map;
 
-import org.red5.server.net.rtmp.event.IRTMPEvent;
-import org.red5.server.stream.message.RTMPMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,15 +98,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
         for (IConsumer consumer : consumers) {
             try {
                 IPushableConsumer pcon = (IPushableConsumer) consumer;
-                if (message instanceof RTMPMessage) {
-                    RTMPMessage rtmpMessage = (RTMPMessage) message;
-                    IRTMPEvent body = rtmpMessage.getBody();
-                    int time = body.getTimestamp();
-                    pcon.pushMessage(this, message);
-                    body.setTimestamp(time);
-                } else {
-                    pcon.pushMessage(this, message);
-                }
+                pcon.pushMessage(this, message);
             } catch (Throwable t) {
                 if (t instanceof IOException) {
                     throw (IOException) t;

@@ -441,7 +441,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                         result = (Map<String, Object>) pcResult;
                         result.put("objectEncoding", 3);
                     } else if (pcResult instanceof StatusObject) {
-                        result = new HashMap<String, Object>();
+                        result = new HashMap<>();
                         StatusObject status = (StatusObject) pcResult;
                         result.put("code", status.getCode());
                         result.put("description", status.getDescription());

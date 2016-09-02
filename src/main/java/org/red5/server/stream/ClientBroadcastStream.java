@@ -282,7 +282,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                             audioStreamCodec = codecInfo.getAudioCodec();
                         }
                         if (audioStreamCodec != null) {
-                            audioStreamCodec.addData(buf.asReadOnlyBuffer());
+                            audioStreamCodec.addData(buf);
                         }
                         if (info != null) {
                             info.setHasAudio(true);
@@ -301,7 +301,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                             videoStreamCodec = codecInfo.getVideoCodec();
                         }
                         if (videoStreamCodec != null) {
-                            videoStreamCodec.addData(buf.asReadOnlyBuffer());
+                            videoStreamCodec.addData(buf);
                         }
                         if (info != null) {
                             info.setHasVideo(true);

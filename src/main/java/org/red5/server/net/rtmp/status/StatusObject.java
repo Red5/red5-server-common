@@ -63,6 +63,11 @@ public class StatusObject implements Serializable, ICustomSerializable, External
 
     }
 
+    public StatusObject(String code, String level) {
+        this.code = code;
+        this.level = level;
+    }
+
     public StatusObject(String code, String level, String description) {
         this.code = code;
         this.level = level;
