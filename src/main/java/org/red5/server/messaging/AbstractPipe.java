@@ -44,17 +44,17 @@ public abstract class AbstractPipe implements IPipe {
     /**
      * Pipe consumers list
      */
-    protected volatile CopyOnWriteArrayList<IConsumer> consumers = new CopyOnWriteArrayList<IConsumer>();
+    protected volatile CopyOnWriteArrayList<IConsumer> consumers = new CopyOnWriteArrayList<>();
 
     /**
      * Pipe providers list
      */
-    protected volatile CopyOnWriteArrayList<IProvider> providers = new CopyOnWriteArrayList<IProvider>();
+    protected volatile CopyOnWriteArrayList<IProvider> providers = new CopyOnWriteArrayList<>();
 
     /**
      * Event listeners
      */
-    protected volatile CopyOnWriteArrayList<IPipeConnectionListener> listeners = new CopyOnWriteArrayList<IPipeConnectionListener>();
+    protected volatile CopyOnWriteArrayList<IPipeConnectionListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * Executor service used to run pipe tasks.

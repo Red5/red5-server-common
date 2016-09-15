@@ -35,7 +35,7 @@ public class StreamableFileFactory implements IStreamableFileFactory {
     // Initialize Logging
     public static Logger logger = LoggerFactory.getLogger(StreamableFileFactory.class);
 
-    private Set<IStreamableFileService> services = new HashSet<IStreamableFileService>();
+    private Set<IStreamableFileService> services = new HashSet<>();
 
     /**
      * Setter for services

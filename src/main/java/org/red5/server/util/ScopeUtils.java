@@ -330,13 +330,11 @@ public class ScopeUtils {
         }
         // We expect an interface
         assert intf.isInterface();
-
-        String attr = IPersistable.TRANSIENT_PREFIX + SERVICE_CACHE_PREFIX + intf.getCanonicalName();
+        String attr = String.format("%s%s%s", IPersistable.TRANSIENT_PREFIX, SERVICE_CACHE_PREFIX, intf.getCanonicalName());
         if (scope.hasAttribute(attr)) {
             // return cached service
             return scope.getAttribute(attr);
         }
-
         Object handler = null;
         if (checkHandler) {
             IScope current = scope;
@@ -352,7 +350,6 @@ public class ScopeUtils {
                 current = current.getParent();
             }
         }
-
         if (handler == null && IScopeService.class.isAssignableFrom(intf)) {
             // we've got an IScopeService, try to lookup bean
             Field key = null;
@@ -360,11 +357,16 @@ public class ScopeUtils {
             try {
                 key = intf.getField("BEAN_NAME");
                 serviceName = key.get(null);
-                if (serviceName instanceof String) {
-                    handler = getScopeService(scope, (String) serviceName, defaultClass);
-                }
+                //log.debug("serviceName {}", serviceName);
+                handler = getScopeService(scope, serviceName.toString(), defaultClass);
             } catch (Exception e) {
-                log.debug("No string field 'BEAN_NAME' in that interface");
+                if (log.isDebugEnabled()) {
+                    if (key == null) {
+                        log.debug("No string field 'BEAN_NAME' in interface {}", intf.getName());
+                    } else {
+                        log.warn("Exception getting scope service using {}", intf.getName(), e);
+                    }
+                }
             }
         }
         if (handler == null && defaultClass != null) {
