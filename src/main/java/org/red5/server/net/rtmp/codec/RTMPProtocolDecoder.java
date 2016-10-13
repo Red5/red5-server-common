@@ -78,7 +78,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RTMPProtocolDecoder implements Constants, IEventDecoder {
 
-    protected Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
+    protected static final Logger log = LoggerFactory.getLogger(RTMPProtocolDecoder.class);
 
     // close when header errors occur
     protected boolean closeOnHeaderError;
