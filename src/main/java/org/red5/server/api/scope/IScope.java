@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -32,8 +32,9 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 /**
  * The scope object.
  * 
- * A stateful object shared between a group of clients connected to the same <tt>context path</tt>. Scopes are arranged in hierarchical way, so its possible for a scope to have a parent and children scopes. If a client connects to a scope then they are also connected to its parent scope. The scope object is used to access resources, shared object, streams, etc. That is, scope are general option for grouping things in
- * application.
+ * A stateful object shared between a group of clients connected to the same <tt>context path</tt>. Scopes are arranged in hierarchical way, 
+ * so its possible for a scope to have a parent and children scopes. If a client connects to a scope then they are also connected to its parent scope.
+ * The scope object is used to access resources, shared object, streams, etc. Scope is a general option for grouping things in an application.
  * 
  * The following are all names for scopes: application, room, place, lobby.
  * 
@@ -51,106 +52,40 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Check to see if this scope has a child scope matching a given name.
      * 
-     * @param name
-     *            the name of the child scope
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if a child scope exists, otherwise
-     * 
-     *         <pre>
-     * false
-     * </pre>
+     * @param name the name of the child scope
+     * @return true if a child scope exists, otherwise false
      */
     public boolean hasChildScope(String name);
 
     /**
      * Checks whether scope has a child scope with given name and type
      * 
-     * @param type
-     *            Child scope type
-     * @param name
-     *            Child scope name
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if a child scope exists, otherwise
-     * 
-     *         <pre>
-     * false
-     * </pre>
+     * @param type Child scope type
+     * @param name Child scope name
+     * @return true if a child scope exists, otherwise false
      */
     public boolean hasChildScope(ScopeType type, String name);
 
     /**
-     * Creates child scope with name given and returns success value. Returns
+     * Creates child scope with name given and returns success value. Returns true on success and false if given scope already exists among children.
      * 
-     * <pre>
-     * true
-     * </pre>
-     * 
-     * on success,
-     * 
-     * <pre>
-     * false
-     * </pre>
-     * 
-     * if given scope already exists among children.
-     * 
-     * @param name
-     *            New child scope name
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if child scope was successfully creates,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param name New child scope name
+     * @return true if child scope was successfully created, false otherwise
      */
     public boolean createChildScope(String name);
 
     /**
-     * Adds scope as a child scope. Returns
+     * Adds scope as a child scope. Returns true on success and false if given scope is already a child of current.
      * 
-     * <pre>
-     * true
-     * </pre>
-     * 
-     * on success,
-     * 
-     * <pre>
-     * false
-     * </pre>
-     * 
-     * if given scope is already a child of current.
-     * 
-     * @param scope
-     *            Scope given
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if child scope was successfully added,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param scope Scope given
+     * @return true if child scope was successfully added, false otherwise
      */
     public boolean addChildScope(IBasicScope scope);
 
     /**
      * Removes scope from the children scope list.
      * 
-     * @param scope
-     *            Scope given
+     * @param scope Scope given
      */
     public void removeChildScope(IBasicScope scope);
 
@@ -171,8 +106,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Return the broadcast scope for a given name.
      * 
-     * @param name
-     *            name
+     * @param name name
      * @return broadcast scope or null if not found
      */
     public IBroadcastScope getBroadcastScope(String name);
@@ -180,10 +114,8 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Get a child scope by type and name.
      * 
-     * @param type
-     *            Child scope type
-     * @param name
-     *            Name of the child scope
+     * @param type Child scope type
+     * @param name Name of the child scope
      * @return the child scope, or null if no scope is found
      */
     public IBasicScope getBasicScope(ScopeType type, String name);
@@ -191,8 +123,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Return scope by name
      * 
-     * @param name
-     *            Scope name
+     * @param name Scope name
      * @return Scope with given name
      */
     public IScope getScope(String name);
@@ -225,8 +156,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
      * Lookup connections.
      * 
      * @deprecated Use {@link IScope#lookupConnection(IClient)} instead
-     * @param client
-     *            object
+     * @param client object
      * @return Set of connection objects (read-only)
      */
     @Deprecated
@@ -235,8 +165,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Lookup connection for a given client.
      * 
-     * @param client
-     *            object
+     * @param client object
      * @return connection object
      */
     public IConnection lookupConnection(IClient client);
@@ -251,17 +180,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Checks whether scope has handler or not.
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has a handler,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope has a handler, false otherwise
      */
     public boolean hasHandler();
 
@@ -282,48 +201,24 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Adds given connection to the scope
      * 
-     * @param conn
-     *            Given connection
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         if given connection already belongs to this scope
+     * @param conn Given connection
+     * @return true on success, false if given connection already belongs to this scope
      */
     public boolean connect(IConnection conn);
 
     /**
      * Add given connection to the scope, overloaded for parameters pass case.
      * 
-     * @param conn
-     *            Given connection
-     * @param params
-     *            Parameters passed
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         if given connection already belongs to this scope
+     * @param conn Given connection
+     * @param params Parameters passed
+     * @return true on success, false if given connection already belongs to this scope
      */
     public boolean connect(IConnection conn, Object[] params);
 
     /**
      * Removes given connection from list of scope connections. This disconnects all clients of given connection from the scope.
      * 
-     * @param conn
-     *            Connection given
+     * @param conn Connection given
      */
     public void disconnect(IConnection conn);
 
@@ -337,10 +232,8 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Set attribute by name
      * 
-     * @param name
-     *            name
-     * @param value
-     *            value
+     * @param name name
+     * @param value value
      * @return true if added, false if not added
      */
     public boolean setAttribute(String name, Object value);
@@ -348,8 +241,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Get attribute by name
      * 
-     * @param name
-     *            name
+     * @param name name
      * @return value for the given name in the attributes or null if not found
      */
     public Object getAttribute(String name);
@@ -357,8 +249,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Whether or not an attribute exists, keyed by the given name
      * 
-     * @param name
-     *            name
+     * @param name name
      * @return true if it exists, false otherwise
      */
     public boolean hasAttribute(String name);
@@ -366,8 +257,7 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     /**
      * Remove attribute by name
      * 
-     * @param name
-     *            name
+     * @param name name
      * @return true if removed, false otherwise
      */
     public boolean removeAttribute(String name);

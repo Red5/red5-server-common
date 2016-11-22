@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -19,14 +19,11 @@
 package org.red5.server.net.rtmp.codec;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.net.rtmp.event.Aggregate;
 import org.red5.server.net.rtmp.event.AudioData;
 import org.red5.server.net.rtmp.event.BytesRead;
 import org.red5.server.net.rtmp.event.ChunkSize;
 import org.red5.server.net.rtmp.event.FlexMessage;
-import org.red5.server.net.rtmp.event.Invoke;
-import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.Ping;
 import org.red5.server.net.rtmp.event.Unknown;
 import org.red5.server.net.rtmp.event.VideoData;
@@ -74,28 +71,6 @@ public interface IEventDecoder {
      * @return ISharedObjectMessage event
      */
     public abstract ISharedObjectMessage decodeFlexSharedObject(IoBuffer in);
-
-    /**
-     * Decode a Notify.
-     * 
-     * @param encoding
-     *            encoding
-     * @param in
-     *            input buffer
-     * @return decoded notify result
-     */
-    public abstract Notify decodeNotify(Encoding encoding, IoBuffer in);
-
-    /**
-     * Decodes invocation event.
-     * 
-     * @param encoding
-     *            encoding
-     * @param in
-     *            Byte buffer to decode
-     * @return Invoke event
-     */
-    public abstract Invoke decodeInvoke(Encoding encoding, IoBuffer in);
 
     /**
      * Decodes ping event.

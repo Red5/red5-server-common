@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -44,17 +44,17 @@ public abstract class AbstractPipe implements IPipe {
     /**
      * Pipe consumers list
      */
-    protected volatile CopyOnWriteArrayList<IConsumer> consumers = new CopyOnWriteArrayList<IConsumer>();
+    protected volatile CopyOnWriteArrayList<IConsumer> consumers = new CopyOnWriteArrayList<>();
 
     /**
      * Pipe providers list
      */
-    protected volatile CopyOnWriteArrayList<IProvider> providers = new CopyOnWriteArrayList<IProvider>();
+    protected volatile CopyOnWriteArrayList<IProvider> providers = new CopyOnWriteArrayList<>();
 
     /**
      * Event listeners
      */
-    protected volatile CopyOnWriteArrayList<IPipeConnectionListener> listeners = new CopyOnWriteArrayList<IPipeConnectionListener>();
+    protected volatile CopyOnWriteArrayList<IPipeConnectionListener> listeners = new CopyOnWriteArrayList<>();
 
     /**
      * Executor service used to run pipe tasks.
@@ -68,17 +68,7 @@ public abstract class AbstractPipe implements IPipe {
      *            Consumer
      * @param paramMap
      *            Parameters passed with connection, used in concrete pipe implementations
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if consumer was added,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if consumer was added, false otherwise
      */
     public boolean subscribe(IConsumer consumer, Map<String, Object> paramMap) {
         // pipe is possibly used by dozens of threads at once (like many subscribers for one server stream)
@@ -87,7 +77,6 @@ public abstract class AbstractPipe implements IPipe {
         if (success && consumer instanceof IPipeConnectionListener) {
             listeners.addIfAbsent((IPipeConnectionListener) consumer);
         }
-
         return success;
     }
 
@@ -98,17 +87,7 @@ public abstract class AbstractPipe implements IPipe {
      *            Provider
      * @param paramMap
      *            Parameters passed with connection, used in concrete pipe implementations
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if provider was added,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if provider was added, false otherwise
      */
     public boolean subscribe(IProvider provider, Map<String, Object> paramMap) {
         boolean success = providers.addIfAbsent(provider);
@@ -124,21 +103,11 @@ public abstract class AbstractPipe implements IPipe {
      * 
      * @param provider
      *            Provider that should be removed
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true on success, false otherwise
      */
     public boolean unsubscribe(IProvider provider) {
         if (providers.remove(provider)) {
-            fireProviderConnectionEvent(provider, PipeConnectionEvent.PROVIDER_DISCONNECT, null);
+            fireProviderConnectionEvent(provider, PipeConnectionEvent.EventType.PROVIDER_DISCONNECT, null);
             listeners.remove(provider);
             return true;
         }
@@ -150,21 +119,11 @@ public abstract class AbstractPipe implements IPipe {
      * 
      * @param consumer
      *            Consumer that should be removed
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true on success, false otherwise
      */
     public boolean unsubscribe(IConsumer consumer) {
         if (consumers.remove(consumer)) {
-            fireConsumerConnectionEvent(consumer, PipeConnectionEvent.CONSUMER_DISCONNECT, null);
+            fireConsumerConnectionEvent(consumer, PipeConnectionEvent.EventType.CONSUMER_DISCONNECT, null);
             listeners.remove(consumer);
             return true;
         }
@@ -275,15 +234,8 @@ public abstract class AbstractPipe implements IPipe {
      * @param paramMap
      *            Parameters passed with connection
      */
-    protected void fireConsumerConnectionEvent(IConsumer consumer, int type, Map<String, Object> paramMap) {
-        // Create event object
-        PipeConnectionEvent event = new PipeConnectionEvent(this);
-        // Fill it up
-        event.setConsumer(consumer);
-        event.setType(type);
-        event.setParamMap(paramMap);
-        // Fire it
-        firePipeConnectionEvent(event);
+    protected void fireConsumerConnectionEvent(IConsumer consumer, PipeConnectionEvent.EventType type, Map<String, Object> paramMap) {
+        firePipeConnectionEvent(PipeConnectionEvent.build(this, type, consumer, paramMap));
     }
 
     /**
@@ -296,12 +248,8 @@ public abstract class AbstractPipe implements IPipe {
      * @param paramMap
      *            Parameters passed with connection
      */
-    protected void fireProviderConnectionEvent(IProvider provider, int type, Map<String, Object> paramMap) {
-        PipeConnectionEvent event = new PipeConnectionEvent(this);
-        event.setProvider(provider);
-        event.setType(type);
-        event.setParamMap(paramMap);
-        firePipeConnectionEvent(event);
+    protected void fireProviderConnectionEvent(IProvider provider, PipeConnectionEvent.EventType type, Map<String, Object> paramMap) {
+        firePipeConnectionEvent(PipeConnectionEvent.build(this, type, provider, paramMap));
     }
 
     /**

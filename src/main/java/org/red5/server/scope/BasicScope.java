@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.red5.server.api.IConnection;
 import org.red5.server.api.event.IEvent;
 import org.red5.server.api.event.IEventListener;
 import org.red5.server.api.persistence.IPersistenceStore;
@@ -30,6 +31,7 @@ import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IBasicScope;
 import org.red5.server.api.scope.IScope;
+import org.red5.server.api.scope.IScopeSecurityHandler;
 import org.red5.server.api.scope.ScopeType;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
@@ -98,6 +100,11 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
      * Set to amount of time (in seconds) the scope will be kept before being freed, after the last disconnect.
      */
     protected int keepDelay = 0;
+
+    /**
+     * List of security handlers
+     */
+    protected transient CopyOnWriteArraySet<IScopeSecurityHandler> securityHandlers;
 
     /**
      * List of event listeners
@@ -187,8 +194,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     /**
      * Sets the amount of time to keep the scope available after the last disconnect.
      * 
-     * @param keepDelay
-     *            delay
+     * @param keepDelay delay
      */
     public void setKeepDelay(int keepDelay) {
         this.keepDelay = keepDelay;
@@ -205,10 +211,72 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public boolean isConnectionAllowed(IConnection conn) {
+        if (log.isDebugEnabled()) {
+            log.debug("isConnectionAllowed: {}", conn);
+        }
+        if (securityHandlers != null) {
+            if (log.isDebugEnabled()) {
+                log.debug("securityHandlers: {}", securityHandlers);
+            }
+            // loop through the handlers
+            for (IScopeSecurityHandler handler : securityHandlers) {
+                // if allowed continue to the next handler
+                if (handler.allowed(conn)) {
+                    continue;
+                } else {
+                    // if any handlers deny we return false
+                    return false;
+                }
+            }
+        }
+        // default is to allow
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isScopeAllowed(IScope scope) {
+        if (log.isDebugEnabled()) {
+            log.debug("isScopeAllowed: {}", scope);
+        }
+        if (securityHandlers != null) {
+            // loop through the handlers
+            for (IScopeSecurityHandler handler : securityHandlers) {
+                // if allowed continue to the next handler
+                if (handler.allowed(scope)) {
+                    continue;
+                } else {
+                    // if any handlers deny we return false
+                    return false;
+                }
+            }
+        }
+        // default is to allow
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setSecurityHandlers(Set<IScopeSecurityHandler> handlers) {
+        if (securityHandlers == null) {
+            securityHandlers = new CopyOnWriteArraySet<>();
+        }
+        // add the specified set of security handlers
+        securityHandlers.addAll(handlers);
+        if (log.isDebugEnabled()) {
+            log.debug("securityHandlers: {}", securityHandlers);
+        }
+    }
+
+    /**
      * Add event listener to list of notified objects
      * 
-     * @param listener
-     *            Listening object
+     * @param listener Listening object
      * @return true if listener is added and false otherwise
      */
     public boolean addEventListener(IEventListener listener) {
@@ -268,8 +336,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     /**
      * Handles event. To be implemented in subclass realization
      *
-     * @param event
-     *            Event context
+     * @param event Event context
      * @return Event handling result
      */
     public boolean handleEvent(IEvent event) {
@@ -279,8 +346,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     /**
      * Notifies listeners on event. Current implementation is empty. To be implemented in subclass realization
      * 
-     * @param event
-     *            Event to broadcast
+     * @param event Event to broadcast
      */
     public void notifyEvent(IEvent event) {
 
@@ -289,8 +355,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     /**
      * Dispatches event (notifies all listeners)
      *
-     * @param event
-     *            Event to dispatch
+     * @param event Event to dispatch
      */
     public void dispatchEvent(IEvent event) {
         for (IEventListener listener : listeners) {

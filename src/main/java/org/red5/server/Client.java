@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.openmbean.CompositeData;
 
@@ -78,6 +79,11 @@ public class Client extends AttributeStore implements IClient {
      * Whether or not the bandwidth has been checked.
      */
     protected boolean bandwidthChecked;
+
+    /**
+     * Disconnected state.
+     */
+    protected AtomicBoolean disconnected = new AtomicBoolean(false);
 
     /**
      * Creates client, sets creation time and registers it in ClientRegistry.
@@ -131,23 +137,25 @@ public class Client extends AttributeStore implements IClient {
      * Disconnects client from Red5 application
      */
     public void disconnect() {
-        log.debug("Disconnect - id: {}", id);
-        if (connections != null && !connections.isEmpty()) {
-            log.debug("Closing {} scope connections", connections.size());
-            // close all connections held to Red5 by client
-            for (IConnection con : getConnections()) {
-                try {
-                    con.close();
-                } catch (Exception e) {
-                    // closing a connection calls into application code, so exception possible
-                    log.error("Unexpected exception closing connection {}", e);
+        if (disconnected.compareAndSet(false, true)) {
+            log.debug("Disconnect - id: {}", id);
+            if (connections != null && !connections.isEmpty()) {
+                log.debug("Closing {} scope connections", connections.size());
+                // close all connections held to Red5 by client
+                for (IConnection con : getConnections()) {
+                    try {
+                        con.close();
+                    } catch (Exception e) {
+                        // closing a connection calls into application code, so exception possible
+                        log.error("Unexpected exception closing connection {}", e);
+                    }
                 }
+            } else {
+                log.debug("Connection map is empty or null");
             }
-        } else {
-            log.debug("Connection map is empty or null");
+            // unregister client
+            removeInstance();
         }
-        // unregister client
-        removeInstance();
     }
 
     /**
@@ -344,7 +352,6 @@ public class Client extends AttributeStore implements IClient {
         if (log.isDebugEnabled()) {
             log.debug("Check bandwidth: {}", Arrays.toString(params));
         }
-
         bandwidthChecked = true;
         //do something to check the bandwidth, Dan what do you think?
         ClientServerDetection detection = new ClientServerDetection();

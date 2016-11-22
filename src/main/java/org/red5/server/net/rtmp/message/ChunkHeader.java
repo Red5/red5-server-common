@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -25,6 +25,8 @@ import java.io.ObjectOutput;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.net.protocol.ProtocolException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RTMP chunk header 
@@ -33,6 +35,7 @@ import org.red5.server.net.protocol.ProtocolException;
  * </pre>
  */
 public class ChunkHeader implements Constants, Cloneable, Externalizable {
+    protected static final Logger log = LoggerFactory.getLogger(ChunkHeader.class);
 
     /**
      * Chunk format
@@ -109,7 +112,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     /**
      * Read chunk header from the buffer.
      * 
-     * @param in
+     * @param in buffer
      * @return ChunkHeader instance
      */
     public static ChunkHeader read(IoBuffer in) {
@@ -119,29 +122,37 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
             ChunkHeader h = new ChunkHeader();
             // going to check highest 2 bits
             h.format = (byte) ((0b11000000 & headerByte) >> 6);
-            if ((headerByte & 0x3f) == 0) {
-                // two byte header
-                h.size = 2;
-                if (remaining < 2) {
-                    throw new ProtocolException("Bad chunk header, at least 2 bytes are expected");
-                }
-                h.channelId = h.channelId << 8 | (in.get() & 0xff);
-            } else if ((headerByte & 0x3f) == 1) {
-                // three byte header
-                h.size = 3;
-                if (remaining < 3) {
-                    throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
-                }
-                h.channelId = h.channelId << 16 | (in.get() & 0xff) << 8 | (in.get() & 0xff);
-            } else {
-                // single byte header
-                h.size = 1;
-                h.channelId = 0x3f & headerByte;
+            int fmt = headerByte & 0x3f;
+            switch (fmt) {
+                case 0:
+                    // two byte header
+                    h.size = 2;
+                    if (remaining < 2) {
+                        throw new ProtocolException("Bad chunk header, at least 2 bytes are expected");
+                    }
+                    h.channelId = 64 + (in.get() & 0xff);
+                    break;
+                case 1:
+                    // three byte header
+                    h.size = 3;
+                    if (remaining < 3) {
+                         throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
+                    }
+                    byte b1 = in.get();
+                    byte b2 = in.get();
+                    h.channelId = 64 + ((b2 & 0xff) << 8 | (b1 & 0xff));
+                    break;
+                default:
+                    // single byte header
+                    h.size = 1;
+                    h.channelId = 0x3f & headerByte;
+                    break;
             }
             // check channel id is valid
             if (h.channelId < 0) {
                 throw new ProtocolException("Bad channel id: " + h.channelId);
             }
+            log.trace("CHUNK header:: byte {}, count {}, header {}, channel {}", String.format("%02x", headerByte), h.size, 0, h.channelId);
             return h;
         } else {
             // at least one byte for valid decode

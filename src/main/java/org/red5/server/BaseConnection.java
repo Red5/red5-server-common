@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -101,8 +101,6 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 
     /**
      * Connection params passed from client with NetConnection.connect call
-     *
-     * @see <a href='http://livedocs.adobe.com/fms/2/docs/00000570.html'>NetConnection in Flash Media Server docs (external)</a>
      */
     @SuppressWarnings("all")
     protected volatile Map<String, Object> params = null;

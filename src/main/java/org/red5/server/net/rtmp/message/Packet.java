@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -145,11 +145,11 @@ public class Packet implements Externalizable {
                 buffer.mark();
                 buffer.get(copy);
                 buffer.reset();
-                this.data = IoBuffer.wrap(copy);
+                data = IoBuffer.wrap(copy);
             } else {
                 log.trace("Buffer has no backing array, using ByteBuffer");
                 // fallback to ByteBuffer
-                this.data.put(buffer.buf()).flip();
+                data.put(buffer.buf()).flip();
             }
         }
     }

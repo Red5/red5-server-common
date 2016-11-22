@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -61,6 +61,11 @@ public class StatusObject implements Serializable, ICustomSerializable, External
     /** Constructs a new StatusObject. */
     public StatusObject() {
 
+    }
+
+    public StatusObject(String code, String level) {
+        this.code = code;
+        this.level = level;
     }
 
     public StatusObject(String code, String level, String description) {

@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -35,7 +35,7 @@ public class StreamableFileFactory implements IStreamableFileFactory {
     // Initialize Logging
     public static Logger logger = LoggerFactory.getLogger(StreamableFileFactory.class);
 
-    private Set<IStreamableFileService> services = new HashSet<IStreamableFileService>();
+    private Set<IStreamableFileService> services = new HashSet<>();
 
     /**
      * Setter for services

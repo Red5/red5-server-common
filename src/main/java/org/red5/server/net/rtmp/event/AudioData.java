@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -27,6 +27,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.codec.AudioCodec;
+import org.red5.io.ITag;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.stream.IStreamData;
 
@@ -40,6 +42,16 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
      * Data type
      */
     private byte dataType = TYPE_AUDIO_DATA;
+
+    /**
+     * The codec id
+     */
+    protected int codecId = -1;
+
+    /**
+     * True if this is configuration data and false otherwise
+     */
+    protected boolean config;
 
     /** Constructs a new AudioData. */
     public AudioData() {
@@ -88,12 +100,28 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     }
 
     public void setData(IoBuffer data) {
+        if (data != null && data.limit() > 0) {
+            data.mark();
+            codecId = ((data.get(0) & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4;
+            if (codecId == AudioCodec.AAC.getId()) {
+                config = (data.get() == 0);
+            }
+            data.reset();
+        }
         this.data = data;
     }
 
     public void setData(byte[] data) {
         this.data = IoBuffer.allocate(data.length);
         this.data.put(data).flip();
+    }
+
+    public int getCodecId() {
+        return codecId;
+    }
+
+    public boolean isConfig() {
+        return config;
     }
 
     /** {@inheritDoc} */
@@ -110,9 +138,7 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
         super.readExternal(in);
         byte[] byteBuf = (byte[]) in.readObject();
         if (byteBuf != null) {
-            data = IoBuffer.allocate(0);
-            data.setAutoExpand(true);
-            SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
+            setData(IoBuffer.wrap(byteBuf));
         }
     }
 
@@ -120,7 +146,7 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         if (data != null) {
-            out.writeObject(SerializeUtils.ByteBufferToByteArray(data));
+            out.writeObject(data.array());
         } else {
             out.writeObject(null);
         }

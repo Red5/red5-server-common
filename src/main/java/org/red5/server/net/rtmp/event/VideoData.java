@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -27,6 +27,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.codec.VideoCodec;
+import org.red5.io.ITag;
 import org.red5.io.IoConstants;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.stream.IStreamData;
@@ -59,6 +61,16 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
      * Frame type, unknown by default
      */
     protected FrameType frameType = FrameType.UNKNOWN;
+
+    /**
+     * The codec id
+     */
+    protected int codecId = -1;
+
+    /**
+     * True if this is configuration data and false otherwise
+     */
+    protected boolean config;
 
     /** Constructs a new VideoData. */
     public VideoData() {
@@ -116,7 +128,11 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         this.data = data;
         if (data != null && data.limit() > 0) {
             data.mark();
-            int firstByte = (data.get(0)) & 0xff;
+            int firstByte = data.get(0) & 0xff;
+            codecId = firstByte & ITag.MASK_VIDEO_CODEC;
+            if (codecId == VideoCodec.AVC.getId()) {
+                config = (data.get() == 0);
+            }
             data.reset();
             int frameType = (firstByte & MASK_VIDEO_FRAMETYPE) >> 4;
             if (frameType == FLAG_FRAMETYPE_KEYFRAME) {
@@ -145,6 +161,14 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         return frameType;
     }
 
+    public int getCodecId() {
+        return codecId;
+    }
+
+    public boolean isConfig() {
+        return config;
+    }
+
     /** {@inheritDoc} */
     @Override
     protected void releaseInternal() {
@@ -164,9 +188,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         frameType = (FrameType) in.readObject();
         byte[] byteBuf = (byte[]) in.readObject();
         if (byteBuf != null) {
-            data = IoBuffer.allocate(byteBuf.length);
-            data.setAutoExpand(true);
-            SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
+            setData(IoBuffer.wrap(byteBuf));
         }
     }
 
@@ -175,7 +197,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         super.writeExternal(out);
         out.writeObject(frameType);
         if (data != null) {
-            out.writeObject(SerializeUtils.ByteBufferToByteArray(data));
+            out.writeObject(data.array());
         } else {
             out.writeObject(null);
         }

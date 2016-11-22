@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -145,13 +145,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     }
 
     /**
-     * Set interval to check for buffer underruns. Set to
-     * 
-     * <pre>
-     * 0
-     * </pre>
-     * 
-     * to disable.
+     * Set interval to check for buffer underruns. Set to 0 to disable.
      * 
      * @param bufferCheckInterval
      *            interval in ms
@@ -203,7 +197,6 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                     //try the parent
                     providerService = (IProviderService) scope.getParent().getContext().getBean(IProviderService.BEAN_NAME);
                 }
-
                 engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService).build();
             } else {
                 throw new IllegalStateException("Scope was null on start playing");
@@ -224,35 +217,34 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
         // Check how many is yet to play...
         int count = items.size();
         // Return if playlist is empty
-        if (count == 0) {
-            return;
-        }
-        // Move to next if current item is set to -1
-        if (currentItemIndex == -1) {
-            moveToNext();
-        }
-        // If there's some more items on list then play current item
-        while (count-- > 0) {
-            IPlayItem item = null;
-            read.lock();
-            try {
-                // Get playlist item
-                item = items.get(currentItemIndex);
-                engine.play(item);
-                break;
-            } catch (StreamNotFoundException e) {
-                // go for next item
+        if (count > 0) {
+            // Move to next if current item is set to -1
+            if (currentItemIndex == -1) {
                 moveToNext();
-                if (currentItemIndex == -1) {
-                    // we reaches the end.
+            }
+            // If there's some more items on list then play current item
+            while (count-- > 0) {
+                IPlayItem item = null;
+                read.lock();
+                try {
+                    // Get playlist item
+                    item = items.get(currentItemIndex);
+                    engine.play(item);
                     break;
+                } catch (StreamNotFoundException e) {
+                    // go for next item
+                    moveToNext();
+                    if (currentItemIndex == -1) {
+                        // we reaches the end.
+                        break;
+                    }
+                    item = items.get(currentItemIndex);
+                } catch (IllegalStateException e) {
+                    // an stream is already playing
+                    break;
+                } finally {
+                    read.unlock();
                 }
-                item = items.get(currentItemIndex);
-            } catch (IllegalStateException e) {
-                // an stream is already playing
-                break;
-            } finally {
-                read.unlock();
             }
         }
     }
@@ -277,6 +269,9 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public void stop() {
+        if (log.isDebugEnabled()) {
+            log.debug("stop");
+        }
         try {
             engine.stop();
         } catch (IllegalStateException e) {
@@ -299,7 +294,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public void close() {
+        if (log.isDebugEnabled()) {
+            log.debug("close");
+        }
         if (engine != null) {
+            // before or on close we may need to allow the queued messages a chance to clear
             engine.close();
             onChange(StreamState.CLOSED);
             items.clear();
@@ -651,9 +650,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamPlayItemSeek(stream, item, position);
                             } catch (Throwable t) {
                                 log.error("error notify streamPlayItemSeek", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -675,9 +675,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamPlayItemPause(stream, item, position);
                             } catch (Throwable t) {
                                 log.error("error notify streamPlayItemPause", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -699,9 +700,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamPlayItemResume(stream, item, position);
                             } catch (Throwable t) {
                                 log.error("error notify streamPlayItemResume", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -721,9 +723,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamPlayItemPlay(stream, item, isLive);
                             } catch (Throwable t) {
                                 log.error("error notify streamPlayItemPlay", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -739,9 +742,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamSubscriberClose(stream);
                             } catch (Throwable t) {
                                 log.error("error notify streamSubscriberClose", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -757,9 +761,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamSubscriberStart(stream);
                             } catch (Throwable t) {
                                 log.error("error notify streamSubscriberStart", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }
@@ -779,9 +784,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                                 handler.streamPlayItemStop(stream, item);
                             } catch (Throwable t) {
                                 log.error("error notify streamPlaylistItemStop", t);
+                            } finally {
+                                // clear thread local reference
+                                Red5.setConnectionLocal(null);
                             }
-                            // clear thread local reference
-                            Red5.setConnectionLocal(null);
                         }
                     };
                 }

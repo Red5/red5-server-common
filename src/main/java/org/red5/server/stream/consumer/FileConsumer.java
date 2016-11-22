@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -158,7 +159,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     private int percentage = 25;
 
     /**
-     * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on their time stamp.
+     * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on
+     * their time stamp.
      */
     private boolean delayWrite = false;
 
@@ -172,7 +174,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      */
     private volatile Future<?> writerFuture;
 
-    private volatile boolean gotVideoKeyFrame;
+    private AtomicBoolean gotVideoKeyFrame = new AtomicBoolean(false);
 
     /**
      * Default ctor
@@ -223,16 +225,16 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             // if we're dealing with a FlexStreamSend IRTMPEvent, this avoids
             // relative timestamp calculations
             if (!(msg instanceof FlexStreamSend)) {
-                log.trace("Not FlexStreamSend type");
+                //log.trace("Not FlexStreamSend type");
                 lastTimestamp = timestamp;
             }
             // ensure that our first video frame written is a key frame
             if (msg instanceof VideoData) {
-                if (!gotVideoKeyFrame) {
+                if (!gotVideoKeyFrame.get()) {
                     VideoData video = (VideoData) msg;
                     if (video.getFrameType() == FrameType.KEYFRAME) {
                         log.debug("Got our first keyframe");
-                        gotVideoKeyFrame = true;
+                        gotVideoKeyFrame.set(true);
                     } else {
                         // skip this frame bail out
                         log.debug("Skipping video data since keyframe has not been written yet");
@@ -283,6 +285,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             }
         } else if (message instanceof ResetMessage) {
             startTimestamp = -1;
+        } else if (log.isDebugEnabled()) {
+            log.debug("Ignoring pushed message: {}", message);
         }
     }
 
@@ -404,24 +408,16 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      * @param event
      *            Pipe connection event
      */
+    @SuppressWarnings("incomplete-switch")
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         switch (event.getType()) {
-            case PipeConnectionEvent.CONSUMER_CONNECT_PUSH:
+            case CONSUMER_CONNECT_PUSH:
                 if (event.getConsumer() == this) {
                     Map<String, Object> paramMap = event.getParamMap();
                     if (paramMap != null) {
                         mode = (String) paramMap.get("mode");
                     }
                 }
-                break;
-            case PipeConnectionEvent.CONSUMER_DISCONNECT:
-                if (event.getConsumer() != this) {
-                    break;
-                }
-            case PipeConnectionEvent.PROVIDER_DISCONNECT:
-                // we only support one provider at a time so releasing when provider disconnects uninit();
-                break;
-            default:
                 break;
         }
     }

@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -81,6 +81,18 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
     public Notify(IoBuffer data) {
         super(Type.STREAM_DATA);
         this.data = data;
+    }
+
+    /**
+     * Create new notification event with given byte buffer and action.
+     * 
+     * @param data Byte buffer
+     * @param action Action / method
+     */
+    public Notify(IoBuffer data, String action) {
+        super(Type.STREAM_DATA);
+        this.data = data;
+        this.action = action;
     }
 
     /**
@@ -168,12 +180,18 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         this.connectionParams = connectionParams;
     }
 
+    public void setAction(String onCueOrOnMeta) {
+        this.action = onCueOrOnMeta;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Notify: ").append(call);
-        return sb.toString();
+        return call != null ? String.format("%s: %s", getClass().getSimpleName(), call) : (action != null ? String.format("%s action: %s", getClass().getSimpleName(), action) : getClass().getSimpleName());
     }
 
     /** {@inheritDoc} */
@@ -232,11 +250,17 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
             data.setAutoExpand(true);
             SerializeUtils.ByteArrayToByteBuffer(byteBuf, data);
         }
+        if (log.isTraceEnabled()) {
+            log.trace("readExternal - transactionId: {} connectionParams: {} call: {}", transactionId, connectionParams, call);
+        }
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
+        if (log.isTraceEnabled()) {
+            log.trace("writeExternal - transactionId: {} connectionParams: {} call: {}", transactionId, connectionParams, call);
+        }
         out.writeObject(call);
         out.writeObject(connectionParams);
         out.writeInt(transactionId);
@@ -269,15 +293,6 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         ois.close();
         bais.close();
         return result;
-    }
-
-    public void setAction(String onCueOrOnMeta) {
-        this.action = onCueOrOnMeta;
-
-    }
-
-    public String getAction() {
-        return action;
     }
 
 }

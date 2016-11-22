@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -188,19 +188,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Add child scope to this scope
      * 
-     * @param scope
-     *            Child scope
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success (if scope has handler and it accepts child scope addition),
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param scope Child scope
+     * @return true on success (if scope has handler and it accepts child scope addition), false otherwise
      */
     public boolean addChildScope(IBasicScope scope) {
         log.debug("Add child: {}", scope);
@@ -235,19 +224,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Connect to scope
      * 
-     * @param conn
-     *            Connection object
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param conn Connection object
+     * @return true on success, false otherwise
      */
     public boolean connect(IConnection conn) {
         return connect(conn, null);
@@ -256,21 +234,9 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Connect to scope with parameters. To successfully connect to scope it must have handler that will accept this connection with given set of parameters. Client associated with connection is added to scope clients set, connection is registered as scope event listener.
      * 
-     * @param conn
-     *            Connection object
-     * @param params
-     *            Parameters passed with connection
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param conn Connection object
+     * @param params Parameters passed with connection
+     * @return true on success, false otherwise
      */
     public boolean connect(IConnection conn, Object[] params) {
         log.debug("Connect - scope: {} connection: {}", this, conn);
@@ -323,19 +289,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Create child scope of room type, with the given name.
      * 
-     * @param name
-     *            child scope name
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param name child scope name
+     * @return true on success, false otherwise
      */
     public boolean createChildScope(String name) {
         // quick lookup by name
@@ -351,8 +306,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Destroys scope
      * 
-     * @throws Exception
-     *             on error
+     * @throws Exception on error
      */
     public void destroy() throws Exception {
         log.debug("Destroy scope");
@@ -375,8 +329,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Disconnect connection from scope
      * 
-     * @param conn
-     *            Connection object
+     * @param conn Connection object
      */
     public void disconnect(IConnection conn) {
         log.debug("Disconnect: {}", conn);
@@ -495,10 +448,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return base scope of given type with given name
      * 
-     * @param type
-     *            Scope type
-     * @param name
-     *            Scope name
+     * @param type Scope type
+     * @param name Scope name
      * @return Basic scope object
      */
     public IBasicScope getBasicScope(ScopeType type, String name) {
@@ -508,8 +459,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return basic scope names matching given type
      * 
-     * @param type
-     *            Scope type
+     * @param type Scope type
      * @return set of scope names
      */
     public Set<String> getBasicScopeNames(ScopeType type) {
@@ -712,8 +662,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return resource located at given path
      * 
-     * @param path
-     *            Resource path
+     * @param path Resource path
      * @return Resource
      */
     public Resource getResource(String path) {
@@ -726,11 +675,9 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return array of resources from path string, usually used with pattern path
      * 
-     * @param path
-     *            Resources path
+     * @param path Resources path
      * @return Resources
-     * @throws IOException
-     *             I/O exception
+     * @throws IOException I/O exception
      */
     public Resource[] getResources(String path) throws IOException {
         if (hasContext()) {
@@ -742,8 +689,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return child scope by name
      * 
-     * @param name
-     *            Scope name
+     * @param name Scope name
      * @return Child scope with given name
      */
     public IScope getScope(String name) {
@@ -771,8 +717,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return service handler by name
      * 
-     * @param name
-     *            Handler name
+     * @param name Handler name
      * @return Service handler with given name
      */
     public Object getServiceHandler(String name) {
@@ -809,8 +754,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return map of service handlers and optionally created it if it doesn't exist.
      * 
-     * @param allowCreate
-     *            Should the map be created if it doesn't exist?
+     * @param allowCreate Should the map be created if it doesn't exist?
      * @return Map of service handlers
      */
     protected Map<String, Object> getServiceHandlers(boolean allowCreate) {
@@ -846,19 +790,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Handles event. To be implemented in subclasses.
      * 
-     * @param event
-     *            Event to handle
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         on success,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param event Event to handle
+     * @return true on success, false otherwise
      */
     @Override
     public boolean handleEvent(IEvent event) {
@@ -868,19 +801,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check whether scope has child scope with given name
      * 
-     * @param name
-     *            Child scope name
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has child node with given name,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param name Child scope name
+     * @return true if scope has child node with given name, false otherwise
      */
     public boolean hasChildScope(String name) {
         log.debug("Has child scope? {} in {}", name, this);
@@ -890,21 +812,9 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check whether scope has child scope with given name and type
      * 
-     * @param type
-     *            Child scope type
-     * @param name
-     *            Child scope name
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has child node with given name and type,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @param type Child scope type
+     * @param name Child scope name
+     * @return true if scope has child node with given name and type, false otherwise
      */
     public boolean hasChildScope(ScopeType type, String name) {
         log.debug("Has child scope? {} in {}", name, this);
@@ -914,17 +824,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check if scope has a context
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has context,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope has context, false otherwise
      */
     public boolean hasContext() {
         return context != null;
@@ -933,17 +833,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check if scope or it's parent has handler
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope or it's parent scope has a handler,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope or it's parent scope has a handler, false otherwise
      */
     public boolean hasHandler() {
         return (handler != null || (hasParent() && getParent().hasHandler()));
@@ -952,17 +842,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check if scope has parent scope
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has parent scope,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise`
+     * @return true if scope has parent scope, false otherwise`
      */
     @Override
     public boolean hasParent() {
@@ -970,11 +850,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Initialization actions, start if autostart is set to
-     * 
-     * <pre>
-     * true
-     * </pre>
+     * Initialization actions, start if autostart is set to true.
      */
     public void init() {
         log.debug("Init scope: {} parent: {}", name, parent);
@@ -1020,17 +896,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check if scope is enabled
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope is enabled,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope is enabled, false otherwise
      */
     public boolean isEnabled() {
         return enabled;
@@ -1046,17 +912,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check if scope is in running state
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope is in running state,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope is in running state, false otherwise
      */
     public boolean isRunning() {
         return running;
@@ -1072,10 +928,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Register service handler by name
      * 
-     * @param name
-     *            Service handler name
-     * @param handler
-     *            Service handler
+     * @param name Service handler name
+     * @param handler Service handler
      */
     public void registerServiceHandler(String name, Object handler) {
         Map<String, Object> serviceHandlers = getServiceHandlers();
@@ -1085,8 +939,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Removes child scope
      * 
-     * @param scope
-     *            Child scope to remove
+     * @param scope Child scope to remove
      */
     public void removeChildScope(IBasicScope scope) {
         log.debug("removeChildScope: {}", scope);
@@ -1112,8 +965,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Setter for autostart flag
      * 
-     * @param autoStart
-     *            Autostart flag value
+     * @param autoStart Autostart flag value
      */
     public void setAutoStart(boolean autoStart) {
         this.autoStart = autoStart;
@@ -1122,8 +974,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Setter for child load path. Should be implemented in subclasses?
      * 
-     * @param pattern
-     *            Load path pattern
+     * @param pattern Load path pattern
      */
     public void setChildLoadPath(String pattern) {
 
@@ -1132,8 +983,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Setter for context
      * 
-     * @param context
-     *            Context object
+     * @param context Context object
      */
     public void setContext(IContext context) {
         log.debug("Set context: {}", context);
@@ -1143,8 +993,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Set scope depth
      * 
-     * @param depth
-     *            Scope depth
+     * @param depth Scope depth
      */
     public void setDepth(int depth) {
         this.depth = depth;
@@ -1153,8 +1002,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Enable or disable scope by setting enable flag
      * 
-     * @param enabled
-     *            Enable flag value
+     * @param enabled Enable flag value
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
@@ -1226,17 +1074,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Starts scope
      * 
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if scope has handler and it's start method returned true,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if scope has handler and it's start method returned true, false otherwise
      */
     public boolean start() {
         log.debug("Start scope");
@@ -1383,8 +1221,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Allows for reconstruction via CompositeData.
      * 
-     * @param cd
-     *            composite data
+     * @param cd composite data
      * @return Scope class instance
      */
     public static Scope from(CompositeData cd) {

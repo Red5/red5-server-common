@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -68,7 +68,7 @@ public class StatusObjectService implements StatusCodes, InitializingBean {
      * Creates all status objects and adds them to status objects map
      */
     public void loadStatusObjects() {
-        statusObjects = new HashMap<String, StatusObject>();
+        statusObjects = new HashMap<>();
 
         statusObjects.put(NC_CALL_FAILED, new StatusObject(NC_CALL_FAILED, StatusObject.ERROR, ""));
         statusObjects.put(NC_CALL_BADVERSION, new StatusObject(NC_CALL_BADVERSION, StatusObject.ERROR, ""));

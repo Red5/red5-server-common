@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -184,7 +184,7 @@ public abstract class RTMPHandshake implements IHandshake {
     protected IoBuffer buffer;
 
     static {
-        //get security provider
+        // add bouncycastle security provider
         Security.addProvider(new BouncyCastleProvider());
     }
 
@@ -371,7 +371,7 @@ public abstract class RTMPHandshake implements IHandshake {
             log.trace("calculateHMAC_SHA256 - messageOffset: {} messageLen: {}", messageOffset, messageLen);
             log.trace("calculateHMAC_SHA256 - message: {}", Hex.encodeHexString(Arrays.copyOfRange(message, messageOffset, messageOffset + messageLen)));
             log.trace("calculateHMAC_SHA256 - keyLen: {} key: {}", keyLen, Hex.encodeHexString(Arrays.copyOf(key, keyLen)));
-            log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
+            //log.trace("calculateHMAC_SHA256 - digestOffset: {} digest: {}", digestOffset, Hex.encodeHexString(Arrays.copyOfRange(digest, digestOffset, digestOffset + DIGEST_LENGTH)));
         }
         byte[] calcDigest;
         try {

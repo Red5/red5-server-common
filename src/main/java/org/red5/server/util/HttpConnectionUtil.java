@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -26,6 +26,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -75,6 +76,7 @@ public class HttpConnectionUtil {
      */
     public static final HttpClient getClient(int timeout) {
         HttpClientBuilder client = HttpClientBuilder.create();
+        // set the connection manager
         client.setConnectionManager(connectionManager);
         // dont retry
         client.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
@@ -90,6 +92,29 @@ public class HttpConnectionUtil {
             HttpHost proxy = new HttpHost(System.getProperty("http.proxyHost").toString(), Integer.valueOf(System.getProperty("http.proxyPort")));
             client.setProxy(proxy);
         }
+        return client.build();
+    }
+
+    /**
+     * Returns a client with all our selected properties / params and SSL enabled.
+     * 
+     * @return client
+     */
+    public static final HttpClient getSecureClient() {
+        HttpClientBuilder client = HttpClientBuilder.create();
+        // set the ssl verifier to accept all
+        client.setSSLHostnameVerifier(new NoopHostnameVerifier());
+        // set the connection manager
+        client.setConnectionManager(connectionManager);
+        // dont retry
+        client.setRetryHandler(new DefaultHttpRequestRetryHandler(0, false));
+        // establish a connection within x seconds
+        RequestConfig config = RequestConfig.custom().setSocketTimeout(connectionTimeout).build();
+        client.setDefaultRequestConfig(config);
+        // no redirects
+        client.disableRedirectHandling();
+        // set custom ua
+        client.setUserAgent(userAgent);
         return client.build();
     }
 

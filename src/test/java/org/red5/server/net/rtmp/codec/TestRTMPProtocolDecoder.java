@@ -17,7 +17,9 @@ import org.red5.io.utils.IOUtils;
 import org.red5.server.net.rtmp.IRTMPHandler;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.RTMPMinaConnection;
+import org.red5.server.net.rtmp.RTMPUtils;
 import org.red5.server.net.rtmp.event.Invoke;
+import org.red5.server.net.rtmp.message.ChunkHeader;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
 import org.slf4j.Logger;
@@ -33,6 +35,27 @@ public class TestRTMPProtocolDecoder implements IRTMPHandler {
 
     @After
     public void tearDown() throws Exception {
+    }
+
+    @Test
+    public void testDecodeChannelId() {
+        {
+            IoBuffer p00 = IoBuffer.wrap(IOUtils.hexStringToByteArray("03"));
+            ChunkHeader chh = ChunkHeader.read(p00);
+            assertEquals(3, chh.getChannelId());
+        }
+        {
+            IoBuffer p00 = IoBuffer.wrap(IOUtils.hexStringToByteArray("43"));
+            ChunkHeader chh = ChunkHeader.read(p00);
+            assertEquals(3, chh.getChannelId());
+        }
+        for (int i = 2; i < 64 * 1024; ++i) {
+            IoBuffer b = IoBuffer.allocate(3);
+            RTMPUtils.encodeHeaderByte(b, (byte)(i < 64 ? 0 : (i > 63 && i < 320 ? 1 : 2)), i);
+            b.flip();
+            ChunkHeader chh = ChunkHeader.read(b);
+            assertEquals(i, chh.getChannelId());
+        }
     }
 
 //    @Test

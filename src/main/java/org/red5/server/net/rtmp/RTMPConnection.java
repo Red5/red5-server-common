@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -406,6 +406,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         this.handler = handler;
     }
 
+    public IRTMPHandler getHandler() {
+        return handler;
+    }
+
     public RTMP getState() {
         return state;
     }
@@ -484,10 +488,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 stopWaitForHandshake();
                 // once the handshake has completed, start needed jobs start the ping / pong keep-alive
                 startRoundTripMeasurement();
-            } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Connect failed");
-                }
+            } else if (log.isDebugEnabled()) {
+                log.debug("Connect failed");
             }
             return success;
         } catch (ClientRejectedException e) {
@@ -509,7 +511,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         try {
             waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
         } catch (TaskRejectedException e) {
-            log.error("WaitForHandshake task was rejected for " + sessionId, e);
+            log.error("WaitForHandshake task was rejected for {}", sessionId, e);
         }
     }
 
@@ -519,10 +521,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     private void stopWaitForHandshake() {
         if (waitForHandshakeTask != null) {
             boolean cancelled = waitForHandshakeTask.cancel(true);
-            if (cancelled) {
+            waitForHandshakeTask = null;
+            if (cancelled && log.isDebugEnabled()) {
                 log.debug("waitForHandshake was cancelled for {}", sessionId);
             }
-            waitForHandshakeTask = null;
         }
     }
 
@@ -536,12 +538,13 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                     log.debug("startRoundTripMeasurement - {}", sessionId);
                 }
                 try {
-                    keepAliveTask = scheduler.scheduleAtFixedRate(new KeepAliveTask(), pingInterval);
+                    // schedule with an initial delay of now + 2s to prevent ping messages during connect post processes
+                    keepAliveTask = scheduler.scheduleWithFixedDelay(new KeepAliveTask(), new Date(System.currentTimeMillis() + 2000L), pingInterval);
                     if (log.isDebugEnabled()) {
-                        log.debug("Keep alive scheduled for: {}", sessionId);
+                        log.debug("Keep alive scheduled for {}", sessionId);
                     }
                 } catch (Exception e) {
-                    log.error("Error creating keep alive job for: " + sessionId, e);
+                    log.error("Error creating keep alive job for {}", sessionId, e);
                 }
             }
         } else {
@@ -555,10 +558,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     private void stopRoundTripMeasurement() {
         if (keepAliveTask != null) {
             boolean cancelled = keepAliveTask.cancel(true);
-            if (cancelled) {
+            keepAliveTask = null;
+            if (cancelled && log.isDebugEnabled()) {
                 log.debug("Keep alive was cancelled for {}", sessionId);
             }
-            keepAliveTask = null;
         }
     }
 
@@ -651,12 +654,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         }
         ReceivedMessageTaskQueue queue = tasksByChannels.remove(channelId);
         if (queue != null) {
+            if (isConnected()) {
+                // if connected, drain and process the tasks queued-up
+                log.debug("Processing remaining tasks at close for channel: {}", channelId);
+                processTasksQueue(queue);
+            }
             queue.removeAllTasks();
         } else if (log.isTraceEnabled()) {
             log.trace("No task queue for id: {}", channelId);
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("Closing / removing channel: {}", chan);
         }
         chan = null;
     }
@@ -1036,7 +1041,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * processing. The caller only knows that it cannot be confirmed that the callee has invoked the service call and returned a result.
      */
     public void sendPendingServiceCallsCloseError() {
-        if (!pendingCalls.isEmpty()) {
+        if (pendingCalls != null && !pendingCalls.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("Connection calls pending: {}", pendingCalls.size());
             }

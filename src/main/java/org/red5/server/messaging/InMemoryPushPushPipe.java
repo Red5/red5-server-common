@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -21,8 +21,6 @@ package org.red5.server.messaging;
 import java.io.IOException;
 import java.util.Map;
 
-import org.red5.server.net.rtmp.event.IRTMPEvent;
-import org.red5.server.stream.message.RTMPMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +52,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
                 log.debug("Consumer subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), consumer, paramMap });
             }
             if (success) {
-                fireConsumerConnectionEvent(consumer, PipeConnectionEvent.CONSUMER_CONNECT_PUSH, paramMap);
+                fireConsumerConnectionEvent(consumer, PipeConnectionEvent.EventType.CONSUMER_CONNECT_PUSH, paramMap);
             }
             return success;
         } else {
@@ -70,7 +68,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
             log.debug("Provider subscribe{} {} params: {}", new Object[] { (success ? "d" : " failed"), provider, paramMap });
         }
         if (success) {
-            fireProviderConnectionEvent(provider, PipeConnectionEvent.PROVIDER_CONNECT_PUSH, paramMap);
+            fireProviderConnectionEvent(provider, PipeConnectionEvent.EventType.PROVIDER_CONNECT_PUSH, paramMap);
         }
         return success;
     }
@@ -91,25 +89,16 @@ public class InMemoryPushPushPipe extends AbstractPipe {
      * @param message
      *            the message to be pushed to consumers
      * @throws IOException
-     *            In case IOException of some sort is occured
+     *            In case IOException of some sort is occurred
      */
     public void pushMessage(IMessage message) throws IOException {
         if (log.isDebugEnabled()) {
-            log.debug("pushMessage: {}", message);
-            log.debug("pushMessage - consumers: {}", consumers.size());
+            log.debug("pushMessage: {} to {} consumers", message, consumers.size());
         }
         for (IConsumer consumer : consumers) {
             try {
                 IPushableConsumer pcon = (IPushableConsumer) consumer;
-                if (message instanceof RTMPMessage) {
-                    RTMPMessage rtmpMessage = (RTMPMessage) message;
-                    IRTMPEvent body = rtmpMessage.getBody();
-                    int time = body.getTimestamp();
-                    pcon.pushMessage(this, message);
-                    body.setTimestamp(time);
-                } else {
-                    pcon.pushMessage(this, message);
-                }
+                pcon.pushMessage(this, message);
             } catch (Throwable t) {
                 if (t instanceof IOException) {
                     throw (IOException) t;

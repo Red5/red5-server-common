@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -29,7 +29,7 @@ import org.red5.server.api.stream.StreamState;
 import org.red5.server.net.rtmp.event.Notify;
 
 /**
- * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling meand, provides stream start and stop operations.
+ * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling, and provides stream start and stop operations.
  *
  * @see org.red5.server.api.stream.IStream
  */

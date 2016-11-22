@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -27,6 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.Random;
 import java.util.zip.ZipEntry;
@@ -197,38 +200,10 @@ public class FileUtil {
      *            new name
      */
     public static void rename(String from, String to) {
-        Process p = null;
-        Thread std = null;
         try {
-            Runtime runTime = Runtime.getRuntime();
-            log.debug("Execute runtime");
-            //determine file system type
-            if (File.separatorChar == '\\') {
-                //we are windows
-                p = runTime.exec("CMD /D /C \"REN " + from + ' ' + to + "\"");
-            } else {
-                //we are unix variant 
-                p = runTime.exec("mv -f " + from + ' ' + to);
-            }
-            // observe std out
-            std = stdOut(p);
-            // wait for the observer threads to finish
-            while (std.isAlive()) {
-                try {
-                    Thread.sleep(250);
-                } catch (Exception e) {
-                }
-            }
-            log.debug("Process threads wait exited");
-        } catch (Exception e) {
-            log.error("Error running delete script", e);
-        } finally {
-            if (null != p) {
-                log.debug("Destroying process");
-                p.destroy();
-                p = null;
-                std = null;
-            }
+            Files.move(Paths.get(from), Paths.get(to), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Error renaming file", e);
         }
     }
 
@@ -394,6 +369,7 @@ public class FileUtil {
     }
 
     public static void copy(InputStream in, OutputStream out) throws IOException {
+        
         synchronized (in) {
             synchronized (out) {
                 byte[] buffer = new byte[256];
@@ -406,61 +382,6 @@ public class FileUtil {
             }
         }
     }
-
-    /**
-     * Unzips a given archive to a specified destination directory.
-     * 
-     * @param compressedFileName
-     * @param destinationDir
-     */
-    //	public static void unzip(String compressedFileName, String destinationDir) {
-    //		log.debug("Unzip - file: {} destination: {}", compressedFileName, destinationDir);
-    //		try {
-    //			final int BUFFER = 2048;
-    //			BufferedOutputStream dest = null;
-    //			FileInputStream fis = new FileInputStream(compressedFileName);
-    //			CheckedInputStream checksum = new CheckedInputStream(fis,
-    //					new Adler32());
-    //			ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
-    //					checksum));
-    //			ZipEntry entry;
-    //			while ((entry = zis.getNextEntry()) != null) {
-    //				log.debug("Extracting: {}", entry);
-    //				String name = entry.getName();
-    //				int count;
-    //				byte data[] = new byte[BUFFER];
-    //				// write the files to the disk
-    //				File destFile = new File(destinationDir, name);
-    //				log.debug("Absolute path: {}", destFile.getAbsolutePath());
-    //				//create dirs as needed, look for file extension to determine type
-    //				if (entry.isDirectory()) {
-    //					log.debug("Entry is detected as a directory");
-    //					if (destFile.mkdirs()) {
-    //						log.debug("Directory created: {}", destFile.getName());
-    //					} else {
-    //						log.warn("Directory was not created: {}", destFile.getName());
-    //					}
-    //					destFile = null;
-    //					continue;
-    //				}				
-    //
-    //				FileOutputStream fos = new FileOutputStream(destFile);
-    //				dest = new BufferedOutputStream(fos, BUFFER);
-    //				while ((count = zis.read(data, 0, BUFFER)) != -1) {
-    //					dest.write(data, 0, count);
-    //				}
-    //				dest.flush();
-    //				dest.close();
-    //				destFile = null;
-    //			}
-    //			zis.close();
-    //			log.debug("Checksum: {}", checksum.getChecksum().getValue());
-    //		} catch (Exception e) {
-    //			log.error("Error unzipping {}", compressedFileName, e);
-    //			log.warn("Exception {}", e);
-    //		}
-    //
-    //	}
 
     /**
      * Quick-n-dirty directory formatting to support launching in windows, specifically from ant.

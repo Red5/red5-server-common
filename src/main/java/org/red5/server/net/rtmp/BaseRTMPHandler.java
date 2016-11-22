@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -207,7 +207,9 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
      * @return Hostname from that URL
      */
     protected String getHostname(String url) {
-        log.debug("url: {}", url);
+        if (log.isDebugEnabled()) {
+            log.debug("getHostname - url: {}", url);
+        }
         String[] parts = url.split("/");
         if (parts.length == 2) {
             return "";
@@ -242,7 +244,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
             }
             Set<IPendingServiceCallback> callbacks = pendingCall.getCallbacks();
             if (!callbacks.isEmpty()) {
-                HashSet<IPendingServiceCallback> tmp = new HashSet<IPendingServiceCallback>();
+                HashSet<IPendingServiceCallback> tmp = new HashSet<>();
                 tmp.addAll(callbacks);
                 for (IPendingServiceCallback callback : tmp) {
                     try {

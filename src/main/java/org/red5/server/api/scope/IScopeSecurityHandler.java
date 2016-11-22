@@ -16,19 +16,31 @@
  * limitations under the License.
  */
 
-package org.red5.server.stream.bandwidth;
+package org.red5.server.api.scope;
 
 import org.red5.server.api.IConnection;
 
 /**
+ * Provides an interface for scope security handling.
  * 
- * @author The Red5 Project
- * @author Dan Rossi
+ * @author Paul Gregoire (mondain@gmail.com)
  */
-public interface IBandwidthDetection {
+public interface IScopeSecurityHandler {
 
-    public void checkBandwidth(IConnection conn);
+    /**
+     * Determines whether or not a given connection is allowed.
+     * 
+     * @param conn connection
+     * @return true if allowed and false otherwise
+     */
+    boolean allowed(IConnection conn);
 
-    public void calculateClientBw(IConnection conn);
+    /**
+     * Determines whether or not a given scope is allowed.
+     * 
+     * @param conn connection
+     * @return true if allowed and false otherwise
+     */
+    boolean allowed(IScope conn);
 
 }

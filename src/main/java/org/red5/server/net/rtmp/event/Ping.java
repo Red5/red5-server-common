@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -289,7 +289,7 @@ public class Ping extends BaseEvent {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return "Ping: " + eventType + ", " + value2 + ", " + value3 + ", " + value4 + "\n" + debug;
+        return String.format("Ping: %d, %f, %d, %d", eventType, value2.doubleValue(), value3, value4);
     }
 
     /** {@inheritDoc} */

@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -27,11 +27,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.red5.server.api.event.IEventListener;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base abstract class for all RTMP events
  */
 public abstract class BaseEvent implements Constants, IRTMPEvent, Externalizable {
+
+    protected Logger log = LoggerFactory.getLogger(getClass());
 
     // XXX we need a better way to inject allocation debugging
     // (1) make it configurable in xml
@@ -199,9 +203,15 @@ public abstract class BaseEvent implements Constants, IRTMPEvent, Externalizable
         type = (Type) in.readObject();
         sourceType = in.readByte();
         timestamp = in.readInt();
+        if (log.isTraceEnabled()) {
+            log.trace("readExternal - type: {} sourceType: {} timestamp: {}", type, sourceType, timestamp);
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
+        if (log.isTraceEnabled()) {
+            log.trace("writeExternal - type: {} sourceType: {} timestamp: {}", type, sourceType, timestamp);
+        }
         out.writeObject(type);
         out.writeByte(sourceType);
         out.writeInt(timestamp);

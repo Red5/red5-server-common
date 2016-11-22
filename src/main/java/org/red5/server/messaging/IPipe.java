@@ -1,5 +1,5 @@
 /*
- * RED5 Open Source Flash Server - https://github.com/Red5/
+ * RED5 Open Source Media Server - https://github.com/Red5/
  * 
  * Copyright 2006-2016 by respective authors (see below). All rights reserved.
  * 
@@ -27,6 +27,7 @@ package org.red5.server.messaging;
  * @author Steven Gong (steven.gong@gmail.com)
  */
 public interface IPipe extends IMessageInput, IMessageOutput {
+
     /**
      * Add connection event listener to pipe
      * 
@@ -42,4 +43,5 @@ public interface IPipe extends IMessageInput, IMessageOutput {
      *            Connection event listener
      */
     void removePipeConnectionListener(IPipeConnectionListener listener);
+
 }
