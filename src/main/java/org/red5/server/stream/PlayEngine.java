@@ -92,9 +92,9 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     private static final Logger log = Red5LoggerFactory.getLogger(PlayEngine.class);
 
-    private final AtomicReference<IMessageInput> msgIn = new AtomicReference<>();
+    private final AtomicReference<IMessageInput> msgInReference = new AtomicReference<>();
 
-    private final AtomicReference<IMessageOutput> msgOut = new AtomicReference<>();
+    private final AtomicReference<IMessageOutput> msgOutReference = new AtomicReference<>();
 
     private final ISubscriberStream subscriberStream;
 
@@ -277,7 +277,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     }
 
     void setMessageOut(IMessageOutput msgOut) {
-        this.msgOut.set(msgOut);
+        this.msgOutReference.set(msgOut);
     }
 
     /**
@@ -292,7 +292,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 // allow start if uninitialized and change state to stopped
                 subscriberStream.setState(StreamState.STOPPED);
                 IMessageOutput out = consumerService.getConsumerOutput(subscriberStream);
-                if (msgOut.compareAndSet(null, out)) {
+                if (msgOutReference.compareAndSet(null, out)) {
                     out.subscribe(this, null);
                 } else if (log.isDebugEnabled()) {
                     log.debug("Message output was already set for stream: {}", subscriberStream);
@@ -340,10 +340,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         // cannot play if state is not stopped
         switch (subscriberStream.getState()) {
             case STOPPED:
-                in = msgIn.get();
+                in = msgInReference.get();
                 if (in != null) {
                     in.unsubscribe(this);
-                    msgIn.set(null);
+                    msgInReference.set(null);
                 }
                 break;
             default:
@@ -405,7 +405,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             case 0:
                 // get source input without create
                 in = providerService.getLiveProviderInput(thisScope, itemName, false);
-                if (msgIn.compareAndSet(null, in)) {
+                if (msgInReference.compareAndSet(null, in)) {
                     // drop all frames up to the next keyframe
                     videoFrameDropper.reset(IFrameDropper.SEND_KEYFRAMES_CHECK);
                     if (in instanceof IBroadcastScope) {
@@ -438,7 +438,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             case 2:
                 // get source input with create
                 in = providerService.getLiveProviderInput(thisScope, itemName, true);
-                if (msgIn.compareAndSet(null, in)) {
+                if (msgInReference.compareAndSet(null, in)) {
                     if (type == -1 && itemLength >= 0) {
                         if (log.isDebugEnabled()) {
                             log.debug("Creating wait job for {}", itemLength);
@@ -471,7 +471,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 break;
             case 1:
                 in = providerService.getVODProviderInput(thisScope, itemName);
-                if (msgIn.compareAndSet(null, in)) {
+                if (msgInReference.compareAndSet(null, in)) {
                     if (in.subscribe(this, null)) {
                         // execute the processes to get VOD playback setup
                         msg = playVOD(withReset, itemLength);
@@ -532,8 +532,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         subscriberStream.setState(StreamState.PLAYING);
         streamOffset = 0;
         streamStartTS.set(-1);
-        IMessageInput in = msgIn.get();
-        IMessageOutput out = msgOut.get();
+        IMessageInput in = msgInReference.get();
+        IMessageOutput out = msgOutReference.get();
         if (in != null && out != null) {
             // get the stream so that we can grab any metadata and decoder configs
             IBroadcastStream stream = (IBroadcastStream) ((IBroadcastScope) in).getClientBroadcastStream();
@@ -618,7 +618,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 }
             }
         } else {
-            throw new IOException(String.format("A message pipe is null - in: %b out: %b", (msgIn == null), (msgOut == null)));
+            throw new IOException(String.format("A message pipe is null - in: %b out: %b", (msgInReference == null), (msgOutReference == null)));
         }
     }
 
@@ -651,7 +651,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 streamOffset = (int) currentItem.getStart();
             }
         }
-        IMessageInput in = msgIn.get();
+        IMessageInput in = msgInReference.get();
         msg = in.pullMessage();
         if (msg instanceof RTMPMessage) {
             // Only send first video frame
@@ -682,13 +682,13 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      */
     private final void connectToProvider(String itemName) {
         log.debug("Attempting connection to {}", itemName);
-        IMessageInput in = msgIn.get();
+        IMessageInput in = msgInReference.get();
         if (in == null) {
             in = providerService.getLiveProviderInput(subscriberStream.getScope(), itemName, true);
-            msgIn.set(in);
+            msgInReference.set(in);
         }
         if (in != null) {
-            log.debug("Provider: {}", msgIn.get());
+            log.debug("Provider: {}", msgInReference.get());
             if (in.subscribe(this, null)) {
                 log.debug("Subscribed to {} provider", itemName);
                 // execute the processes to get Live playback setup
@@ -797,10 +797,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             case PLAYING:
             case PAUSED:
                 subscriberStream.setState(StreamState.STOPPED);
-                IMessageInput in = msgIn.get();
+                IMessageInput in = msgInReference.get();
                 if (in != null && !pullMode) {
                     in.unsubscribe(this);
-                    msgIn.set(null);
+                    msgInReference.set(null);
                 }
                 subscriberStream.onChange(StreamState.STOPPED, currentItem);
                 clearWaitJobs();
@@ -842,10 +842,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             log.debug("close");
         }
         if (!subscriberStream.getState().equals(StreamState.CLOSED)) {
-            IMessageInput in = msgIn.get();
+            IMessageInput in = msgInReference.get();
             if (in != null) {
                 in.unsubscribe(this);
-                msgIn.set(null);
+                msgInReference.set(null);
             }
             subscriberStream.setState(StreamState.CLOSED);
             clearWaitJobs();
@@ -853,7 +853,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             lastMessageTs = 0;
             // XXX is clear ping required?
             //sendClearPing();
-            InMemoryPushPushPipe out = (InMemoryPushPushPipe) msgOut.get();
+            InMemoryPushPushPipe out = (InMemoryPushPushPipe) msgOutReference.get();
             if (out != null) {
                 List<IConsumer> consumers = out.getConsumers();
                 // assume a list of 1 in most cases
@@ -865,7 +865,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                         out.unsubscribe(consumer);
                     }
                 }
-                msgOut.set(null);
+                msgOutReference.set(null);
             }
         } else {
             log.debug("Stream is already in closed state");
@@ -1001,7 +1001,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             String msgType = message.getMessageType();
             log.trace("doPushMessage: {}", msgType);
         }
-        IMessageOutput out = msgOut.get();
+        IMessageOutput out = msgOutReference.get();
         if (out != null) {
             try {
                 out.pushMessage(message);
@@ -1355,7 +1355,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         Map<String, Object> paramMap = new HashMap<String, Object>(1);
         paramMap.put("startTS", (int) item.getStart());
         oobCtrlMsg.setServiceParamMap(paramMap);
-        msgIn.get().sendOOBControlMessage(this, oobCtrlMsg);
+        msgInReference.get().sendOOBControlMessage(this, oobCtrlMsg);
     }
 
     /**
@@ -1374,7 +1374,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         Map<String, Object> paramMap = new HashMap<String, Object>(1);
         paramMap.put("position", position);
         oobCtrlMsg.setServiceParamMap(paramMap);
-        msgIn.get().sendOOBControlMessage(this, oobCtrlMsg);
+        msgInReference.get().sendOOBControlMessage(this, oobCtrlMsg);
         if (oobCtrlMsg.getResult() instanceof Integer) {
             return (Integer) oobCtrlMsg.getResult();
         } else {
@@ -1391,7 +1391,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         OOBControlMessage oobCtrlMsg = new OOBControlMessage();
         oobCtrlMsg.setTarget(IStreamTypeAwareProvider.KEY);
         oobCtrlMsg.setServiceName("hasVideo");
-        msgIn.get().sendOOBControlMessage(this, oobCtrlMsg);
+        msgInReference.get().sendOOBControlMessage(this, oobCtrlMsg);
         if (oobCtrlMsg.getResult() instanceof Boolean) {
             return (Boolean) oobCtrlMsg.getResult();
         } else {
@@ -1403,7 +1403,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     public void onOOBControlMessage(IMessageComponent source, IPipe pipe, OOBControlMessage oobCtrlMsg) {
         if ("ConnectionConsumer".equals(oobCtrlMsg.getTarget())) {
             if (source instanceof IProvider) {
-                IMessageOutput out = msgOut.get();
+                IMessageOutput out = msgOutReference.get();
                 if (out != null) {
                     out.sendOOBControlMessage((IProvider) source, oobCtrlMsg);
                 } else {
@@ -1454,6 +1454,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
         if (message instanceof RTMPMessage) {
+            IMessageInput msgIn = msgInReference.get();
+            
             RTMPMessage rtmpMessage = (RTMPMessage) message;
             IRTMPEvent body = rtmpMessage.getBody();
             if (body instanceof IStreamData) {
@@ -1478,6 +1480,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                 }
                                 // only check for frame dropping if the codec supports it
                                 long pendingVideos = pendingVideoMessages();
+                                
                                 if (!videoFrameDropper.canSendPacket(rtmpMessage, pendingVideos)) {
                                     // drop frame as it depends on other frames that were dropped before
                                     log.debug("Dropping packet because frame dropper says we cant send it");
@@ -1539,7 +1542,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         } else if (message instanceof ResetMessage) {
             sendReset();
         } else {
-            msgOut.get().pushMessage(message);
+            msgOutReference.get().pushMessage(message);
         }
     }
 
@@ -1549,7 +1552,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      * @return Number of pending video messages
      */
     private long pendingVideoMessages() {
-        IMessageOutput out = msgOut.get();
+        IMessageOutput out = msgOutReference.get();
         if (out != null) {
             OOBControlMessage pendingRequest = new OOBControlMessage();
             pendingRequest.setTarget("ConnectionConsumer");
@@ -1768,7 +1771,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     // we send a single snapshot on pause
                     if (sendCheckVideoCM()) {
                         IMessage msg = null;
-                        IMessageInput in = msgIn.get();
+                        IMessageInput in = msgInReference.get();
                         do {
                             try {
                                 msg = in.pullMessage();
@@ -1814,7 +1817,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 if (sendCheckVideoCM()) {
                     final long clientBuffer = subscriberStream.getClientBufferDuration();
                     IMessage msg = null;
-                    IMessageInput in = msgIn.get();
+                    IMessageInput in = msgInReference.get();
                     int msgSent = 0;
                     do {
                         try {
@@ -1898,7 +1901,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             }
                         } else {
                             IMessage msg = null;
-                            IMessageInput in = msgIn.get();
+                            IMessageInput in = msgInReference.get();
                             do {
                                 msg = in.pullMessage();
                                 if (msg != null) {
