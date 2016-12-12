@@ -1474,7 +1474,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     videoFrameDropper.dropPacket(rtmpMessage);
                     return;
                 }
+
                 if (body instanceof VideoData && body.getSourceType() == Constants.SOURCE_TYPE_LIVE) {
+                    // We only want to drop packets from a live stream. VOD streams we let it buffer.
+                    // We don't want a user watching a movie to see a choppy video due to low bandwidth.
                     if (msgIn instanceof IBroadcastScope) {
                         IBroadcastStream stream = (IBroadcastStream) ((IBroadcastScope) msgIn).getClientBroadcastStream();
                         if (stream != null && stream.getCodecInfo() != null) {
