@@ -227,6 +227,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      */
     private ConcurrentLinkedQueue<Runnable> pendingOperations = new ConcurrentLinkedQueue<Runnable>();
 
+    // Keep count of dropped packets so we can log every so often.
+    private long droppedPacketsCount = 0;
+    private long droppedPacketsCountLogInterval = 200;
+
     /**
      * Constructs a new PlayEngine.
      */
@@ -1453,6 +1457,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
+        String sessionId = subscriberStream.getConnection().getSessionId();
+
         if (message instanceof RTMPMessage) {
             IMessageInput msgIn = msgInReference.get();
             
@@ -1461,11 +1467,17 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             if (body instanceof IStreamData) {
                 // the subscriber paused 
                 if (subscriberStream.getState() == StreamState.PAUSED) {
-                    log.debug("Dropping packet because we are paused");
+                    if (log.isInfoEnabled()) {
+                        log.info("Dropping packet because we are paused. sessionId={} stream={} count={}",
+                                sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
+                    }
                     videoFrameDropper.dropPacket(rtmpMessage);
                     return;
                 }
-                if (body instanceof VideoData) {
+
+                if (body instanceof VideoData && body.getSourceType() == Constants.SOURCE_TYPE_LIVE) {
+                    // We only want to drop packets from a live stream. VOD streams we let it buffer.
+                    // We don't want a user watching a movie to see a choppy video due to low bandwidth.
                     if (msgIn instanceof IBroadcastScope) {
                         IBroadcastStream stream = (IBroadcastStream) ((IBroadcastScope) msgIn).getClientBroadcastStream();
                         if (stream != null && stream.getCodecInfo() != null) {
@@ -1473,17 +1485,40 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             // dont try to drop frames if video codec is null
                             if (videoCodec != null && videoCodec.canDropFrames()) {
                                 if (!receiveVideo) {
-                                    // client disabled video or the app doesn't have enough bandwidth allowed for this stream
-                                    log.debug("Dropping packet because we cant receive video or token acquire failed");
                                     videoFrameDropper.dropPacket(rtmpMessage);
+                                    droppedPacketsCount++;
+                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                        // client disabled video or the app doesn't have enough bandwidth allowed for this stream
+                                        log.info("Drop packet. Failed to acquire token or no video. sessionId={} stream={} count={}",
+                                                sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
+                                    }
                                     return;
                                 }
+
+                                // Implement some sort of back-pressure on video streams. When the client is on a congested
+                                // connection, Red5 cannot send packets fast enough. Mina puts these packets into an
+                                // unbounded queue. If we generate video packets fast enough, the queue would get large
+                                // which may trigger an OutOfMemory exception. To mitigate this, we check the size of
+                                // pending video messages and drop video packets until the queue is below the
+                                // threshold.
+
                                 // only check for frame dropping if the codec supports it
                                 long pendingVideos = pendingVideoMessages();
-                                
+
+                                if (log.isTraceEnabled()) {
+                                    log.trace("Pending messages. sessionId={} pending={} threshold={} sequential={} stream={}, count={}",
+                                            new Object[] { sessionId, pendingVideos, maxPendingVideoFramesThreshold,
+                                                    numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
+                                                    droppedPacketsCount});
+                                }
+
                                 if (!videoFrameDropper.canSendPacket(rtmpMessage, pendingVideos)) {
                                     // drop frame as it depends on other frames that were dropped before
-                                    log.debug("Dropping packet because frame dropper says we cant send it");
+                                    droppedPacketsCount++;
+                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                        log.info("Frame dropper says to drop packet. sessionId={} stream={} count={}",
+                                                sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
+                                    }
                                     return;
                                 }
                                 // increment the number of times we had pending video frames sequentially
@@ -1494,7 +1529,14 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                     numSequentialPendingVideoFrames = 0;
                                 }
                                 if (pendingVideos > maxPendingVideoFramesThreshold || numSequentialPendingVideoFrames > maxSequentialPendingVideoFrames) {
-                                    log.debug("Pending: {} Threshold: {} Sequential: {}", new Object[] { pendingVideos, maxPendingVideoFramesThreshold, numSequentialPendingVideoFrames });
+                                    droppedPacketsCount++;
+                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                        log.info("Drop packet. Pending above threshold. sessionId={} pending={} threshold={} sequential={} stream={} count={}",
+                                                new Object[]{sessionId, pendingVideos, maxPendingVideoFramesThreshold,
+                                                        numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
+                                                        droppedPacketsCount});
+                                    }
+
                                     // drop because the client has insufficient bandwidth
                                     long now = System.currentTimeMillis();
                                     if (bufferCheckInterval > 0 && now >= nextCheckBufferUnderrun) {
