@@ -23,11 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
@@ -229,7 +229,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     // Keep count of dropped packets so we can log every so often.
     private long droppedPacketsCount = 0;
-    private long droppedPacketsCountLogInterval = 200;
+    private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+    private long droppedPacketsCountLogInterval = 1 * 60 * 1000L; // 5 minutes
 
     /**
      * Constructs a new PlayEngine.
@@ -1029,7 +1030,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /**
      * Send RTMP message
      * 
-     * @param message
+     * @param messageIn
      *            RTMP message
      */
     private void sendMessage(RTMPMessage messageIn) {
@@ -1455,6 +1456,16 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         }
     }
 
+    private boolean shouldLogPacketDrop() {
+        long now = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+        if (now - droppedPacketsCountLastLogTimestamp > droppedPacketsCountLogInterval) {
+            droppedPacketsCountLastLogTimestamp = now;
+            return true;
+        }
+
+        return false;
+    }
+
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
         String sessionId = subscriberStream.getConnection().getSessionId();
@@ -1465,9 +1476,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             RTMPMessage rtmpMessage = (RTMPMessage) message;
             IRTMPEvent body = rtmpMessage.getBody();
             if (body instanceof IStreamData) {
+
+
                 // the subscriber paused 
                 if (subscriberStream.getState() == StreamState.PAUSED) {
-                    if (log.isInfoEnabled()) {
+                    if (log.isInfoEnabled() && shouldLogPacketDrop()) {
                         log.info("Dropping packet because we are paused. sessionId={} stream={} count={}",
                                 sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
                     }
@@ -1487,7 +1500,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                 if (!receiveVideo) {
                                     videoFrameDropper.dropPacket(rtmpMessage);
                                     droppedPacketsCount++;
-                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                    if (log.isInfoEnabled() && shouldLogPacketDrop()) {
                                         // client disabled video or the app doesn't have enough bandwidth allowed for this stream
                                         log.info("Drop packet. Failed to acquire token or no video. sessionId={} stream={} count={}",
                                                 sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
@@ -1515,7 +1528,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                 if (!videoFrameDropper.canSendPacket(rtmpMessage, pendingVideos)) {
                                     // drop frame as it depends on other frames that were dropped before
                                     droppedPacketsCount++;
-                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                    if (log.isInfoEnabled() && shouldLogPacketDrop()) {
                                         log.info("Frame dropper says to drop packet. sessionId={} stream={} count={}",
                                                 sessionId, subscriberStream.getBroadcastStreamPublishName(), droppedPacketsCount);
                                     }
@@ -1530,7 +1543,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                 }
                                 if (pendingVideos > maxPendingVideoFramesThreshold || numSequentialPendingVideoFrames > maxSequentialPendingVideoFrames) {
                                     droppedPacketsCount++;
-                                    if (log.isInfoEnabled() && droppedPacketsCount % droppedPacketsCountLogInterval == 0) {
+                                    if (log.isInfoEnabled() && shouldLogPacketDrop()) {
                                         log.info("Drop packet. Pending above threshold. sessionId={} pending={} threshold={} sequential={} stream={} count={}",
                                                 new Object[]{sessionId, pendingVideos, maxPendingVideoFramesThreshold,
                                                         numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
