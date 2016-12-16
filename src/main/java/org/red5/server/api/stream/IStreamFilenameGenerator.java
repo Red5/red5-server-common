@@ -34,7 +34,7 @@ public interface IStreamFilenameGenerator extends IScopeService {
 
     /** Possible filename generation types. */
     public static enum GenerationType {
-        PLAYBACK, RECORD
+        PLAYBACK, RECORD, APPEND
     };
 
     /**
