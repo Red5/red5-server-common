@@ -83,6 +83,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     // close when header errors occur
     protected boolean closeOnHeaderError;
 
+    // maximum size for an RTMP packet in Mb
+    protected static int MAX_PACKET_SIZE = 3145728; // 3MB
+
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
     }
@@ -251,6 +254,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             // close the channel on which the issue occurred, until we find a way to exclude the current data
             conn.closeChannel(channelId);
             return null;
+        }
+        // ensure that we dont exceed maximum packet size
+        int size = header.getSize();
+        if (size > MAX_PACKET_SIZE) {
+            // Reject packets that are too big, to protect against OOM when decoding has failed in some way
+            log.warn("Packet size exceeded. size={}, max={}, connId={}", header.getSize(), MAX_PACKET_SIZE, conn.getSessionId());
+            // send a NetStream.Failed message
+            StreamService.sendNetStreamStatus(conn, StatusCodes.NS_FAILED, "Data exceeded maximum allowed by " + (size - MAX_PACKET_SIZE) + " bytes", "no-name", Status.ERROR, conn.getStreamIdForChannelId(channelId));
+            throw new ProtocolException(String.format("Packet size exceeded. size: %s", header.getSize()));
         }
         // get the size of our chunks
         int readChunkSize = rtmp.getReadChunkSize();
@@ -1099,6 +1111,18 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             }
         }
         return params;
+    }
+
+    /**
+     * Set the maximum allowed packet size. Default is 3 Mb.
+     * 
+     * @param maxPacketSize
+     */
+    public static void setMaxPacketSize(int maxPacketSize) {
+        MAX_PACKET_SIZE = maxPacketSize;
+        if (log.isDebugEnabled()) {
+            log.debug("Max packet size: {}", MAX_PACKET_SIZE);
+        }
     }
 
 }
