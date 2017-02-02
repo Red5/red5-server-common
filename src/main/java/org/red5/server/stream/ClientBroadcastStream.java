@@ -77,6 +77,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
+import com.antstreaming.muxer.HLSMuxer;
+import com.antstreaming.muxer.Mp4Muxer;
+import com.antstreaming.muxer.MuxAdaptor;
+
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is, broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record broadcasted stream.
  *
@@ -175,6 +179,21 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      * Whether or not to register with JMX.
      */
     private boolean registerJMX = true;
+    
+    
+    /**
+     * Whether or not automatically record incoming stream as mp4
+     */
+    private boolean automaticMp4Recording;
+    
+    
+    /**
+     * Whether or not automatically record incoming stream as mp4
+     */
+    private boolean automaticHlsRecording;
+
+	private WeakReference<com.antstreaming.muxer.MuxAdaptor> muxAdaptor;
+
 
     /**
      * Check and send notification if necessary
@@ -207,6 +226,11 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             // inform the listener to finish and close
             recordingListener.get().stop();
         }
+        
+        if (muxAdaptor != null) {
+        	muxAdaptor.get().stop();
+        }
+        
         sendPublishStopNotify();
         // TODO: can we send the client something to make sure he stops sending data?
         if (connMsgOut != null) {
@@ -217,6 +241,13 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         if (recordingListener != null) {
             recordingListener.clear();
         }
+        
+        if (muxAdaptor != null) {
+        	muxAdaptor.clear();
+        	muxAdaptor = null;
+        }
+
+        
         // clear listeners
         if (!listeners.isEmpty()) {
             listeners.clear();
@@ -696,6 +727,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             log.debug("Recording listener already exists for stream: {} auto record enabled: {}", name, automaticRecording);
         }
     }
+    
 
     /**
      * Sends publish start notifications
@@ -857,6 +889,36 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                 log.warn("Start of automatic recording failed", e);
             }
         }
+        
+        if (automaticMp4Recording || automaticHlsRecording)  {
+        	MuxAdaptor localMuxAdaptor = new MuxAdaptor();
+        	
+        	if (automaticMp4Recording) {
+        		localMuxAdaptor.addMuxer(new Mp4Muxer());
+        	}
+        	
+        	if (automaticHlsRecording) {
+        		localMuxAdaptor.addMuxer(new HLSMuxer());
+            }
+        	 IStreamCapableConnection conn = getConnection();
+        	 try {
+        		 if (conn == null) {
+                     throw new IOException("Stream is no longer connected");
+                 }
+            	localMuxAdaptor.init(conn, publishedName, false);
+            	addStreamListener(localMuxAdaptor);
+            	this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
+            	localMuxAdaptor.start();
+        	 }
+        	 catch (Exception e) {
+        		 e.printStackTrace();
+        	 }
+             
+        }
+       
+        
+    
+        
     }
 
     /** {@inheritDoc} */
@@ -881,6 +943,14 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             // clear and null-out the thread local
             recordingListener.clear();
             recordingListener = null;
+        }
+        
+        if (muxAdaptor != null) {
+        	MuxAdaptor localMuxAdaptor = muxAdaptor.get();
+        	removeStreamListener(localMuxAdaptor);
+        	localMuxAdaptor.stop();
+        	muxAdaptor.clear();
+        	muxAdaptor = null;
         }
     }
 
@@ -944,5 +1014,13 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             }
         }
     }
+
+	public void setAutomaticMp4Recording(boolean automaticMp4Recording) {
+		this.automaticMp4Recording = automaticMp4Recording;
+	}
+
+	public void setAutomaticHlsRecording(boolean automaticHlsRecording) {
+		this.automaticHlsRecording = automaticHlsRecording;
+	}
 
 }
