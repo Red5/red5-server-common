@@ -21,6 +21,7 @@ package org.red5.server.stream;
 import java.util.concurrent.Semaphore;
 
 import org.red5.codec.IStreamCodecInfo;
+import org.red5.codec.StreamCodecInfo;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.IScopeHandler;
 import org.red5.server.api.stream.IStream;
@@ -48,7 +49,7 @@ public abstract class AbstractStream implements IStream {
     /**
      * Stream audio and video codec information
      */
-    private IStreamCodecInfo codecInfo;
+    private IStreamCodecInfo codecInfo = new StreamCodecInfo();
 
     /**
      * Stores the streams metadata

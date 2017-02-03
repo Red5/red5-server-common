@@ -78,7 +78,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 /**
- * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is, broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record broadcasted stream.
+ * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
+ * broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record
+ * broadcasted stream.
  *
  * Note that recorded streams are recorded as FLV files.
  *
@@ -835,7 +837,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         IConsumerService consumerManager = (IConsumerService) getScope().getContext().getBean(IConsumerService.KEY);
         connMsgOut = consumerManager.getConsumerOutput(this);
         if (connMsgOut != null && connMsgOut.subscribe(this, null)) {
-            setCodecInfo(new StreamCodecInfo());
             creationTime = System.currentTimeMillis();
             closed = false;
         } else {
