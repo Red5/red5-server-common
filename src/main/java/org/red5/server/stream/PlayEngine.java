@@ -1569,7 +1569,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                         rtmpMessage = RTMPMessage.build(interframe);
                                     } else {
                                         // it means that new keyframe was received and we should send current frames instead of buffered
-                                        bufferedInterframeIdx = 0;
+                                        bufferedInterframeIdx = -1;
                                     }
                                 }
                             }
