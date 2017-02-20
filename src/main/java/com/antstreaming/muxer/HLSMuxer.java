@@ -63,6 +63,7 @@ public class HLSMuxer extends AbstractMuxer  {
 
 	private AVBitStreamFilter h264bsfc;
 	private AVBSFContext bsfContext;
+	private long lastDTS = -1; 
 
 
 	protected static Logger logger = LoggerFactory.getLogger(HLSMuxer.class);
@@ -188,6 +189,14 @@ public class HLSMuxer extends AbstractMuxer  {
 				pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 				pkt.pos(-1);
+				
+				if (lastDTS >= pkt.dts()) {
+					pkt.dts(lastDTS + 1);
+				}
+				if (pkt.dts() > pkt.pts()) {
+					pkt.pts(pkt.dts());
+				}
+				lastDTS = pkt.dts();
 
 				ret = av_write_frame(outputFormatContext, pkt);
 				if (ret < 0) {
@@ -200,6 +209,14 @@ public class HLSMuxer extends AbstractMuxer  {
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 			pkt.pos(-1);
+			
+			if (lastDTS >= pkt.dts()) {
+				pkt.dts(lastDTS + 1);
+			}
+			if (pkt.dts() > pkt.pts()) {
+				pkt.pts(pkt.dts());
+			}
+			lastDTS = pkt.dts();
 
 			ret = av_write_frame(outputFormatContext, pkt);
 			if (ret < 0) {

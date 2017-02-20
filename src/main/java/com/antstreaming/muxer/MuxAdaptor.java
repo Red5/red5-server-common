@@ -24,6 +24,7 @@ import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -49,6 +50,7 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.event.CachedEvent;
 import org.red5.server.scheduling.QuartzSchedulingService;
+import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
 import org.slf4j.Logger;
@@ -76,8 +78,10 @@ public class MuxAdaptor implements IRecordingListener {
 	private ReadCallback readCallback;
 	private PacketFeederJob packetFeederJob;
 	private boolean isRecording = false;
+	private ClientBroadcastStream broadcastStream;
 
-	public MuxAdaptor() {
+	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+		this.broadcastStream = clientBroadcastStream;
 		
 	}
 	
@@ -297,6 +301,8 @@ public class MuxAdaptor implements IRecordingListener {
 					packetFeederJobName = scheduler.addScheduledJob(100, packetFeederJob);
 				}
 				else {
+					broadcastStream.removeStreamListener(MuxAdaptor.this);
+					avformat_close_input(inputFormatContext);
 					logger.warn("input format context cannot be created");
 				}
 			}
@@ -331,10 +337,17 @@ public class MuxAdaptor implements IRecordingListener {
 			return false;
 		}
 		
-		for(AbstractMuxer muxer : muxerList) {
+		Iterator<AbstractMuxer> iterator = muxerList.iterator();
+		while (iterator.hasNext()) {
+			AbstractMuxer muxer = (AbstractMuxer) iterator.next();
 			if (!muxer.prepare(inputFormatContext)) {
+				iterator.remove();
 				logger.warn("muxer prepare returns false " + muxer.getFormat());
 			}
+		}
+
+		if (muxerList.isEmpty()) {
+			return false;
 		}
 		return true;
 	}

@@ -69,6 +69,7 @@ import org.springframework.util.concurrent.SuccessCallback;
 public class Mp4Muxer extends AbstractMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
+	private long lastDTS = -1;
 
 
 	public Mp4Muxer() {
@@ -129,6 +130,8 @@ public class Mp4Muxer extends AbstractMuxer {
 		ret = avformat_write_header(outputFormatContext, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
+
+			clearResource();
 			return false;
 		}
 
@@ -141,12 +144,18 @@ public class Mp4Muxer extends AbstractMuxer {
 
 		av_write_trailer(outputFormatContext);
 
+		clearResource();
+		isRecording = false;	
+	}
+
+
+	private void clearResource() {
 		/* close output */
 		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
 			avio_closep(outputFormatContext.pb());
 
 		avformat_free_context(outputFormatContext);
-		isRecording = false;	
+		outputFormatContext = null;
 	}
 
 	@Override
@@ -159,7 +168,15 @@ public class Mp4Muxer extends AbstractMuxer {
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 		pkt.pos(-1);
+		
+		if (lastDTS >= pkt.dts()) {
+			pkt.dts(lastDTS + 1);
+		}
+		if (pkt.dts() > pkt.pts()) {
+			pkt.pts(pkt.dts());
+		}
 
+		lastDTS = pkt.dts();
 		int ret = av_write_frame(outputFormatContext, pkt);
 		if (ret < 0) {
 			logger.info("cannot write frame to muxer");

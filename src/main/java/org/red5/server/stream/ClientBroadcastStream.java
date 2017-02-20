@@ -891,7 +891,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         }
         
         if (automaticMp4Recording || automaticHlsRecording)  {
-        	MuxAdaptor localMuxAdaptor = new MuxAdaptor();
+        	MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
         	
         	if (automaticMp4Recording) {
         		localMuxAdaptor.addMuxer(new Mp4Muxer());
