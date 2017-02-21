@@ -19,6 +19,7 @@
 package org.red5.server.stream;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.StreamCodecInfo;
@@ -54,7 +55,7 @@ public abstract class AbstractStream implements IStream {
     /**
      * Stores the streams metadata
      */
-    protected Notify metaData;
+    private AtomicReference<Notify> metaData = new AtomicReference<>();
 
     /**
      * Stream scope
@@ -90,12 +91,28 @@ public abstract class AbstractStream implements IStream {
     }
 
     /**
-     * Returns the metadata for the associated stream, if it exists.
+     * Returns a copy of the metadata for the associated stream, if it exists.
      * 
      * @return stream meta data
      */
     public Notify getMetaData() {
-        return metaData;
+        Notify md = metaData.get();
+        if (md != null) {
+            try {
+                return md.duplicate();
+            } catch (Exception e) {
+            }
+        }
+        return md;
+    }
+
+    /**
+     * Set the metadata.
+     * 
+     * @param metaData stream meta data
+     */
+    public void setMetaData(Notify metaData) {
+        this.metaData.set(metaData);
     }
 
     /**

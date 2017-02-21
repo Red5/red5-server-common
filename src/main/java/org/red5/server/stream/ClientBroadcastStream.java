@@ -318,12 +318,15 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         return;
                     } else if (rtmpEvent instanceof Notify) {
                         Notify notifyEvent = (Notify) rtmpEvent;
-                        log.debug("Notify action: {}", notifyEvent.getAction());
-                        if (notifyEvent.getAction() != null && notifyEvent.getAction().equals("onMetaData")) {
+                        String action = notifyEvent.getAction();
+                        if (log.isDebugEnabled()) {
+                            log.debug("Notify action: {}", action);
+                        }
+                        if ("onMetaData".equals(action)) {
                             // store the metadata
                             try {
                                 log.debug("Setting metadata");
-                                metaData = notifyEvent.duplicate();
+                                setMetaData(notifyEvent.duplicate());
                             } catch (Exception e) {
                                 log.warn("Metadata could not be duplicated for this stream", e);
                             }
