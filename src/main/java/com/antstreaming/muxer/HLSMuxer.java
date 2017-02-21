@@ -95,48 +95,50 @@ public class HLSMuxer extends AbstractMuxer  {
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
-			AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
+			if (isCodecSupported(in_stream.codecpar())) {
+				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
 
-			if (in_stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
-				ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
-				if (ret < 0) {
-					logger.info("cannot copy input codec parameters");
-					return false;
+				if (in_stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+					ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
+					if (ret < 0) {
+						logger.info("cannot copy input codec parameters");
+						return false;
+					}
+					bsfContext.time_base_in(in_stream.time_base());
+
+					ret = av_bsf_init(bsfContext);
+					if (ret < 0) {
+						logger.info("cannot init bit stream filter context");
+						return false;
+					}
+
+					ret = avcodec_parameters_copy(out_stream.codecpar(), bsfContext.par_out());
+					if (ret < 0) {
+						logger.info("cannot copy codec parameters to output");
+						return false;
+					}
+
+					out_stream.time_base(bsfContext.time_base_out());
 				}
-				bsfContext.time_base_in(in_stream.time_base());
+				else {
+					AVCodecParameters avCodecParameters = new AVCodecParameters();
 
-				ret = av_bsf_init(bsfContext);
-				if (ret < 0) {
-					logger.info("cannot init bit stream filter context");
-					return false;
+					ret = avcodec_parameters_from_context(avCodecParameters,  in_stream.codec());
+					if (ret < 0) {
+						logger.info("Cannot get codec parameters\n");
+						return false;
+					}
+					ret  = avcodec_parameters_to_context(out_stream.codec(), avCodecParameters);
+					if (ret < 0) {
+						logger.info("Cannot set codec parameters\n");
+						return false;
+					}
 				}
+				out_stream.codec().codec_tag(0);
 
-				ret = avcodec_parameters_copy(out_stream.codecpar(), bsfContext.par_out());
-				if (ret < 0) {
-					logger.info("cannot copy codec parameters to output");
-					return false;
-				}
-
-				out_stream.time_base(bsfContext.time_base_out());
+				if ((outputFormatContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
+					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
-			else {
-				AVCodecParameters avCodecParameters = new AVCodecParameters();
-
-				ret = avcodec_parameters_from_context(avCodecParameters,  in_stream.codec());
-				if (ret < 0) {
-					logger.info("Cannot get codec parameters\n");
-					return false;
-				}
-				ret  = avcodec_parameters_to_context(out_stream.codec(), avCodecParameters);
-				if (ret < 0) {
-					logger.info("Cannot set codec parameters\n");
-					return false;
-				}
-			}
-			out_stream.codec().codec_tag(0);
-
-			if ((outputFormatContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 		}
 
 		AVIOContext pb = new AVIOContext(null);
@@ -166,12 +168,26 @@ public class HLSMuxer extends AbstractMuxer  {
 		return true;
 	}
 
+	private boolean isCodecSupported(AVCodecParameters codecpar) {
+		if (codecpar.codec_id() == AV_CODEC_ID_H264 || 
+				codecpar.codec_id() == AV_CODEC_ID_AAC) {
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public void writePacket(AVPacket pkt, AVStream inStream) 
 	{
 		int packetIndex = pkt.stream_index();
-		AVStream out_stream = outputFormatContext.streams(packetIndex);
 		
+		//TODO: find a better frame to check if stream exists in outputFormatContext
+		if (packetIndex >= outputFormatContext.nb_streams())  {
+			return;
+		}
+		
+		AVStream out_stream = outputFormatContext.streams(packetIndex);
+
 		int ret;
 
 		if (inStream.codec().codec_type() ==  AVMEDIA_TYPE_VIDEO) 
@@ -189,7 +205,7 @@ public class HLSMuxer extends AbstractMuxer  {
 				pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 				pkt.pos(-1);
-				
+
 				if (lastDTS >= pkt.dts()) {
 					pkt.dts(lastDTS + 1);
 				}
@@ -209,7 +225,7 @@ public class HLSMuxer extends AbstractMuxer  {
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 			pkt.pos(-1);
-			
+
 			if (lastDTS >= pkt.dts()) {
 				pkt.dts(lastDTS + 1);
 			}
