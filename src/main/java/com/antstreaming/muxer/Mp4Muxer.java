@@ -1,9 +1,6 @@
 package com.antstreaming.muxer;
 
 import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_to_context;
 import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avutil.*;
 
@@ -14,7 +11,9 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -70,6 +69,7 @@ public class Mp4Muxer extends AbstractMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private long lastDTS = -1;
+	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 
 	public Mp4Muxer() {
@@ -134,26 +134,25 @@ public class Mp4Muxer extends AbstractMuxer {
 			logger.info("Could not create output context\n");
 			return false;
 		}
-
+		
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
 			if (isCodecSupported(in_stream.codecpar())) {
+				
+				registeredStreamIndexList.add(i);
+				
+				
 				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
-				AVCodecParameters avCodecParameters = new AVCodecParameters();
 
-				ret = avcodec_parameters_from_context(avCodecParameters,  in_stream.codec());
+				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 				if (ret < 0) {
 					logger.info("Cannot get codec parameters\n");
 					return false;
 				}
-				ret  = avcodec_parameters_to_context(out_stream.codec(), avCodecParameters);
-				if (ret < 0) {
-					logger.info("Cannot set codec parameters\n");
-					return false;
-				}
+				
 				out_stream.codec().codec_tag(0);
-
+				
 				if ((outputFormatContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
@@ -214,30 +213,31 @@ public class Mp4Muxer extends AbstractMuxer {
 	{
 		int packetIndex = pkt.stream_index();
 		//TODO: find a better frame to check if stream exists in outputFormatContext
-		if (packetIndex < outputFormatContext.nb_streams()) 
-		{
-			AVStream out_stream = outputFormatContext.streams(packetIndex);
-			
-
-			pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
-			pkt.pos(-1);
-
-			if (lastDTS >= pkt.dts()) {
-				pkt.dts(lastDTS + 1);
-			}
-			if (pkt.dts() > pkt.pts()) {
-				pkt.pts(pkt.dts());
-			}
-
-			lastDTS = pkt.dts();
-			int ret = av_write_frame(outputFormatContext, pkt);
-			if (ret < 0) {
-				logger.info("cannot write frame to muxer");
-			}
-
+		
+		if (!registeredStreamIndexList.contains(packetIndex)) {
+			return;
 		}
+		
+		AVStream out_stream = outputFormatContext.streams(packetIndex);
+
+		pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
+		pkt.pos(-1);
+
+		if (lastDTS >= pkt.dts()) {
+			pkt.dts(lastDTS + 1);
+		}
+		if (pkt.dts() > pkt.pts()) {
+			pkt.pts(pkt.dts());
+		}
+
+		lastDTS = pkt.dts();
+		int ret = av_write_frame(outputFormatContext, pkt);
+		if (ret < 0) {
+			logger.info("cannot write frame to muxer");
+		}
+
 	}
 
 

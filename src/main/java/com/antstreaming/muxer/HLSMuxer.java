@@ -31,6 +31,8 @@ import static org.bytedeco.javacpp.avformat.avio_alloc_context;
 import static org.bytedeco.javacpp.avformat.avio_closep;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -65,6 +67,7 @@ public class HLSMuxer extends AbstractMuxer  {
 	private AVBSFContext bsfContext;
 	private long lastDTS = -1; 
 
+	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 	protected static Logger logger = LoggerFactory.getLogger(HLSMuxer.class);
 
@@ -96,6 +99,7 @@ public class HLSMuxer extends AbstractMuxer  {
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
 			if (isCodecSupported(in_stream.codecpar())) {
+				registeredStreamIndexList.add(i);
 				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
 
 				if (in_stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
@@ -121,18 +125,13 @@ public class HLSMuxer extends AbstractMuxer  {
 					out_stream.time_base(bsfContext.time_base_out());
 				}
 				else {
-					AVCodecParameters avCodecParameters = new AVCodecParameters();
 
-					ret = avcodec_parameters_from_context(avCodecParameters,  in_stream.codec());
+					ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 					if (ret < 0) {
 						logger.info("Cannot get codec parameters\n");
 						return false;
 					}
-					ret  = avcodec_parameters_to_context(out_stream.codec(), avCodecParameters);
-					if (ret < 0) {
-						logger.info("Cannot set codec parameters\n");
-						return false;
-					}
+
 				}
 				out_stream.codec().codec_tag(0);
 
@@ -182,7 +181,7 @@ public class HLSMuxer extends AbstractMuxer  {
 		int packetIndex = pkt.stream_index();
 		
 		//TODO: find a better frame to check if stream exists in outputFormatContext
-		if (packetIndex >= outputFormatContext.nb_streams())  {
+		if (!registeredStreamIndexList.contains(packetIndex))  {
 			return;
 		}
 		
