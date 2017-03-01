@@ -82,7 +82,9 @@ import com.antstreaming.muxer.Mp4Muxer;
 import com.antstreaming.muxer.MuxAdaptor;
 
 /**
- * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is, broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record broadcasted stream.
+ * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
+ * broadcasted stream has broadcast mode. It can be either "live" or "record" and latter causes server-side application to record
+ * broadcasted stream.
  *
  * Note that recorded streams are recorded as FLV files.
  *
@@ -347,12 +349,15 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         return;
                     } else if (rtmpEvent instanceof Notify) {
                         Notify notifyEvent = (Notify) rtmpEvent;
-                        log.debug("Notify action: {}", notifyEvent.getAction());
-                        if (notifyEvent.getAction() != null && notifyEvent.getAction().equals("onMetaData")) {
+                        String action = notifyEvent.getAction();
+                        if (log.isDebugEnabled()) {
+                            log.debug("Notify action: {}", action);
+                        }
+                        if ("onMetaData".equals(action)) {
                             // store the metadata
                             try {
                                 log.debug("Setting metadata");
-                                metaData = notifyEvent.duplicate();
+                                setMetaData(notifyEvent.duplicate());
                             } catch (Exception e) {
                                 log.warn("Metadata could not be duplicated for this stream", e);
                             }
@@ -867,7 +872,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         IConsumerService consumerManager = (IConsumerService) getScope().getContext().getBean(IConsumerService.KEY);
         connMsgOut = consumerManager.getConsumerOutput(this);
         if (connMsgOut != null && connMsgOut.subscribe(this, null)) {
-            setCodecInfo(new StreamCodecInfo());
             creationTime = System.currentTimeMillis();
             closed = false;
         } else {

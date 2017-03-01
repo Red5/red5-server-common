@@ -35,9 +35,9 @@ public class ReceivedMessageTaskQueue {
     private final static Logger log = LoggerFactory.getLogger(ReceivedMessageTaskQueue.class);
 
     /**
-     * Channel id.
+     * Stream id.
      */
-    private final int channelId;
+    private final int streamId;
 
     /**
      * Task queue.
@@ -49,8 +49,8 @@ public class ReceivedMessageTaskQueue {
      */
     private final IReceivedMessageTaskQueueListener listener;
 
-    public ReceivedMessageTaskQueue(int channelId, IReceivedMessageTaskQueueListener listener) {
-        this.channelId = channelId;
+    public ReceivedMessageTaskQueue(int streamId, IReceivedMessageTaskQueueListener listener) {
+        this.streamId = streamId;
         this.listener = listener;
     }
 
@@ -111,8 +111,8 @@ public class ReceivedMessageTaskQueue {
         tasks.clear();
     }
 
-    public int getChannelId() {
-        return channelId;
+    public int getStreamId() {
+        return streamId;
     }
 
     /**
