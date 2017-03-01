@@ -144,7 +144,7 @@ public class HLSMuxer extends AbstractMuxer  {
 
 		ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
-			System.out.println("Could not open output file");
+			logger.warn("Could not open output file");
 			return false;
 		}
 		outputFormatContext.pb(pb);

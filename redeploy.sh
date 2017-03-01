@@ -6,7 +6,7 @@ RED5_DIR=/Users/mekya/softwares/red5-server
 
 RED5_LIB_DIR=$RED5_DIR/lib
 
-RED5_JAR=/Users/mekya/git/red5-server-common/target/red5-server-common-1.0.8-RELEASE.jar
+RED5_JAR=/Users/mekya/git/red5-server-common/target/red5-server-common-1.0.9-M2.jar
 
 SRC_CONF_DIR=/Users/mekya/git/red5-server/src/main/server/conf/
 

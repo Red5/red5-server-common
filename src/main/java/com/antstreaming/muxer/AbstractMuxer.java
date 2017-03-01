@@ -110,6 +110,11 @@ public abstract class AbstractMuxer {
 
 	public void init(IScope scope, String name) {
 		file = getRecordFile(scope, name, extension);
+		
+		File parentFile = file.getParentFile();
+		if (!parentFile.exists()) {
+			parentFile.mkdir();
+		}
 	}
 
 }
