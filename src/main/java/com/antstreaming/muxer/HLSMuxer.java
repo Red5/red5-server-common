@@ -76,8 +76,8 @@ public class HLSMuxer extends AbstractMuxer  {
 	public HLSMuxer() {
 		extension = ".m3u8";
 		format = "hls";
-		options.put("hls_wrap", "40");
-
+		options.put("hls_list_size", "40");
+		options.put("hls_time", "2");
 	}
 
 	public boolean prepare(AVFormatContext inputFormatContext) {
@@ -180,7 +180,6 @@ public class HLSMuxer extends AbstractMuxer  {
 	{
 		int packetIndex = pkt.stream_index();
 		
-		//TODO: find a better frame to check if stream exists in outputFormatContext
 		if (!registeredStreamIndexList.contains(packetIndex))  {
 			return;
 		}
@@ -200,43 +199,46 @@ public class HLSMuxer extends AbstractMuxer  {
 
 			while ((ret = av_bsf_receive_packet(bsfContext, pkt)) == 0) 
 			{
+				
+				long pts = pkt.pts();
+				long dts = pkt.dts();
+				long duration = pkt.duration();
+				long pos = pkt.pos();
+				
 				pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 				pkt.pos(-1);
 
-				if (lastDTS >= pkt.dts()) {
-					pkt.dts(lastDTS + 1);
-				}
-				if (pkt.dts() > pkt.pts()) {
-					pkt.pts(pkt.dts());
-				}
-				lastDTS = pkt.dts();
-
 				ret = av_write_frame(outputFormatContext, pkt);
 				if (ret < 0) {
 					logger.info("cannot write frame to muxer");
 				}
+				
 			}
 		}
 		else {
+			
+			long pts = pkt.pts();
+			long dts = pkt.dts();
+			long duration = pkt.duration();
+			long pos = pkt.pos();
+			
 			pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 			pkt.pos(-1);
 
-			if (lastDTS >= pkt.dts()) {
-				pkt.dts(lastDTS + 1);
-			}
-			if (pkt.dts() > pkt.pts()) {
-				pkt.pts(pkt.dts());
-			}
-			lastDTS = pkt.dts();
-
+			
 			ret = av_write_frame(outputFormatContext, pkt);
 			if (ret < 0) {
 				logger.info("cannot write frame to muxer");
 			}
+			
+			pkt.pts(pts);
+			pkt.dts(dts);
+			pkt.duration(pkt.duration());
+			pkt.pos(pkt.pos());
 		}
 
 	}

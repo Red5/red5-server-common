@@ -181,6 +181,7 @@ public class MuxAdaptor implements IRecordingListener {
 					if (ret >= 0) {
 						AVStream stream = inputFormatContext.streams(pkt.stream_index());
 						for(AbstractMuxer muxer : muxerList) {
+							
 							muxer.writePacket(pkt, stream);
 						}
 					}

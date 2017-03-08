@@ -68,14 +68,13 @@ import org.springframework.util.concurrent.SuccessCallback;
 public class Mp4Muxer extends AbstractMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
-	private long lastDTS = -1;
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 
 	public Mp4Muxer() {
 		extension = ".mp4";
 		format = "mp4";
-		options.put("movflags", "faststart+rtphint");	
+		options.put("movflags", "faststart+rtphint");  	
 	}
 
 	public static int[] mp4_supported_codecs = {
@@ -144,7 +143,7 @@ public class Mp4Muxer extends AbstractMuxer {
 				
 				
 				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
-
+				
 				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 				if (ret < 0) {
 					logger.info("Cannot get codec parameters\n");
@@ -218,25 +217,26 @@ public class Mp4Muxer extends AbstractMuxer {
 			return;
 		}
 		
+		long pts = pkt.pts();
+		long dts = pkt.dts();
+		long duration = pkt.duration();
+		long pos = pkt.pos();
 		AVStream out_stream = outputFormatContext.streams(packetIndex);
 
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 		pkt.pos(-1);
-
-		if (lastDTS >= pkt.dts()) {
-			pkt.dts(lastDTS + 1);
-		}
-		if (pkt.dts() > pkt.pts()) {
-			pkt.pts(pkt.dts());
-		}
-
-		lastDTS = pkt.dts();
+		
 		int ret = av_write_frame(outputFormatContext, pkt);
 		if (ret < 0) {
-			logger.info("cannot write frame to muxer");
+			logger.warn("cannot write frame to muxer");
 		}
+		
+		pkt.pts(pts);
+		pkt.dts(dts);
+		pkt.duration(pkt.duration());
+		pkt.pos(pkt.pos());
 
 	}
 

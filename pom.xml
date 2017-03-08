@@ -233,6 +233,7 @@
 			<groupId>org.bytedeco.javacpp-presets</groupId>
 			<artifactId>ffmpeg-platform</artifactId>
 			<version>${javacpp.ffmpeg.version}</version>
+			<scope>provided</scope>
 		</dependency>
         <dependency>
             <groupId>junit</groupId>
