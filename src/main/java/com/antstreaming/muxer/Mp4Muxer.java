@@ -69,9 +69,13 @@ public class Mp4Muxer extends AbstractMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
+	private File fileTmp;
 
 
+	private static String TEMP_EXTENSION = ".tmp_extension";
+	
 	public Mp4Muxer() {
+		
 		extension = ".mp4";
 		format = "mp4";
 		options.put("movflags", "faststart+rtphint");  	
@@ -128,7 +132,8 @@ public class Mp4Muxer extends AbstractMuxer {
 	@Override
 	public boolean prepare(AVFormatContext inputFormatContext) {
 		outputFormatContext= new AVFormatContext(null);
-		int ret = avformat_alloc_output_context2(outputFormatContext, null, format, file.getAbsolutePath());
+		fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
+		int ret = avformat_alloc_output_context2(outputFormatContext, null, format, fileTmp.getAbsolutePath());
 		if (ret < 0) {
 			logger.info("Could not create output context\n");
 			return false;
@@ -159,7 +164,7 @@ public class Mp4Muxer extends AbstractMuxer {
 
 		AVIOContext pb = new AVIOContext(null);
 
-		ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
+		ret = avformat.avio_open(pb,  fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file");
 			return false;
@@ -194,7 +199,16 @@ public class Mp4Muxer extends AbstractMuxer {
 		av_write_trailer(outputFormatContext);
 
 		clearResource();
-		isRecording = false;	
+		isRecording = false;
+		String absolutePath = fileTmp.getAbsolutePath();
+		
+		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
+
+		File f = new File(origFileName);
+		boolean renameTo = fileTmp.renameTo(f);
+		if (!renameTo) {
+			logger.error("Renaming from {} to {} failed" , absolutePath, origFileName);
+		}
 	}
 
 
