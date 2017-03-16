@@ -11,7 +11,9 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,12 +72,13 @@ public class Mp4Muxer extends AbstractMuxer {
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 	private File fileTmp;
+	private boolean addDateTimeToMp4FileName;
 
 
 	private static String TEMP_EXTENSION = ".tmp_extension";
-	
+
 	public Mp4Muxer() {
-		
+
 		extension = ".mp4";
 		format = "mp4";
 		options.put("movflags", "faststart+rtphint");  	
@@ -129,34 +132,53 @@ public class Mp4Muxer extends AbstractMuxer {
 		return false;
 
 	}
+
+	@Override
+	public void init(IScope scope, String name) {
+		if (addDateTimeToMp4FileName) {
+			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
+			Date dt = new Date();
+			name = name + "-" + dtFormat.format(dt);
+		}
+
+		file = getRecordFile(scope, name, extension);
+
+		File parentFile = file.getParentFile();
+		if (!parentFile.exists()) {
+			parentFile.mkdir();
+		}
+	}
+
 	@Override
 	public boolean prepare(AVFormatContext inputFormatContext) {
 		outputFormatContext= new AVFormatContext(null);
+
 		fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
+
 		int ret = avformat_alloc_output_context2(outputFormatContext, null, format, fileTmp.getAbsolutePath());
 		if (ret < 0) {
 			logger.info("Could not create output context\n");
 			return false;
 		}
-		
+
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
 			if (isCodecSupported(in_stream.codecpar())) {
-				
+
 				registeredStreamIndexList.add(i);
-				
-				
+
+
 				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
-				
+
 				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 				if (ret < 0) {
 					logger.info("Cannot get codec parameters\n");
 					return false;
 				}
-				
+
 				out_stream.codec().codec_tag(0);
-				
+
 				if ((outputFormatContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
@@ -201,7 +223,7 @@ public class Mp4Muxer extends AbstractMuxer {
 		clearResource();
 		isRecording = false;
 		String absolutePath = fileTmp.getAbsolutePath();
-		
+
 		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 
 		File f = new File(origFileName);
@@ -226,11 +248,11 @@ public class Mp4Muxer extends AbstractMuxer {
 	{
 		int packetIndex = pkt.stream_index();
 		//TODO: find a better frame to check if stream exists in outputFormatContext
-		
+
 		if (!registeredStreamIndexList.contains(packetIndex)) {
 			return;
 		}
-		
+
 		long pts = pkt.pts();
 		long dts = pkt.dts();
 		long duration = pkt.duration();
@@ -241,17 +263,20 @@ public class Mp4Muxer extends AbstractMuxer {
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
 		pkt.pos(-1);
-		
+
 		int ret = av_write_frame(outputFormatContext, pkt);
 		if (ret < 0) {
 			logger.warn("cannot write frame to muxer");
 		}
-		
+
 		pkt.pts(pts);
 		pkt.dts(dts);
 		pkt.duration(pkt.duration());
 		pkt.pos(pkt.pos());
 
+	}
+	public void setAddDateTimeToFileNames(boolean addDateTimeToMp4FileName) {
+		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
 	}
 
 

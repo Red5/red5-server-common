@@ -40,6 +40,7 @@ import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
 import org.red5.codec.StreamCodecInfo;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.IContext;
 import org.red5.server.api.Red5;
 import org.red5.server.api.event.IEvent;
 import org.red5.server.api.event.IEventDispatcher;
@@ -75,8 +76,10 @@ import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
+import com.antstreaming.AppSettings;
 import com.antstreaming.muxer.HLSMuxer;
 import com.antstreaming.muxer.Mp4Muxer;
 import com.antstreaming.muxer.MuxAdaptor;
@@ -897,14 +900,23 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         if (automaticMp4Recording || automaticHlsRecording)  {
         	MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
         	
-        	if (automaticMp4Recording) {
-        		localMuxAdaptor.addMuxer(new Mp4Muxer());
+        	 IStreamCapableConnection conn = getConnection();
+        	 IContext context = conn.getScope().getContext(); 
+        	 ApplicationContext appCtx = context.getApplicationContext(); 
+        	 AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
+        	
+        	if (automaticMp4Recording && appSettings.isMp4MuxingEnabled()) {
+        		Mp4Muxer mp4Muxer = new Mp4Muxer();
+        		mp4Muxer.setAddDateTimeToFileNames(appSettings.isAddDateTimeToMp4FileName());
+        		localMuxAdaptor.addMuxer(mp4Muxer);
+        		
+        		
         	}
         	
         	if (automaticHlsRecording) {
         		localMuxAdaptor.addMuxer(new HLSMuxer());
             }
-        	 IStreamCapableConnection conn = getConnection();
+        	
         	 try {
         		 if (conn == null) {
                      throw new IOException("Stream is no longer connected");
