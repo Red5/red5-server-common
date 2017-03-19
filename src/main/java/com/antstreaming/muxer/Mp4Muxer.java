@@ -168,7 +168,6 @@ public class Mp4Muxer extends AbstractMuxer {
 
 				registeredStreamIndexList.add(i);
 
-
 				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
 
 				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
@@ -202,6 +201,7 @@ public class Mp4Muxer extends AbstractMuxer {
 				av_dict_set(optionsDictionary, key, options.get(key), 0);
 			}
 		}
+		
 		logger.warn("before writing header");
 		ret = avformat_write_header(outputFormatContext, optionsDictionary);		
 		if (ret < 0) {
@@ -209,6 +209,9 @@ public class Mp4Muxer extends AbstractMuxer {
 
 			clearResource();
 			return false;
+		}
+		if (optionsDictionary != null) {
+			av_dict_free(optionsDictionary);
 		}
 
 		return true;

@@ -82,7 +82,7 @@ public class HLSMuxer extends AbstractMuxer  {
 
 	public boolean prepare(AVFormatContext inputFormatContext) {
 		h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
-		bsfContext = new AVBSFContext();
+		bsfContext = new AVBSFContext(null);
 		int ret = av_bsf_alloc(h264bsfc, bsfContext);
 		if (ret < 0) {
 			logger.info("cannot allocate bsf context");
@@ -163,6 +163,10 @@ public class HLSMuxer extends AbstractMuxer  {
 			logger.warn("could not write header");
 			return false;
 		}
+		
+		if (optionsDictionary != null) {
+			av_dict_free(optionsDictionary);
+		}
 
 		return true;
 	}
@@ -214,6 +218,11 @@ public class HLSMuxer extends AbstractMuxer  {
 				if (ret < 0) {
 					logger.info("cannot write frame to muxer");
 				}
+				
+				pkt.pts(pts);
+				pkt.dts(dts);
+				pkt.duration(pkt.duration());
+				pkt.pos(pkt.pos());
 				
 			}
 		}

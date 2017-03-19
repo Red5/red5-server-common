@@ -20,6 +20,7 @@ import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
 import static org.bytedeco.javacpp.avutil.av_dict_set;
 import static org.bytedeco.javacpp.avutil.av_rescale_q;
 import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
+import static org.bytedeco.javacpp.avutil.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -79,6 +80,8 @@ public class MuxAdaptor implements IRecordingListener {
 	private PacketFeederJob packetFeederJob;
 	private boolean isRecording = false;
 	private ClientBroadcastStream broadcastStream;
+	private AVIOContext avio_alloc_context;
+	private AVPacket pkt = new AVPacket();
 
 	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 		this.broadcastStream = clientBroadcastStream;
@@ -113,11 +116,9 @@ public class MuxAdaptor implements IRecordingListener {
 
 
 	class ReadCallback extends Read_packet_Pointer_BytePointer_int {
-		private AtomicBoolean isRunning = new AtomicBoolean(false);
-
 		boolean firstCall = true;
 
-		@Override public synchronized int call(Pointer opaque, BytePointer buf, int buf_size) {
+		@Override public int call(Pointer opaque, BytePointer buf, int buf_size) {
 			int length = -1;
 			try {
 				if (!firstCall) {
@@ -151,9 +152,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 			} catch (Exception e) {
 				logger.error("Exception handling queue", e);
-			} finally {
-				isRunning.compareAndSet(true, false);
-			}
+			} 
 
 			return length;
 		}
@@ -169,43 +168,60 @@ public class MuxAdaptor implements IRecordingListener {
 		@Override
 		public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
+			
+			
 			//logger.info("pipe reader job running");
 			if (isPipeReaderJobRunning.compareAndSet(false, true)) 
 			{
+				
 				//logger.info("pipe reader job in running");
 				while (true) {
-					AVPacket pkt = new AVPacket();
+					if (inputFormatContext == null) {
+						break;
+					}
 					int ret = av_read_frame(inputFormatContext, pkt);
 					//logger.info("input read...");
 					
 					if (ret >= 0) {
 						AVStream stream = inputFormatContext.streams(pkt.stream_index());
 						for(AbstractMuxer muxer : muxerList) {
-							
 							muxer.writePacket(pkt, stream);
 						}
 					}
 					else {
-						
+						scheduler.removeScheduledJob(packetFeederJobName);
 						for(AbstractMuxer muxer : muxerList) {
 							muxer.writeTrailer();
 						}
+						logger.info("closing input");
 						avformat_close_input(inputFormatContext);
-						scheduler.removeScheduledJob(packetFeederJobName);
-						isRecording = false;
+						
+						
+						if (avio_alloc_context != null) {
+		                    if (avio_alloc_context.buffer() != null) {
+		                    	logger.info("free buffer");
+		                        av_free(avio_alloc_context.buffer());
+		                        avio_alloc_context.buffer(null);
+		                    }
+		                    logger.info("free context");
+		                    av_free(avio_alloc_context);
+		                    avio_alloc_context = null;
+		                }
+						
+						inputFormatContext = null;
+						isRecording = false;	
 					}
-					
 					
 					av_packet_unref(pkt);
 
 					//if there is not element in the qeueue,
 					//break the loop
-					if (inputQueue.peek() == null) 
+					if (inputQueue.peek() == null || inputFormatContext == null) 
 					{
 						break;
 					}
 				}
-
+			
 				isPipeReaderJobRunning.compareAndSet(true, false);
 			}
 
@@ -293,13 +309,13 @@ public class MuxAdaptor implements IRecordingListener {
 	public void start() {
 		isRecording = false;
 		stopRequestExist = false;
-		scheduler.addScheduledOnceJob(10, new IScheduledJob() {
+		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
 			
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
 				if (prepare()) {
 					isRecording = true;
-					packetFeederJobName = scheduler.addScheduledJob(100, packetFeederJob);
+					packetFeederJobName = scheduler.addScheduledJob(10, packetFeederJob);
 				}
 				else {
 					broadcastStream.removeStreamListener(MuxAdaptor.this);
@@ -322,10 +338,10 @@ public class MuxAdaptor implements IRecordingListener {
 
 		readCallback = new ReadCallback();
 
-		AVIOContext avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0, inputFormatContext, readCallback, null, null);
+		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0, inputFormatContext, readCallback, null, null);
 		inputFormatContext.pb(avio_alloc_context);
-
-
+		
+		
 		int ret;
 		if ((ret = avformat_open_input(inputFormatContext, (String)null, avformat.av_find_input_format("flv"), (AVDictionary)null)) < 0) {
 			logger.info("cannot open input context");
