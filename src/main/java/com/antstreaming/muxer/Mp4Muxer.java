@@ -136,7 +136,7 @@ public class Mp4Muxer extends AbstractMuxer {
 	@Override
 	public void init(IScope scope, String name) {
 		if (addDateTimeToMp4FileName) {
-			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm");
+			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
 			Date dt = new Date();
 			name = name + "-" + dtFormat.format(dt);
 		}

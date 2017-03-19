@@ -22,9 +22,11 @@ import static org.bytedeco.javacpp.avutil.av_rescale_q;
 import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
 import static org.bytedeco.javacpp.avutil.*;
 
+import java.awt.Frame;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -66,29 +68,27 @@ public class MuxAdaptor implements IRecordingListener {
 	protected QuartzSchedulingService scheduler;
 
 	protected static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
-	protected ConcurrentLinkedQueue<CachedEvent> inputQueue = new ConcurrentLinkedQueue<>();
 
-	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	String packetFeederJobName;
-	protected AVFormatContext inputFormatContext;
+	
 
-	protected boolean stopRequestExist = false;
+	protected volatile boolean stopRequestExist = false;
 
 	protected ArrayList<AbstractMuxer> muxerList = new ArrayList();
-	protected static final int BUFFER_SIZE = 1024 * 200;
-	private ReadCallback readCallback;
+	protected static final int BUFFER_SIZE = 4096;
+	
 	private PacketFeederJob packetFeederJob;
 	private boolean isRecording = false;
 	private ClientBroadcastStream broadcastStream;
-	private AVIOContext avio_alloc_context;
-	private AVPacket pkt = new AVPacket();
+	
+	
 
 	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 		this.broadcastStream = clientBroadcastStream;
-		
+
 	}
-	
-	
+
+
 	public void addMuxer(AbstractMuxer muxer) {
 		muxerList.add(muxer);
 	}
@@ -113,75 +113,125 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		return true;
 	}
-
-
-	class ReadCallback extends Read_packet_Pointer_BytePointer_int {
-		boolean firstCall = true;
-
-		@Override public int call(Pointer opaque, BytePointer buf, int buf_size) {
-			int length = -1;
-			try {
-				if (!firstCall) {
-					IStreamPacket packet = null;
-					//System.out.println("queue size:" + inputQueue.size());
-
-					while ((packet = inputQueue.poll()) == null) {
-						if (stopRequestExist) {
-							logger.info("stop request");
-							break;
-						}
-						Thread.sleep(50);
-					}
-
-					if (packet != null) {
-						//make sure buf size is larger than below data length
-
-						byte[] data = getFLVFrame(packet);
-						length = data.length;
-						buf.put(data, 0, length);
-					}
-				}
-				else {
-					firstCall = false;
-					logger.info("writing header...");
-					byte[] flvHeader = getFLVHeader();
-					length = flvHeader.length;
-
-					buf.put(flvHeader, 0, length);
-				}
-
-			} catch (Exception e) {
-				logger.error("Exception handling queue", e);
-			} 
-
-			return length;
-		}
-
-		public boolean isFirstCall() {
-			return firstCall;
-		}
-	}
-
+	
+	protected AVFormatContext inputFormatContext;
 
 	class PacketFeederJob implements IScheduledJob {
+		
+		protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
+		
+		private ReadCallback readCallback;
+		protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
+		private AVIOContext avio_alloc_context;
+		
+		
+		public boolean prepare() 
+		{
+
+			inputFormatContext = avformat.avformat_alloc_context();
+			if (inputFormatContext == null) {
+				logger.info("cannot allocate input context");
+				return false;
+			}
+
+			readCallback = new ReadCallback();
+
+			avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0, inputFormatContext, readCallback, null, null);
+			inputFormatContext.pb(avio_alloc_context);
+
+			int ret;
+			if ((ret = avformat_open_input(inputFormatContext, (String)null, avformat.av_find_input_format("flv"), (AVDictionary)null)) < 0) {
+				logger.info("cannot open input context");
+				return false;
+			}
+
+			ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
+			if (ret < 0) {
+				logger.info("Could not find stream information\n");
+				return false;
+			}
+
+			Iterator<AbstractMuxer> iterator = muxerList.iterator();
+			while (iterator.hasNext()) {
+				AbstractMuxer muxer = (AbstractMuxer) iterator.next();
+				if (!muxer.prepare(inputFormatContext)) {
+					iterator.remove();
+					logger.warn("muxer prepare returns false " + muxer.getFormat());
+				}
+			}
+
+			if (muxerList.isEmpty()) {
+				return false;
+			}
+			return true;
+		}
+		
+		class ReadCallback extends Read_packet_Pointer_BytePointer_int {
+			boolean firstCall = true;
+
+			@Override 
+			public synchronized int call(Pointer opaque, BytePointer buf, int buf_size) {
+				int length = -1;
+				try {
+					if (!firstCall) {
+						byte[] packet;
+						//System.out.println("queue size:" + inputQueue.size());
+
+						while ((packet = inputQueue.poll()) == null) {
+							if (stopRequestExist) {
+								logger.info("stop request");
+								break;
+							}
+							Thread.sleep(50);
+						}
+
+						if (packet != null) {
+							//make sure buf size is larger than below data length
+							//byte[] data = getFLVFrame(packet);
+							//** this setting critical..
+							length = packet.length;
+							buf.put(packet, 0, length);
+						}
+					}
+					else {
+						firstCall = false;
+						logger.info("writing header...");
+						byte[] flvHeader = getFLVHeader();
+						length = flvHeader.length;
+
+						buf.put(flvHeader, 0, length);
+					}
+
+				} catch (Exception e) {
+					logger.error("Exception handling queue", e);
+				} 
+
+				return length;
+			}
+
+			public boolean isFirstCall() {
+				return firstCall;
+			}
+		}
 
 		@Override
 		public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
-			
-			
+
+
 			//logger.info("pipe reader job running");
 			if (isPipeReaderJobRunning.compareAndSet(false, true)) 
 			{
-				
+
 				//logger.info("pipe reader job in running");
+				AVPacket pkt = new AVPacket();
 				while (true) {
 					if (inputFormatContext == null) {
 						break;
 					}
 					int ret = av_read_frame(inputFormatContext, pkt);
 					//logger.info("input read...");
-					
+
 					if (ret >= 0) {
 						AVStream stream = inputFormatContext.streams(pkt.stream_index());
 						for(AbstractMuxer muxer : muxerList) {
@@ -195,23 +245,23 @@ public class MuxAdaptor implements IRecordingListener {
 						}
 						logger.info("closing input");
 						avformat_close_input(inputFormatContext);
-						
-						
+
+
 						if (avio_alloc_context != null) {
-		                    if (avio_alloc_context.buffer() != null) {
-		                    	logger.info("free buffer");
-		                        av_free(avio_alloc_context.buffer());
-		                        avio_alloc_context.buffer(null);
-		                    }
-		                    logger.info("free context");
-		                    av_free(avio_alloc_context);
-		                    avio_alloc_context = null;
-		                }
-						
+							if (avio_alloc_context.buffer() != null) {
+								logger.info("free buffer");
+								av_free(avio_alloc_context.buffer());
+								avio_alloc_context.buffer(null);
+							}
+							logger.info("free context");
+							av_free(avio_alloc_context);
+							avio_alloc_context = null;
+						}
+
 						inputFormatContext = null;
 						isRecording = false;	
 					}
-					
+
 					av_packet_unref(pkt);
 
 					//if there is not element in the qeueue,
@@ -221,10 +271,15 @@ public class MuxAdaptor implements IRecordingListener {
 						break;
 					}
 				}
-			
+
 				isPipeReaderJobRunning.compareAndSet(true, false);
 			}
 
+		}
+
+		public void add(byte[] data) {
+			inputQueue.add(data);
+			
 		}
 
 	}; 
@@ -271,6 +326,7 @@ public class MuxAdaptor implements IRecordingListener {
 			// get the audio or video codec identifier
 
 		}
+		
 		// Data Type
 		IOUtils.writeUnsignedByte(tagBuffer, dataType); //1
 		// Body Size - Length of the message. Number of bytes after StreamID to end of tag 
@@ -310,10 +366,12 @@ public class MuxAdaptor implements IRecordingListener {
 		isRecording = false;
 		stopRequestExist = false;
 		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
-			
+
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				if (prepare()) {
+				logger.info("before prepare");
+				if (packetFeederJob.prepare()) {
+					logger.info("after prepare");
 					isRecording = true;
 					packetFeederJobName = scheduler.addScheduledJob(10, packetFeederJob);
 				}
@@ -326,48 +384,8 @@ public class MuxAdaptor implements IRecordingListener {
 		});
 
 	}
+
 	
-	public boolean prepare() 
-	{
-
-		inputFormatContext = avformat.avformat_alloc_context();
-		if (inputFormatContext == null) {
-			logger.info("cannot allocate input context");
-			return false;
-		}
-
-		readCallback = new ReadCallback();
-
-		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0, inputFormatContext, readCallback, null, null);
-		inputFormatContext.pb(avio_alloc_context);
-		
-		
-		int ret;
-		if ((ret = avformat_open_input(inputFormatContext, (String)null, avformat.av_find_input_format("flv"), (AVDictionary)null)) < 0) {
-			logger.info("cannot open input context");
-			return false;
-		}
-
-		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
-		if (ret < 0) {
-			logger.info("Could not find stream information\n");
-			return false;
-		}
-		
-		Iterator<AbstractMuxer> iterator = muxerList.iterator();
-		while (iterator.hasNext()) {
-			AbstractMuxer muxer = (AbstractMuxer) iterator.next();
-			if (!muxer.prepare(inputFormatContext)) {
-				iterator.remove();
-				logger.warn("muxer prepare returns false " + muxer.getFormat());
-			}
-		}
-
-		if (muxerList.isEmpty()) {
-			return false;
-		}
-		return true;
-	}
 
 
 	@Override
@@ -379,12 +397,41 @@ public class MuxAdaptor implements IRecordingListener {
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
-		CachedEvent event = new CachedEvent();
-		event.setData(packet.getData().duplicate());
-		event.setDataType(packet.getDataType());
-		event.setReceivedTime(System.currentTimeMillis());
-		event.setTimestamp(packet.getTimestamp());
-		inputQueue.add(event);
+
+//  		CachedEvent event = new CachedEvent();
+//		event.setData(packet.getData().duplicate());
+//		event.setDataType(packet.getDataType());
+//		event.setReceivedTime(System.currentTimeMillis());
+//		event.setTimestamp(packet.getTimestamp());
+
+		byte[] flvFrame;
+		try {
+			flvFrame = getFLVFrame(packet);
+
+			if (flvFrame.length <= BUFFER_SIZE) {
+				packetFeederJob.add(flvFrame); 
+			}
+			else {
+				int numberOfBytes = flvFrame.length;
+				int startIndex = 0;
+				int copySize = 0;
+				while (numberOfBytes != 0) {
+					if (numberOfBytes > BUFFER_SIZE) {
+						copySize = BUFFER_SIZE;
+					}
+					else {
+						copySize = numberOfBytes;
+					}
+					byte[] data = Arrays.copyOfRange(flvFrame, startIndex, startIndex + copySize);
+					packetFeederJob.add(data); 
+					numberOfBytes -= copySize;
+					startIndex += copySize;
+				}
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 
