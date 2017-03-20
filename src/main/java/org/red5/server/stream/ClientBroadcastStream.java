@@ -246,7 +246,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         log.error("Class cast exception in event dispatch", e);
                         return;
                     }
-                    int eventTime = -1;
+                    int eventTime = rtmpEvent.getTimestamp();
                     if (log.isTraceEnabled()) {
                         // If this is first packet save its timestamp; expect it is
                         // absolute? no matter: it's never used!
@@ -254,7 +254,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                             firstPacketTime = rtmpEvent.getTimestamp();
                             log.trace(String.format("CBS=@%08x: rtmpEvent=%s creation=%s firstPacketTime=%d", System.identityHashCode(this), rtmpEvent.getClass().getSimpleName(), creationTime, firstPacketTime));
                         } else {
-                            log.trace(String.format("CBS=@%08x: rtmpEvent=%s creation=%s firstPacketTime=%d timestamp=%d", System.identityHashCode(this), rtmpEvent.getClass().getSimpleName(), creationTime, firstPacketTime, rtmpEvent.getTimestamp()));
+                            log.trace(String.format("CBS=@%08x: rtmpEvent=%s creation=%s firstPacketTime=%d timestamp=%d", System.identityHashCode(this), rtmpEvent.getClass().getSimpleName(), creationTime, firstPacketTime, eventTime));
                         }
                     }
                     //get the buffer only once per call
@@ -270,6 +270,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                     }
                     //log.trace("Stream codec info: {}", info);
                     if (rtmpEvent instanceof AudioData) {
+                        log.trace("Audio: {}", eventTime);
                         IAudioStreamCodec audioStreamCodec = null;
                         if (checkAudioCodec) {
                             // dont try to read codec info from 0 length audio packets
@@ -289,9 +290,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         if (info != null) {
                             info.setHasAudio(true);
                         }
-                        eventTime = rtmpEvent.getTimestamp();
-                        log.trace("Audio: {}", eventTime);
                     } else if (rtmpEvent instanceof VideoData) {
+                        log.trace("Video: {}", eventTime);
                         IVideoStreamCodec videoStreamCodec = null;
                         if (checkVideoCodec) {
                             videoStreamCodec = VideoCodecFactory.getVideoCodec(buf);
@@ -303,17 +303,14 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                             videoStreamCodec = codecInfo.getVideoCodec();
                         }
                         if (videoStreamCodec != null) {
-                            videoStreamCodec.addData(buf);
+                            videoStreamCodec.addData(buf, eventTime);
                         }
                         if (info != null) {
                             info.setHasVideo(true);
                         }
-                        eventTime = rtmpEvent.getTimestamp();
-                        log.trace("Video: {}", eventTime);
                     } else if (rtmpEvent instanceof Invoke) {
                         Invoke invokeEvent = (Invoke) rtmpEvent;
                         log.debug("Invoke action: {}", invokeEvent.getAction());
-                        eventTime = rtmpEvent.getTimestamp();
                         // event / stream listeners will not be notified of invokes
                         return;
                     } else if (rtmpEvent instanceof Notify) {
@@ -331,7 +328,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                                 log.warn("Metadata could not be duplicated for this stream", e);
                             }
                         }
-                        eventTime = rtmpEvent.getTimestamp();
                     }
                     // update last event time
                     if (eventTime > latestTimeStamp) {

@@ -146,12 +146,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     private int underrunTrigger = 10;
 
     /**
-     * threshold for number of pending video frames
+     * Threshold for number of pending video frames
      */
-    private int maxPendingVideoFramesThreshold = 10;
+    private int maxPendingVideoFrames = 10;
 
     /**
-     * if we have more than 1 pending video frames, but less than maxPendingVideoFrames, continue sending until there are this many sequential frames with more than 1 pending
+     * If we have more than 1 pending video frames, but less than maxPendingVideoFrames, continue sending until there are this many sequential frames with more than 1 pending
      */
     private int maxSequentialPendingVideoFrames = 10;
 
@@ -229,7 +229,9 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     // Keep count of dropped packets so we can log every so often.
     private long droppedPacketsCount = 0;
+
     private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+
     private long droppedPacketsCountLogInterval = 1 * 60 * 1000L; // 5 minutes
 
     /**
@@ -1520,7 +1522,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
                                 if (log.isTraceEnabled()) {
                                     log.trace("Pending messages. sessionId={} pending={} threshold={} sequential={} stream={}, count={}",
-                                            new Object[] { sessionId, pendingVideos, maxPendingVideoFramesThreshold,
+                                            new Object[] { sessionId, pendingVideos, maxPendingVideoFrames,
                                                     numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
                                                     droppedPacketsCount});
                                 }
@@ -1541,11 +1543,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                     // reset number of sequential pending frames if 1 or 0 are pending
                                     numSequentialPendingVideoFrames = 0;
                                 }
-                                if (pendingVideos > maxPendingVideoFramesThreshold || numSequentialPendingVideoFrames > maxSequentialPendingVideoFrames) {
+                                if (pendingVideos > maxPendingVideoFrames || numSequentialPendingVideoFrames > maxSequentialPendingVideoFrames) {
                                     droppedPacketsCount++;
                                     if (log.isInfoEnabled() && shouldLogPacketDrop()) {
                                         log.info("Drop packet. Pending above threshold. sessionId={} pending={} threshold={} sequential={} stream={} count={}",
-                                                new Object[]{sessionId, pendingVideos, maxPendingVideoFramesThreshold,
+                                                new Object[]{sessionId, pendingVideos, maxPendingVideoFrames,
                                                         numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
                                                         droppedPacketsCount});
                                     }
@@ -2018,7 +2020,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
      *            the maxPendingVideoFrames to set
      */
     public void setMaxPendingVideoFrames(int maxPendingVideoFrames) {
-        this.maxPendingVideoFramesThreshold = maxPendingVideoFrames;
+        this.maxPendingVideoFrames = maxPendingVideoFrames;
     }
 
     /**
@@ -2028,4 +2030,5 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     public void setMaxSequentialPendingVideoFrames(int maxSequentialPendingVideoFrames) {
         this.maxSequentialPendingVideoFrames = maxSequentialPendingVideoFrames;
     }
+
 }

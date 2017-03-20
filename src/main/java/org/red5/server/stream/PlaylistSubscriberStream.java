@@ -129,6 +129,16 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
      */
     protected long bytesSent = 0;
 
+    /**
+     * see PlayEngine.maxPendingVideoFrames
+     */
+    private int maxPendingVideoFrames = 10;
+
+    /**
+     * see PlayEngine.maxSequentialPendingVideoFrames
+     */
+    private int maxSequentialPendingVideoFrames = 10;
+
     /** Constructs a new PlaylistSubscriberStream. */
     public PlaylistSubscriberStream() {
         defaultController = new SimplePlaylistController();
@@ -141,6 +151,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
      */
     PlayEngine createEngine(ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService) {
         engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService).build();
+        // set the max pending video frames to the play engine
+        engine.setMaxPendingVideoFrames(maxPendingVideoFrames);
+        // set the max sequential pending video frames to the play engine
+        engine.setMaxSequentialPendingVideoFrames(maxSequentialPendingVideoFrames);
         return engine;
     }
 
@@ -206,6 +220,10 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
         engine.setBufferCheckInterval(bufferCheckInterval);
         //set underrun trigger
         engine.setUnderrunTrigger(underrunTrigger);
+        // set the max pending video frames to the play engine
+        engine.setMaxPendingVideoFrames(maxPendingVideoFrames);
+        // set the max sequential pending video frames to the play engine
+        engine.setMaxSequentialPendingVideoFrames(maxSequentialPendingVideoFrames);
         // Start playback engine
         engine.start();
         // Notify subscribers on start
@@ -849,6 +867,22 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
         // expected amount of data present in client buffer
         final long buffered = lastMessageTs - delta;
         return (buffered * 100.0) / buffer;
+    }
+
+    /**
+     * @param maxPendingVideoFrames
+     *            the maxPendingVideoFrames to set
+     */
+    public void setMaxPendingVideoFrames(int maxPendingVideoFrames) {
+        this.maxPendingVideoFrames = maxPendingVideoFrames;
+    }
+
+    /**
+     * @param maxSequentialPendingVideoFrames
+     *            the maxSequentialPendingVideoFrames to set
+     */
+    public void setMaxSequentialPendingVideoFrames(int maxSequentialPendingVideoFrames) {
+        this.maxSequentialPendingVideoFrames = maxSequentialPendingVideoFrames;
     }
 
     /** {@inheritDoc} */
