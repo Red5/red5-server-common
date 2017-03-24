@@ -314,14 +314,14 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
             // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
             // don't reset the header we stored.
-            final Header lastReadHeader = rtmp.getLastReadPacketHeader(channelId);
-            if (lastReadHeader != null && (message instanceof AudioData || message instanceof VideoData) && RTMPUtils.compareTimestamps(lastReadHeader.getTimer(), packet.getHeader().getTimer()) >= 0) {
-                log.trace("Non-monotonically increasing timestamps; type: {}; adjusting to {}; ts: {}; last: {}", new Object[] { header.getDataType(), lastReadHeader.getTimer() + 1, header.getTimer(), lastReadHeader.getTimer() });
-                message.setTimestamp(lastReadHeader.getTimer() + 1);
-            } else {
+            //final Header lastReadHeader = rtmp.getLastReadPacketHeader(channelId);
+            //if (lastReadHeader != null && (message instanceof AudioData || message instanceof VideoData) && RTMPUtils.compareTimestamps(lastReadHeader.getTimer(), packet.getHeader().getTimer()) >= 0) {
+                //log.trace("Non-monotonically increasing timestamps; type: {}; adjusting to {}; ts: {}; last: {}", new Object[] { header.getDataType(), lastReadHeader.getTimer() + 1, header.getTimer(), lastReadHeader.getTimer() });
+                //message.setTimestamp(lastReadHeader.getTimer() + 1);
+            //} else {
                 message.setTimestamp(header.getTimer());
-            }
-            rtmp.setLastReadPacketHeader(channelId, packet.getHeader());
+            //}
+            //rtmp.setLastReadPacketHeader(channelId, packet.getHeader());
             packet.setMessage(message);
             if (message instanceof ChunkSize) {
                 ChunkSize chunkSizeMsg = (ChunkSize) message;
