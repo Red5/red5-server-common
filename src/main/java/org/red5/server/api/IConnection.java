@@ -57,7 +57,8 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     public static enum Type {
         PERSISTENT, // Persistent connection type, eg RTMP
         POLLING, // Polling connection type, eg RTMPT
-        TRANSIENT // Transient connection type, eg Remoting, HTTP, etc
+        TRANSIENT, // Transient connection type, eg Remoting, HTTP, etc
+        UNKNOWN // all others not matching known types
     };
 
     /**

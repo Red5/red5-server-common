@@ -160,7 +160,11 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     @ConstructorProperties({ "type" })
     public BaseConnection(String type) {
         log.debug("New BaseConnection - type: {}", type);
-        this.type = IConnection.Type.valueOf(type.toUpperCase());
+        if (type != null) {
+            this.type = IConnection.Type.valueOf(type.toUpperCase());
+        } else {
+            this.type = IConnection.Type.UNKNOWN;
+        }
         this.sessionId = RandomStringUtils.randomAlphanumeric(13).toUpperCase();
         log.debug("Generated session id: {}", sessionId);
     }
