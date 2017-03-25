@@ -18,6 +18,9 @@
 
 package org.red5.server.stream;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -63,6 +66,11 @@ public abstract class AbstractStream implements IStream {
     private IScope scope;
 
     /**
+     * Contains {@link PropertyChangeListener}s registered with this stream and following its changes of state.
+     */
+    private CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
+
+    /**
      * Timestamp the stream was created.
      */
     protected long creationTime;
@@ -71,6 +79,41 @@ public abstract class AbstractStream implements IStream {
      * Lock for protecting critical sections
      */
     protected final transient Semaphore lock = new Semaphore(1, true);
+
+    /**
+     * Creates a new {@link PropertyChangeEvent} and delivers it to all currently registered state listeners.
+     *
+     * @param oldState
+     *            the {@link StreamState} we had before the change
+     * @param newState
+     *            the {@link StreamState} we had after the change
+     */
+    protected void fireStateChange(StreamState oldState, StreamState newState) {
+        final PropertyChangeEvent evt = new PropertyChangeEvent(this, "StreamState", oldState, newState);
+        for (PropertyChangeListener listener : stateListeners) {
+            listener.propertyChange(evt);
+        }
+    }
+
+    /**
+     * Adds to the list of listeners tracking changes of the {@link StreamState} of this stream.
+     *
+     * @param listener the listener to register
+     */
+    public void addStateChangeListener(PropertyChangeListener listener) {
+        if (!stateListeners.contains(listener)) {
+            stateListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes from the list of listeners tracking changes of the {@link StreamState} of this stream.
+     *
+     * @param listener the listener to remove
+     */
+    public void removeStateChangeListener(PropertyChangeListener listener) {
+        stateListeners.remove(listener);
+    }
 
     /**
      * Return stream name.
@@ -184,12 +227,14 @@ public abstract class AbstractStream implements IStream {
      *            stream state
      */
     public void setState(StreamState state) {
-        if (!this.state.equals(state)) {
+        StreamState oldState = this.state;
+        if (!oldState.equals(state)) {
             try {
                 lock.acquireUninterruptibly();
                 this.state = state;
             } finally {
                 lock.release();
+                fireStateChange(oldState, state);
             }
         }
     }

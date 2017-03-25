@@ -123,7 +123,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Set of basic scopes. The scopes may be of shared object or broadcast stream type.
      */
-    protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
+    protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<>();
 
     /**
      * Is the connection closed?
@@ -133,7 +133,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Listeners
      */
-    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
+    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
 
     /**
      * Used to protect mulit-threaded operations on write
@@ -141,7 +141,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     private final transient Semaphore writeLock = new Semaphore(1, true);
 
     // Support for stream ids
-    private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>();
+    private transient ThreadLocal<Number> streamLocal = new ThreadLocal<>();
 
     /**
      * Creates a new persistent base connection
@@ -191,7 +191,11 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     public BaseConnection(String type, String host, String remoteAddress, int remotePort, String path, String sessionId, Map<String, Object> params) {
         log.debug("New BaseConnection - type: {} host: {} remoteAddress: {} remotePort: {} path: {} sessionId: {}", new Object[] { type, host, remoteAddress, remotePort, path, sessionId });
         log.debug("Params: {}", params);
-        this.type = IConnection.Type.valueOf(type.toUpperCase());
+        if (type != null) {
+            this.type = IConnection.Type.valueOf(type.toUpperCase());
+        } else {
+            this.type = IConnection.Type.UNKNOWN;
+        }
         this.host = host;
         this.remoteAddress = remoteAddress;
         this.remoteAddresses = new ArrayList<String>(1);

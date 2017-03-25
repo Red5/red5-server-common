@@ -52,6 +52,7 @@ import org.red5.server.api.stream.IStreamAwareScopeHandler;
 import org.red5.server.api.stream.IStreamCapableConnection;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
+import org.red5.server.api.stream.StreamState;
 import org.red5.server.jmx.mxbeans.ClientBroadcastStreamMXBean;
 import org.red5.server.messaging.IConsumer;
 import org.red5.server.messaging.IFilter;
@@ -225,6 +226,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         }
         // deregister with jmx
         unregisterJMX();
+        setState(StreamState.CLOSED);
     }
 
     /**
@@ -500,7 +502,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             try {
                 handler.streamRecordStop(this);
             } catch (Throwable t) {
-                log.error("Error in notifyBroadcastClose", t);
+                log.error("Error in notifyRecordingStop", t);
             }
         }
     }
@@ -711,6 +713,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         StatusMessage startMsg = new StatusMessage();
         startMsg.setBody(publishStatus);
         pushMessage(startMsg);
+        setState(StreamState.PUBLISHING);
     }
 
     /**
@@ -724,6 +727,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         StatusMessage stopMsg = new StatusMessage();
         stopMsg.setBody(stopStatus);
         pushMessage(stopMsg);
+        setState(StreamState.STOPPED);
     }
 
     /**
@@ -843,6 +847,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         } else {
             log.warn("Subscribe failed");
         }
+        setState(StreamState.STARTED);
     }
 
     /** {@inheritDoc} */
@@ -864,6 +869,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /** {@inheritDoc} */
     public void stop() {
         //log.info("Stream stop: {}", publishedName);
+        setState(StreamState.STOPPED);
         stopRecording();
         close();
     }
