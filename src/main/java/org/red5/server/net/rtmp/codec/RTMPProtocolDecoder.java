@@ -744,7 +744,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // instance the invoke
         Invoke invoke = new Invoke();
         // set the transaction id
-        invoke.setTransactionId(Deserializer.<Number> deserialize(input, Number.class).intValue());
+        Number transactionId = Deserializer.<Number> deserialize(input, Number.class);
+        invoke.setTransactionId(transactionId == null ? 0 : transactionId.intValue());
         // reset and decode parameters
         input.reset();
         // get / set the parameters if there any
