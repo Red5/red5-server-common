@@ -69,4 +69,10 @@ public interface IStream {
      */
     public long getCreationTime();
 
+    /**
+     * Returns the timestamp at which the stream was started.
+     * 
+     * @return started timestamp
+     */
+    long getStartTime();
 }

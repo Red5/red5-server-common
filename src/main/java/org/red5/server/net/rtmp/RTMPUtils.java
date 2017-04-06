@@ -38,28 +38,6 @@ public class RTMPUtils implements Constants {
      * @param value
      *            Integer to write
      */
-    public static void writeReverseIntOld(IoBuffer out, int value) {
-        byte[] bytes = new byte[4];
-        IoBuffer rev = IoBuffer.allocate(4);
-        rev.putInt(value);
-        rev.flip();
-        bytes[3] = rev.get();
-        bytes[2] = rev.get();
-        bytes[1] = rev.get();
-        bytes[0] = rev.get();
-        out.put(bytes);
-        rev.free();
-        rev = null;
-    }
-
-    /**
-     * Writes reversed integer to buffer.
-     *
-     * @param out
-     *            Buffer
-     * @param value
-     *            Integer to write
-     */
     public static void writeReverseInt(IoBuffer out, int value) {
         out.put((byte) (0xFF & value));
         out.put((byte) (0xFF & (value >> 8)));
@@ -81,9 +59,9 @@ public class RTMPUtils implements Constants {
     }
 
     /**
-     *
-     * @param in
-     *            input
+     * Read unsigned 24 bit integer.
+     * 
+     * @param in input
      * @return unsigned int
      */
     public static int readUnsignedMediumInt(IoBuffer in) {
@@ -98,41 +76,7 @@ public class RTMPUtils implements Constants {
     }
 
     /**
-     *
-     * @param in
-     *            input
-     * @return unsigned medium (3 byte) int.
-     */
-    public static int readUnsignedMediumIntOld(IoBuffer in) {
-        byte[] bytes = new byte[3];
-        in.get(bytes);
-        int val = 0;
-        val += (bytes[0] & 0xFF) * 256 * 256;
-        val += (bytes[1] & 0xFF) * 256;
-        val += (bytes[2] & 0xFF);
-        return val;
-    }
-
-    /**
-     *
-     * @param in
-     *            input
-     * @return signed 3-byte int
-     */
-    public static int readMediumIntOld(IoBuffer in) {
-        IoBuffer buf = IoBuffer.allocate(4);
-        buf.put((byte) 0x00);
-        buf.put(in.get());
-        buf.put(in.get());
-        buf.put(in.get());
-        buf.flip();
-        int value = buf.getInt();
-        buf.free();
-        buf = null;
-        return value;
-    }
-
-    /**
+     * Read 24 bit integer.
      *
      * @param in
      *            input
@@ -173,13 +117,9 @@ public class RTMPUtils implements Constants {
     /**
      * Encodes header size marker and channel id into header marker.
      * 
-     * @param out
-     *            output buffer
-     *
-     * @param headerSize
-     *            Header size marker
-     * @param channelId
-     *            Channel used
+     * @param out output buffer
+     * @param headerSize Header size marker
+     * @param channelId Channel used
      */
     public static void encodeHeaderByte(IoBuffer out, byte headerSize, int channelId) {
         if (channelId <= 63) {
@@ -198,10 +138,8 @@ public class RTMPUtils implements Constants {
     /**
      * Decode channel id.
      *
-     * @param header
-     *            Header
-     * @param byteCount
-     *            byte count
+     * @param header Header
+     * @param byteCount byte count
      * @return Channel id
      */
     public static int decodeChannelId(int header, int byteCount) {

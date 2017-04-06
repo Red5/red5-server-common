@@ -73,7 +73,13 @@ public abstract class AbstractStream implements IStream {
     /**
      * Timestamp the stream was created.
      */
-    protected long creationTime;
+    protected long creationTime = System.currentTimeMillis();
+    
+
+    /**
+     * Timestamp the stream was started.
+     */
+    protected long startTime;
 
     /**
      * Lock for protecting critical sections
@@ -174,6 +180,15 @@ public abstract class AbstractStream implements IStream {
      */
     public long getCreationTime() {
         return creationTime;
+    }
+
+    /**
+     * Returns timestamp at which the stream was started.
+     * 
+     * @return started timestamp
+     */
+    public long getStartTime() {
+        return startTime;
     }
 
     /**

@@ -22,7 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +44,7 @@ import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
 import org.red5.codec.StreamCodecInfo;
+import org.red5.io.amf.Output;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.Red5;
 import org.red5.server.api.event.IEvent;
@@ -70,6 +76,7 @@ import org.red5.server.net.rtmp.event.IRTMPEvent;
 import org.red5.server.net.rtmp.event.Invoke;
 import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
+import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
 import org.red5.server.stream.message.RTMPMessage;
@@ -346,7 +353,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                             // create new RTMP message, initialize it and push through pipe
                             RTMPMessage msg = RTMPMessage.build(rtmpEvent, eventTime);
                             livePipe.pushMessage(msg);
-                        } else {
+                        } else if (log.isDebugEnabled()) {
                             log.debug("Live pipe was null, message was not pushed");
                         }
                     } catch (IOException err) {
@@ -519,6 +526,29 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                 log.error("Error in notifyBroadcastStart", t);
             }
         }
+        // send metadata for creation and start dates
+        IoBuffer buf = IoBuffer.allocate(256);
+        buf.setAutoExpand(true);
+        Output out = new Output(buf);
+        out.writeString("onMetaData");
+        Map<Object, Object> params = new HashMap<>();
+        Calendar cal = GregorianCalendar.getInstance();
+        cal.setTimeInMillis(creationTime);
+        params.put("creationdate", ZonedDateTime.ofInstant(cal.toInstant(), ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT));
+        cal.setTimeInMillis(startTime);
+        params.put("startdate", ZonedDateTime.ofInstant(cal.toInstant(), ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT));
+        if (log.isDebugEnabled()) {
+            log.debug("Params: {}", params);
+        }
+        out.writeMap(params);
+        buf.flip();
+        Notify notify = new Notify(buf);
+        notify.setAction("onMetaData");
+        notify.setHeader(new Header());
+        notify.getHeader().setDataType(Notify.TYPE_STREAM_METADATA);
+        notify.getHeader().setStreamId(0);
+        notify.setTimestamp(0);
+        dispatchEvent(notify);
     }
 
     /**
@@ -842,7 +872,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         IConsumerService consumerManager = (IConsumerService) getScope().getContext().getBean(IConsumerService.KEY);
         connMsgOut = consumerManager.getConsumerOutput(this);
         if (connMsgOut != null && connMsgOut.subscribe(this, null)) {
-            creationTime = System.currentTimeMillis();
+            // technically this would be a 'start' time
+            startTime = System.currentTimeMillis();
             closed = false;
         } else {
             log.warn("Subscribe failed");

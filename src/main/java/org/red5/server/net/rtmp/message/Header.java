@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
  */
 public class Header implements Constants, Cloneable, Externalizable {
 
-    private static final long serialVersionUID = 8982665579411495024L;
+    private static final long serialVersionUID = 8982665579411495026L;
 
     public enum HeaderType {
         HEADER_NEW, HEADER_SAME_SOURCE, HEADER_TIMER_CHANGE, HEADER_CONTINUE;
@@ -65,9 +65,9 @@ public class Header implements Constants, Cloneable, Externalizable {
     private Number streamId = 0.0d;
 
     /**
-     * Extended Timestamp
+     * Using extended timestamps
      */
-    private int extendedTimestamp;
+    private boolean extended;
 
     /**
      * Getter for channel id
@@ -146,25 +146,6 @@ public class Header implements Constants, Cloneable, Externalizable {
     }
 
     /**
-     * Getter for Extended Timestamp
-     *
-     * @return Extended Timestamp
-     */
-    public int getExtendedTimestamp() {
-        return extendedTimestamp;
-    }
-
-    /**
-     * Setter for Extended Timestamp
-     *
-     * @param extendedTimestamp
-     *            Extended Timestamp
-     */
-    public void setExtendedTimestamp(int extendedTimestamp) {
-        this.extendedTimestamp = extendedTimestamp;
-    }
-
-    /**
      * Getter for timer
      *
      * @return Timer
@@ -184,6 +165,14 @@ public class Header implements Constants, Cloneable, Externalizable {
         this.timerDelta = 0;
     }
 
+    public void setTimerBase(int timerBase) {
+        this.timerBase = timerBase;
+    }
+
+    public int getTimerBase() {
+        return timerBase;
+    }
+
     public void setTimerDelta(int timerDelta) {
         this.timerDelta = timerDelta;
     }
@@ -192,12 +181,12 @@ public class Header implements Constants, Cloneable, Externalizable {
         return timerDelta;
     }
 
-    public void setTimerBase(int timerBase) {
-        this.timerBase = timerBase;
+    public void setExtended(boolean extended) {
+        this.extended = extended;
     }
 
-    public int getTimerBase() {
-        return timerBase;
+    public boolean isExtended() {
+        return extended;
     }
 
     public boolean isEmpty() {
@@ -213,7 +202,6 @@ public class Header implements Constants, Cloneable, Externalizable {
         result = prime * result + size;
         result = prime * result + streamId.intValue();
         result = prime * result + getTimer();
-        result = prime * result + extendedTimestamp;
         return result;
     }
 
@@ -224,20 +212,20 @@ public class Header implements Constants, Cloneable, Externalizable {
             return false;
         }
         final Header header = (Header) other;
-        return (header.getChannelId() == channelId && header.getDataType() == dataType && header.getSize() == size && header.getTimer() == this.getTimer() && header.getStreamId() == streamId && header.getExtendedTimestamp() == extendedTimestamp);
+        return (header.getChannelId() == channelId && header.getDataType() == dataType && header.getSize() == size && header.getTimer() == this.getTimer() && header.getStreamId() == streamId);
     }
 
     /** {@inheritDoc} */
     @Override
     public Header clone() {
         final Header header = new Header();
+        header.setDataType(dataType);
         header.setChannelId(channelId);
+        header.setSize(size);
+        header.setStreamId(streamId);
+        header.setExtended(extended);
         header.setTimerBase(timerBase);
         header.setTimerDelta(timerDelta);
-        header.setSize(size);
-        header.setDataType(dataType);
-        header.setStreamId(streamId);
-        header.setExtendedTimestamp(extendedTimestamp);
         return header;
     }
 
@@ -246,9 +234,9 @@ public class Header implements Constants, Cloneable, Externalizable {
         channelId = in.readInt();
         size = in.readInt();
         streamId = (Number) in.readDouble();
+        extended = in.readBoolean();
         timerBase = in.readInt();
         timerDelta = in.readInt();
-        extendedTimestamp = in.readInt();
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -256,9 +244,9 @@ public class Header implements Constants, Cloneable, Externalizable {
         out.writeInt(channelId);
         out.writeInt(size);
         out.writeDouble(streamId.doubleValue());
+        out.writeBoolean(extended);
         out.writeInt(timerBase);
         out.writeInt(timerDelta);
-        out.writeInt(extendedTimestamp);
     }
 
     /* (non-Javadoc)
@@ -270,7 +258,7 @@ public class Header implements Constants, Cloneable, Externalizable {
         if (isEmpty()) {
             return "empty";
         } else {
-            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extendedTimestamp=" + extendedTimestamp + "]";
+            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extended=" +  extended + "]";
         }
     }
 

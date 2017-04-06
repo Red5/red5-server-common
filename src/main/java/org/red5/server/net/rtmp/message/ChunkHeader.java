@@ -29,12 +29,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * RTMP chunk header 
+ * RTMP chunk header
+ * 
  * <pre>
  * rtmp_specification_1.0.pdf (5.3.1.1 page 12)
  * </pre>
  */
 public class ChunkHeader implements Constants, Cloneable, Externalizable {
+
     protected static final Logger log = LoggerFactory.getLogger(ChunkHeader.class);
 
     /**
@@ -112,7 +114,8 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
     /**
      * Read chunk header from the buffer.
      * 
-     * @param in buffer
+     * @param in
+     *            buffer
      * @return ChunkHeader instance
      */
     public static ChunkHeader read(IoBuffer in) {
@@ -136,7 +139,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
                     // three byte header
                     h.size = 3;
                     if (remaining < 3) {
-                         throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
+                        throw new ProtocolException("Bad chunk header, at least 3 bytes are expected");
                     }
                     byte b1 = in.get();
                     byte b2 = in.get();
@@ -152,7 +155,7 @@ public class ChunkHeader implements Constants, Cloneable, Externalizable {
             if (h.channelId < 0) {
                 throw new ProtocolException("Bad channel id: " + h.channelId);
             }
-            log.trace("CHUNK header:: byte {}, count {}, header {}, channel {}", String.format("%02x", headerByte), h.size, 0, h.channelId);
+            log.trace("CHUNK header byte {}, count {}, header {}, channel {}", String.format("%02x", headerByte), h.size, 0, h.channelId);
             return h;
         } else {
             // at least one byte for valid decode

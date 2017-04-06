@@ -86,6 +86,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     // maximum size for an RTMP packet in Mb
     protected static int MAX_PACKET_SIZE = 3145728; // 3MB
 
+    //private ThreadLocal<Integer> lastTimestamp = new ThreadLocal<>();
+
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
     }
@@ -101,26 +103,28 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
         final int position = buffer.position();
-        if (log.isTraceEnabled()) {
-            log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
-        }
+        //if (log.isTraceEnabled()) {
+            //log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
+        //}
         // decoded results
         List<Object> result = null;
         if (conn != null) {
-            log.trace("Decoding for connection - session id: {}", conn.getSessionId());
+            //log.trace("Decoding for connection - session id: {}", conn.getSessionId());
             try {
                 // instance list to hold results
-                result = new LinkedList<Object>();
+                result = new LinkedList<>();
                 // get the local decode state
                 RTMPDecodeState state = conn.getDecoderState();
-                log.trace("RTMP decode state {}", state);
+                //if (log.isTraceEnabled()) {
+                    //log.trace("RTMP decode state {}", state);
+                //}
                 if (!conn.getSessionId().equals(state.getSessionId())) {
                     log.warn("Session decode overlap: {} != {}", conn.getSessionId(), state.getSessionId());
                 }
                 int remaining;
                 while ((remaining = buffer.remaining()) > 0) {
                     if (state.canStartDecoding(remaining)) {
-                        log.trace("Can start decoding");
+                        //log.trace("Can start decoding");
                         state.startDecoding();
                     } else {
                         log.trace("Cannot start decoding");
@@ -128,12 +132,12 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                     }
                     final Object decodedObject = decode(conn, state, buffer);
                     if (state.hasDecodedObject()) {
-                        log.trace("Has decoded object");
+                        //log.trace("Has decoded object");
                         if (decodedObject != null) {
                             result.add(decodedObject);
                         }
                     } else if (state.canContinueDecoding()) {
-                        log.trace("Can continue decoding");
+                        //log.trace("Can continue decoding");
                         continue;
                     } else {
                         log.trace("Cannot continue decoding");
@@ -149,9 +153,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 // close connection because we can't parse data from it
                 conn.close();
             } finally {
-                if (log.isTraceEnabled()) {
-                    log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
-                }
+                //if (log.isTraceEnabled()) {
+                    //log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
+                //}
                 buffer.compact();
             }
         } else {
@@ -180,9 +184,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      *             on error
      */
     public Object decode(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) throws ProtocolException {
-        if (log.isTraceEnabled()) {
-            log.trace("Decoding for {}", conn.getSessionId());
-        }
+        //if (log.isTraceEnabled()) {
+            //log.trace("Decoding for {}", conn.getSessionId());
+        //}
         try {
             final byte connectionState = conn.getStateCode();
             switch (connectionState) {
@@ -203,9 +207,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         } catch (RuntimeException e) {
             throw new ProtocolException("Error during decoding", e);
         } finally {
-            if (log.isTraceEnabled()) {
-                log.trace("Decoding finished for {}", conn.getSessionId());
-            }
+            //if (log.isTraceEnabled()) {
+                //log.trace("Decoding finished for {}", conn.getSessionId());
+            //}
         }
     }
 
@@ -222,11 +226,15 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         final int position = in.position();
-        if (log.isTraceEnabled()) {
+        //if (log.isTraceEnabled()) {
             //log.trace("decodePacket - state: {} buffer: {}", state, in);
             //log.trace("decodePacket: position {}, limit {}, {}", position, in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
-            log.trace("decodePacket: position {}, limit {}", position, in.limit());
-        }
+            //log.trace("decodePacket: position {}, limit {}", position, in.limit());
+            //int lastTs = lastTimestamp.get() != null ? lastTimestamp.get() : 0;
+            //if (lastTs == 0 || lastTs >= (MEDIUM_INT_MAX - 100)) {
+                //log.trace("decodePacket:{}\n{}", lastTs, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
+            //}
+        //}
         // get RTMP state holder
         RTMP rtmp = conn.getState();
         // read the chunk header (variable from 1-3 bytes)
@@ -255,6 +263,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             conn.closeChannel(channelId);
             return null;
         }
+        // store the header based on its channel id
+        rtmp.setLastReadHeader(channelId, header);
         // ensure that we dont exceed maximum packet size
         int size = header.getSize();
         if (size > MAX_PACKET_SIZE) {
@@ -266,8 +276,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         // get the size of our chunks
         int readChunkSize = rtmp.getReadChunkSize();
-        // store the header based on its channel id
-        rtmp.setLastReadHeader(channelId, header);
         // check to see if this is a new packet or continue decoding an existing one
         Packet packet = rtmp.getLastReadPacket(channelId);
         if (packet == null) {
@@ -278,13 +286,13 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         // get the packet data
         IoBuffer buf = packet.getData();
-        if (log.isTraceEnabled()) {
-            log.trace("Source buffer position: {}, limit: {}, packet-buf.position {}, packet size: {}", new Object[] { in.position(), in.limit(), buf.position(), header.getSize() });
-        }
+        //if (log.isTraceEnabled()) {
+            //log.trace("Source buffer position: {}, limit: {}, packet-buf.position {}, packet size: {}", new Object[] { in.position(), in.limit(), buf.position(), header.getSize() });
+        //}
         // read chunk
         int length = Math.min(buf.remaining(), readChunkSize);
         if (in.remaining() < length) {
-            log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
+            //log.debug("Chunk too small, buffering ({},{})", in.remaining(), length);
             // how much more data we need to continue?
             state.bufferDecoding(in.position() - position + length);
             // we need to move back position so header will be available during another decode round
@@ -293,35 +301,33 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         // get the chunk from our input
         byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
-        if (log.isTraceEnabled()) {
-            log.trace("Read chunkSize: {}, length: {}, chunk: {}", readChunkSize, length, Hex.encodeHexString(chunk));
-        }
+        //if (log.isTraceEnabled()) {
+            //log.trace("Read chunkSize: {}, length: {}, chunk: {}", readChunkSize, length, Hex.encodeHexString(chunk));
+        //}
         // move the position
         in.skip(length);
         // put the chunk into the packet
         buf.put(chunk);
         if (buf.hasRemaining()) {
-            log.trace("Packet is incomplete ({},{})", buf.remaining(), buf.limit());
+            //if (log.isTraceEnabled()) {
+                //log.trace("Packet is incomplete ({},{})", buf.remaining(), buf.limit());
+            //}
             return null;
         }
-        // flip so we can read / decode the packet data inot a message
+        // flip so we can read / decode the packet data into a message
         buf.flip();
         try {
+            // timebase + timedelta?
+            final int timestamp = header.getTimer();
+            // store the last ts in thread local for debugging
+            //lastTimestamp.set(header.getTimerBase());
             final IRTMPEvent message = decodeMessage(conn, packet.getHeader(), buf);
+            // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it, we give it the 
+            // minimal increment since the last message. To avoid relative time stamps being mis-computed, we don't reset the header we stored.
+            message.setTimestamp(timestamp);
             if (log.isTraceEnabled()) {
                 log.trace("Decoded message: {}", message);
             }
-            // flash will send an earlier time stamp when resetting a video stream with a new key frame. To avoid dropping it,
-            // we give it the minimal increment since the last message. To avoid relative time stamps being mis-computed, we
-            // don't reset the header we stored.
-            //final Header lastReadHeader = rtmp.getLastReadPacketHeader(channelId);
-            //if (lastReadHeader != null && (message instanceof AudioData || message instanceof VideoData) && RTMPUtils.compareTimestamps(lastReadHeader.getTimer(), packet.getHeader().getTimer()) >= 0) {
-                //log.trace("Non-monotonically increasing timestamps; type: {}; adjusting to {}; ts: {}; last: {}", new Object[] { header.getDataType(), lastReadHeader.getTimer() + 1, header.getTimer(), lastReadHeader.getTimer() });
-                //message.setTimestamp(lastReadHeader.getTimer() + 1);
-            //} else {
-                message.setTimestamp(header.getTimer());
-            //}
-            //rtmp.setLastReadPacketHeader(channelId, packet.getHeader());
             packet.setMessage(message);
             if (message instanceof ChunkSize) {
                 ChunkSize chunkSizeMsg = (ChunkSize) message;
@@ -330,12 +336,17 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 log.debug("Abort packet detected");
                 // client is aborting a message, reset the packet because the next chunk will start a new packet
                 Abort abort = (Abort) message;
+                rtmp.setLastReadPacket(abort.getChannelId(), null);
                 packet = null;
-                rtmp.setLastReadPacket(abort.getChannelId(), packet);
             }
-            // collapse the time stamps on the last packet so that it works right for chunk type 3 later
+            // collapse the time stamps on the last header after decode is complete
             Header lastHeader = rtmp.getLastReadHeader(channelId);
-            lastHeader.setTimerBase(header.getTimer());
+            lastHeader.setTimerBase(timestamp);
+            // clear the delta
+            lastHeader.setTimerDelta(0);
+            if (log.isTraceEnabled()) {
+                log.trace("Last read header after decode: {}", lastHeader);
+            }
         } finally {
             rtmp.setLastReadPacket(channelId, null);
         }
@@ -356,16 +367,16 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      * @return Decoded header
      */
     public Header decodeHeader(ChunkHeader chh, RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
-        if (log.isTraceEnabled()) {
+        //if (log.isTraceEnabled()) {
             //log.trace("decodeHeader - chh: {} input: {}", chh, Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
-            log.trace("decodeHeader - chh: {}", chh);
-        }
-        final int remaining = in.remaining();
+            //log.trace("decodeHeader - chh: {}", chh);
+        //}
         final int channelId = chh.getChannelId();
+        // identifies the header type of the four types
         final byte headerSize = chh.getFormat();
         Header lastHeader = rtmp.getLastReadHeader(channelId);
         if (log.isTraceEnabled()) {
-            log.trace("lastHeader: {}", lastHeader);
+            log.trace("{} lastHeader: {}", Header.HeaderType.values()[headerSize], lastHeader);
         }
         // got a non-new header for a channel which has no last-read header
         if (headerSize != HEADER_NEW && lastHeader == null) {
@@ -383,77 +394,96 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         int headerLength = RTMPUtils.getHeaderLength(headerSize);
         headerLength += chh.getSize() - 1;
-        if (log.isTraceEnabled()) {
-            log.trace("headerLength: {}", headerLength);
-        }
-        if (remaining < headerLength) {
-            log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
+//        if (log.isTraceEnabled()) {
+//            log.trace("headerLength: {}", headerLength);
+//        }
+        if (in.remaining() < headerLength) {
+            //log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
             state.bufferDecoding(headerLength);
             return null;
         }
-        int timeValue;
+        int timeBase = 0, timeDelta = 0;
         Header header = new Header();
         header.setChannelId(channelId);
         switch (headerSize) {
-            case HEADER_NEW:
+            case HEADER_NEW: // type 0
                 // an absolute time value
-                timeValue = RTMPUtils.readUnsignedMediumInt(in);
+                timeBase = RTMPUtils.readUnsignedMediumInt(in);
                 header.setSize(RTMPUtils.readUnsignedMediumInt(in));
                 header.setDataType(in.get());
                 header.setStreamId(RTMPUtils.readReverseInt(in));
-                if (timeValue == 0xffffff) {
-                    timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-                    header.setExtendedTimestamp(timeValue);
+                // read the extended timestamp if we have the indication that it exists
+                if (timeBase >= MEDIUM_INT_MAX) {
+                    long ext = in.getUnsignedInt();
+                    timeBase = (int) (ext ^ (ext >>> 32));
+                    if (log.isTraceEnabled()) {
+                        log.trace("Extended time read: {}", timeBase);
+                    }
+                    header.setExtended(true);
                 }
-                header.setTimerBase(timeValue);
-                header.setTimerDelta(0);
+                header.setTimerBase(timeBase);
+                header.setTimerDelta(timeDelta);
                 break;
-            case HEADER_SAME_SOURCE:
+            case HEADER_SAME_SOURCE: // type 1
+                // time base from last header
+                timeBase = lastHeader.getTimerBase();
                 // a delta time value
-                timeValue = RTMPUtils.readUnsignedMediumInt(in);
+                timeDelta = RTMPUtils.readUnsignedMediumInt(in);
                 header.setSize(RTMPUtils.readUnsignedMediumInt(in));
                 header.setDataType(in.get());
                 header.setStreamId(lastHeader.getStreamId());
-                if (timeValue == 0xffffff) {
-                    timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-                    header.setExtendedTimestamp(timeValue);
-                } else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-                    log.trace("Audio with zero delta; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
+                // read the extended timestamp if we have the indication that it exists
+                if (timeDelta >= MEDIUM_INT_MAX) {
+                    long ext = in.getUnsignedInt();
+                    timeDelta = (int) (ext ^ (ext >>> 32));
+                    header.setExtended(true);
                 }
-                header.setTimerBase(lastHeader.getTimerBase());
-                header.setTimerDelta(timeValue);
+                header.setTimerBase(timeBase);
+                header.setTimerDelta(timeDelta);
                 break;
-            case HEADER_TIMER_CHANGE:
+            case HEADER_TIMER_CHANGE: // type 2
+                // time base from last header
+                timeBase = lastHeader.getTimerBase();
                 // a delta time value
-                timeValue = RTMPUtils.readUnsignedMediumInt(in);
+                timeDelta = RTMPUtils.readUnsignedMediumInt(in);
                 header.setSize(lastHeader.getSize());
                 header.setDataType(lastHeader.getDataType());
                 header.setStreamId(lastHeader.getStreamId());
-                if (timeValue == 0xffffff) {
-                    timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-                    header.setExtendedTimestamp(timeValue);
-                } else if (timeValue == 0 && header.getDataType() == TYPE_AUDIO_DATA) {
-                    log.trace("Audio with zero delta; ChannelId: {}; DataType: {}; HeaderSize: {}", new Object[] { header.getChannelId(), header.getDataType(), headerSize });
+                // read the extended timestamp if we have the indication that it exists
+                if (timeDelta >= MEDIUM_INT_MAX) {
+                    long ext = in.getUnsignedInt();
+                    timeDelta = (int) (ext ^ (ext >>> 32));
+                    header.setExtended(true);
                 }
-                header.setTimerBase(lastHeader.getTimerBase());
-                header.setTimerDelta(timeValue);
+                header.setTimerBase(timeBase);
+                header.setTimerDelta(timeDelta);
                 break;
-            case HEADER_CONTINUE:
+            case HEADER_CONTINUE: // type 3
+                // time base from last header
+                timeBase = lastHeader.getTimerBase();
+                timeDelta = lastHeader.getTimerDelta();
                 header.setSize(lastHeader.getSize());
                 header.setDataType(lastHeader.getDataType());
                 header.setStreamId(lastHeader.getStreamId());
-                header.setTimerBase(lastHeader.getTimerBase());
-                header.setTimerDelta(lastHeader.getTimerDelta());
-                if (lastHeader.getExtendedTimestamp() != 0) {
-                    timeValue = (int) (in.getUnsignedInt() & Integer.MAX_VALUE);
-                    header.setExtendedTimestamp(timeValue);
-                    log.trace("HEADER_CONTINUE with extended timestamp: {}", timeValue);
+                // read the extended timestamp if we have the indication that it exists
+                // This field is present in Type 3 chunks when the most recent Type 0, 1, or 2 chunk for the same chunk stream ID
+                // indicated the presence of an extended timestamp field
+                if (lastHeader.isExtended()) {
+                    long ext = in.getUnsignedInt();
+                    int timeExt = (int) (ext ^ (ext >>> 32));
+                    if (log.isTraceEnabled()) {
+                        log.trace("Extended time read: {} {}", ext, timeExt);
+                    }
+                    timeBase = timeExt;
+                    header.setExtended(true);
                 }
+                header.setTimerBase(timeBase);
+                header.setTimerDelta(timeDelta);
                 break;
             default:
-                throw new ProtocolException(String.format("Unexpected header size: %s", headerSize));
+                throw new ProtocolException(String.format("Unexpected header: %s", headerSize));
         }
-        log.trace("CHUNK, D, {}, {}", header, headerSize);
+        log.trace("Decoded chunk {} {}", Header.HeaderType.values()[headerSize], header);
         return header;
     }
 
@@ -1116,7 +1146,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     /**
      * Set the maximum allowed packet size. Default is 3 Mb.
      * 
-     * @param maxPacketSize
+     * @param maxPacketSize maximum allowed size for a packet
      */
     public static void setMaxPacketSize(int maxPacketSize) {
         MAX_PACKET_SIZE = maxPacketSize;
