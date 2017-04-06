@@ -143,7 +143,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
         }
         // normally the message is expected not to be dropped
         if (!dropMessage(channelId, message)) {
-            log.trace("Header time: {} message timestamp: {}", header.getTimer(), message.getTimestamp());
+            //log.trace("Header time: {} message timestamp: {}", header.getTimer(), message.getTimestamp());
             IoBuffer data = encodeMessage(header, message);
             if (data != null) {
                 RTMP rtmp = ((RTMPConnection) Red5.getConnectionLocal()).getState();
@@ -318,7 +318,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                 if (isDroppable && message instanceof VideoData) {
                     VideoData video = (VideoData) message;
                     if (video.getFrameType() == FrameType.KEYFRAME) {
-                        // if its a key frame the inter and disposible checks can be skipped
+                        // if its a key frame the inter and disposable checks can be skipped
                         if (log.isDebugEnabled()) {
                             log.debug("Resuming stream with key frame; message: {}", message);
                         }
