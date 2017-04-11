@@ -70,14 +70,17 @@ public class HLSMuxer extends AbstractMuxer  {
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 	protected static Logger logger = LoggerFactory.getLogger(HLSMuxer.class);
+	public final static String  HLS_LIST_SIZE = "40";
 
 
 
 	public HLSMuxer() {
 		extension = ".m3u8";
 		format = "hls";
-		options.put("hls_list_size", "40");
+		options.put("hls_list_size", HLS_LIST_SIZE);
 		options.put("hls_time", "2");
+		options.put("hls_flags", "delete_segments");
+		options.put("hls_wrap", HLS_LIST_SIZE);
 	}
 
 	public boolean prepare(AVFormatContext inputFormatContext) {
