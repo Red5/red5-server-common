@@ -76,6 +76,7 @@ import org.red5.server.net.rtmp.event.IRTMPEvent;
 import org.red5.server.net.rtmp.event.Invoke;
 import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
+import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
@@ -256,6 +257,10 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         return;
                     }
                     int eventTime = rtmpEvent.getTimestamp();
+                    // verify and / or set source type
+                    if (rtmpEvent.getSourceType() != Constants.SOURCE_TYPE_LIVE) {
+                        rtmpEvent.setSourceType(Constants.SOURCE_TYPE_LIVE);
+                    }
                     /*
                     if (log.isTraceEnabled()) {
                         // If this is first packet save its timestamp; expect it is

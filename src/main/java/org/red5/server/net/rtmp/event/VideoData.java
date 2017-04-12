@@ -229,6 +229,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         if (header != null) {
             result.setHeader(header.clone());
         }
+        result.setSourceType(sourceType);
         return result;
     }
 

@@ -28,10 +28,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
+import org.red5.codec.IVideoStreamCodec.FrameData;
 import org.red5.codec.StreamCodecInfo;
 import org.red5.io.amf.Output;
 import org.red5.io.utils.ObjectMap;
@@ -135,13 +137,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     private int bufferCheckInterval = 0;
 
     /**
-     * Number of pending messages at which a
-     * 
-     * <pre>
-     * NetStream.Play.InsufficientBW
-     * </pre>
-     * 
-     * message is generated for VOD streams.
+     * Number of pending messages at which a <tt>NetStream.Play.InsufficientBW</tt> message is generated for VOD streams.
      */
     private int underrunTrigger = 10;
 
@@ -225,14 +221,14 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /**
      * List of pending operations
      */
-    private ConcurrentLinkedQueue<Runnable> pendingOperations = new ConcurrentLinkedQueue<Runnable>();
+    private ConcurrentLinkedQueue<Runnable> pendingOperations = new ConcurrentLinkedQueue<>();
 
     // Keep count of dropped packets so we can log every so often.
-    private long droppedPacketsCount = 0;
+    private long droppedPacketsCount;
 
     private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 
-    private long droppedPacketsCountLogInterval = 1 * 60 * 1000L; // 5 minutes
+    private long droppedPacketsCountLogInterval = 60 * 1000L;
 
     /**
      * Constructs a new PlayEngine.
@@ -403,11 +399,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 }
                 break;
         }
-        log.debug("Play decision is {} (0=Live, 1=File, 2=Wait, 3=N/A)", playDecision);
         IMessage msg = null;
         currentItem = item;
         long itemLength = item.getLength();
-        log.debug("Item length: {}", itemLength);
+        if (log.isDebugEnabled()) {
+            log.debug("Play decision is {} (0=Live, 1=File, 2=Wait, 3=N/A) item length: {}", playDecision, itemLength);
+        }
         switch (playDecision) {
             case 0:
                 // get source input without create
@@ -515,6 +512,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         }
         subscriberStream.onChange(StreamState.PLAYING, currentItem, !pullMode);
         if (withReset) {
+            log.debug("Resetting times");
             long currentTime = System.currentTimeMillis();
             playbackStart = currentTime - streamOffset;
             nextCheckBufferUnderrun = currentTime + bufferCheckInterval;
@@ -537,8 +535,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     private final void playLive() throws IOException {
         // change state
         subscriberStream.setState(StreamState.PLAYING);
-        streamOffset = 0;
-        streamStartTS.set(-1);
         IMessageInput in = msgInReference.get();
         IMessageOutput out = msgOutReference.get();
         if (in != null && out != null) {
@@ -550,12 +546,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                 //check for metadata to send
                 if (metaData != null) {
                     log.debug("Metadata is available");
-                    RTMPMessage metaMsg = RTMPMessage.build(metaData, 0);
-                    try {
-                        out.pushMessage(metaMsg);
-                    } catch (IOException e) {
-                        log.warn("Error sending metadata", e);
-                    }
+                    RTMPMessage metaMsg = RTMPMessage.build(metaData, metaData.getTimestamp());
+                    sendMessage(metaMsg);
                 } else {
                     log.debug("No metadata available");
                 }
@@ -571,31 +563,17 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                         IoBuffer config = videoCodec.getDecoderConfiguration();
                         if (config != null) {
                             log.debug("Decoder configuration is available for {}", videoCodec.getName());
-                            //log.debug("Dump:\n{}", Hex.encodeHex(config.array()));
-                            VideoData conf = new VideoData(config.asReadOnlyBuffer());
-                            log.trace("Configuration ts: {}", conf.getTimestamp());
-                            RTMPMessage confMsg = RTMPMessage.build(conf);
-                            try {
-                                log.debug("Pushing video decoder configuration");
-                                out.pushMessage(confMsg);
-                            } finally {
-                                conf.release();
-                            }
+                            VideoData conf = new VideoData(config, true);
+                            log.debug("Pushing video decoder configuration");
+                            sendMessage(RTMPMessage.build(conf, conf.getTimestamp()));
                         }
-                        // check for a keyframe to send
-                        IoBuffer keyFrame = videoCodec.getKeyframe();
-                        if (keyFrame != null) {
+                        // check for keyframes to send
+                        FrameData[] keyFrames = videoCodec.getKeyframes();
+                        for (FrameData keyframe : keyFrames) {
                             log.debug("Keyframe is available");
-                            VideoData video = new VideoData(keyFrame.asReadOnlyBuffer());
-                            log.trace("Keyframe ts: {}", video.getTimestamp());
-                            //log.debug("Dump:\n{}", Hex.encodeHex(keyFrame.array()));
-                            RTMPMessage videoMsg = RTMPMessage.build(video);
-                            try {
-                                log.debug("Pushing keyframe");
-                                out.pushMessage(videoMsg);
-                            } finally {
-                                video.release();
-                            }
+                            VideoData video = new VideoData(keyframe.getFrame(), true);
+                            log.debug("Pushing keyframe");
+                            sendMessage(RTMPMessage.build(video, video.getTimestamp()));
                         }
                     } else {
                         log.debug("No video decoder configuration available");
@@ -608,16 +586,9 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                         IoBuffer config = audioCodec.getDecoderConfiguration();
                         if (config != null) {
                             log.debug("Decoder configuration is available for {}", audioCodec.getName());
-                            //log.debug("Dump:\n{}", Hex.encodeHex(config.array()));
                             AudioData conf = new AudioData(config.asReadOnlyBuffer());
-                            log.trace("Configuration ts: {}", conf.getTimestamp());
-                            RTMPMessage confMsg = RTMPMessage.build(conf);
-                            try {
-                                log.debug("Pushing audio decoder configuration");
-                                out.pushMessage(confMsg);
-                            } finally {
-                                conf.release();
-                            }
+                            log.debug("Pushing audio decoder configuration");
+                            sendMessage(RTMPMessage.build(conf, conf.getTimestamp()));
                         }
                     } else {
                         log.debug("No audio decoder configuration available");
@@ -643,14 +614,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         IMessage msg = null;
         // change state
         subscriberStream.setState(StreamState.PLAYING);
-        streamOffset = 0;
-        streamStartTS.set(-1);
         if (withReset) {
             releasePendingMessage();
         }
         sendVODInitCM(currentItem);
-        // Don't use pullAndPush to detect IOExceptions prior to sending
-        // NetStream.Play.Start
+        // Don't use pullAndPush to detect IOExceptions prior to sending NetStream.Play.Start
         if (currentItem.getStart() > 0) {
             streamOffset = sendVODSeekCM((int) currentItem.getStart());
             // We seeked to the nearest keyframe so use real timestamp now
@@ -1030,67 +998,68 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     }
 
     /**
-     * Send RTMP message
+     * Send an RTMP message
      * 
-     * @param messageIn
-     *            RTMP message
+     * @param messageIn incoming RTMP message
      */
     private void sendMessage(RTMPMessage messageIn) {
+        IRTMPEvent eventIn = messageIn.getBody();
         IRTMPEvent event;
-        IoBuffer dataReference;
-        switch (messageIn.getBody().getDataType()) {
+        switch (eventIn.getDataType()) {
             case Constants.TYPE_AGGREGATE:
-                dataReference = ((Aggregate) messageIn.getBody()).getData();
-                event = new Aggregate(dataReference);
-                event.setTimestamp(messageIn.getBody().getTimestamp());
+                event = new Aggregate(((Aggregate) eventIn).getData());
                 break;
             case Constants.TYPE_AUDIO_DATA:
-                dataReference = ((AudioData) messageIn.getBody()).getData();
-                event = new AudioData(dataReference);
-                event.setTimestamp(messageIn.getBody().getTimestamp());
+                event = new AudioData(((AudioData) eventIn).getData());
                 break;
             case Constants.TYPE_VIDEO_DATA:
-                dataReference = ((VideoData) messageIn.getBody()).getData();
-                event = new VideoData(dataReference);
-                event.setTimestamp(messageIn.getBody().getTimestamp());
+                event = new VideoData(((VideoData) eventIn).getData());
                 break;
             default:
-                dataReference = ((Notify) messageIn.getBody()).getData();
-                event = new Notify(dataReference);
-                event.setTimestamp(messageIn.getBody().getTimestamp());
+                event = new Notify(((Notify) eventIn).getData());
                 break;
         }
-        // Create the RTMP Message to send. Make sure to propagate the source type so that the connection can decide to drop packets
-        // if the connection is congested for LIVE streams.
-        RTMPMessage messageOut = RTMPMessage.build(event, messageIn.getBody().getSourceType());
-        //get the current timestamp from the message
-        int ts = messageOut.getBody().getTimestamp();
+        // get the incoming event time
+        int eventTime = eventIn.getTimestamp();
+        // get the incoming event source type and set on the outgoing event
+        event.setSourceType(eventIn.getSourceType());
+        // instance the outgoing message
+        RTMPMessage messageOut = RTMPMessage.build(event, eventTime);
         if (log.isTraceEnabled()) {
-            log.trace("sendMessage: streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS.get(), currentItem.getLength(), streamOffset, ts });
-            final long delta = System.currentTimeMillis() - playbackStart;
-            log.trace("clientBufferDetails: timestamp {} delta {} buffered {}", new Object[] { lastMessageTs, delta, lastMessageTs - delta });
+            log.trace("Source type - in: {} out: {}", eventIn.getSourceType(), messageOut.getBody().getSourceType());
+            long delta = System.currentTimeMillis() - playbackStart;
+            log.trace("sendMessage: streamStartTS {}, length {}, streamOffset {}, timestamp {} last timestamp {} delta {} buffered {}", new Object[] { streamStartTS.get(), currentItem.getLength(), streamOffset, eventTime, lastMessageTs, delta, lastMessageTs - delta });
         }
-        // don't reset streamStartTS to 0 for live streams
-        if ((streamStartTS.get() == -1 && (ts > 0 || playDecision != 0)) || streamStartTS.get() > ts) {
-            log.debug("sendMessage: resetting streamStartTS");
-            streamStartTS.compareAndSet(-1, ts);
-            messageOut.getBody().setTimestamp(0);
-        }
-        // relative timestamp adjustment for live streams
-        if (playDecision == 0 && streamStartTS.get() > 0) {
-            // subtract the offset time of when the stream started playing for the client
-            ts -= streamStartTS.get();
-            messageOut.getBody().setTimestamp(ts);
-            if (log.isTraceEnabled()) {
-                log.trace("sendMessage (updated): streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { streamStartTS.get(), currentItem.getLength(), streamOffset, ts });
+        if (playDecision == 1) { // 1 == vod/file
+            if (eventTime > 0 && streamStartTS.compareAndSet(-1, eventTime)) {
+                log.debug("sendMessage: set streamStartTS");
+                messageOut.getBody().setTimestamp(0);
             }
-        }
-        if (streamStartTS.get() > -1 && currentItem.getLength() >= 0) {
-            int duration = ts - streamStartTS.get();
-            if (duration - streamOffset >= currentItem.getLength()) {
-                // sent enough data to client
-                stop();
-                return;
+            if (currentItem.getLength() >= 0) {
+                int duration = eventTime - streamStartTS.get();
+                if (log.isTraceEnabled()) {
+                    log.trace("sendMessage duration={} length={}", duration, currentItem.getLength());
+                }
+                if (duration - streamOffset >= currentItem.getLength()) {
+                    // sent enough data to client
+                    stop();
+                    return;
+                }
+            }
+        } else {
+            // don't reset streamStartTS to 0 for live streams
+            if (eventTime > 0 && streamStartTS.compareAndSet(-1, eventTime)) {
+                log.debug("sendMessage: set streamStartTS");
+            }
+            // relative timestamp adjustment for live streams
+            int startTs = streamStartTS.get();
+            if (startTs > 0) {
+                // subtract the offset time of when the stream started playing for the client
+                eventTime -= startTs;
+                messageOut.getBody().setTimestamp(eventTime);
+                if (log.isTraceEnabled()) {
+                    log.trace("sendMessage (updated): streamStartTS={}, length={}, streamOffset={}, timestamp={}", new Object[] { startTs, currentItem.getLength(), streamOffset, eventTime });
+                }
             }
         }
         doPushMessage(messageOut);
@@ -1471,15 +1440,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
         String sessionId = subscriberStream.getConnection().getSessionId();
-
         if (message instanceof RTMPMessage) {
             IMessageInput msgIn = msgInReference.get();
-            
             RTMPMessage rtmpMessage = (RTMPMessage) message;
             IRTMPEvent body = rtmpMessage.getBody();
             if (body instanceof IStreamData) {
-
-
                 // the subscriber paused 
                 if (subscriberStream.getState() == StreamState.PAUSED) {
                     if (log.isInfoEnabled() && shouldLogPacketDrop()) {
@@ -1489,7 +1454,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     videoFrameDropper.dropPacket(rtmpMessage);
                     return;
                 }
-
                 if (body instanceof VideoData && body.getSourceType() == Constants.SOURCE_TYPE_LIVE) {
                     // We only want to drop packets from a live stream. VOD streams we let it buffer.
                     // We don't want a user watching a movie to see a choppy video due to low bandwidth.
@@ -1509,24 +1473,19 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                     }
                                     return;
                                 }
-
                                 // Implement some sort of back-pressure on video streams. When the client is on a congested
                                 // connection, Red5 cannot send packets fast enough. Mina puts these packets into an
                                 // unbounded queue. If we generate video packets fast enough, the queue would get large
                                 // which may trigger an OutOfMemory exception. To mitigate this, we check the size of
-                                // pending video messages and drop video packets until the queue is below the
-                                // threshold.
-
+                                // pending video messages and drop video packets until the queue is below the threshold.
                                 // only check for frame dropping if the codec supports it
                                 long pendingVideos = pendingVideoMessages();
-
                                 if (log.isTraceEnabled()) {
-                                    log.trace("Pending messages. sessionId={} pending={} threshold={} sequential={} stream={}, count={}",
+                                    log.trace("Pending messages sessionId={} pending={} threshold={} sequential={} stream={}, count={}",
                                             new Object[] { sessionId, pendingVideos, maxPendingVideoFrames,
                                                     numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
                                                     droppedPacketsCount});
                                 }
-
                                 if (!videoFrameDropper.canSendPacket(rtmpMessage, pendingVideos)) {
                                     // drop frame as it depends on other frames that were dropped before
                                     droppedPacketsCount++;
@@ -1551,7 +1510,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                                         numSequentialPendingVideoFrames, subscriberStream.getBroadcastStreamPublishName(),
                                                         droppedPacketsCount});
                                     }
-
                                     // drop because the client has insufficient bandwidth
                                     long now = System.currentTimeMillis();
                                     if (bufferCheckInterval > 0 && now >= nextCheckBufferUnderrun) {

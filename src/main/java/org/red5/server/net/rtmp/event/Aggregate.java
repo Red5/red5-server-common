@@ -274,6 +274,7 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
         if (header != null) {
             result.setHeader(header.clone());
         }
+        result.setSourceType(sourceType);
         return result;
     }
 

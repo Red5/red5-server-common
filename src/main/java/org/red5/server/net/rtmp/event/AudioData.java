@@ -178,6 +178,7 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
         if (header != null) {
             result.setHeader(header.clone());
         }
+        result.setSourceType(sourceType);
         return result;
     }
 

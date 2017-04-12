@@ -37,6 +37,7 @@ public class RTMPMessage extends AbstractMessage {
      */
     private RTMPMessage(IRTMPEvent body) {
         this.body = body;
+        this.body.setSourceType(body.getSourceType());
         this.setMessageType(RTMPType.valueOf(body.getDataType()));
     }
 
@@ -51,6 +52,7 @@ public class RTMPMessage extends AbstractMessage {
     private RTMPMessage(IRTMPEvent body, int eventTime) {
         this.body = body;
         this.body.setTimestamp(eventTime);
+        this.body.setSourceType(body.getSourceType());
         this.setMessageType(RTMPType.valueOf(body.getDataType()));
     }
 
@@ -71,9 +73,7 @@ public class RTMPMessage extends AbstractMessage {
      * @return Immutable RTMPMessage
      */
     public final static RTMPMessage build(IRTMPEvent body) {
-        RTMPMessage msg = new RTMPMessage(body);
-        msg.body.setSourceType(body.getSourceType());
-        return msg;
+        return new RTMPMessage(body);
     }
 
     /**
@@ -86,24 +86,7 @@ public class RTMPMessage extends AbstractMessage {
      * @return Immutable RTMPMessage
      */
     public final static RTMPMessage build(IRTMPEvent body, int eventTime) {
-        RTMPMessage msg = new RTMPMessage(body, eventTime);
-        msg.body.setSourceType(body.getSourceType());
-        return msg;
-    }
-
-    /**
-     * Builder for RTMPMessage.
-     * 
-     * @param body
-     *            event data
-     * @param sourceType
-     *            live or vod
-     * @return Immutable RTMPMessage
-     */
-    public final static RTMPMessage build(IRTMPEvent body, byte sourceType) {
-        RTMPMessage msg = new RTMPMessage(body);
-        msg.body.setSourceType(sourceType);
-        return msg;
+        return new RTMPMessage(body, eventTime);
     }
 
 }

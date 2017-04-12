@@ -188,21 +188,21 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * 
      * @see org.red5.server.net.rtmp.Channel
      */
-    private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
+    private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
     /**
      * Queues of tasks for every channel
      *
      * @see org.red5.server.net.rtmp.ReceivedMessageTaskQueue
      */
-    private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByStreams = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
+    private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByStreams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Client streams
      * 
      * @see org.red5.server.api.stream.IClientStream
      */
-    private transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<Number, IClientStream>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
+    private transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
@@ -217,14 +217,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Hash map that stores pending calls and ids as pairs.
      */
-    private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
+    private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
 
     /**
      * Deferred results set.
      * 
      * @see org.red5.server.net.rtmp.DeferredResult
      */
-    private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<DeferredResult>();
+    private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<>();
 
     /**
      * Last ping round trip time
@@ -274,7 +274,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Map for pending video packets keyed by stream id.
      */
-    private transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<Number, AtomicInteger>(1, 0.9f, 1);
+    private transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Number of (NetStream) streams used.
@@ -284,7 +284,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Remembered stream buffer durations.
      */
-    private transient ConcurrentMap<Number, Integer> streamBuffers = new ConcurrentHashMap<Number, Integer>(1, 0.9f, 1);
+    private transient ConcurrentMap<Number, Integer> streamBuffers = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Maximum time in milliseconds to wait for a valid handshake.
@@ -503,10 +503,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             log.debug("startWaitForHandshake - {}", sessionId);
         }
         // start the handshake checker after maxHandshakeTimeout milliseconds
-        try {
-            waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
-        } catch (TaskRejectedException e) {
-            log.error("WaitForHandshake task was rejected for {}", sessionId, e);
+        if (scheduler != null) {
+            try {
+                waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
+            } catch (TaskRejectedException e) {
+                log.error("WaitForHandshake task was rejected for {}", sessionId, e);
+            }
         }
     }
 
@@ -996,10 +998,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 // dump memory stats
                 log.trace("Memory at close - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
             }
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Already closing..");
-            }
+        } else if (log.isDebugEnabled()) {
+            log.debug("Already closing..");
         }
     }
 
@@ -1365,52 +1365,52 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Handle the incoming message.
      * 
-     * @param message
-     *            message
+     * @param packet
+     *            incoming message packet
      */
-    public void handleMessageReceived(Packet message) {
+    public void handleMessageReceived(Packet packet) {
         if (log.isTraceEnabled()) {
             log.trace("handleMessageReceived - {}", sessionId);
         }
-        final byte dataType = message.getHeader().getDataType();
-        // route these types outside the executor
-        switch (dataType) {
-            case Constants.TYPE_PING:
-            case Constants.TYPE_ABORT:
-            case Constants.TYPE_BYTES_READ:
-            case Constants.TYPE_CHUNK_SIZE:
-            case Constants.TYPE_CLIENT_BANDWIDTH:
-            case Constants.TYPE_SERVER_BANDWIDTH:
-                // pass message to the handler
-                try {
-                    handler.messageReceived(this, message);
-                } catch (Exception e) {
-                    log.error("Error processing received message {}", sessionId, e);
-                }
-                break;
-            default:
-                if (executor != null) {
-                    final String messageType = getMessageType(message);
+        // set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
+        if (maxHandlingTimeout > 0) {
+            packet.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
+        }
+        if (executor != null) {
+            final byte dataType = packet.getHeader().getDataType();
+            // route these types outside the executor
+            switch (dataType) {
+                case Constants.TYPE_PING:
+                case Constants.TYPE_ABORT:
+                case Constants.TYPE_BYTES_READ:
+                case Constants.TYPE_CHUNK_SIZE:
+                case Constants.TYPE_CLIENT_BANDWIDTH:
+                case Constants.TYPE_SERVER_BANDWIDTH:
+                    // pass message to the handler
+                    try {
+                        handler.messageReceived(this, packet);
+                    } catch (Exception e) {
+                        log.error("Error processing received message {}", sessionId, e);
+                    }
+                    break;
+                default:
+                    final String messageType = getMessageType(packet);
                     try {
                         // increment the packet number
                         final long packetNumber = packetSequence.incrementAndGet();
                         if (executorQueueSizeToDropAudioPackets > 0 && currentQueueSize.get() >= executorQueueSizeToDropAudioPackets) {
-                            if (message.getHeader().getDataType() == Constants.TYPE_AUDIO_DATA) {
+                            if (packet.getHeader().getDataType() == Constants.TYPE_AUDIO_DATA) {
                                 // if there's a backlog of messages in the queue. Flash might have sent a burst of messages after a network congestion. Throw away packets that we are able to discard.
                                 log.info("Queue threshold reached. Discarding packet: session=[{}], msgType=[{}], packetNum=[{}]", sessionId, messageType, packetNumber);
                                 return;
                             }
                         }
-                        // set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
-                        if (maxHandlingTimeout > 0) {
-                            message.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
-                        }
-                        int streamId = message.getHeader().getStreamId().intValue();
+                        int streamId = packet.getHeader().getStreamId().intValue();
                         if (log.isTraceEnabled()) {
-                            log.trace("Handling message for streamId: {}, channelId: {} Channels: {}", streamId, message.getHeader().getChannelId(), channels);
+                            log.trace("Handling message for streamId: {}, channelId: {} Channels: {}", streamId, packet.getHeader().getChannelId(), channels);
                         }
                         // create a task to setProcessing the message
-                        ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
+                        ReceivedMessageTask task = new ReceivedMessageTask(sessionId, packet, handler, this);
                         task.setPacketNumber(packetNumber);
                         // create a task queue
                         ReceivedMessageTaskQueue newStreamTasks = new ReceivedMessageTaskQueue(streamId, this);
@@ -1426,13 +1426,19 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                     } catch (Exception e) {
                         log.error("Incoming message handling failed on session=[" + sessionId + "], messageType=[" + messageType + "]", e);
                         if (log.isDebugEnabled()) {
-                            log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
+                            log.debug("Execution rejected on {} - {}", sessionId, RTMP.states[getStateCode()]);
                             log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
                         }
                     }
-                } else {
-                    log.warn("Executor is null on {} state: {}", getSessionId(), RTMP.states[getStateCode()]);
-                }
+            }
+        } else {
+            log.debug("Executor is null on {} state: {}", sessionId, RTMP.states[getStateCode()]);
+            // pass message to the handler
+            try {
+                handler.messageReceived(this, packet);
+            } catch (Exception e) {
+                log.error("Error processing received message {} state: {}", sessionId, RTMP.states[getStateCode()], e);
+            }
         }
     }
 
@@ -1452,7 +1458,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     private void processTasksQueue(final ReceivedMessageTaskQueue currentStreamTasks) {
         int streamId = currentStreamTasks.getStreamId();
         if (log.isTraceEnabled()) {
-           log.trace("Process tasks for streamId {}", streamId);
+            log.trace("Process tasks for streamId {}", streamId);
         }
         final ReceivedMessageTask task = currentStreamTasks.getTaskToProcess();
         if (task != null) {
