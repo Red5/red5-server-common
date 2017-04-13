@@ -86,8 +86,6 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     // maximum size for an RTMP packet in Mb
     protected static int MAX_PACKET_SIZE = 3145728; // 3MB
 
-    //private ThreadLocal<Integer> lastTimestamp = new ThreadLocal<>();
-
     /** Constructs a new RTMPProtocolDecoder. */
     public RTMPProtocolDecoder() {
     }
@@ -317,7 +315,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // flip so we can read / decode the packet data into a message
         buf.flip();
         try {
-            // timebase + timedelta?
+            // timebase + timedelta
             final int timestamp = header.getTimer();
             // store the last ts in thread local for debugging
             //lastTimestamp.set(header.getTimerBase());
@@ -343,7 +341,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             Header lastHeader = rtmp.getLastReadHeader(channelId);
             lastHeader.setTimerBase(timestamp);
             // clear the delta
-            lastHeader.setTimerDelta(0);
+            //lastHeader.setTimerDelta(0);
             if (log.isTraceEnabled()) {
                 log.trace("Last read header after decode: {}", lastHeader);
             }
