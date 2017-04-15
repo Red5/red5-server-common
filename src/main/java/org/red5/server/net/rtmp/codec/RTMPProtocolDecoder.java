@@ -795,10 +795,10 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         return invoke;
     }
 
-	private int readTransactionId(Input input) {
-		Number transactionId = Deserializer.<Number> deserialize(input, Number.class);
+    private int readTransactionId(Input input) {
+        Number transactionId = Deserializer.<Number> deserialize(input, Number.class);
         return transactionId == null ? 0 : transactionId.intValue();
-	}
+    }
 
     /**
      * Decodes ping event.
@@ -1022,7 +1022,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         Input input = new org.red5.io.amf.Input(in);
         String action = Deserializer.deserialize(input, String.class);
         FlexMessage msg = new FlexMessage();
-		msg.setTransactionId(readTransactionId(input));
+        msg.setTransactionId(readTransactionId(input));
         Object[] params = new Object[] {};
         if (in.hasRemaining()) {
             ArrayList<Object> paramList = new ArrayList<>();
