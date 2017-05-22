@@ -1,4 +1,4 @@
-package com.antstreaming.muxer;
+package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
 import static org.bytedeco.javacpp.avformat.av_write_trailer;
@@ -9,13 +9,20 @@ import static org.bytedeco.javacpp.avformat.avio_closep;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.io.FileUtils;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.avcodec.AVCodec;
+import org.bytedeco.javacpp.avcodec.AVCodecContext;
+import org.bytedeco.javacpp.avcodec.AVCodecParameters;
 import org.bytedeco.javacpp.avcodec.AVPacket;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
 import org.bytedeco.javacpp.avformat.AVStream;
@@ -41,13 +48,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 
-public abstract class AbstractMuxer {
+public abstract class Muxer {
 
 	protected String extension;
 	protected String format;
 
 	protected Map<String, String> options = new HashMap();
-	protected static Logger logger = LoggerFactory.getLogger(AbstractMuxer.class);
+	protected static Logger logger = LoggerFactory.getLogger(Muxer.class);
 
 	protected AVFormatContext outputFormatContext;
 
@@ -58,6 +65,10 @@ public abstract class AbstractMuxer {
 
 
 	public static File getRecordFile(IScope scope, String name, String extension) {
+		return getRecordFile(scope, name, extension, true);
+	}	
+	
+	public static File getRecordFile(IScope scope, String name, String extension, boolean renameFile) {
 		// get stream filename generator
 		IStreamFilenameGenerator generator = (IStreamFilenameGenerator) ScopeUtils.getScopeService(scope, IStreamFilenameGenerator.class, DefaultStreamFilenameGenerator.class);
 		// generate filename
@@ -79,15 +90,60 @@ public abstract class AbstractMuxer {
 				file = new File(String.format("%s/webapps/%s/%s", System.getProperty("red5.root"), appScopeName, fileName));
 			}
 		}
+		if (file.exists() && renameFile) {
+			//do not overwrite
+			String parent = file.getParent();
+			int i = 1;
+			File newFile;
+			do {
+				
+				newFile = new File(parent + "/" + name + i + extension);
+				i++;
+			} while(newFile.exists());
+			
+			try {
+				Files.move(Paths.get(file.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()),
+				        StandardCopyOption.ATOMIC_MOVE);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		return file;
 	}
 
-
+    /**
+     * All in one function, it is great for transmuxing.
+     * Just call prepare and then write packets. 
+     * Use {@link #writePacket(AVPacket, AVStream)} to write packets
+     * @param inputFormatContext
+     * @return
+     */
 	public abstract boolean prepare(AVFormatContext inputFormatContext);
+	
+	/**
+	 * Add a new stream with this codec, codecContext and stream Index parameters.
+	 * After adding streams with funcitons need to call prepareIO()
+	 * @param codec
+	 * @param codecContext
+	 * @param streamIndex
+	 * @return
+	 */
+	public abstract boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex);
+	
+	/**
+	 * Add a new stream with copying stream codec pars.
+	 * @param stream
+	 * @return
+	 */
+	//public abstract boolean addStream(AVStream stream);
+	
+	public abstract boolean prepareIO();
 
 	public abstract void writeTrailer();
 	
 	public abstract void writePacket(AVPacket avpacket,  AVStream inStream);
+	
+	public abstract void writePacket(AVPacket pkt);
 
 
 	public File getFile() {

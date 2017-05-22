@@ -1,4 +1,4 @@
-package com.antstreaming;
+package io.antmedia;
 
 import java.util.HashMap;
 import java.util.Map;

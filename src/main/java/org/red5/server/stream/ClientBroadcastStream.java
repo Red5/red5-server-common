@@ -22,8 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -79,10 +83,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-import com.antstreaming.AppSettings;
-import com.antstreaming.muxer.HLSMuxer;
-import com.antstreaming.muxer.Mp4Muxer;
-import com.antstreaming.muxer.MuxAdaptor;
+import io.antmedia.AppSettings;
+import io.antmedia.muxer.HLSMuxer;
+import io.antmedia.muxer.Mp4Muxer;
+import io.antmedia.muxer.MuxAdaptor;
 
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
@@ -197,7 +201,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	 */
 	private boolean automaticHlsRecording;
 
-	private WeakReference<com.antstreaming.muxer.MuxAdaptor> muxAdaptor;
+	private WeakReference<MuxAdaptor> muxAdaptor;
 
 
 	/**
@@ -898,7 +902,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		}
 
 		if (automaticMp4Recording || automaticHlsRecording)  {
-			MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
+			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
+			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor();
 
 			IStreamCapableConnection conn = getConnection();
 			IContext context = conn.getScope().getContext(); 
@@ -911,17 +916,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
 			}
 
-			if (automaticMp4Recording && mp4MuxingEnabled) {
-				Mp4Muxer mp4Muxer = new Mp4Muxer();
-				mp4Muxer.setAddDateTimeToFileNames(addDateTimeToMp4FileName);
-				localMuxAdaptor.addMuxer(mp4Muxer);
+			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
+			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording);
 
-
-			}
-
-			if (automaticHlsRecording) {
-				localMuxAdaptor.addMuxer(new HLSMuxer());
-			}
 
 			try {
 				if (conn == null) {
@@ -941,6 +938,23 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 
 
+	}
+
+	private MuxAdaptor initializeMuxAdaptor() {
+		MuxAdaptor muxAdaptor = null;
+		try {
+			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.TransraterAdaptor");
+			List<Integer> resolutionList = Arrays.asList(720, 480, 360, 240);
+
+			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(String.class, List.class).newInstance(this, resolutionList);
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		if (muxAdaptor == null) {
+			muxAdaptor = new MuxAdaptor(this);
+		}
+
+		return muxAdaptor;
 	}
 
 	/** {@inheritDoc} */

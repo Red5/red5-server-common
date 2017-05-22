@@ -1,4 +1,4 @@
-package com.antstreaming.muxer;
+package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avcodec.*;
 import static org.bytedeco.javacpp.avformat.*;
@@ -24,11 +24,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.PointerPointer;
 import org.bytedeco.javacpp.avformat;
+import org.bytedeco.javacpp.avcodec.AVCodec;
 import org.bytedeco.javacpp.avcodec.AVCodecParameters;
 import org.bytedeco.javacpp.avcodec.AVPacket;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
@@ -67,21 +69,23 @@ import org.springframework.util.concurrent.FailureCallback;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.SuccessCallback;
 
-public class Mp4Muxer extends AbstractMuxer {
+public class Mp4Muxer extends Muxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 	private File fileTmp;
 	private boolean addDateTimeToMp4FileName;
+	private int totalSize = 0;
 
-
+ 
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
 	public Mp4Muxer() {
 
 		extension = ".mp4";
 		format = "mp4";
-		options.put("movflags", "faststart+rtphint");  	
+		//options.put("movflags", "faststart+rtphint");  	
+		options.put("movflags", "faststart");  
 	}
 
 	public static int[] mp4_supported_codecs = {
@@ -124,8 +128,12 @@ public class Mp4Muxer extends AbstractMuxer {
 
 
 	private boolean isCodecSupported(AVCodecParameters avCodecParameters) {
+		return isCodecSupported(avCodecParameters.codec_id());
+	}
+
+	private boolean isCodecSupported(int codecId) {
 		for (int i=0; i< mp4_supported_codecs.length; i++) {
-			if (avCodecParameters.codec_id() == mp4_supported_codecs[i]) {
+			if (codecId == mp4_supported_codecs[i]) {
 				return true;
 			}
 		}
@@ -136,7 +144,7 @@ public class Mp4Muxer extends AbstractMuxer {
 	@Override
 	public void init(IScope scope, String name) {
 		if (addDateTimeToMp4FileName) {
-			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
+			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
 			Date dt = new Date();
 			name = name + "-" + dtFormat.format(dt);
 		}
@@ -149,18 +157,49 @@ public class Mp4Muxer extends AbstractMuxer {
 		}
 	}
 
-	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
-		outputFormatContext= new AVFormatContext(null);
 
-		fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
+	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
 
-		int ret = avformat_alloc_output_context2(outputFormatContext, null, format, fileTmp.getAbsolutePath());
-		if (ret < 0) {
-			logger.info("Could not create output context\n");
+		AVFormatContext outputContext = getOutputFormatContext();
+
+		if (outputContext == null) {
 			return false;
 		}
+		if (isCodecSupported(codecContext.codec_id())) {
+			registeredStreamIndexList.add(streamIndex);
+			AVStream out_stream = avformat_new_stream(outputContext, codec);
+			
+			out_stream.codec().time_base(codecContext.time_base());
+			int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
+			
+			if (ret < 0) {
+				System.out.println("codec context cannot be copied");
+			}
+			out_stream.codec().codec_tag(0);
+			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
+				out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 
+		}
+		return true;
+	}
+
+	private AVFormatContext getOutputFormatContext() {
+		if (outputFormatContext == null) {
+			outputFormatContext= new AVFormatContext(null);
+			fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
+			int ret = avformat_alloc_output_context2(outputFormatContext, null, format, fileTmp.getAbsolutePath());
+			if (ret < 0) {
+				logger.info("Could not create output context\n");
+				return null;
+			}
+		}
+		return outputFormatContext;
+	}
+
+
+	@Override
+	public boolean prepare(AVFormatContext inputFormatContext) {
+		AVFormatContext context = getOutputFormatContext();
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
@@ -168,9 +207,9 @@ public class Mp4Muxer extends AbstractMuxer {
 
 				registeredStreamIndexList.add(i);
 
-				AVStream out_stream = avformat_new_stream(outputFormatContext, in_stream.codec().codec());
+				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
 
-				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+				int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 				if (ret < 0) {
 					logger.info("Cannot get codec parameters\n");
 					return false;
@@ -178,19 +217,24 @@ public class Mp4Muxer extends AbstractMuxer {
 
 				out_stream.codec().codec_tag(0);
 
-				if ((outputFormatContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
+				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
 		}
 
+		prepareIO();
+		return true;
+	}
+
+	public boolean prepareIO() {
 		AVIOContext pb = new AVIOContext(null);
 
-		ret = avformat.avio_open(pb,  fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
+		int ret = avformat.avio_open(pb,  fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file");
 			return false;
 		}
-		outputFormatContext.pb(pb);
+		getOutputFormatContext().pb(pb);
 
 		AVDictionary optionsDictionary = null;
 
@@ -201,9 +245,9 @@ public class Mp4Muxer extends AbstractMuxer {
 				av_dict_set(optionsDictionary, key, options.get(key), 0);
 			}
 		}
-		
+
 		logger.warn("before writing header");
-		ret = avformat_write_header(outputFormatContext, optionsDictionary);		
+		ret = avformat_write_header(getOutputFormatContext(), optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
 
@@ -215,15 +259,16 @@ public class Mp4Muxer extends AbstractMuxer {
 		}
 
 		return true;
+
 	}
 
 	@Override
 	public void writeTrailer() {
-		logger.info("write trailer...");
-
+		
 		av_write_trailer(outputFormatContext);
-
+		
 		clearResource();
+		
 		isRecording = false;
 		String absolutePath = fileTmp.getAbsolutePath();
 
@@ -247,8 +292,25 @@ public class Mp4Muxer extends AbstractMuxer {
 	}
 
 	@Override
-	public void writePacket(AVPacket pkt, AVStream inStream) 
+	public void writePacket(AVPacket pkt, AVStream stream) {
+		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
+		writePacket(pkt, stream.time_base(),  out_stream.time_base()); 
+	}
+
+	@Override
+	public void writePacket(AVPacket pkt) {
+		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
+		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base()); 
+	}
+
+
+	public void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase) 
 	{
+		
+		AVFormatContext context = getOutputFormatContext();
+		
+		totalSize += pkt.size();
+		
 		int packetIndex = pkt.stream_index();
 		//TODO: find a better frame to check if stream exists in outputFormatContext
 
@@ -260,31 +322,24 @@ public class Mp4Muxer extends AbstractMuxer {
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
-		AVStream out_stream = outputFormatContext.streams(packetIndex);
 
-		pkt.pts(av_rescale_q_rnd(pkt.pts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-		pkt.dts(av_rescale_q_rnd(pkt.dts(), inStream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-		pkt.duration(av_rescale_q(pkt.duration(), inStream.time_base(), out_stream.time_base()));
+		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
 
-		int ret = av_write_frame(outputFormatContext, pkt);
+		int ret = av_write_frame(context, pkt);
 		if (ret < 0) {
-			logger.warn("cannot write frame to muxer");
+			logger.warn("cannot write frame to muxer"); 
 		}
 
 		pkt.pts(pts);
 		pkt.dts(dts);
-		pkt.duration(pkt.duration());
-		pkt.pos(pkt.pos());
+		pkt.duration(duration);
+		pkt.pos(pos);
 
 	}
 	public void setAddDateTimeToFileNames(boolean addDateTimeToMp4FileName) {
 		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
 	}
-
-
-
-
-
-
 }
