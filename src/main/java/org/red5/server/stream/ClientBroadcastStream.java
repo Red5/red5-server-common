@@ -946,7 +946,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.TransraterAdaptor");
 			List<Integer> resolutionList = Arrays.asList(720, 480, 360, 240);
 
-			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(String.class, List.class).newInstance(this, resolutionList);
+			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, resolutionList);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
