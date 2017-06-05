@@ -948,7 +948,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, resolutionList);
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} 
 		if (muxAdaptor == null) {
 			muxAdaptor = new MuxAdaptor(this);

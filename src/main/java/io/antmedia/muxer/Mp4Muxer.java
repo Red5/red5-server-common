@@ -77,7 +77,7 @@ public class Mp4Muxer extends Muxer {
 	private boolean addDateTimeToMp4FileName;
 	private int totalSize = 0;
 
- 
+
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
 	public Mp4Muxer() {
@@ -168,10 +168,10 @@ public class Mp4Muxer extends Muxer {
 		if (isCodecSupported(codecContext.codec_id())) {
 			registeredStreamIndexList.add(streamIndex);
 			AVStream out_stream = avformat_new_stream(outputContext, codec);
-			
+
 			out_stream.codec().time_base(codecContext.time_base());
 			int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
-			
+
 			if (ret < 0) {
 				System.out.println("codec context cannot be copied");
 			}
@@ -264,11 +264,11 @@ public class Mp4Muxer extends Muxer {
 
 	@Override
 	public void writeTrailer() {
-		
+
 		av_write_trailer(outputFormatContext);
-		
+
 		clearResource();
-		
+
 		isRecording = false;
 		String absolutePath = fileTmp.getAbsolutePath();
 
@@ -293,24 +293,30 @@ public class Mp4Muxer extends Muxer {
 
 	@Override
 	public void writePacket(AVPacket pkt, AVStream stream) {
+		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+			return;
+		}
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		writePacket(pkt, stream.time_base(),  out_stream.time_base()); 
 	}
 
 	@Override
 	public void writePacket(AVPacket pkt) {
+		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+			return;
+		}
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base()); 
 	}
 
 
-	public void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase) 
+	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase) 
 	{
-		
+
 		AVFormatContext context = getOutputFormatContext();
-		
+
 		totalSize += pkt.size();
-		
+
 		int packetIndex = pkt.stream_index();
 		//TODO: find a better frame to check if stream exists in outputFormatContext
 
