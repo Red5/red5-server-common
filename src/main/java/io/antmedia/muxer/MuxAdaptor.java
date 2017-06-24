@@ -62,6 +62,8 @@ import org.red5.server.stream.consumer.FileConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.antmedia.storage.StorageClient;
+
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
@@ -100,6 +102,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean mp4MuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected StorageClient storageClient;
 
 	static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override 
@@ -176,20 +179,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
-		if (mp4MuxingEnabled) {
-			Mp4Muxer mp4Muxer = new Mp4Muxer();
-			mp4Muxer.setAddDateTimeToFileNames(addDateTimeToMp4FileName);
-			addMuxer(mp4Muxer);
-		}
-		if (hlsMuxingEnabled) {
-			addMuxer(new HLSMuxer());
-		}
 		
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans");
 			return false;
 		}
+		
+		if (mp4MuxingEnabled) {
+			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
+			mp4Muxer.setAddDateTimeToFileNames(addDateTimeToMp4FileName);
+			addMuxer(mp4Muxer);
+		}
+		if (hlsMuxingEnabled) {
+			addMuxer(new HLSMuxer(scheduler));
+		}
+
 		for(Muxer muxer : muxerList) {
 			muxer.init(scope, name);
 		}
@@ -509,6 +514,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setHLSMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
+	}
+
+
+	public void setStorageClient(StorageClient storageClient) {
+		this.storageClient = storageClient;
 	}
 
 }

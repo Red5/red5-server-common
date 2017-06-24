@@ -87,6 +87,8 @@ import io.antmedia.AppSettings;
 import io.antmedia.muxer.HLSMuxer;
 import io.antmedia.muxer.Mp4Muxer;
 import io.antmedia.muxer.MuxAdaptor;
+import io.antmedia.storage.AmazonS3StorageClient;
+import io.antmedia.storage.StorageClient;
 
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
@@ -908,17 +910,27 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			IStreamCapableConnection conn = getConnection();
 			IContext context = conn.getScope().getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
-			boolean mp4MuxingEnabled =true;
+			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
+			StorageClient storageClient = null;
+			boolean hlsMuxingEnabled = true;
+			
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
+				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
+				
+			}
+			if (appCtx.containsBean("app.storageClient")) {
+				storageClient = (StorageClient) appCtx.getBean("app.storageClient");
 			}
 
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
-			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording);
+			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
+			localMuxAdaptor.setStorageClient(storageClient);
 
+			
 
 			try {
 				if (conn == null) {

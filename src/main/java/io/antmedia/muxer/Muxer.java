@@ -62,11 +62,24 @@ public abstract class Muxer {
 
 	protected boolean isRecording;
 	
+	protected QuartzSchedulingService scheduler;
+	
+	protected IScope scope;
+	
+	public Muxer(QuartzSchedulingService scheduler) {
+		this.scheduler = scheduler;
+	}
+	
 
+	public static File getPreviewFile(IScope scope, String name, String extension) {
+		String appScopeName = ScopeUtils.findApplication(scope).getName();
+		File file = new File(String.format("%s/webapps/%s/%s", System.getProperty("red5.root"), appScopeName, "previews/"+name+".mp4"));
+		return file;
+	}
 
 	public static File getRecordFile(IScope scope, String name, String extension) {
 		return getRecordFile(scope, name, extension, true);
-	}	
+	}
 	
 	public static File getRecordFile(IScope scope, String name, String extension, boolean renameFile) {
 		// get stream filename generator

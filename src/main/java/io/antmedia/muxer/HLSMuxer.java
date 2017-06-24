@@ -92,7 +92,8 @@ public class HLSMuxer extends Muxer  {
 	int videoHeight;
 	
 
-	public HLSMuxer() {
+	public HLSMuxer(QuartzSchedulingService scheduler) {
+		super(scheduler);
 		extension = ".m3u8";
 		format = "hls";
 		options.put("hls_list_size", HLS_LIST_SIZE);
@@ -102,6 +103,7 @@ public class HLSMuxer extends Muxer  {
 		avRationalTimeBase = new AVRational();
 		avRationalTimeBase.num(1);
 		avRationalTimeBase.den(1);
+		
 		
 	}
 	

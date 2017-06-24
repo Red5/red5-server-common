@@ -44,6 +44,7 @@ import org.red5.codec.IStreamCodecInfo;
 import org.red5.io.ITag;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
@@ -69,6 +70,11 @@ import org.springframework.util.concurrent.FailureCallback;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.SuccessCallback;
 
+import com.google.common.io.Files;
+
+import io.antmedia.storage.StorageClient;
+import io.antmedia.storage.StorageClient.FileType;
+
 public class Mp4Muxer extends Muxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
@@ -76,16 +82,20 @@ public class Mp4Muxer extends Muxer {
 	private File fileTmp;
 	private boolean addDateTimeToMp4FileName;
 	private int totalSize = 0;
+	private StorageClient storageClient = null;
+	private QuartzSchedulingService scheduler;
 
 
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
-	public Mp4Muxer() {
-
+	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
+		super(scheduler);
 		extension = ".mp4";
 		format = "mp4";
 		//options.put("movflags", "faststart+rtphint");  	
 		options.put("movflags", "faststart");  
+		this.storageClient = storageClient;
+		this.scheduler = scheduler;
 	}
 
 	public static int[] mp4_supported_codecs = {
@@ -155,6 +165,7 @@ public class Mp4Muxer extends Muxer {
 		if (!parentFile.exists()) {
 			parentFile.mkdir();
 		}
+		this.scope = scope;
 	}
 
 
@@ -274,13 +285,57 @@ public class Mp4Muxer extends Muxer {
 
 		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 
-		File f = new File(origFileName);
-		boolean renameTo = fileTmp.renameTo(f);
-		if (!renameTo) {
-			logger.error("Renaming from {} to {} failed" , absolutePath, origFileName);
+		final File f = new File(origFileName);
+		
+		try {
+			Files.move(fileTmp, f);
+			
+			if (storageClient != null) {
+				scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
+					
+					@Override
+					public void execute(ISchedulingService service) throws CloneNotSupportedException {
+						
+						IContext context = Mp4Muxer.this.scope.getContext(); 
+						ApplicationContext appCtx = context.getApplicationContext(); 
+						Object bean = appCtx.getBean("web.handler");
+						if (bean instanceof IMuxerListener) {
+							((IMuxerListener)bean).muxingFinished(f, getDuration(f));
+						}
+						storageClient.save(f, FileType.TYPE_STREAM);
+					}
+				});
+				
+			}
+		} catch (IOException e) {
+			
+			e.printStackTrace();
 		}
 	}
-
+	
+	
+	public long getDuration(File f) {
+		AVFormatContext inputFormatContext = avformat.avformat_alloc_context();
+		int ret;
+		if ((ret = avformat_open_input(inputFormatContext, f.getAbsolutePath(), null, (AVDictionary)null)) < 0) {
+			logger.info("cannot open input context");
+			avformat_close_input(inputFormatContext);
+			return -1L;
+		}
+		
+		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
+		if (ret < 0) {
+			logger.info("Could not find stream information\n");
+			avformat_close_input(inputFormatContext);
+			return -1L;
+		}
+		long durationInMS = -1;
+		if (inputFormatContext.duration() != AV_NOPTS_VALUE) 
+		{
+			durationInMS = inputFormatContext.duration() / 1000;
+		}
+		return durationInMS;
+	}
 
 	private void clearResource() {
 		/* close output */

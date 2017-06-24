@@ -14,6 +14,8 @@ public class AppSettings {
 	private boolean mp4MuxingEnabled = true;
 	
 	private boolean addDateTimeToMp4FileName = false;
+	
+	private boolean hlsMuxingEnabled = true;
 
 
 
@@ -32,5 +34,15 @@ public class AppSettings {
 	public void setMp4MuxingEnabled(boolean mp4MuxingEnabled) {
 		this.mp4MuxingEnabled = mp4MuxingEnabled;
 	}
+
+	public boolean isHlsMuxingEnabled() {
+		return hlsMuxingEnabled;
+	}
+
+	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
+		this.hlsMuxingEnabled = hlsMuxingEnabled;
+	}
+
+	
 
 }
