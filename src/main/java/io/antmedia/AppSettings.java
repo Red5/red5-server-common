@@ -1,6 +1,7 @@
 package io.antmedia;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -16,6 +17,8 @@ public class AppSettings {
 	private boolean addDateTimeToMp4FileName = false;
 	
 	private boolean hlsMuxingEnabled = true;
+	
+	private List<Integer> adaptiveResolutionList;
 
 
 
@@ -41,6 +44,14 @@ public class AppSettings {
 
 	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
+	}
+
+	public List<Integer> getAdaptiveResolutionList() {
+		return adaptiveResolutionList;
+	}
+
+	public void setAdaptiveResolutionList(List<Integer> adaptiveResolutionList) {
+		this.adaptiveResolutionList = adaptiveResolutionList;
 	}
 
 	

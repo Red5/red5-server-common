@@ -905,8 +905,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 		if (automaticMp4Recording || automaticHlsRecording)  {
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
-			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor();
-
+			
 			IStreamCapableConnection conn = getConnection();
 			IContext context = conn.getScope().getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
@@ -914,14 +913,17 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			boolean addDateTimeToMp4FileName=false;
 			StorageClient storageClient = null;
 			boolean hlsMuxingEnabled = true;
-			
+			List<Integer> adaptiveResolutionList = null;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
 				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
-				
+				adaptiveResolutionList = appSettings.getAdaptiveResolutionList();
 			}
+			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
+
+			
 			if (appCtx.containsBean("app.storageClient")) {
 				storageClient = (StorageClient) appCtx.getBean("app.storageClient");
 			}
@@ -952,13 +954,12 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	}
 
-	private MuxAdaptor initializeMuxAdaptor() {
+	private MuxAdaptor initializeMuxAdaptor(List<Integer> adaptiveResolutionList) {
 		MuxAdaptor muxAdaptor = null;
 		try {
 			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.TransraterAdaptor");
-			List<Integer> resolutionList = Arrays.asList(720, 480, 360, 240);
 
-			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, resolutionList);
+			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, adaptiveResolutionList);
 		} catch (Exception e) {
 			//e.printStackTrace();
 		} 

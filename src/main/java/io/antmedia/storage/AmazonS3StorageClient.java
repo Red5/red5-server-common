@@ -60,8 +60,6 @@ public class AmazonS3StorageClient extends StorageClient {
 		AmazonS3 s3 = getAmazonS3();
 		return s3.doesObjectExist(getStorageName(), type.getValue() + "/" + fileName); 
 	}
-
-	
 	
 	public void save(final File file, FileType type) 
 	{
