@@ -77,8 +77,9 @@ public class HLSMuxer extends Muxer  {
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 	protected static Logger logger = LoggerFactory.getLogger(HLSMuxer.class);
-	public final static String  HLS_LIST_SIZE = "5";
-	public final static String HLS_TIME = "2";
+	private String  hlsListSize = "20";
+	private String hlsTime = "2";
+	private String hlsPlayListType = null; 
 
 	private AVRational avRationalTimeBase;
 	private long totalSize;
@@ -87,37 +88,55 @@ public class HLSMuxer extends Muxer  {
 	private long currentTime;
 	private long bitrate;
 	private long bitrateReferenceTime;
-	
+
 	int videoWidth;
 	int videoHeight;
-	
 
-	public HLSMuxer(QuartzSchedulingService scheduler) {
+
+	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
 		super(scheduler);
 		extension = ".m3u8";
 		format = "hls";
-		options.put("hls_list_size", HLS_LIST_SIZE);
-		options.put("hls_time", HLS_TIME);
-		options.put("hls_flags", "delete_segments");
+		if (hlsListSize != null) {
+			this.hlsListSize = hlsListSize;
+		}
 		
+		if (hlsTime != null) {
+			this.hlsTime = hlsTime;
+		}
+		
+		if (hlsPlayListType != null) {
+			this.hlsPlayListType = hlsPlayListType;
+		}
+
 		avRationalTimeBase = new AVRational();
 		avRationalTimeBase.num(1);
 		avRationalTimeBase.den(1);
-		
-		
 	}
 	
+	@Override
+	public void init(IScope scope, String name) {
+		options.put("hls_list_size", hlsListSize);
+		options.put("hls_time", hlsTime);
+		options.put("hls_flags", "delete_segments");
+		if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
+			options.put("hls_playlist_type", hlsPlayListType);
+		}
+		
+		super.init(scope, name);
+	}
+
 	private AVFormatContext getOutputFormatContext() {
 		if (outputFormatContext == null) {
 			h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
 			bsfContext = new AVBSFContext(null);
-			
+
 			int ret = av_bsf_alloc(h264bsfc, bsfContext);
 			if (ret < 0) {
 				logger.info("cannot allocate bsf context");
 				return null;
 			}
-			
+
 			outputFormatContext= new AVFormatContext(null);
 			ret = avformat_alloc_output_context2(outputFormatContext, null, format, file.getAbsolutePath());
 			if (ret < 0) {
@@ -189,7 +208,7 @@ public class HLSMuxer extends Muxer  {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * 
 	 * @return the bitrate in last 1 second
@@ -197,11 +216,11 @@ public class HLSMuxer extends Muxer  {
 	public long getBitrate() {
 		return bitrate;
 	}
-	
+
 	public long getAverageBitrate() {
 
 		long duration = (currentTime - startTime) ;
-		
+
 		if (duration > 0) 
 		{
 			return (totalSize / duration) * 8;
@@ -209,20 +228,20 @@ public class HLSMuxer extends Muxer  {
 		return 0;
 	}
 
-	
+
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
 		int packetIndex = pkt.stream_index();
-		
+
 		if (!registeredStreamIndexList.contains(packetIndex))  {
 			return;
 		}
-		
+
 		long pts = pkt.pts();
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
-		
+
 		totalSize += pkt.size();
 		partialTotalSize += pkt.size();
 		currentTime = av_rescale_q(dts, inputTimebase, avRationalTimeBase);
@@ -230,13 +249,13 @@ public class HLSMuxer extends Muxer  {
 			startTime = currentTime;
 			bitrateReferenceTime = currentTime;
 		}
-	
+
 		if ((currentTime - bitrateReferenceTime) >= 1) {
 			bitrate = partialTotalSize * 8;
 			partialTotalSize = 0;
 			bitrateReferenceTime = currentTime;
 		}
-		
+
 		int ret;
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
@@ -247,7 +266,7 @@ public class HLSMuxer extends Muxer  {
 
 			while ((ret = av_bsf_receive_packet(bsfContext, pkt)) == 0) 
 			{
-				
+
 				pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 				pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
@@ -257,27 +276,27 @@ public class HLSMuxer extends Muxer  {
 				if (ret < 0) {
 					logger.info("cannot write frame to muxer");
 				}
-				
+
 				pkt.pts(pts);
 				pkt.dts(dts);
 				pkt.duration(duration);
 				pkt.pos(pos);
-				
+
 			}
 		}
 		else {
-			
-			
+
+
 			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 			pkt.pos(-1);
-			
+
 			ret = av_write_frame(outputFormatContext, pkt);
 			if (ret < 0) {
 				logger.info("cannot write frame to muxer");
 			}
-			
+
 			pkt.pts(pts);
 			pkt.dts(dts);
 			pkt.duration(duration);
@@ -289,18 +308,22 @@ public class HLSMuxer extends Muxer  {
 
 	@Override
 	public void writeTrailer() {
-		av_bsf_free(bsfContext);
+		if (bsfContext != null) {
+			av_bsf_free(bsfContext);
+		}
 
-		av_write_trailer(outputFormatContext);
+		if (outputFormatContext != null) {
+			av_write_trailer(outputFormatContext);
 
-		/* close output */
-		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
-			avio_closep(outputFormatContext.pb());
+			/* close output */
+			if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
+				avio_closep(outputFormatContext.pb());
 
-		avformat_free_context(outputFormatContext);
-		
-		outputFormatContext = null;
-		
+			avformat_free_context(outputFormatContext);
+
+			outputFormatContext = null;
+		}
+
 		isRecording = false;	
 	}
 
@@ -310,15 +333,15 @@ public class HLSMuxer extends Muxer  {
 		if (!registeredStreamIndexList.contains(pkt.stream_index()))  {
 			return;
 		}
-		
+
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
-		
+
 	}
 
 	@Override
 	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
-		
+
 		AVFormatContext context = getOutputFormatContext();
 
 		if (context == null) {
@@ -362,7 +385,7 @@ public class HLSMuxer extends Muxer  {
 				//codec context is used in a same way with another muxer
 				out_stream.codec().time_base(codecContext.time_base());
 				int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
-				
+
 				//out_stream.codec(codecContext);
 			}
 			out_stream.codec().codec_tag(0);
@@ -379,7 +402,7 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public boolean prepareIO() {
 		AVIOContext pb = new AVIOContext(null);
-		
+
 		int ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file");
@@ -401,7 +424,7 @@ public class HLSMuxer extends Muxer  {
 			logger.warn("could not write header");
 			return false;
 		}
-		
+
 		if (optionsDictionary != null) {
 			av_dict_free(optionsDictionary);
 		}
@@ -415,16 +438,41 @@ public class HLSMuxer extends Muxer  {
 		}
 		AVStream out_stream = getOutputFormatContext().streams(avpacket.stream_index());
 		writePacket(avpacket, inStream.time_base(),  out_stream.time_base(), inStream.codecpar().codec_type()); 
-		
+
 	}
-	
+
 	public int getVideoWidth() {
 		return videoWidth;
 	}
-	
+
 	public int getVideoHeight() {
 		return videoHeight;
 	}
+
+	public String getHlsListSize() {
+		return hlsListSize;
+	}
+
+	public void setHlsListSize(String hlsListSize) {
+		this.hlsListSize = hlsListSize;
+	}
+
+	public String getHlsTime() {
+		return hlsTime;
+	}
+
+	public void setHlsTime(String hlsTime) {
+		this.hlsTime = hlsTime;
+	}
+
+	public String getHlsPlayListType() {
+		return hlsPlayListType;
+	}
+
+	public void setHlsPlayListType(String hlsPlayListType) {
+		this.hlsPlayListType = hlsPlayListType;
+	}
+
 
 
 

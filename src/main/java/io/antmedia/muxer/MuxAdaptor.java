@@ -103,6 +103,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
 	protected StorageClient storageClient;
+	protected String hlsTime;
+	protected String hlsListSize;
+	protected String hlsPlayListType;
 
 	static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override 
@@ -164,7 +167,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 
-	protected void addMuxer(Muxer muxer) {
+	public void addMuxer(Muxer muxer) {
 		muxerList.add(muxer);
 	}
 
@@ -192,7 +195,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			addMuxer(mp4Muxer);
 		}
 		if (hlsMuxingEnabled) {
-			addMuxer(new HLSMuxer(scheduler));
+			addMuxer(new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType));
 		}
 
 		for(Muxer muxer : muxerList) {
@@ -350,6 +353,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			//tag.getBody().get(bodyBuf);
 			packet.getData().get(bodyBuf);
 			// get the audio or video codec identifier
+			packet.getData().flip();
 
 		}
 
@@ -427,12 +431,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
 
-		//  		CachedEvent event = new CachedEvent();
-		//		event.setData(packet.getData().duplicate());
-		//		event.setDataType(packet.getDataType());
-		//		event.setReceivedTime(System.currentTimeMillis());
-		//		event.setTimestamp(packet.getTimestamp());
-
 		byte[] flvFrame;
 		try {
 			flvFrame = getFLVFrame(packet);
@@ -508,7 +506,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setMp4MuxingEnabled(boolean mp4Enabled, boolean addDateTimeToMp4FileName) {
 		this.mp4MuxingEnabled = mp4Enabled;
 		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
-
 	}
 
 
@@ -519,6 +516,21 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setStorageClient(StorageClient storageClient) {
 		this.storageClient = storageClient;
+	}
+
+
+	public void setHlsTime(String hlsTime) {
+		this.hlsTime = hlsTime;
+	}
+
+
+	public void setHlsListSize(String hlsListSize) {
+		this.hlsListSize = hlsListSize;
+	}
+
+
+	public void setHlsPlayListType(String hlsPlayListType) {
+		this.hlsPlayListType = hlsPlayListType;
 	}
 
 }

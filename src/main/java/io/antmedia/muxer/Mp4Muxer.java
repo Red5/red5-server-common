@@ -276,9 +276,11 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public void writeTrailer() {
 
-		av_write_trailer(outputFormatContext);
+		if (outputFormatContext != null) {
+			av_write_trailer(outputFormatContext);
 
-		clearResource();
+			clearResource();
+		}
 
 		isRecording = false;
 		String absolutePath = fileTmp.getAbsolutePath();
@@ -286,34 +288,33 @@ public class Mp4Muxer extends Muxer {
 		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 
 		final File f = new File(origFileName);
-		
+
 		try {
 			Files.move(fileTmp, f);
-			
+			IContext context = Mp4Muxer.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			Object bean = appCtx.getBean("web.handler");
+			if (bean instanceof IMuxerListener) {
+				((IMuxerListener)bean).muxingFinished(f, getDuration(f));
+			}
+
 			if (storageClient != null) {
 				scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
-					
+
 					@Override
 					public void execute(ISchedulingService service) throws CloneNotSupportedException {
-						
-						IContext context = Mp4Muxer.this.scope.getContext(); 
-						ApplicationContext appCtx = context.getApplicationContext(); 
-						Object bean = appCtx.getBean("web.handler");
-						if (bean instanceof IMuxerListener) {
-							((IMuxerListener)bean).muxingFinished(f, getDuration(f));
-						}
 						storageClient.save(f, FileType.TYPE_STREAM);
 					}
 				});
-				
+
 			}
 		} catch (IOException e) {
-			
+
 			e.printStackTrace();
 		}
 	}
-	
-	
+
+
 	public long getDuration(File f) {
 		AVFormatContext inputFormatContext = avformat.avformat_alloc_context();
 		int ret;
@@ -322,7 +323,7 @@ public class Mp4Muxer extends Muxer {
 			avformat_close_input(inputFormatContext);
 			return -1L;
 		}
-		
+
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
 		if (ret < 0) {
 			logger.info("Could not find stream information\n");

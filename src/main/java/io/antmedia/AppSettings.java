@@ -19,6 +19,15 @@ public class AppSettings {
 	private boolean hlsMuxingEnabled = true;
 	
 	private List<Integer> adaptiveResolutionList;
+	
+	private String hlsListSize;
+	
+	private String hlsTime;
+	
+	/**
+	 * event or vod
+	 */
+	private String hlsPlayListType;
 
 
 
@@ -52,6 +61,30 @@ public class AppSettings {
 
 	public void setAdaptiveResolutionList(List<Integer> adaptiveResolutionList) {
 		this.adaptiveResolutionList = adaptiveResolutionList;
+	}
+
+	public String getHlsPlayListType() {
+		return hlsPlayListType;
+	}
+
+	public void setHlsPlayListType(String hlsPlayListType) {
+		this.hlsPlayListType = hlsPlayListType;
+	}
+
+	public String getHlsTime() {
+		return hlsTime;
+	}
+
+	public void setHlsTime(String hlsTime) {
+		this.hlsTime = hlsTime;
+	}
+
+	public String getHlsListSize() {
+		return hlsListSize;
+	}
+
+	public void setHlsListSize(String hlsListSize) {
+		this.hlsListSize = hlsListSize;
 	}
 
 	

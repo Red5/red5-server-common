@@ -905,7 +905,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 		if (automaticMp4Recording || automaticHlsRecording)  {
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
-			
+
 			IStreamCapableConnection conn = getConnection();
 			IContext context = conn.getScope().getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
@@ -914,25 +914,37 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			StorageClient storageClient = null;
 			boolean hlsMuxingEnabled = true;
 			List<Integer> adaptiveResolutionList = null;
+			String hlsListSize = null;
+			String hlsTime = null;
+			String hlsPlayListType = null;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
 				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 				adaptiveResolutionList = appSettings.getAdaptiveResolutionList();
+				hlsListSize = appSettings.getHlsListSize();
+				hlsTime = appSettings.getHlsTime();
+				hlsPlayListType = appSettings.getHlsPlayListType();
 			}
 			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
 
-			
+
 			if (appCtx.containsBean("app.storageClient")) {
 				storageClient = (StorageClient) appCtx.getBean("app.storageClient");
 			}
 
+			localMuxAdaptor.setStorageClient(storageClient);
+			
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
-			localMuxAdaptor.setStorageClient(storageClient);
 
+			localMuxAdaptor.setHlsTime(hlsTime);
+			localMuxAdaptor.setHlsListSize(hlsListSize);
+			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
 			
+
+
 
 			try {
 				if (conn == null) {
