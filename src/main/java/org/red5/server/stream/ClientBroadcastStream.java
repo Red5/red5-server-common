@@ -969,7 +969,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	private MuxAdaptor initializeMuxAdaptor(List<Integer> adaptiveResolutionList) {
 		MuxAdaptor muxAdaptor = null;
 		try {
-			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.TransraterAdaptor");
+			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.EncoderAdaptor");
 
 			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, adaptiveResolutionList);
 		} catch (Exception e) {

@@ -232,6 +232,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Could not find stream information\n");
 			return false;
 		}
+		
+		
+		//avformat.av_dump_format(inputFormatContext, 0, "stream", 0);
 
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
