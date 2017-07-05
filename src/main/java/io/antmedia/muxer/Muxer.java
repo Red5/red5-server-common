@@ -77,11 +77,8 @@ public abstract class Muxer {
 		return file;
 	}
 
-	public static File getRecordFile(IScope scope, String name, String extension) {
-		return getRecordFile(scope, name, extension, true);
-	}
 	
-	public static File getRecordFile(IScope scope, String name, String extension, boolean renameFile) {
+	public static File getRecordFile(IScope scope, String name, String extension) {
 		// get stream filename generator
 		IStreamFilenameGenerator generator = (IStreamFilenameGenerator) ScopeUtils.getScopeService(scope, IStreamFilenameGenerator.class, DefaultStreamFilenameGenerator.class);
 		// generate filename
@@ -101,24 +98,6 @@ public abstract class Muxer {
 			} else {
 				String appScopeName = ScopeUtils.findApplication(scope).getName();
 				file = new File(String.format("%s/webapps/%s/%s", System.getProperty("red5.root"), appScopeName, fileName));
-			}
-		}
-		if (file.exists() && renameFile) {
-			//do not overwrite
-			String parent = file.getParent();
-			int i = 1;
-			File newFile;
-			do {
-				
-				newFile = new File(parent + "/" + name + i + extension);
-				i++;
-			} while(newFile.exists());
-			
-			try {
-				Files.move(Paths.get(file.getAbsolutePath()), Paths.get(newFile.getAbsolutePath()),
-				        StandardCopyOption.ATOMIC_MOVE);
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 		return file;

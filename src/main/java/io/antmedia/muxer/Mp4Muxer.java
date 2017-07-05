@@ -159,7 +159,13 @@ public class Mp4Muxer extends Muxer {
 			name = name + "-" + dtFormat.format(dt);
 		}
 
-		file = getRecordFile(scope, name, extension);
+		String tmpName = name;
+		int i = 1;
+		do {
+			file = getRecordFile(scope, tmpName, extension);
+			tmpName = name + "_" + i;
+			i++;
+		} while (file.exists());
 
 		File parentFile = file.getParentFile();
 		if (!parentFile.exists()) {
