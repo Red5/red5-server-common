@@ -46,6 +46,7 @@ import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.avcodec;
 import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacpp.avutil;
 
@@ -91,6 +92,7 @@ public class HLSMuxer extends Muxer  {
 
 	int videoWidth;
 	int videoHeight;
+	private AVPacket tmpPacket;
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
@@ -100,11 +102,11 @@ public class HLSMuxer extends Muxer  {
 		if (hlsListSize != null) {
 			this.hlsListSize = hlsListSize;
 		}
-		
+
 		if (hlsTime != null) {
 			this.hlsTime = hlsTime;
 		}
-		
+
 		if (hlsPlayListType != null) {
 			this.hlsPlayListType = hlsPlayListType;
 		}
@@ -113,7 +115,7 @@ public class HLSMuxer extends Muxer  {
 		avRationalTimeBase.num(1);
 		avRationalTimeBase.den(1);
 	}
-	
+
 	@Override
 	public void init(IScope scope, String name) {
 		options.put("hls_list_size", hlsListSize);
@@ -123,22 +125,17 @@ public class HLSMuxer extends Muxer  {
 			options.put("hls_playlist_type", hlsPlayListType);
 		}
 		
+		tmpPacket = avcodec.av_packet_alloc();
+		av_init_packet(tmpPacket);
+
 		super.init(scope, name);
 	}
 
 	private AVFormatContext getOutputFormatContext() {
 		if (outputFormatContext == null) {
-			h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
-			bsfContext = new AVBSFContext(null);
-
-			int ret = av_bsf_alloc(h264bsfc, bsfContext);
-			if (ret < 0) {
-				logger.info("cannot allocate bsf context");
-				return null;
-			}
 
 			outputFormatContext= new AVFormatContext(null);
-			ret = avformat_alloc_output_context2(outputFormatContext, null, format, file.getAbsolutePath());
+			int ret = avformat_alloc_output_context2(outputFormatContext, null, format, file.getAbsolutePath());
 			if (ret < 0) {
 				logger.info("Could not create output context\n");
 				return null;
@@ -158,7 +155,17 @@ public class HLSMuxer extends Muxer  {
 				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
 
 				if (in_stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
-					int ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
+
+					h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
+					bsfContext = new AVBSFContext(null);
+
+					int ret = av_bsf_alloc(h264bsfc, bsfContext);
+					if (ret < 0) {
+						logger.info("cannot allocate bsf context");
+						return false;
+					}
+
+					ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
 					if (ret < 0) {
 						logger.info("cannot copy input codec parameters");
 						return false;
@@ -259,30 +266,42 @@ public class HLSMuxer extends Muxer  {
 		int ret;
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
+			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
+			pkt.pos(-1);
+			
+			av_copy_packet(tmpPacket , pkt);
 
-			ret = av_bsf_send_packet(bsfContext, pkt);
-			if (ret < 0)
-				return;
+			if (bsfContext != null) {
 
-			while ((ret = av_bsf_receive_packet(bsfContext, pkt)) == 0) 
-			{
+				ret = av_bsf_send_packet(bsfContext, tmpPacket);
+				if (ret < 0)
+					return;
 
-				pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-				pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-				pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
-				pkt.pos(-1);
+				while ((ret = av_bsf_receive_packet(bsfContext, tmpPacket)) == 0) 
+				{
 
-				ret = av_write_frame(outputFormatContext, pkt);
+					ret = av_write_frame(outputFormatContext, tmpPacket);
+					if (ret < 0) {
+						logger.info("cannot write frame to muxer");
+					}
+
+				}
+			}
+			else {
+				ret = av_write_frame(outputFormatContext, tmpPacket);
 				if (ret < 0) {
 					logger.info("cannot write frame to muxer");
 				}
-
-				pkt.pts(pts);
-				pkt.dts(dts);
-				pkt.duration(duration);
-				pkt.pos(pos);
-
 			}
+			
+			av_packet_unref(tmpPacket);
+
+			pkt.pts(pts);
+			pkt.dts(dts);
+			pkt.duration(duration);
+			pkt.pos(pos);
 		}
 		else {
 
@@ -311,6 +330,9 @@ public class HLSMuxer extends Muxer  {
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 		}
+		if (tmpPacket != null) {
+			av_packet_free(tmpPacket);
+		}
 
 		if (outputFormatContext != null) {
 			av_write_trailer(outputFormatContext);
@@ -333,7 +355,6 @@ public class HLSMuxer extends Muxer  {
 		if (!registeredStreamIndexList.contains(pkt.stream_index()))  {
 			return;
 		}
-
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
 
@@ -352,6 +373,7 @@ public class HLSMuxer extends Muxer  {
 			AVStream out_stream = avformat_new_stream(context, codec);
 			out_stream.index(streamIndex);
 			if (codecContext.codec_type() == AVMEDIA_TYPE_VIDEO) {
+				/*
 				int ret = avcodec_parameters_from_context(bsfContext.par_in(), codecContext);
 				//int ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
 				if (ret < 0) {
@@ -375,10 +397,13 @@ public class HLSMuxer extends Muxer  {
 					logger.info("cannot copy codec parameters to output");
 					return false;
 				}
+				 */
 				videoWidth = codecContext.width();
 				videoHeight = codecContext.height();
 
-				out_stream.time_base(bsfContext.time_base_out());
+				out_stream.codec().time_base(codecContext.time_base());
+				int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
+				//out_stream.time_base(bsfContext.time_base_out());
 			}
 			else {
 				//TODO: do we need this setting codec context, it may cause some memory problems if 

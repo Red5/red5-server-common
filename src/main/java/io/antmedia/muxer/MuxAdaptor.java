@@ -2,6 +2,7 @@ package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
 import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avcodec.av_packet_free;
 import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.javacpp.avcodec.avcodec_parameters_to_context;
 import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.avcodec;
 import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacpp.avutil;
 import org.bytedeco.javacpp.avcodec.AVCodecParameters;
@@ -106,6 +108,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsTime;
 	protected String hlsListSize;
 	protected String hlsPlayListType;
+	protected AVPacket pkt = avcodec.av_packet_alloc(); // new AVPacket();
 
 	static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override 
@@ -250,7 +253,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		return true;
 	}
-
+	
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
@@ -258,7 +261,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) 
 		{
 			//logger.info("pipe reader job in running");
-			AVPacket pkt = new AVPacket();
 			while (true) {
 				if (inputFormatContext == null) {
 					break;
@@ -271,6 +273,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					for(Muxer muxer : muxerList) {
 						muxer.writePacket(pkt, stream);
 					}
+					av_packet_unref(pkt);
+					
 				}
 				else {
 					System.out.println("removing scheduled job " + MuxAdaptor.this);
@@ -281,7 +285,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					logger.info("closing input");
 
 					queueReferences.remove(inputFormatContext);
-
+					
+					
+					av_packet_free(pkt);
 					avformat_close_input(inputFormatContext);
 
 					if (avio_alloc_context != null) {
@@ -297,7 +303,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					isRecording = false;	
 				}
 
-				av_packet_unref(pkt);
+				
 
 				//if there is not element in the qeueue,
 				//break the loop
@@ -354,9 +360,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			bodyBuf = new byte[bodySize];
 			// put the bytes into the array
 			//tag.getBody().get(bodyBuf);
+			packet.getData().position(0);
 			packet.getData().get(bodyBuf);
 			// get the audio or video codec identifier
-			packet.getData().flip();
+			packet.getData().position(0);
 
 		}
 
