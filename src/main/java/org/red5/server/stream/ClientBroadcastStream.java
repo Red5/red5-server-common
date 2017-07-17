@@ -84,6 +84,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 import io.antmedia.AppSettings;
+import io.antmedia.cluster.IClusterNotifier;
+import io.antmedia.cluster.IClusterNotifier.StreamEvent;
 import io.antmedia.muxer.HLSMuxer;
 import io.antmedia.muxer.Mp4Muxer;
 import io.antmedia.muxer.MuxAdaptor;
@@ -205,6 +207,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	private WeakReference<MuxAdaptor> muxAdaptor;
 
+	private IClusterNotifier clusterNotifier;
+
 
 	/**
 	 * Check and send notification if necessary
@@ -257,7 +261,12 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor.clear();
 			muxAdaptor = null;
 		}
-
+		
+		IClusterNotifier clusterNotifier = getClusterNotifier();
+		if (clusterNotifier != null) {
+			IScope scope = Red5.getConnectionLocal().getScope();
+			clusterNotifier.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
+		}
 
 		// clear listeners
 		if (!listeners.isEmpty()) {
@@ -893,6 +902,16 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		// We send the start messages before the first packet is received.
 		// This is required so FME actually starts publishing.
 		sendStartNotifications(Red5.getConnectionLocal());
+		
+		IStreamCapableConnection conn = getConnection();
+		IContext context = conn.getScope().getContext(); 
+		ApplicationContext appCtx = context.getApplicationContext(); 
+		
+		IClusterNotifier notifier = getClusterNotifier();
+		if (notifier != null) {
+			notifier.sendStreamNotification(publishedName, conn.getScope().getName(), StreamEvent.STREAM_PUBLISHED);;
+		}
+		
 		// force recording if set
 		if (automaticRecording) {
 			log.debug("Starting automatic recording of {}", publishedName);
@@ -906,9 +925,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (automaticMp4Recording || automaticHlsRecording)  {
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
 
-			IStreamCapableConnection conn = getConnection();
-			IContext context = conn.getScope().getContext(); 
-			ApplicationContext appCtx = context.getApplicationContext(); 
+			
 			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
 			StorageClient storageClient = null;
@@ -943,9 +960,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
 			
-
-
-
 			try {
 				if (conn == null) {
 					throw new IOException("Stream is no longer connected");
@@ -961,9 +975,20 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 		}
 
-
-
-
+	}
+	
+	public IClusterNotifier getClusterNotifier() {
+		if (clusterNotifier == null) {
+			IContext context =  Red5.getConnectionLocal().getScope().getContext();
+			if (context.hasBean("tomcat.cluster")) {
+				clusterNotifier = (IClusterNotifier) context.getBean("tomcat.cluster");
+			}
+			
+		}
+		if (clusterNotifier == null) {
+			log.warn("cluster notifier null");
+		}
+		return clusterNotifier;
 	}
 
 	private MuxAdaptor initializeMuxAdaptor(List<Integer> adaptiveResolutionList) {

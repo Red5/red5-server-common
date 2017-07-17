@@ -121,6 +121,7 @@ public class HLSMuxer extends Muxer  {
 		options.put("hls_list_size", hlsListSize);
 		options.put("hls_time", hlsTime);
 		options.put("hls_flags", "delete_segments");
+		options.put("hls_segment_filename", "webapps/" + scope.getName() + "/streams/" + name + "%04d.ts");
 		if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
 			options.put("hls_playlist_type", hlsPlayListType);
 		}
