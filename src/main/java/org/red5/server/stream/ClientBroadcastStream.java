@@ -86,9 +86,13 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 import io.antmedia.AppSettings;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
+import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.muxer.HLSMuxer;
 import io.antmedia.muxer.Mp4Muxer;
 import io.antmedia.muxer.MuxAdaptor;
+import io.antmedia.muxer.RtmpMuxer;
 import io.antmedia.storage.AmazonS3StorageClient;
 import io.antmedia.storage.StorageClient;
 
@@ -209,6 +213,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	private IClusterNotifier clusterNotifier;
 
+	private WeakReference<MuxAdaptor> endPointMuxAdaptor;
+
 
 	/**
 	 * Check and send notification if necessary
@@ -245,6 +251,10 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (muxAdaptor != null) {
 			muxAdaptor.get().stop();
 		}
+		
+		if (endPointMuxAdaptor != null) {
+			endPointMuxAdaptor.get().stop();
+		}
 
 		sendPublishStopNotify();
 		// TODO: can we send the client something to make sure he stops sending data?
@@ -260,6 +270,11 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (muxAdaptor != null) {
 			muxAdaptor.clear();
 			muxAdaptor = null;
+		}
+		
+		if (endPointMuxAdaptor != null) {
+			endPointMuxAdaptor.clear();
+			endPointMuxAdaptor = null;
 		}
 		
 		IClusterNotifier clusterNotifier = getClusterNotifier();
@@ -921,6 +936,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				log.warn("Start of automatic recording failed", e);
 			}
 		}
+		
+		setUpEndPoints(appCtx, publishedName, conn);
 
 		if (automaticMp4Recording || automaticHlsRecording)  {
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
@@ -977,6 +994,28 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	}
 	
+	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, IStreamCapableConnection conn) {
+		if (appCtx.containsBean("db.datastore")) 
+		{
+			IDataStore dataStore = (IDataStore)appCtx.getBean("db.datastore");
+			Broadcast broadcast = dataStore.get(publishedName);
+			if (broadcast != null) {
+				List<Endpoint> endPointList = broadcast.getEndPointList();
+				if (endPointList != null && endPointList.size() > 0) {
+					MuxAdaptor endPointMuxAdaptor = new MuxAdaptor(this);
+					for (Endpoint endpoint : endPointList) {
+						endPointMuxAdaptor.addMuxer(new RtmpMuxer(endpoint.rtmpUrl));
+					}
+					endPointMuxAdaptor.init(conn, publishedName, false);
+					addStreamListener(endPointMuxAdaptor);
+					this.endPointMuxAdaptor = new WeakReference<MuxAdaptor>(endPointMuxAdaptor);
+					endPointMuxAdaptor.start();
+				}
+			}
+		}
+		
+	}
+
 	public IClusterNotifier getClusterNotifier() {
 		if (clusterNotifier == null) {
 			IContext context =  Red5.getConnectionLocal().getScope().getContext();
@@ -1037,6 +1076,13 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.stop();
 			muxAdaptor.clear();
 			muxAdaptor = null;
+		}
+		if (endPointMuxAdaptor != null) {
+			MuxAdaptor adaptor = endPointMuxAdaptor.get();
+			removeStreamListener(adaptor);
+			adaptor.stop();
+			endPointMuxAdaptor.clear();
+			endPointMuxAdaptor = null;
 		}
 	}
 
