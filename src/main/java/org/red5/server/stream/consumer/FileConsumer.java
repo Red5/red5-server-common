@@ -35,6 +35,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.codec.AudioCodec;
+import org.red5.codec.VideoCodec;
 import org.red5.io.IStreamableFile;
 import org.red5.io.ITag;
 import org.red5.io.ITagWriter;
@@ -836,12 +838,45 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
         @Override
         public int compareTo(QueuedData other) {
-            if (tag.getTimestamp() > other.getTimestamp()) {
-                return 1;
-            } else if (tag.getTimestamp() < other.getTimestamp()) {
-                return -1;
+            int result = 0;
+            // config data needs precedence over non-config
+            byte type1 = tag.getDataType();
+            byte type2 = other.getDataType();
+            if (type1 == type2) {
+                byte[] buf1 = tag.getBody().array();
+                byte[] buf2 = other.getData().getBody().array();
+                if (type1 == ITag.TYPE_AUDIO) {
+                    // if audio, check codec config
+                    if ((((buf1[0] & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4) == AudioCodec.AAC.getId()) {
+                        if (buf1[1] == 0 && buf2[1] != 0) {
+                            result = -1;
+                        } else if (buf1[1] != 0 && buf2[1] == 0) {
+                            result = 1;
+                        }
+                    }
+                } else if (type1 == ITag.TYPE_VIDEO) {
+                    // if video, check codec config
+                    if (((buf1[0] & 0xff) & ITag.MASK_VIDEO_CODEC) == VideoCodec.AVC.getId()) {
+                        if (buf1[1] == 0 && buf2[1] != 0) {
+                            result = -1;
+                        } else if (buf1[1] != 0 && buf2[1] == 0) {
+                            result = 1;
+                        }
+                    }
+                }
+                if (tag.getTimestamp() > other.getTimestamp()) {
+                    result += 1;
+                } else if (tag.getTimestamp() < other.getTimestamp()) {
+                    result -= 1;
+                }
+            } else {
+                if (tag.getTimestamp() > other.getTimestamp()) {
+                    result = 1;
+                } else if (tag.getTimestamp() < other.getTimestamp()) {
+                    result = -1;
+                }
             }
-            return 0;
+            return result;
         }
 
         public void dispose() {
