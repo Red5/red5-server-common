@@ -846,12 +846,15 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                 byte[] buf1 = tag.getBody().array();
                 byte[] buf2 = other.getData().getBody().array();
                 if (type1 == ITag.TYPE_AUDIO) {
-                    // if audio, check codec config
-                    if ((((buf1[0] & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4) == AudioCodec.AAC.getId()) {
-                        if (buf1[1] == 0 && buf2[1] != 0) {
-                            result = -1;
-                        } else if (buf1[1] != 0 && buf2[1] == 0) {
-                            result = 1;
+                    // dont forget about silence!
+                    if (buf1.length > 0 && buf2.length > 0) {
+                        // if audio, check codec config
+                        if ((((buf1[0] & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4) == AudioCodec.AAC.getId()) {
+                            if (buf1[1] == 0 && buf2[1] != 0) {
+                                result = -1;
+                            } else if (buf1[1] != 0 && buf2[1] == 0) {
+                                result = 1;
+                            }
                         }
                     }
                 } else if (type1 == ITag.TYPE_VIDEO) {
