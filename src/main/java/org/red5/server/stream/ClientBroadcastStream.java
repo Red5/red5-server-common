@@ -178,7 +178,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Recording listener
      */
-    private transient WeakReference<IRecordingListener> recordingListener;
+    protected transient WeakReference<IRecordingListener> recordingListener;
 
     protected long latestTimeStamp = -1;
 
@@ -839,16 +839,16 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
                         } else {
                             // delete any previously recorded versions of this now "live" stream per
                             // http://livedocs.adobe.com/flashmediaserver/3.0/hpdocs/help.html?content=00000186.html
-                            try {
-                                File file = getRecordFile(scope, publishedName);
-                                if (file != null && file.exists()) {
-                                    if (!file.delete()) {
-                                        log.debug("File was not deleted: {}", file.getAbsoluteFile());
-                                    }
-                                }
-                            } catch (Exception e) {
-                                log.warn("Exception removing previously recorded file", e);
-                            }
+//                            try {
+//                                File file = getRecordFile(scope, publishedName);
+//                                if (file != null && file.exists()) {
+//                                    if (!file.delete()) {
+//                                        log.debug("File was not deleted: {}", file.getAbsoluteFile());
+//                                    }
+//                                }
+//                            } catch (Exception e) {
+//                                log.warn("Exception removing previously recorded file", e);
+//                            }
                             // callback for publish start
                             ((IStreamAwareScopeHandler) handler).streamPublishStart(this);
                         }
