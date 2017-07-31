@@ -87,7 +87,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected ArrayList<Muxer> muxerList = new ArrayList<Muxer>();
 
-	private static class InputContext {
+	public static class InputContext {
 		public ConcurrentLinkedQueue<byte[]> queue;
 		public volatile boolean isHeaderWritten = false;
 		public volatile boolean stopRequestExist = false;

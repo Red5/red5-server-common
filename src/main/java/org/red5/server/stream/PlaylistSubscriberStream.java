@@ -140,7 +140,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
      * during unit testing.
      */
     PlayEngine createEngine(ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService) {
-        engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService).build();
+        engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService, cluster).build();
         return engine;
     }
 
@@ -197,7 +197,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                     //try the parent
                     providerService = (IProviderService) scope.getParent().getContext().getBean(IProviderService.BEAN_NAME);
                 }
-                engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService).build();
+                engine = new PlayEngine.Builder(this, schedulingService, consumerService, providerService, cluster).build();
             } else {
                 throw new IllegalStateException("Scope was null on start playing");
             }

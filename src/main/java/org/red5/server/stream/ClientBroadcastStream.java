@@ -251,7 +251,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (muxAdaptor != null) {
 			muxAdaptor.get().stop();
 		}
-		
+
 		if (endPointMuxAdaptor != null) {
 			endPointMuxAdaptor.get().stop();
 		}
@@ -271,12 +271,12 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor.clear();
 			muxAdaptor = null;
 		}
-		
+
 		if (endPointMuxAdaptor != null) {
 			endPointMuxAdaptor.clear();
 			endPointMuxAdaptor = null;
 		}
-		
+
 		IClusterNotifier clusterNotifier = getClusterNotifier();
 		if (clusterNotifier != null) {
 			IScope scope = Red5.getConnectionLocal().getScope();
@@ -917,16 +917,16 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		// We send the start messages before the first packet is received.
 		// This is required so FME actually starts publishing.
 		sendStartNotifications(Red5.getConnectionLocal());
-		
+
 		IStreamCapableConnection conn = getConnection();
 		IContext context = conn.getScope().getContext(); 
 		ApplicationContext appCtx = context.getApplicationContext(); 
-		
+
 		IClusterNotifier notifier = getClusterNotifier();
 		if (notifier != null) {
 			notifier.sendStreamNotification(publishedName, conn.getScope().getName(), StreamEvent.STREAM_PUBLISHED);;
 		}
-		
+
 		// force recording if set
 		if (automaticRecording) {
 			log.debug("Starting automatic recording of {}", publishedName);
@@ -936,13 +936,13 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				log.warn("Start of automatic recording failed", e);
 			}
 		}
-		
+
 		setUpEndPoints(appCtx, publishedName, conn);
 
 		if (automaticMp4Recording || automaticHlsRecording)  {
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
 
-			
+
 			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
 			StorageClient storageClient = null;
@@ -969,14 +969,14 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 
 			localMuxAdaptor.setStorageClient(storageClient);
-			
+
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
 
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
-			
+
 			try {
 				if (conn == null) {
 					throw new IOException("Stream is no longer connected");
@@ -993,7 +993,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		}
 
 	}
-	
+
 	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, IStreamCapableConnection conn) {
 		if (appCtx.containsBean("db.datastore")) 
 		{
@@ -1013,16 +1013,22 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				}
 			}
 		}
-		
+
 	}
 
 	public IClusterNotifier getClusterNotifier() {
 		if (clusterNotifier == null) {
-			IContext context =  Red5.getConnectionLocal().getScope().getContext();
-			if (context.hasBean("tomcat.cluster")) {
-				clusterNotifier = (IClusterNotifier) context.getBean("tomcat.cluster");
+			IConnection connectionLocal = Red5.getConnectionLocal();
+			if (connectionLocal != null) 
+			{
+				IScope scope = connectionLocal.getScope();
+				if (scope != null) {
+					IContext context = scope.getContext();
+					if (context != null && context.hasBean("tomcat.cluster")) {
+						clusterNotifier = (IClusterNotifier) context.getBean("tomcat.cluster");
+					}
+				}
 			}
-			
 		}
 		if (clusterNotifier == null) {
 			log.warn("cluster notifier null");

@@ -90,7 +90,7 @@ public class RtmpMuxer extends Muxer {
 
 	@Override
 	public void init(IScope scope, String name) {
-		
+
 	}
 
 	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
@@ -139,7 +139,6 @@ public class RtmpMuxer extends Muxer {
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
 			{
-
 				registeredStreamIndexList.add(i);
 
 				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
@@ -205,11 +204,11 @@ public class RtmpMuxer extends Muxer {
 		clearResource();
 
 		isRecording = false;
-	
 
-		}
-	
-	
+
+	}
+
+
 	private void clearResource() {
 		/* close output */
 		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
