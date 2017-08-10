@@ -292,6 +292,8 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         // set the action if it exists
         result.setAction(getAction());
         result.setSourceType(sourceType);
+        result.setSource(source);
+        result.setTimestamp(timestamp);
         return result;
     }
 

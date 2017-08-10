@@ -44,7 +44,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
      * Videoframe type
      */
     public static enum FrameType {
-        UNKNOWN, KEYFRAME, INTERFRAME, DISPOSABLE_INTERFRAME,
+        UNKNOWN, KEYFRAME, INTERFRAME, DISPOSABLE_INTERFRAME, END_OF_SEQUENCE
     }
 
     /**
@@ -71,6 +71,11 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
      * True if this is configuration data and false otherwise
      */
     protected boolean config;
+
+    /**
+     * True if this indicates an end-of-sequence and false otherwise
+     */
+    protected boolean endOfSequence;
 
     /** Constructs a new VideoData. */
     public VideoData() {
@@ -99,7 +104,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
     public VideoData(IoBuffer data, boolean copy) {
         super(Type.STREAM_DATA);
         if (copy) {
-            byte[] array = new byte[data.limit()];
+            byte[] array = new byte[data.remaining()];
             data.mark();
             data.get(array);
             data.reset();
@@ -131,7 +136,9 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
             int firstByte = data.get(0) & 0xff;
             codecId = firstByte & ITag.MASK_VIDEO_CODEC;
             if (codecId == VideoCodec.AVC.getId()) {
-                config = (data.get() == 0);
+                int secondByte = data.get(1) & 0xff;
+                config = (secondByte == 0);
+                endOfSequence = (secondByte == 2);
             }
             data.reset();
             int frameType = (firstByte & MASK_VIDEO_FRAMETYPE) >> 4;
@@ -148,8 +155,9 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
     }
 
     public void setData(byte[] data) {
-        this.data = IoBuffer.allocate(data.length);
-        this.data.put(data).flip();
+        setData(IoBuffer.wrap(data));
+        //this.data = IoBuffer.allocate(data.length);
+        //this.data.put(data).flip();
     }
 
     /**
@@ -167,6 +175,10 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
 
     public boolean isConfig() {
         return config;
+    }
+
+    public boolean isEndOfSequence() {
+        return endOfSequence;
     }
 
     /** {@inheritDoc} */
@@ -188,7 +200,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         frameType = (FrameType) in.readObject();
         byte[] byteBuf = (byte[]) in.readObject();
         if (byteBuf != null) {
-            setData(IoBuffer.wrap(byteBuf));
+            setData(byteBuf);
         }
     }
 
@@ -197,7 +209,15 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         super.writeExternal(out);
         out.writeObject(frameType);
         if (data != null) {
-            out.writeObject(data.array());
+            if (data.hasArray()) {
+                out.writeObject(data.array());
+            } else {
+                byte[] array = new byte[data.remaining()];
+                data.mark();
+                data.get(array);
+                data.reset();
+                out.writeObject(array);
+            }
         } else {
             out.writeObject(null);
         }
@@ -230,6 +250,8 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
             result.setHeader(header.clone());
         }
         result.setSourceType(sourceType);
+        result.setSource(source);
+        result.setTimestamp(timestamp);
         return result;
     }
 

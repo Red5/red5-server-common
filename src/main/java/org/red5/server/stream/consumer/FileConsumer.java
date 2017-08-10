@@ -54,7 +54,6 @@ import org.red5.server.messaging.IPipeConnectionListener;
 import org.red5.server.messaging.IPushableConsumer;
 import org.red5.server.messaging.OOBControlMessage;
 import org.red5.server.messaging.PipeConnectionEvent;
-import org.red5.server.net.rtmp.event.FlexStreamSend;
 import org.red5.server.net.rtmp.event.IRTMPEvent;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.event.VideoData.FrameType;
@@ -140,12 +139,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     private int startTimestamp = -1;
 
     /**
-     * Last write timestamp
-     */
-    @SuppressWarnings("unused")
-    private int lastTimestamp;
-
-    /**
      * Video decoder configuration
      */
     private ITag videoConfigurationTag;
@@ -164,12 +157,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      * Percentage of the queue which is sliced for writing
      */
     private int percentage = 25;
-
-    /**
-     * Whether or not to use a queue for delaying file writes. The queue is useful for keeping Tag items in their expected order based on
-     * their time stamp.
-     */
-    //private boolean delayWrite;
 
     /**
      * Tracks the last timestamp written to prevent backwards time stamped data.
@@ -222,11 +209,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
         this();
         this.scope = scope;
         this.mode = mode;
-        // get stream filename generator
-        IStreamFilenameGenerator generator = (IStreamFilenameGenerator) ScopeUtils.getScopeService(scope, IStreamFilenameGenerator.class, DefaultStreamFilenameGenerator.class);
-        // generate file path
-        String filePath = generator.generateFilename(scope, fileName, ".flv", GenerationType.RECORD);
-        this.path = generator.resolvesToAbsolutePath() ? Paths.get(filePath) : Paths.get(System.getProperty("red5.root"), "webapps", scope.getContextPath(), filePath);
+        setupOutputPath(fileName);
     }
 
     /**
@@ -248,12 +231,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             // get the timestamp
             int timestamp = msg.getTimestamp();
             log.trace("Data type: {} timestamp: {}", dataType, timestamp);
-            // if we're dealing with a FlexStreamSend IRTMPEvent, this avoids
-            // relative timestamp calculations
-            if (!(msg instanceof FlexStreamSend)) {
-                //log.trace("Not FlexStreamSend type");
-                lastTimestamp = timestamp;
-            }
             // if writes are delayed, queue the data and sort it by time
             if (queue == null) {
                 // if we plan to use a queue, create one
@@ -266,12 +243,14 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                 }
                 // ensure that our first video frame written is a key frame
                 if (msg instanceof VideoData) {
-                    if (waitForVideoKeyframe && !gotVideoKeyframe) {
+                    log.debug("pushMessage video - waitForVideoKeyframe: {} gotVideoKeyframe: {}", waitForVideoKeyframe, gotVideoKeyframe);
+                    if (!gotVideoKeyframe) {
                         VideoData video = (VideoData) msg;
                         if (video.getFrameType() == FrameType.KEYFRAME) {
                             log.debug("Got our first keyframe");
                             gotVideoKeyframe = true;
-                        } else {
+                        }
+                        if (waitForVideoKeyframe && !gotVideoKeyframe) {
                             // skip this frame bail out
                             log.debug("Skipping video data since keyframe has not been written yet");
                             return;
@@ -698,6 +677,32 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     }
 
     /**
+     * Sets up the output file path for writing.
+     *
+     * @param name output filename to use
+     */
+    public void setupOutputPath(String name) {
+        // get stream filename generator
+        IStreamFilenameGenerator generator = (IStreamFilenameGenerator) ScopeUtils.getScopeService(scope, IStreamFilenameGenerator.class, DefaultStreamFilenameGenerator.class);
+        // generate file path
+        String filePath = generator.generateFilename(scope, name, ".flv", GenerationType.RECORD);
+        this.path = generator.resolvesToAbsolutePath() ? Paths.get(filePath) : Paths.get(System.getProperty("red5.root"), "webapps", scope.getContextPath(), filePath);
+        // if append was requested, ensure the file we want to append exists (append==record)
+        File appendee = getFile();
+        if (IClientStream.MODE_APPEND.equals(mode) && !appendee.exists()) {
+            try {
+                if (appendee.createNewFile()) {
+                    log.debug("New file created for appending");
+                } else {
+                    log.debug("Failure to create new file for appending");
+                }
+            } catch (IOException e) {
+                log.warn("Exception creating replacement file for append", e);
+            }
+        }
+    }
+
+    /**
      * Sets a video decoder configuration; some codecs require this, such as AVC.
      * 
      * @param decoderConfig
@@ -797,6 +802,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      * @param waitForVideoKeyframe
      */
     public void setWaitForVideoKeyframe(boolean waitForVideoKeyframe) {
+        log.debug("setWaitForVideoKeyframe: {}", waitForVideoKeyframe);
         this.waitForVideoKeyframe = waitForVideoKeyframe;
     }
 

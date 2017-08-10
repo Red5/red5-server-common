@@ -108,17 +108,13 @@ public class Invoke extends Notify {
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         writeExternal(oos);
         oos.close();
-
         byte[] buf = baos.toByteArray();
         baos.close();
-
         ByteArrayInputStream bais = new ByteArrayInputStream(buf);
         ObjectInputStream ois = new ObjectInputStream(bais);
-
         result.readExternal(ois);
         ois.close();
         bais.close();
-
         return result;
     }
 
