@@ -188,21 +188,21 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * 
      * @see org.red5.server.net.rtmp.Channel
      */
-    private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<Integer, Channel>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
+    private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
     /**
      * Queues of tasks for every channel
      *
      * @see org.red5.server.net.rtmp.ReceivedMessageTaskQueue
      */
-    private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByChannels = new ConcurrentHashMap<Integer, ReceivedMessageTaskQueue>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
+    private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByStreams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Client streams
      * 
      * @see org.red5.server.api.stream.IClientStream
      */
-    private transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<Number, IClientStream>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
+    private transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
@@ -217,14 +217,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Hash map that stores pending calls and ids as pairs.
      */
-    private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<Integer, IPendingServiceCall>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
+    private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
 
     /**
      * Deferred results set.
      * 
      * @see org.red5.server.net.rtmp.DeferredResult
      */
-    private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<DeferredResult>();
+    private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<>();
 
     /**
      * Last ping round trip time
@@ -274,7 +274,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Map for pending video packets keyed by stream id.
      */
-    private transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<Number, AtomicInteger>(1, 0.9f, 1);
+    private transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Number of (NetStream) streams used.
@@ -284,7 +284,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Remembered stream buffer durations.
      */
-    private transient ConcurrentMap<Number, Integer> streamBuffers = new ConcurrentHashMap<Number, Integer>(1, 0.9f, 1);
+    private transient ConcurrentMap<Number, Integer> streamBuffers = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Maximum time in milliseconds to wait for a valid handshake.
@@ -313,14 +313,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     protected transient Semaphore encoderLock = new Semaphore(1, true);
 
     // keeps track of the decode state
-    protected transient ThreadLocal<RTMPDecodeState> decoderState = new ThreadLocal<RTMPDecodeState>() {
-
-        @Override
-        protected RTMPDecodeState initialValue() {
-            return new RTMPDecodeState(getSessionId());
-        }
-
-    };
+    protected transient RTMPDecodeState decoderState;
 
     /**
      * Scheduling service
@@ -388,6 +381,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         // We start with an anonymous connection without a scope.
         // These parameters will be set during the call of "connect" later.
         super(type);
+        // create a decoder state
+        decoderState = new RTMPDecodeState(getSessionId());
         // set running flag
         running = new AtomicBoolean(false);
     }
@@ -447,7 +442,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * @return the decoderState
      */
     public RTMPDecodeState getDecoderState() {
-        return decoderState.get();
+        return decoderState;
     }
 
     /** {@inheritDoc} */
@@ -508,10 +503,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             log.debug("startWaitForHandshake - {}", sessionId);
         }
         // start the handshake checker after maxHandshakeTimeout milliseconds
-        try {
-            waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
-        } catch (TaskRejectedException e) {
-            log.error("WaitForHandshake task was rejected for {}", sessionId, e);
+        if (scheduler != null) {
+            try {
+                waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
+            } catch (TaskRejectedException e) {
+                log.error("WaitForHandshake task was rejected for {}", sessionId, e);
+            }
         }
     }
 
@@ -652,6 +649,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 log.trace("Channels: {}", channels);
             }
         }
+        /*
         ReceivedMessageTaskQueue queue = tasksByChannels.remove(channelId);
         if (queue != null) {
             if (isConnected()) {
@@ -663,6 +661,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         } else if (log.isTraceEnabled()) {
             log.trace("No task queue for id: {}", channelId);
         }
+        */
         chan = null;
     }
 
@@ -999,10 +998,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 // dump memory stats
                 log.trace("Memory at close - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
             }
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Already closing..");
-            }
+        } else if (log.isDebugEnabled()) {
+            log.debug("Already closing..");
         }
     }
 
@@ -1368,74 +1365,80 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Handle the incoming message.
      * 
-     * @param message
-     *            message
+     * @param packet
+     *            incoming message packet
      */
-    public void handleMessageReceived(Packet message) {
+    public void handleMessageReceived(Packet packet) {
         if (log.isTraceEnabled()) {
             log.trace("handleMessageReceived - {}", sessionId);
         }
-        final byte dataType = message.getHeader().getDataType();
-        // route these types outside the executor
-        switch (dataType) {
-            case Constants.TYPE_PING:
-            case Constants.TYPE_ABORT:
-            case Constants.TYPE_BYTES_READ:
-            case Constants.TYPE_CHUNK_SIZE:
-            case Constants.TYPE_CLIENT_BANDWIDTH:
-            case Constants.TYPE_SERVER_BANDWIDTH:
-                // pass message to the handler
-                try {
-                    handler.messageReceived(this, message);
-                } catch (Exception e) {
-                    log.error("Error processing received message {}", sessionId, e);
-                }
-                break;
-            default:
-                if (executor != null) {
-                    final String messageType = getMessageType(message);
+        // set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
+        if (maxHandlingTimeout > 0) {
+            packet.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
+        }
+        if (executor != null) {
+            final byte dataType = packet.getHeader().getDataType();
+            // route these types outside the executor
+            switch (dataType) {
+                case Constants.TYPE_PING:
+                case Constants.TYPE_ABORT:
+                case Constants.TYPE_BYTES_READ:
+                case Constants.TYPE_CHUNK_SIZE:
+                case Constants.TYPE_CLIENT_BANDWIDTH:
+                case Constants.TYPE_SERVER_BANDWIDTH:
+                    // pass message to the handler
+                    try {
+                        handler.messageReceived(this, packet);
+                    } catch (Exception e) {
+                        log.error("Error processing received message {}", sessionId, e);
+                    }
+                    break;
+                default:
+                    final String messageType = getMessageType(packet);
                     try {
                         // increment the packet number
                         final long packetNumber = packetSequence.incrementAndGet();
                         if (executorQueueSizeToDropAudioPackets > 0 && currentQueueSize.get() >= executorQueueSizeToDropAudioPackets) {
-                            if (message.getHeader().getDataType() == Constants.TYPE_AUDIO_DATA) {
+                            if (packet.getHeader().getDataType() == Constants.TYPE_AUDIO_DATA) {
                                 // if there's a backlog of messages in the queue. Flash might have sent a burst of messages after a network congestion. Throw away packets that we are able to discard.
                                 log.info("Queue threshold reached. Discarding packet: session=[{}], msgType=[{}], packetNum=[{}]", sessionId, messageType, packetNumber);
                                 return;
                             }
                         }
-                        // set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
-                        if (maxHandlingTimeout > 0) {
-                            message.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
-                        }
-                        int channelId = message.getHeader().getChannelId();
+                        int streamId = packet.getHeader().getStreamId().intValue();
                         if (log.isTraceEnabled()) {
-                            log.trace("Handling message for channelId: {}, Channels: {}", channelId, channels);
+                            log.trace("Handling message for streamId: {}, channelId: {} Channels: {}", streamId, packet.getHeader().getChannelId(), channels);
                         }
                         // create a task to setProcessing the message
-                        ReceivedMessageTask task = new ReceivedMessageTask(sessionId, message, handler, this);
+                        ReceivedMessageTask task = new ReceivedMessageTask(sessionId, packet, handler, this);
                         task.setPacketNumber(packetNumber);
                         // create a task queue
-                        ReceivedMessageTaskQueue newChannelTasks = new ReceivedMessageTaskQueue(channelId, this);
-                        // put the queue in the task by channel map
-                        ReceivedMessageTaskQueue currentChannelTasks = tasksByChannels.putIfAbsent(channelId, newChannelTasks);
-                        if (currentChannelTasks != null) {
+                        ReceivedMessageTaskQueue newStreamTasks = new ReceivedMessageTaskQueue(streamId, this);
+                        // put the queue in the task by stream map
+                        ReceivedMessageTaskQueue currentStreamTasks = tasksByStreams.putIfAbsent(streamId, newStreamTasks);
+                        if (currentStreamTasks != null) {
                             // add the task to the existing queue
-                            currentChannelTasks.addTask(task);
+                            currentStreamTasks.addTask(task);
                         } else {
                             // add the task to the newly created and just added queue
-                            newChannelTasks.addTask(task);
+                            newStreamTasks.addTask(task);
                         }
                     } catch (Exception e) {
                         log.error("Incoming message handling failed on session=[" + sessionId + "], messageType=[" + messageType + "]", e);
                         if (log.isDebugEnabled()) {
-                            log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
+                            log.debug("Execution rejected on {} - {}", sessionId, RTMP.states[getStateCode()]);
                             log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
                         }
                     }
-                } else {
-                    log.warn("Executor is null on {} state: {}", getSessionId(), RTMP.states[getStateCode()]);
-                }
+            }
+        } else {
+            log.debug("Executor is null on {} state: {}", sessionId, RTMP.states[getStateCode()]);
+            // pass message to the handler
+            try {
+                handler.messageReceived(this, packet);
+            } catch (Exception e) {
+                log.error("Error processing received message {} state: {}", sessionId, RTMP.states[getStateCode()], e);
+            }
         }
     }
 
@@ -1452,12 +1455,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     }
 
     @SuppressWarnings("unchecked")
-    private void processTasksQueue(final ReceivedMessageTaskQueue currentChannelTasks) {
-        int channelId = currentChannelTasks.getChannelId();
+    private void processTasksQueue(final ReceivedMessageTaskQueue currentStreamTasks) {
+        int streamId = currentStreamTasks.getStreamId();
         if (log.isTraceEnabled()) {
-            log.trace("Process tasks for channel {}", channelId);
+            log.trace("Process tasks for streamId {}", streamId);
         }
-        final ReceivedMessageTask task = currentChannelTasks.getTaskToProcess();
+        final ReceivedMessageTask task = currentStreamTasks.getTaskToProcess();
         if (task != null) {
             Packet packet = task.getPacket();
             try {
@@ -1476,7 +1479,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                         if (log.isWarnEnabled()) {
                             log.warn("onFailure - session: {}, msgtype: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
                         }
-                        currentChannelTasks.removeTask(task);
+                        currentStreamTasks.removeTask(task);
                     }
 
                     public void onSuccess(Packet packet) {
@@ -1484,7 +1487,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                         if (log.isDebugEnabled()) {
                             log.debug("onSuccess - session: {}, msgType: {}, processingTime: {}, packetNum: {}", sessionId, messageType, getProcessingTime(), task.getPacketNumber());
                         }
-                        currentChannelTasks.removeTask(task);
+                        currentStreamTasks.removeTask(task);
                     }
 
                 });
@@ -1494,18 +1497,18 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                     log.warn("Suppressed exception on {}", sessionId, t);
                 }
                 log.info("Rejected message: {} on {}", packet, sessionId);
-                currentChannelTasks.removeTask(task);
+                currentStreamTasks.removeTask(task);
             } catch (Throwable e) {
                 log.error("Incoming message handling failed on session=[" + sessionId + "]", e);
                 if (log.isDebugEnabled()) {
                     log.debug("Execution rejected on {} - {}", getSessionId(), RTMP.states[getStateCode()]);
                     log.debug("Lock permits - decode: {} encode: {}", decoderLock.availablePermits(), encoderLock.availablePermits());
                 }
-                currentChannelTasks.removeTask(task);
+                currentStreamTasks.removeTask(task);
             }
         } else {
             if (log.isTraceEnabled()) {
-                log.trace("Channel {} task queue is empty", channelId);
+                log.trace("Channel {} task queue is empty", streamId);
             }
         }
     }
@@ -1596,7 +1599,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         Ping pingRequest = new Ping();
         pingRequest.setEventType(Ping.PING_CLIENT);
         lastPingSentOn.set(newPingTime);
-        int now = (int) (newPingTime & 0xffffffff);
+        int now = (int) (newPingTime & 0xffffffffL);
         pingRequest.setValue2(now);
         ping(pingRequest);
     }
@@ -1609,19 +1612,21 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      */
     public void pingReceived(Ping pong) {
         long now = System.currentTimeMillis();
-        Number previousPingValue = lastPingSentOn.get() & 0xffffffff;
+        long previousPingTime = lastPingSentOn.get();
+        int previousPingValue = (int) (previousPingTime & 0xffffffffL);
+        int pongValue = pong.getValue2().intValue();
         if (log.isDebugEnabled()) {
-            log.debug("Pong received: session=[{}] at {} with value {}, previous received at {}", new Object[] { getSessionId(), now, pong.getValue2(), previousPingValue });
+            log.debug("Pong received: session=[{}] at {} with value {}, previous received at {}", new Object[] { getSessionId(), now, pongValue, previousPingValue });
         }
-        if (pong.getValue2() == previousPingValue) {
-            lastPingRoundTripTime.set((int) ((now & 0xffffffff) - pong.getValue2().intValue()));
+        if (pongValue == previousPingValue) {
+            lastPingRoundTripTime.set((int) ((now - previousPingTime) & 0xffffffffL));
             if (log.isDebugEnabled()) {
                 log.debug("Ping response session=[{}], RTT=[{} ms]", new Object[] { getSessionId(), lastPingRoundTripTime.get() });
             }
         } else {
             // don't log the congestion entry unless there are more than X messages waiting
             if (getPendingMessages() > 4) {
-                Number pingRtt = (now & 0xffffffff) - pong.getValue2().intValue();
+                int pingRtt = (int) ((now & 0xffffffffL)) - pongValue;
                 log.info("Pong delayed: session=[{}], ping response took [{} ms] to arrive. Connection may be congested, or loopback", new Object[] { getSessionId(), pingRtt });
             }
         }

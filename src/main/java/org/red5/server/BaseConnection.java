@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Base abstract class for connections. Adds connection specific functionality like work with clients to AttributeStore.
  */
+@SuppressWarnings("deprecation")
 public abstract class BaseConnection extends AttributeStore implements IConnection {
 
     private static final Logger log = LoggerFactory.getLogger(BaseConnection.class);
@@ -52,7 +53,12 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Connection type
      */
-    protected final String type;
+    protected final Type type;
+
+    /**
+     * Duty type
+     */
+    protected volatile Duty duty = Duty.UNDEFINED;
 
     /**
      * Connection host
@@ -118,7 +124,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Set of basic scopes. The scopes may be of shared object or broadcast stream type.
      */
-    protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<IBasicScope>();
+    protected transient CopyOnWriteArraySet<IBasicScope> basicScopes = new CopyOnWriteArraySet<>();
 
     /**
      * Is the connection closed?
@@ -128,7 +134,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Listeners
      */
-    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<IConnectionListener>();
+    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
 
     /**
      * Used to protect mulit-threaded operations on write
@@ -136,24 +142,14 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     private final transient Semaphore writeLock = new Semaphore(1, true);
 
     // Support for stream ids
-    private transient ThreadLocal<Number> streamLocal = new ThreadLocal<Number>();
-
-    /** {@inheritDoc} */
-    public Number getStreamId() {
-        return streamLocal.get();
-    }
-
-    /** {@inheritDoc} */
-    public void setStreamId(Number id) {
-        streamLocal.set(id);
-    }
+    private transient ThreadLocal<Number> streamLocal = new ThreadLocal<>();
 
     /**
      * Creates a new persistent base connection
      */
     @ConstructorProperties(value = { "persistent" })
     public BaseConnection() {
-        this(PERSISTENT);
+        this(IConnection.Type.PERSISTENT.name().toLowerCase());
     }
 
     /**
@@ -165,7 +161,11 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     @ConstructorProperties({ "type" })
     public BaseConnection(String type) {
         log.debug("New BaseConnection - type: {}", type);
-        this.type = type;
+        if (type != null) {
+            this.type = IConnection.Type.valueOf(type.toUpperCase());
+        } else {
+            this.type = IConnection.Type.UNKNOWN;
+        }
         this.sessionId = RandomStringUtils.randomAlphanumeric(13).toUpperCase();
         log.debug("Generated session id: {}", sessionId);
     }
@@ -192,7 +192,11 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     public BaseConnection(String type, String host, String remoteAddress, int remotePort, String path, String sessionId, Map<String, Object> params) {
         log.debug("New BaseConnection - type: {} host: {} remoteAddress: {} remotePort: {} path: {} sessionId: {}", new Object[] { type, host, remoteAddress, remotePort, path, sessionId });
         log.debug("Params: {}", params);
-        this.type = type;
+        if (type != null) {
+            this.type = IConnection.Type.valueOf(type.toUpperCase());
+        } else {
+            this.type = IConnection.Type.UNKNOWN;
+        }
         this.host = host;
         this.remoteAddress = remoteAddress;
         this.remoteAddresses = new ArrayList<String>(1);
@@ -222,6 +226,16 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
         return writeLock;
     }
 
+    /** {@inheritDoc} */
+    public Number getStreamId() {
+        return streamLocal.get();
+    }
+
+    /** {@inheritDoc} */
+    public void setStreamId(Number id) {
+        streamLocal.set(id);
+    }
+
     /**
      * Initializes client
      * 
@@ -249,57 +263,47 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
         }
     }
 
-    /**
-     *
-     * @return type
-     */
+    /** {@inheritDoc} */
     public String getType() {
-        return type;
+        return type.name().toLowerCase();
     }
 
-    /**
-     *
-     * @return host
-     */
+    /** {@inheritDoc} */
+    public Duty getDuty() {
+        return duty;
+    }
+
+    /** {@inheritDoc} */
+    public void setDuty(Duty duty) {
+        this.duty = duty;
+    }
+
+    /** {@inheritDoc} */
     public String getHost() {
         return host;
     }
 
-    /**
-     *
-     * @return remote address
-     */
+    /** {@inheritDoc} */
     public String getRemoteAddress() {
         return remoteAddress;
     }
 
-    /**
-     * @return remote address
-     */
+    /** {@inheritDoc} */
     public List<String> getRemoteAddresses() {
         return remoteAddresses;
     }
 
-    /**
-     *
-     * @return remote port
-     */
+    /** {@inheritDoc} */
     public int getRemotePort() {
         return remotePort;
     }
 
-    /**
-     *
-     * @return path
-     */
+    /** {@inheritDoc} */
     public String getPath() {
         return path;
     }
 
-    /**
-     *
-     * @return session id
-     */
+    /** {@inheritDoc} */
     public String getSessionId() {
         return sessionId;
     }

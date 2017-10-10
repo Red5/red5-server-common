@@ -82,7 +82,7 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
     public Aggregate(IoBuffer data, boolean copy) {
         super(Type.STREAM_DATA);
         if (copy) {
-            byte[] array = new byte[data.limit()];
+            byte[] array = new byte[data.remaining()];
             data.mark();
             data.get(array);
             data.reset();
@@ -274,6 +274,9 @@ public class Aggregate extends BaseEvent implements IoConstants, IStreamData<Agg
         if (header != null) {
             result.setHeader(header.clone());
         }
+        result.setSourceType(sourceType);
+        result.setSource(source);
+        result.setTimestamp(timestamp);
         return result;
     }
 

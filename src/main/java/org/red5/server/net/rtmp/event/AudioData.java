@@ -74,7 +74,7 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     public AudioData(IoBuffer data, boolean copy) {
         super(Type.STREAM_DATA);
         if (copy) {
-            byte[] array = new byte[data.limit()];
+            byte[] array = new byte[data.remaining()];
             data.mark();
             data.get(array);
             data.reset();
@@ -112,8 +112,9 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     }
 
     public void setData(byte[] data) {
-        this.data = IoBuffer.allocate(data.length);
-        this.data.put(data).flip();
+        setData(IoBuffer.wrap(data));
+        //this.data = IoBuffer.allocate(data.length);
+        //this.data.put(data).flip();
     }
 
     public int getCodecId() {
@@ -138,7 +139,7 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
         super.readExternal(in);
         byte[] byteBuf = (byte[]) in.readObject();
         if (byteBuf != null) {
-            setData(IoBuffer.wrap(byteBuf));
+            setData(byteBuf);
         }
     }
 
@@ -146,7 +147,15 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     public void writeExternal(ObjectOutput out) throws IOException {
         super.writeExternal(out);
         if (data != null) {
-            out.writeObject(data.array());
+            if (data.hasArray()) {
+                out.writeObject(data.array());
+            } else {
+                byte[] array = new byte[data.remaining()];
+                data.mark();
+                data.get(array);
+                data.reset();
+                out.writeObject(array);
+            }
         } else {
             out.writeObject(null);
         }
@@ -178,6 +187,9 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
         if (header != null) {
             result.setHeader(header.clone());
         }
+        result.setSourceType(sourceType);
+        result.setSource(source);
+        result.setTimestamp(timestamp);
         return result;
     }
 

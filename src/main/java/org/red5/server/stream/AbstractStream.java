@@ -18,9 +18,14 @@
 
 package org.red5.server.stream;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.red5.codec.IStreamCodecInfo;
+import org.red5.codec.StreamCodecInfo;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.IScopeHandler;
 import org.red5.server.api.stream.IStream;
@@ -48,12 +53,12 @@ public abstract class AbstractStream implements IStream {
     /**
      * Stream audio and video codec information
      */
-    private IStreamCodecInfo codecInfo;
+    private IStreamCodecInfo codecInfo = new StreamCodecInfo();
 
     /**
      * Stores the streams metadata
      */
-    protected Notify metaData;
+    private AtomicReference<Notify> metaData = new AtomicReference<>();
 
     /**
      * Stream scope
@@ -61,14 +66,60 @@ public abstract class AbstractStream implements IStream {
     private IScope scope;
 
     /**
+     * Contains {@link PropertyChangeListener}s registered with this stream and following its changes of state.
+     */
+    private CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
+
+    /**
      * Timestamp the stream was created.
      */
-    protected long creationTime;
+    protected long creationTime = System.currentTimeMillis();
+    
+
+    /**
+     * Timestamp the stream was started.
+     */
+    protected long startTime;
 
     /**
      * Lock for protecting critical sections
      */
     protected final transient Semaphore lock = new Semaphore(1, true);
+
+    /**
+     * Creates a new {@link PropertyChangeEvent} and delivers it to all currently registered state listeners.
+     *
+     * @param oldState
+     *            the {@link StreamState} we had before the change
+     * @param newState
+     *            the {@link StreamState} we had after the change
+     */
+    protected void fireStateChange(StreamState oldState, StreamState newState) {
+        final PropertyChangeEvent evt = new PropertyChangeEvent(this, "StreamState", oldState, newState);
+        for (PropertyChangeListener listener : stateListeners) {
+            listener.propertyChange(evt);
+        }
+    }
+
+    /**
+     * Adds to the list of listeners tracking changes of the {@link StreamState} of this stream.
+     *
+     * @param listener the listener to register
+     */
+    public void addStateChangeListener(PropertyChangeListener listener) {
+        if (!stateListeners.contains(listener)) {
+            stateListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes from the list of listeners tracking changes of the {@link StreamState} of this stream.
+     *
+     * @param listener the listener to remove
+     */
+    public void removeStateChangeListener(PropertyChangeListener listener) {
+        stateListeners.remove(listener);
+    }
 
     /**
      * Return stream name.
@@ -89,12 +140,28 @@ public abstract class AbstractStream implements IStream {
     }
 
     /**
-     * Returns the metadata for the associated stream, if it exists.
+     * Returns a copy of the metadata for the associated stream, if it exists.
      * 
      * @return stream meta data
      */
     public Notify getMetaData() {
-        return metaData;
+        Notify md = metaData.get();
+        if (md != null) {
+            try {
+                return md.duplicate();
+            } catch (Exception e) {
+            }
+        }
+        return md;
+    }
+
+    /**
+     * Set the metadata.
+     * 
+     * @param metaData stream meta data
+     */
+    public void setMetaData(Notify metaData) {
+        this.metaData.set(metaData);
     }
 
     /**
@@ -113,6 +180,15 @@ public abstract class AbstractStream implements IStream {
      */
     public long getCreationTime() {
         return creationTime;
+    }
+
+    /**
+     * Returns timestamp at which the stream was started.
+     * 
+     * @return started timestamp
+     */
+    public long getStartTime() {
+        return startTime;
     }
 
     /**
@@ -166,12 +242,14 @@ public abstract class AbstractStream implements IStream {
      *            stream state
      */
     public void setState(StreamState state) {
-        if (!this.state.equals(state)) {
+        StreamState oldState = this.state;
+        if (!oldState.equals(state)) {
             try {
                 lock.acquireUninterruptibly();
                 this.state = state;
             } finally {
                 lock.release();
+                fireStateChange(oldState, state);
             }
         }
     }

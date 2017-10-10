@@ -74,7 +74,13 @@ public class AudioCodecFactory {
                 case 10: //aac 
                     result = (IAudioStreamCodec) Class.forName("org.red5.codec.AACAudio").newInstance();
                     break;
-            // TODO add SPEEX support?
+				case 11:
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.SpeexAudio").newInstance();
+					break;
+				case 2:
+				case 14:
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.MP3Audio").newInstance();
+					break;
             }
             data.rewind();
         } catch (Exception ex) {

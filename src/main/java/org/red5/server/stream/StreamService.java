@@ -596,7 +596,8 @@ public class StreamService implements IStreamService {
 
     /** {@inheritDoc} */
     public void publish(Boolean dontStop) {
-        if (!dontStop) {
+        // null is as good as false according to Boolean.valueOf() so if null, interpret as false
+        if (dontStop == null || !dontStop) {
             IConnection conn = Red5.getConnectionLocal();
             if (conn instanceof IStreamCapableConnection) {
                 IStreamCapableConnection streamConn = (IStreamCapableConnection) conn;

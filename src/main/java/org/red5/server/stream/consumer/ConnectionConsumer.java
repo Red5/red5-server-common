@@ -32,6 +32,7 @@ import org.red5.server.messaging.PipeConnectionEvent;
 import org.red5.server.net.rtmp.Channel;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.event.AudioData;
+import org.red5.server.net.rtmp.event.BaseEvent;
 import org.red5.server.net.rtmp.event.BytesRead;
 import org.red5.server.net.rtmp.event.ChunkSize;
 import org.red5.server.net.rtmp.event.FlexStreamSend;
@@ -148,7 +149,9 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             }
             // get the data type
             byte dataType = msg.getDataType();
-            log.trace("Data type: {}", dataType);
+            if (log.isTraceEnabled()) {
+                log.trace("Data type: {} source type: {}", dataType, ((BaseEvent) msg).getSourceType());
+            }
             // create a new header for the consumer
             final Header header = new Header();
             header.setTimerBase(eventTime);
@@ -156,17 +159,16 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             IoBuffer buf = null;
             switch (dataType) {
                 case Constants.TYPE_AGGREGATE:
-                    log.trace("Aggregate data");
+                    //log.trace("Aggregate data");
                     data.write(msg);
                     break;
                 case Constants.TYPE_AUDIO_DATA:
-                    log.trace("Audio data");
+                    //log.trace("Audio data");
                     buf = ((AudioData) msg).getData();
                     if (buf != null) {
                         AudioData audioData = new AudioData(buf.asReadOnlyBuffer());
                         audioData.setHeader(header);
                         audioData.setTimestamp(header.getTimer());
-                        log.trace("Source type: {}", ((AudioData) msg).getSourceType());
                         audioData.setSourceType(((AudioData) msg).getSourceType());
                         audio.write(audioData);
                     } else {
@@ -174,13 +176,12 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     }
                     break;
                 case Constants.TYPE_VIDEO_DATA:
-                    log.trace("Video data");
+                    //log.trace("Video data");
                     buf = ((VideoData) msg).getData();
                     if (buf != null) {
                         VideoData videoData = new VideoData(buf.asReadOnlyBuffer());
                         videoData.setHeader(header);
                         videoData.setTimestamp(header.getTimer());
-                        log.trace("Source type: {}", ((VideoData) msg).getSourceType());
                         videoData.setSourceType(((VideoData) msg).getSourceType());
                         video.write(videoData);
                     } else {
@@ -188,7 +189,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     }
                     break;
                 case Constants.TYPE_PING:
-                    log.trace("Ping");
+                    //log.trace("Ping");
                     Ping ping = (Ping) msg;
                     ping.setHeader(header);
                     conn.ping(ping);
@@ -204,9 +205,9 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     data.write(notify);
                     break;
                 case Constants.TYPE_FLEX_STREAM_SEND:
-                    if (log.isTraceEnabled()) {
-                        log.trace("Flex stream send: {}", (Notify) msg);
-                    }
+                    //if (log.isTraceEnabled()) {
+                        //log.trace("Flex stream send: {}", (Notify) msg);
+                    //}
                     FlexStreamSend send = null;
                     if (msg instanceof FlexStreamSend) {
                         send = (FlexStreamSend) msg;
@@ -218,14 +219,14 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     data.write(send);
                     break;
                 case Constants.TYPE_BYTES_READ:
-                    log.trace("Bytes read");
+                    //log.trace("Bytes read");
                     BytesRead bytesRead = (BytesRead) msg;
                     bytesRead.setHeader(header);
                     bytesRead.setTimestamp(header.getTimer());
                     conn.getChannel((byte) 2).write(bytesRead);
                     break;
                 default:
-                    log.trace("Default: {}", dataType);
+                    //log.trace("Default: {}", dataType);
                     data.write(msg);
             }
         } else {

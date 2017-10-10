@@ -282,16 +282,18 @@ public class Notify extends BaseEvent implements ICommand, IStreamData<Notify>, 
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         writeExternal(oos);
         oos.close();
-
         byte[] buf = baos.toByteArray();
         baos.close();
-
         ByteArrayInputStream bais = new ByteArrayInputStream(buf);
         ObjectInputStream ois = new ObjectInputStream(bais);
-
         result.readExternal(ois);
         ois.close();
         bais.close();
+        // set the action if it exists
+        result.setAction(getAction());
+        result.setSourceType(sourceType);
+        result.setSource(source);
+        result.setTimestamp(timestamp);
         return result;
     }
 

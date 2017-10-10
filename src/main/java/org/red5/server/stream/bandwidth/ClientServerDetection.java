@@ -61,11 +61,18 @@ public class ClientServerDetection implements IPendingServiceCallback {
 
     public Map<String, Object> checkBandwidth(Object[] params) {
         final IStreamCapableConnection stats = getStats();
-        Map<String, Object> statsValues = new HashMap<String, Object>();
-        Integer time = (Integer) (params.length > 0 ? params[0] : 0);
+        Map<String, Object> statsValues = new HashMap<>();
+        Number time = 0; 
+        if (params.length > 0) {
+            if (params[0] instanceof Double) {
+                time = (Double) params[0];
+            } else {
+                time = (Integer) params[0];
+            }
+        }
         statsValues.put("cOutBytes", stats.getReadBytes());
         statsValues.put("cInBytes", stats.getWrittenBytes());
-        statsValues.put("time", time);
+        statsValues.put("time", time.intValue());
         log.debug("cOutBytes: {} cInBytes: {} time: {}", new Object[] { stats.getReadBytes(), stats.getWrittenBytes(), time });
         return statsValues;
     }

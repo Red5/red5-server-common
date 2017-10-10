@@ -50,7 +50,7 @@ public abstract class BaseEvent implements Constants, IRTMPEvent, Externalizable
     /**
      * Source type
      */
-    private byte sourceType;
+    protected byte sourceType;
 
     /**
      * Event target object

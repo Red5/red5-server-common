@@ -45,26 +45,36 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
     };
 
     /**
-     * Persistent connection type, eg RTMP.
+     * Duty type.
      */
-    public static final String PERSISTENT = "persistent";
+    public static enum Duty {
+        UNDEFINED, PUBLISHER, SUBSCRIBER, PROXY, REMOTING
+    };
 
     /**
-     * Polling connection type, eg RTMPT.
+     * Connection type.
      */
-    public static final String POLLING = "polling";
-
-    /**
-     * Transient connection type, eg Remoting, HTTP, etc.
-     */
-    public static final String TRANSIENT = "transient";
+    public static enum Type {
+        PERSISTENT, // Persistent connection type, eg RTMP
+        POLLING, // Polling connection type, eg RTMPT
+        TRANSIENT, // Transient connection type, eg Remoting, HTTP, etc
+        UNKNOWN // all others not matching known types
+    };
 
     /**
      * Get the connection type.
      * 
      * @return string containing one of connection types
      */
+    @Deprecated
     public String getType(); // PERSISTENT | POLLING | TRANSIENT
+
+    /**
+     * Get the connection type.
+     * 
+     * @return connection type containing one of connection types
+     */
+    //public Type getType(); // PERSISTENT | POLLING | TRANSIENT
 
     /**
      * Get the object encoding in use for this connection.
@@ -72,6 +82,13 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
      * @return encoding type
      */
     public Encoding getEncoding();
+
+    /**
+     * Get the duty for this connection; this is not meant nor expected to remain static.
+     * 
+     * @return duty type
+     */
+    public Duty getDuty();
 
     /**
      * Initialize the connection.

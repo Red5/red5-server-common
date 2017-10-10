@@ -90,7 +90,7 @@ public class RTMP {
     /**
      * Map for channels, keyed by channel id.
      */
-    private final transient ConcurrentMap<Integer, ChannelInfo> channels = new ConcurrentHashMap<Integer, ChannelInfo>(3, 0.9f, 1);
+    private final transient ConcurrentMap<Integer, ChannelInfo> channels = new ConcurrentHashMap<>(3, 0.9f, 1);
 
     /**
      * Read chunk size. Packets are read and written chunk-by-chunk.

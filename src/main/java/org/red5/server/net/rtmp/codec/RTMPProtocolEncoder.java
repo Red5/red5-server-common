@@ -26,7 +26,6 @@ import java.util.Map;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.io.object.Output;
 import org.red5.io.object.Serializer;
-import org.red5.io.utils.BufferUtils;
 import org.red5.server.api.IConnection.Encoding;
 import org.red5.server.api.Red5;
 import org.red5.server.api.service.IPendingServiceCall;
@@ -134,63 +133,69 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
      */
     public IoBuffer encodePacket(Packet packet) {
         IoBuffer out = null;
-        final Header header = packet.getHeader();
-        final int channelId = header.getChannelId();
-        log.trace("Channel id: {}", channelId);
-        final IRTMPEvent message = packet.getMessage();
+        Header header = packet.getHeader();
+        int channelId = header.getChannelId();
+        //log.trace("Channel id: {}", channelId);
+        IRTMPEvent message = packet.getMessage();
         if (message instanceof ChunkSize) {
             ChunkSize chunkSizeMsg = (ChunkSize) message;
             ((RTMPConnection) Red5.getConnectionLocal()).getState().setWriteChunkSize(chunkSizeMsg.getSize());
         }
         // normally the message is expected not to be dropped
         if (!dropMessage(channelId, message)) {
+            //log.trace("Header time: {} message timestamp: {}", header.getTimer(), message.getTimestamp());
             IoBuffer data = encodeMessage(header, message);
             if (data != null) {
                 RTMP rtmp = ((RTMPConnection) Red5.getConnectionLocal()).getState();
+                // set last write packet
+                rtmp.setLastWritePacket(channelId, packet);
+                // ensure we're at the beginning
                 if (data.position() != 0) {
                     data.flip();
                 } else {
                     data.rewind();
                 }
+                // length of the data to be chunked
                 int dataLen = data.limit();
                 header.setSize(dataLen);
+                //if (log.isTraceEnabled()) {
+                    //log.trace("Message: {}", data);
+                //}
+                // chunk size for writing
+                int chunkSize = rtmp.getWriteChunkSize();
+                // number of chunks to write
+                int numChunks = (int) Math.ceil(dataLen / (float) chunkSize);
                 // get last header
                 Header lastHeader = rtmp.getLastWriteHeader(channelId);
-                // maximum header size with extended timestamp (Chunk message header type 0 with 11 byte)
-                int headerSize = 18;
-                // set last write header
-                rtmp.setLastWriteHeader(channelId, header);
-                // set last write packet
-                rtmp.setLastWritePacket(channelId, packet);
-                int chunkSize = rtmp.getWriteChunkSize();
-                // maximum chunk header size with extended timestamp
-                int chunkHeaderSize = 7;
-                int numChunks = (int) Math.ceil(dataLen / (float) chunkSize);
-                int bufSize = dataLen + headerSize + (numChunks > 0 ? (numChunks - 1) * chunkHeaderSize : 0);
-                out = IoBuffer.allocate(bufSize, false);
-                // encode the header
-                encodeHeader(header, lastHeader, out);
-                if (numChunks == 1) {
-                    // we can do it with a single copy
-                    BufferUtils.put(out, data, dataLen);
-                } else {
-                    int extendedTimestamp = header.getExtendedTimestamp();
-                    for (int i = 0; i < numChunks - 1; i++) {
-                        BufferUtils.put(out, data, chunkSize);
-                        dataLen -= chunkSize;
-                        RTMPUtils.encodeHeaderByte(out, HEADER_CONTINUE, channelId);
-                        if (extendedTimestamp != 0) {
-                            out.putInt(extendedTimestamp);
-                        }
-                    }
-                    BufferUtils.put(out, data, dataLen);
+                if (log.isTraceEnabled()) {
+                    log.trace("Channel id: {} chunkSize: {}", channelId, chunkSize);
                 }
+                // attempt to properly guess the size of the buffer we'll need
+                int bufSize = dataLen + 18 + (numChunks * 2);
+                //log.trace("Allocated buffer size: {}", bufSize);
+                out = IoBuffer.allocate(bufSize, false);
+                out.setAutoExpand(true);
+                do {
+                    // encode the header
+                    encodeHeader(header, lastHeader, out);
+                    // write a chunk
+                    byte[] buf = new byte[Math.min(chunkSize, data.remaining())];
+                    data.get(buf);
+                    //log.trace("Buffer: {}", Hex.encodeHexString(buf));
+                    out.put(buf);
+                    // move header over to last header
+                    lastHeader = header.clone();
+                } while (data.hasRemaining());
+                // collapse the time stamps on the last header after decode is complete
+                lastHeader.setTimerBase(lastHeader.getTimer());
+                // clear the delta
+                lastHeader.setTimerDelta(0);
+                // set last write header
+                rtmp.setLastWriteHeader(channelId, lastHeader);
                 data.free();
                 out.flip();
                 data = null;
             }
-        } else {
-            log.trace("Dropped: {}", message);
         }
         message.release();
         return out;
@@ -199,7 +204,8 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
     /**
      * Determine if this message should be dropped. If the traffic from server to client is congested, then drop LIVE messages to help alleviate congestion.
      * 
-     * - determine latency between server and client using ping - ping timestamp is unsigned int (4 bytes) and is set from value on sender
+     * - determine latency between server and client using ping
+     * - ping timestamp is unsigned int (4 bytes) and is set from value on sender
      * 
      * 1st drop disposable frames - lowest mark 2nd drop interframes - middle 3rd drop key frames - high mark
      * 
@@ -268,7 +274,6 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
             if (log.isDebugEnabled()) {
                 log.debug("incomingLatency={} clockTimeOfMessage={} getClockStartTime={} timestamp={} getStreamStartTime={} now={}", new Object[] { incomingLatency, clockTimeOfMessage, mapping.getClockStartTime(), timestamp, mapping.getStreamStartTime(), now });
             }
-
             //TDJ: EXPERIMENTAL dropping for LIVE packets in future (default false)
             if (isLiveStream && dropLiveFuture) {
                 incomingLatency = Math.abs(incomingLatency);
@@ -276,21 +281,15 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                     log.debug("incomingLatency={} clockTimeOfMessage={} now={}", new Object[] { incomingLatency, clockTimeOfMessage, now });
                 }
             }
+            // NOTE: We could decide to drop the message here because it is very late due to incoming traffic congestion.
 
-            // NOTE:
-            // We could decide to drop the message here because it is very late due to incoming
-            // traffic congestion.
-
-            // We need to calculate how long will this message reach the client. If the traffic is congested, we decide
-            // to drop the message.
+            // We need to calculate how long will this message reach the client. If the traffic is congested, we decide to drop the message.
             long outgoingLatency = 0L;
-
             if (conn != null) {
                 // Determine the interval when the last ping was sent and when the pong was received. The
                 // duration will be the round-trip time (RTT) of the ping-pong message. If it is high then it
                 // means that there is congestion in the connection.
                 int lastPingPongInterval = conn.getLastPingSentAndLastPongReceivedInterval();
-
                 if (lastPingPongInterval > 0) {
                     // The outgoingLatency is the ping RTT minus the incoming latency.
                     outgoingLatency = lastPingPongInterval - incomingLatency;
@@ -299,14 +298,11 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                     }
                 }
             }
-
             //TODO: how should we differ handling based on live or vod?
             //TODO: if we are VOD do we "pause" the provider when we are consistently late?
-
             if (log.isTraceEnabled()) {
                 log.trace("Packet timestamp: {}; latency: {}; now: {}; message clock time: {}, dropLiveFuture: {}", new Object[] { timestamp, incomingLatency, now, clockTimeOfMessage, dropLiveFuture });
             }
-
             if (outgoingLatency < baseTolerance) {
                 // no traffic congestion in outgoing direction
             } else if (outgoingLatency > highestTolerance) {
@@ -314,23 +310,21 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                 if (log.isDebugEnabled()) {
                     log.debug("Outgoing direction congested. outgoingLatency={} highestTolerance={}", new Object[] { outgoingLatency, highestTolerance });
                 }
-
                 if (isDroppable) {
                     mapping.setKeyFrameNeeded(true);
                 }
-
                 drop = true;
             } else {
                 if (isDroppable && message instanceof VideoData) {
                     VideoData video = (VideoData) message;
                     if (video.getFrameType() == FrameType.KEYFRAME) {
-                        //if its a key frame the inter and disposible checks can be skipped
+                        // if its a key frame the inter and disposable checks can be skipped
                         if (log.isDebugEnabled()) {
                             log.debug("Resuming stream with key frame; message: {}", message);
                         }
                         mapping.setKeyFrameNeeded(false);
                     } else if (incomingLatency >= baseTolerance && incomingLatency < midTolerance) {
-                        //drop disposable frames
+                        // drop disposable frames
                         if (video.getFrameType() == FrameType.DISPOSABLE_INTERFRAME) {
                             if (log.isDebugEnabled()) {
                                 log.debug("Dropping disposible frame; message: {}", message);
@@ -338,7 +332,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                             drop = true;
                         }
                     } else if (incomingLatency >= midTolerance && incomingLatency <= highestTolerance) {
-                        //drop inter-frames and disposable frames
+                        // drop inter-frames and disposable frames
                         if (log.isDebugEnabled()) {
                             log.debug("Dropping disposible or inter frame; message: {}", message);
                         }
@@ -356,34 +350,24 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
     /**
      * Determine type of header to use.
      * 
-     * @param header
-     *            RTMP message header
-     * @param lastHeader
-     *            Previous header
-     * @return Header type to use.
+     * @param header RTMP message header
+     * @param lastHeader Previous header
+     * @return Header type to use
      */
     private byte getHeaderType(final Header header, final Header lastHeader) {
-        if (lastHeader == null) {
+        //int lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
+        if (lastHeader == null || header.getStreamId() != lastHeader.getStreamId() || header.getTimer() < lastHeader.getTimer()) {
+            // new header mark if header for another stream
             return HEADER_NEW;
-        }
-        final int lastFullTs = ((RTMPConnection) Red5.getConnectionLocal()).getState().getLastFullTimestampWritten(header.getChannelId());
-        final byte headerType;
-        final long diff = RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
-        final long timeSinceFullTs = RTMPUtils.diffTimestamps(header.getTimer(), lastFullTs);
-        if (header.getStreamId() != lastHeader.getStreamId() || diff < 0 || timeSinceFullTs >= 250) {
-            // New header mark if header for another stream
-            headerType = HEADER_NEW;
         } else if (header.getSize() != lastHeader.getSize() || header.getDataType() != lastHeader.getDataType()) {
-            // Same source header if last header data type or size differ
-            headerType = HEADER_SAME_SOURCE;
-        } else if (header.getTimer() != lastHeader.getTimer() + lastHeader.getTimerDelta()) {
-            // Timer change marker if there's time gap between header time stamps
-            headerType = HEADER_TIMER_CHANGE;
-        } else {
-            // Continue encoding
-            headerType = HEADER_CONTINUE;
+            // same source header if last header data type or size differ
+            return HEADER_SAME_SOURCE;
+        } else if (header.getTimer() != lastHeader.getTimer()) {
+            // timer change marker if there's time gap between header time stamps
+            return HEADER_TIMER_CHANGE;
         }
-        return headerType;
+        // continue encoding
+        return  HEADER_CONTINUE;
     }
 
     /**
@@ -416,7 +400,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
      *            Previous header
      * @return Encoded header data
      */
-    public IoBuffer encodeHeader(final Header header, final Header lastHeader) {
+    public IoBuffer encodeHeader(Header header, Header lastHeader) {
         final IoBuffer result = IoBuffer.allocate(calculateHeaderSize(header, lastHeader));
         encodeHeader(header, lastHeader, result);
         return result;
@@ -425,80 +409,97 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
     /**
      * Encode RTMP header into given IoBuffer.
      *
-     * @param header
-     *            RTMP message header
-     * @param lastHeader
-     *            Previous header
-     * @param buf
-     *            Buffer to write encoded header to
+     * @param header RTMP message header
+     * @param lastHeader Previous header
+     * @param buf Buffer for writing encoded header into
      */
-    public void encodeHeader(final Header header, final Header lastHeader, final IoBuffer buf) {
-        final byte headerType = getHeaderType(header, lastHeader);
+    public void encodeHeader(Header header, Header lastHeader, IoBuffer buf) {
+        byte headerType = getHeaderType(header, lastHeader);
         RTMPUtils.encodeHeaderByte(buf, headerType, header.getChannelId());
-        final int timer;
+        if (log.isTraceEnabled()) {
+            log.trace("{} lastHeader: {}", Header.HeaderType.values()[headerType], lastHeader);
+        }
+        /*
+         Timestamps in RTMP are given as an integer number of milliseconds relative to an unspecified epoch. Typically, each stream will start
+         with a timestamp of 0, but this is not required, as long as the two endpoints agree on the epoch. Note that this means that any
+         synchronization across multiple streams (especially from separate hosts) requires some additional mechanism outside of RTMP.
+         Because timestamps are 32 bits long, they roll over every 49 days, 17 hours, 2 minutes and 47.296 seconds. Because streams are allowed to
+         run continuously, potentially for years on end, an RTMP application SHOULD use serial number arithmetic [RFC1982] when processing
+         timestamps, and SHOULD be capable of handling wraparound. For example, an application assumes that all adjacent timestamps are
+         within 2^31 - 1 milliseconds of each other, so 10000 comes after 4000000000, and 3000000000 comes before 4000000000.
+         Timestamp deltas are also specified as an unsigned integer number of milliseconds, relative to the previous timestamp. Timestamp deltas
+         may be either 24 or 32 bits long.
+         */
+        int timeBase = 0, timeDelta = 0;
+        int headerSize = header.getSize();
+        // encode the message header section
         switch (headerType) {
-            case HEADER_NEW:
-                timer = header.getTimer();
-                if (timer < 0 || timer >= 0xffffff) {
-                    RTMPUtils.writeMediumInt(buf, 0xffffff);
-                } else {
-                    RTMPUtils.writeMediumInt(buf, timer);
-                }
-                RTMPUtils.writeMediumInt(buf, header.getSize());
+            case HEADER_NEW: // type 0 - 11 bytes
+                timeBase = header.getTimerBase();
+                // absolute time - unsigned 24-bit (3 bytes) (chop at max 24bit time) 
+                RTMPUtils.writeMediumInt(buf, Math.min(timeBase, MEDIUM_INT_MAX));
+                // header size 24-bit (3 bytes)
+                RTMPUtils.writeMediumInt(buf, headerSize);
+                // 1 byte
                 buf.put(header.getDataType());
+                // little endian 4 bytes
                 RTMPUtils.writeReverseInt(buf, header.getStreamId().intValue());
-                if (timer < 0 || timer >= 0xffffff) {
-                    buf.putInt(timer);
-                    header.setExtendedTimestamp(timer);
+                header.setTimerDelta(timeDelta);
+                // write the extended timestamp if we are indicated to do so
+                if (timeBase >= MEDIUM_INT_MAX) {
+                    buf.putInt(timeBase);
+                    header.setExtended(true);
                 }
-                header.setTimerBase(timer);
-                header.setTimerDelta(0);
                 RTMPConnection conn = (RTMPConnection) Red5.getConnectionLocal();
                 if (conn != null) {
-                    conn.getState().setLastFullTimestampWritten(header.getChannelId(), timer);
+                    conn.getState().setLastFullTimestampWritten(header.getChannelId(), timeBase);
                 }
                 break;
-            case HEADER_SAME_SOURCE:
-                timer = (int) RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
-                if (timer < 0 || timer >= 0xffffff) {
-                    RTMPUtils.writeMediumInt(buf, 0xffffff);
-                } else {
-                    RTMPUtils.writeMediumInt(buf, timer);
-                }
-                RTMPUtils.writeMediumInt(buf, header.getSize());
+            case HEADER_SAME_SOURCE: // type 1 - 7 bytes
+                // delta type
+                timeDelta = (int) RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
+                header.setTimerDelta(timeDelta);
+                // write the time delta 24-bit 3 bytes
+                RTMPUtils.writeMediumInt(buf, Math.min(timeDelta, MEDIUM_INT_MAX));
+                // write header size
+                RTMPUtils.writeMediumInt(buf, headerSize);
                 buf.put(header.getDataType());
-                if (timer < 0 || timer >= 0xffffff) {
-                    buf.putInt(timer);
-                    header.setExtendedTimestamp(timer);
+                // write the extended timestamp if we are indicated to do so
+                if (timeDelta >= MEDIUM_INT_MAX) {
+                    buf.putInt(timeDelta);
+                    header.setExtended(true);
                 }
-                header.setTimerBase(header.getTimer() - timer);
-                header.setTimerDelta(timer);
+                // time base is from last header minus delta
+                timeBase = header.getTimerBase() - timeDelta;
+                header.setTimerBase(timeBase);
                 break;
-            case HEADER_TIMER_CHANGE:
-                timer = (int) RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
-                if (timer < 0 || timer >= 0xffffff) {
-                    RTMPUtils.writeMediumInt(buf, 0xffffff);
-                    buf.putInt(timer);
-                    header.setExtendedTimestamp(timer);
-                } else {
-                    RTMPUtils.writeMediumInt(buf, timer);
+            case HEADER_TIMER_CHANGE: // type 2 - 3 bytes
+                // delta type
+                timeDelta = (int) RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
+                header.setTimerDelta(timeDelta);
+                // write the time delta 24-bit 3 bytes
+                RTMPUtils.writeMediumInt(buf, Math.min(timeDelta, MEDIUM_INT_MAX));
+                // write the extended timestamp if we are indicated to do so
+                if (timeDelta >= MEDIUM_INT_MAX) {
+                    buf.putInt(timeDelta);
+                    header.setExtended(true);
                 }
-                header.setTimerBase(header.getTimer() - timer);
-                header.setTimerDelta(timer);
+                // time base is from last header minus delta
+                timeBase = header.getTimerBase() - timeDelta;
+                header.setTimerBase(timeBase);
                 break;
-            case HEADER_CONTINUE:
-                timer = (int) RTMPUtils.diffTimestamps(header.getTimer(), lastHeader.getTimer());
-                header.setTimerBase(header.getTimer() - timer);
-                header.setTimerDelta(timer);
-                if (lastHeader.getExtendedTimestamp() != 0) {
-                    buf.putInt(lastHeader.getExtendedTimestamp());
-                    header.setExtendedTimestamp(lastHeader.getExtendedTimestamp());
+            case HEADER_CONTINUE: // type 3 - 0 bytes
+                // time base from the most recent header
+                timeBase = header.getTimerBase() - timeDelta;
+                // write the extended timestamp if we are indicated to do so
+                if (lastHeader.isExtended()) {
+                    buf.putInt(timeBase);
                 }
                 break;
             default:
                 break;
         }
-        log.trace("CHUNK, E, {}, {}", header, headerType);
+        log.trace("Encoded chunk {} {}", Header.HeaderType.values()[headerType], header);
     }
 
     /**

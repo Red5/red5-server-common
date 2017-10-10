@@ -97,8 +97,7 @@ public class InMemoryPushPushPipe extends AbstractPipe {
         }
         for (IConsumer consumer : consumers) {
             try {
-                IPushableConsumer pcon = (IPushableConsumer) consumer;
-                pcon.pushMessage(this, message);
+                ((IPushableConsumer) consumer).pushMessage(this, message);
             } catch (Throwable t) {
                 if (t instanceof IOException) {
                     throw (IOException) t;
