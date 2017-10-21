@@ -84,6 +84,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
 import io.antmedia.datastore.db.IDataStore;
@@ -945,9 +946,10 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
+			boolean webRTCEnabled = false;
 			StorageClient storageClient = null;
 			boolean hlsMuxingEnabled = true;
-			List<Integer> adaptiveResolutionList = null;
+			List<EncoderSettings> adaptiveResolutionList = null;
 			String hlsListSize = null;
 			String hlsTime = null;
 			String hlsPlayListType = null;
@@ -960,6 +962,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				hlsListSize = appSettings.getHlsListSize();
 				hlsTime = appSettings.getHlsTime();
 				hlsPlayListType = appSettings.getHlsPlayListType();
+				webRTCEnabled = appSettings.isWebRTCEnabled();
 			}
 			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
 
@@ -972,6 +975,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
+			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
 
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
@@ -1036,12 +1040,16 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		return clusterNotifier;
 	}
 
-	private MuxAdaptor initializeMuxAdaptor(List<Integer> adaptiveResolutionList) {
+	private MuxAdaptor initializeMuxAdaptor(List<EncoderSettings> adaptiveResolutionList) {
 		MuxAdaptor muxAdaptor = null;
 		try {
-			Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.EncoderAdaptor");
+			if (adaptiveResolutionList != null && adaptiveResolutionList.size() > 0) 
+			{
+				Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.EncoderAdaptor");
 
-			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class).newInstance(this, adaptiveResolutionList);
+				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class)
+						.newInstance(this, adaptiveResolutionList);
+			}
 		} catch (Exception e) {
 			//e.printStackTrace();
 		} 
