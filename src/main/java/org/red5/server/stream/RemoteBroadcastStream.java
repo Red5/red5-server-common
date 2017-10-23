@@ -253,7 +253,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 					rbs.buffer.put(data, offset+11, datalimit - 11);
 					return datalimit;
 				}
-				
 			}
 			else {
 				int size = datalimit;
@@ -270,14 +269,15 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				if (rbs.buffer.position() == rbs.packetDataSize) {
 					rbs.buffer.rewind();
 					rbs.buffer.limit(rbs.packetDataSize);
-					if (rbs.packetDataType == 9) {
-					
+					if (rbs.packetDataType == 9) 
+					{
 						VideoData videoData = new VideoData(rbs.buffer);
 						videoData.setTimestamp(rbs.packetTimestamp);
 						videoData.setSourceType(Constants.SOURCE_TYPE_LIVE);
 						rbs.dispatchEvent(videoData);
 					}
-					else if (rbs.packetDataType == 8) {
+					else if (rbs.packetDataType == 8) 
+					{
 						AudioData audiodata = new AudioData(rbs.buffer);
 						audiodata.setTimestamp(rbs.packetTimestamp);
 						audiodata.setSourceType(Constants.SOURCE_TYPE_LIVE);
@@ -286,8 +286,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 					rbs.buffer.clear();
 				}
 				return datalimit;
-			}
-			
+			}	
 		}
 		
 		int offset = 0;
