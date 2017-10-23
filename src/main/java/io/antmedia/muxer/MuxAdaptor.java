@@ -74,6 +74,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private final static int TAG_HEADER_LENGTH = 11;
 
 	protected QuartzSchedulingService scheduler;
+	
+	
 
 	protected static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 
@@ -104,6 +106,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean mp4MuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
 	protected String hlsListSize;
@@ -202,7 +205,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		for(Muxer muxer : muxerList) {
-			muxer.init(scope, name);
+			muxer.init(scope, name, 0);
 		}
 		return true;
 	}
@@ -222,13 +225,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		inputFormatContext.pb(avio_alloc_context);
 
 		queueReferences.put(inputFormatContext, new InputContext(inputQueue)); 
-		logger.info("input format context: " + inputFormatContext);
 
 		int ret;
 		if ((ret = avformat_open_input(inputFormatContext, (String)null, avformat.av_find_input_format("flv"), (AVDictionary)null)) < 0) {
 			logger.info("cannot open input context");
 			return false;
 		}
+		
+		
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
 		if (ret < 0) {
@@ -236,8 +240,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 		
-		
-		//avformat.av_dump_format(inputFormatContext, 0, "stream", 0);
 
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
@@ -541,6 +543,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setHlsPlayListType(String hlsPlayListType) {
 		this.hlsPlayListType = hlsPlayListType;
+	}
+	
+	public boolean isWebRTCEnabled() {
+		return webRTCEnabled;
+	}
+
+	public void setWebRTCEnabled(boolean webRTCEnabled) {
+		this.webRTCEnabled = webRTCEnabled;
 	}
 
 }

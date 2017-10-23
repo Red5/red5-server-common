@@ -88,11 +88,6 @@ public class RtmpMuxer extends Muxer {
 		this.url = url;
 	}
 
-	@Override
-	public void init(IScope scope, String name) {
-
-	}
-
 	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
 
 		AVFormatContext outputContext = getOutputFormatContext();
@@ -161,6 +156,12 @@ public class RtmpMuxer extends Muxer {
 	}
 
 	public boolean prepareIO() {
+		AVFormatContext context = getOutputFormatContext();
+		if (context.pb() != null) {
+			//return false if it is already prepared
+			return false;
+		}
+		
 		AVIOContext pb = new AVIOContext(null);
 
 		int ret = avformat.avio_open(pb,  url, AVIO_FLAG_WRITE);
@@ -168,7 +169,7 @@ public class RtmpMuxer extends Muxer {
 			logger.warn("Could not open output file");
 			return false;
 		}
-		getOutputFormatContext().pb(pb);
+		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
 
@@ -181,7 +182,7 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		logger.warn("before writing header");
-		ret = avformat_write_header(getOutputFormatContext(), optionsDictionary);		
+		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
 
@@ -193,19 +194,20 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		return true;
-
 	}
 
 	@Override
 	public void writeTrailer() {
+		
+		if (outputFormatContext == null) {
+			//return if it is already null
+			return;
+		}
 
 		av_write_trailer(outputFormatContext);
-
 		clearResource();
 
 		isRecording = false;
-
-
 	}
 
 

@@ -52,6 +52,8 @@ public abstract class Muxer {
 
 	protected String extension;
 	protected String format;
+	protected boolean isInitialized = false;
+	protected boolean isFinished = false;
 
 	protected Map<String, String> options = new HashMap();
 	protected static Logger logger = LoggerFactory.getLogger(Muxer.class);
@@ -61,15 +63,15 @@ public abstract class Muxer {
 	protected File file;
 
 	protected boolean isRecording;
-	
+
 	protected QuartzSchedulingService scheduler;
-	
+
 	protected IScope scope;
-	
+
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;
 	}
-	
+
 
 	public static File getPreviewFile(IScope scope, String name, String extension) {
 		String appScopeName = ScopeUtils.findApplication(scope).getName();
@@ -77,7 +79,7 @@ public abstract class Muxer {
 		return file;
 	}
 
-	
+
 	public static File getRecordFile(IScope scope, String name, String extension) {
 		// get stream filename generator
 		IStreamFilenameGenerator generator = (IStreamFilenameGenerator) ScopeUtils.getScopeService(scope, IStreamFilenameGenerator.class, DefaultStreamFilenameGenerator.class);
@@ -103,15 +105,15 @@ public abstract class Muxer {
 		return file;
 	}
 
-    /**
-     * All in one function, it is great for transmuxing.
-     * Just call prepare and then write packets. 
-     * Use {@link #writePacket(AVPacket, AVStream)} to write packets
-     * @param inputFormatContext
-     * @return
-     */
+	/**
+	 * All in one function, it is great for transmuxing.
+	 * Just call prepare and then write packets. 
+	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
+	 * @param inputFormatContext
+	 * @return
+	 */
 	public abstract boolean prepare(AVFormatContext inputFormatContext);
-	
+
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index parameters.
 	 * After adding streams with funcitons need to call prepareIO()
@@ -121,20 +123,23 @@ public abstract class Muxer {
 	 * @return
 	 */
 	public abstract boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex);
-	
+
 	/**
-	 * Add a new stream with copying stream codec pars.
-	 * @param stream
+	 * This function may be called by multiple encoders. 
+	 * Make sure that it is called once.
 	 * @return
 	 */
-	//public abstract boolean addStream(AVStream stream);
-	
 	public abstract boolean prepareIO();
 
+	/**
+	 * This function may be called by multiple encoders. 
+	 * Make sure that it is called once.
+	 * @return
+	 */
 	public abstract void writeTrailer();
-	
+
 	public abstract void writePacket(AVPacket avpacket,  AVStream inStream);
-	
+
 	public abstract void writePacket(AVPacket pkt);
 
 
@@ -150,18 +155,32 @@ public abstract class Muxer {
 	}
 
 
-	
+
 	public String getFormat() {
 		return format;
 	}
 
 
-	public void init(IScope scope, String name) {
-		file = getRecordFile(scope, name, extension);
-		
-		File parentFile = file.getParentFile();
-		if (!parentFile.exists()) {
-			parentFile.mkdir();
+	/**
+	 * Inits the file to write. 
+	 * Multiple encoders can init the muxer. 
+	 * It is redundant to init multiple times.
+	 */
+	public void init(IScope scope, String name, int resolution) {
+		if (!isInitialized) {
+			isInitialized = true;
+			if (resolution != 0) {
+				file = getRecordFile(scope, name + "_" + resolution + "p", extension);
+			}
+			else {
+				file = getRecordFile(scope, name, extension);
+			}
+
+			File parentFile = file.getParentFile();
+			if (!parentFile.exists()) {
+				parentFile.mkdir();
+			}
+			
 		}
 	}
 

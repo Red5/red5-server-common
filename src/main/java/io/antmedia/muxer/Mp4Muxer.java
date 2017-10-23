@@ -86,6 +86,7 @@ public class Mp4Muxer extends Muxer {
 	private QuartzSchedulingService scheduler;
 
 
+
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
@@ -152,26 +153,33 @@ public class Mp4Muxer extends Muxer {
 	}
 
 	@Override
-	public void init(IScope scope, String name) {
-		if (addDateTimeToMp4FileName) {
-			SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
-			Date dt = new Date();
-			name = name + "-" + dtFormat.format(dt);
-		}
+	public void init(IScope scope, String name, int resolutionHeight) {
+		if (!isInitialized) {
+			isInitialized = true;
+			if (addDateTimeToMp4FileName) {
+				SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
+				Date dt = new Date();
+				name = name + "-" + dtFormat.format(dt);
+			}
 
-		String tmpName = name;
-		int i = 1;
-		do {
-			file = getRecordFile(scope, tmpName, extension);
-			tmpName = name + "_" + i;
-			i++;
-		} while (file.exists());
+			if (resolutionHeight != 0) {
+				name += "_" + resolutionHeight + "p"; 
+			}
+			String tmpName = name;
+			
+			int i = 1;
+			do {
+				file = getRecordFile(scope, tmpName, extension);
+				tmpName = name + "_" + i;
+				i++;
+			} while (file.exists());
 
-		File parentFile = file.getParentFile();
-		if (!parentFile.exists()) {
-			parentFile.mkdir();
+			File parentFile = file.getParentFile();
+			if (!parentFile.exists()) {
+				parentFile.mkdir();
+			}
+			this.scope = scope;
 		}
-		this.scope = scope;
 	}
 
 
@@ -195,7 +203,6 @@ public class Mp4Muxer extends Muxer {
 			out_stream.codec().codec_tag(0);
 			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 				out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-
 		}
 		return true;
 	}
@@ -244,14 +251,21 @@ public class Mp4Muxer extends Muxer {
 	}
 
 	public boolean prepareIO() {
+		
+		AVFormatContext context = getOutputFormatContext();
+		if (context.pb() != null) {
+			//return false if it is already prepared
+			return false;
+		}
+
 		AVIOContext pb = new AVIOContext(null);
 
-		int ret = avformat.avio_open(pb,  fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
+		int ret = avformat.avio_open(pb, fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file");
 			return false;
 		}
-		getOutputFormatContext().pb(pb);
+		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
 
@@ -264,7 +278,7 @@ public class Mp4Muxer extends Muxer {
 		}
 
 		logger.warn("before writing header");
-		ret = avformat_write_header(getOutputFormatContext(), optionsDictionary);		
+		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
 
@@ -281,12 +295,15 @@ public class Mp4Muxer extends Muxer {
 
 	@Override
 	public void writeTrailer() {
-
-		if (outputFormatContext != null) {
-			av_write_trailer(outputFormatContext);
-
-			clearResource();
+		if (outputFormatContext == null) {
+			//return if it is already null
+			return;
 		}
+
+		System.out.println("write trailer " + fileTmp.getName() + " absolute path:" + fileTmp.getAbsolutePath());
+		av_write_trailer(outputFormatContext);
+
+		clearResource();
 
 		isRecording = false;
 		String absolutePath = fileTmp.getAbsolutePath();
@@ -368,6 +385,8 @@ public class Mp4Muxer extends Muxer {
 			return;
 		}
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
+		
+		  
 		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base()); 
 	}
 
@@ -391,6 +410,7 @@ public class Mp4Muxer extends Muxer {
 		long duration = pkt.duration();
 		long pos = pkt.pos();
 
+		
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));

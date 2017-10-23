@@ -33,7 +33,10 @@ import static org.bytedeco.javacpp.avformat.avio_alloc_context;
 import static org.bytedeco.javacpp.avformat.avio_closep;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.nio.IntBuffer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -79,7 +82,7 @@ public class HLSMuxer extends Muxer  {
 
 	protected static Logger logger = LoggerFactory.getLogger(HLSMuxer.class);
 	private String  hlsListSize = "20";
-	private String hlsTime = "2";
+	private String hlsTime = "5";
 	private String hlsPlayListType = null; 
 
 	private AVRational avRationalTimeBase;
@@ -93,6 +96,7 @@ public class HLSMuxer extends Muxer  {
 	int videoWidth;
 	int videoHeight;
 	private AVPacket tmpPacket;
+	private boolean deleteFileOnExist = true;
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
@@ -117,19 +121,22 @@ public class HLSMuxer extends Muxer  {
 	}
 
 	@Override
-	public void init(IScope scope, String name) {
-		options.put("hls_list_size", hlsListSize);
-		options.put("hls_time", hlsTime);
-		options.put("hls_flags", "delete_segments");
-		options.put("hls_segment_filename", "webapps/" + scope.getName() + "/streams/" + name + "%04d.ts");
-		if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
-			options.put("hls_playlist_type", hlsPlayListType);
-		}
-		
-		tmpPacket = avcodec.av_packet_alloc();
-		av_init_packet(tmpPacket);
+	public void init(IScope scope, String name, int resolutionHeight) {
+		if (!isInitialized) {
+			options.put("hls_list_size", hlsListSize);
+			options.put("hls_time", hlsTime);
+			options.put("hls_flags", "delete_segments");
+			options.put("hls_segment_filename", "webapps/" + scope.getName() + "/streams/" + name +"_" + resolutionHeight +"p"+ "%04d.ts");
+			if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
+				options.put("hls_playlist_type", hlsPlayListType);
+			}
 
-		super.init(scope, name);
+			tmpPacket = avcodec.av_packet_alloc();
+			av_init_packet(tmpPacket);
+			super.init(scope, name, resolutionHeight);
+			isInitialized = true;
+		}
+
 	}
 
 	private AVFormatContext getOutputFormatContext() {
@@ -271,7 +278,7 @@ public class HLSMuxer extends Muxer  {
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 			pkt.pos(-1);
-			
+
 			av_copy_packet(tmpPacket , pkt);
 
 			if (bsfContext != null) {
@@ -296,7 +303,7 @@ public class HLSMuxer extends Muxer  {
 					logger.info("cannot write frame to muxer");
 				}
 			}
-			
+
 			av_packet_unref(tmpPacket);
 
 			pkt.pts(pts);
@@ -328,6 +335,10 @@ public class HLSMuxer extends Muxer  {
 
 	@Override
 	public void writeTrailer() {
+		if (outputFormatContext == null) {
+			//return if it is already null
+			return;
+		}
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 		}
@@ -345,6 +356,43 @@ public class HLSMuxer extends Muxer  {
 			avformat_free_context(outputFormatContext);
 
 			outputFormatContext = null;
+		}
+		
+		if (scheduler != null && deleteFileOnExist ) {
+			
+			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
+					new IScheduledJob() {
+				
+				@Override
+				public void execute(ISchedulingService service) throws CloneNotSupportedException {
+					
+					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
+					
+					
+					File[] files = file.getParentFile().listFiles(new FilenameFilter() {
+						@Override
+						public boolean accept(File dir, String name) {
+							return name.contains(filenameWithoutExtension) && name.endsWith(".ts");
+						}
+					});
+					
+					for (int i = 0; i < files.length; i++) {
+						try {
+							Files.delete(files[i].toPath());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					try {
+						Files.delete(file.toPath());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					
+				}
+			});
+			
 		}
 
 		isRecording = false;	
@@ -427,6 +475,11 @@ public class HLSMuxer extends Muxer  {
 
 	@Override
 	public boolean prepareIO() {
+		AVFormatContext context = getOutputFormatContext();
+		if (context.pb() != null) {
+			//return false if it is already prepared
+			return false;
+		}
 		AVIOContext pb = new AVIOContext(null);
 
 		int ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
@@ -434,7 +487,7 @@ public class HLSMuxer extends Muxer  {
 			logger.warn("Could not open output file");
 			return false;
 		}
-		getOutputFormatContext().pb(pb);
+		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
 
@@ -445,7 +498,7 @@ public class HLSMuxer extends Muxer  {
 				av_dict_set(optionsDictionary, key, options.get(key), 0);
 			}
 		}
-		ret = avformat_write_header(getOutputFormatContext(), optionsDictionary);		
+		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
 			return false;
