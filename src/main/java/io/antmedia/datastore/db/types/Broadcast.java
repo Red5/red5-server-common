@@ -79,6 +79,9 @@ public class Broadcast {
 	 */
 	private boolean is360 = false;;
 	
+	
+	private String listenerHookURL;
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -168,7 +171,6 @@ public class Broadcast {
 	}
 
 
-
 	public boolean isIs360() {
 		return is360;
 	}
@@ -183,6 +185,14 @@ public class Broadcast {
 
 	public void setPublicStream(boolean publicStream) {
 		this.publicStream = publicStream;
+	}
+
+	public String getListenerHookURL() {
+		return listenerHookURL;
+	}
+
+	public void setListenerHookURL(String listenerHookURL) {
+		this.listenerHookURL = listenerHookURL;
 	}
 	
 
