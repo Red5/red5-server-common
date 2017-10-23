@@ -1,5 +1,7 @@
 package io.antmedia.datastore.db;
 
+import java.util.List;
+
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 
@@ -22,5 +24,7 @@ public interface IDataStore {
 	long getBroadcastCount();
 
 	boolean delete(String id);
+
+	List<Broadcast> getBroadcastList(int offset, int size);
 
 }
