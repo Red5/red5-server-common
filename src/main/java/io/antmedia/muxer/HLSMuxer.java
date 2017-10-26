@@ -96,7 +96,7 @@ public class HLSMuxer extends Muxer  {
 	int videoWidth;
 	int videoHeight;
 	private AVPacket tmpPacket;
-	private boolean deleteFileOnExist = true;
+	private boolean deleteFileOnExit = true;
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
@@ -358,7 +358,7 @@ public class HLSMuxer extends Muxer  {
 			outputFormatContext = null;
 		}
 		
-		if (scheduler != null && deleteFileOnExist ) {
+		if (scheduler != null && deleteFileOnExit ) {
 			
 			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
 					new IScheduledJob() {
@@ -550,6 +550,14 @@ public class HLSMuxer extends Muxer  {
 
 	public void setHlsPlayListType(String hlsPlayListType) {
 		this.hlsPlayListType = hlsPlayListType;
+	}
+
+	public boolean isDeleteFileOnExit() {
+		return deleteFileOnExit;
+	}
+
+	public void setDeleteFileOnExit(boolean deleteFileOnExist) {
+		this.deleteFileOnExit = deleteFileOnExist;
 	}
 
 
