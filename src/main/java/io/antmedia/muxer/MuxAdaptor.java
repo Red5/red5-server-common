@@ -88,6 +88,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected AVFormatContext inputFormatContext;
 
 	protected ArrayList<Muxer> muxerList = new ArrayList<Muxer>();
+	
+	protected boolean deleteHLSFilesOnExit = true;
+
 
 	public static class InputContext {
 		public ConcurrentLinkedQueue<byte[]> queue;
@@ -201,7 +204,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			addMuxer(mp4Muxer);
 		}
 		if (hlsMuxingEnabled) {
-			addMuxer(new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType));
+			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
+			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
+			addMuxer(hlsMuxer);
 		}
 
 		for(Muxer muxer : muxerList) {
@@ -551,6 +556,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setWebRTCEnabled(boolean webRTCEnabled) {
 		this.webRTCEnabled = webRTCEnabled;
+	}
+	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
+		this.deleteHLSFilesOnExit  = deleteHLSFilesOnExit;
+
 	}
 
 }
