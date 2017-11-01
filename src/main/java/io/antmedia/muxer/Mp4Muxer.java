@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -69,8 +70,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.FailureCallback;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.SuccessCallback;
-
-import com.google.common.io.Files;
 
 import io.antmedia.storage.StorageClient;
 import io.antmedia.storage.StorageClient.FileType;
@@ -300,7 +299,6 @@ public class Mp4Muxer extends Muxer {
 			return;
 		}
 
-		System.out.println("write trailer " + fileTmp.getName() + " absolute path:" + fileTmp.getAbsolutePath());
 		av_write_trailer(outputFormatContext);
 
 		clearResource();
@@ -313,7 +311,8 @@ public class Mp4Muxer extends Muxer {
 		final File f = new File(origFileName);
 
 		try {
-			Files.move(fileTmp, f);
+			Files.move(fileTmp.toPath(),f.toPath());
+			
 			IContext context = Mp4Muxer.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			Object bean = appCtx.getBean("web.handler");
@@ -358,6 +357,7 @@ public class Mp4Muxer extends Muxer {
 		{
 			durationInMS = inputFormatContext.duration() / 1000;
 		}
+		avformat_close_input(inputFormatContext);
 		return durationInMS;
 	}
 
