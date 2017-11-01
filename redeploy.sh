@@ -2,7 +2,7 @@
 
 mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true
 
-RED5_DIR=../../softwares/ant-media-server
+RED5_DIR=~/softwares/ant-media-server
 
 RED5_LIB_DIR=$RED5_DIR/lib
 
