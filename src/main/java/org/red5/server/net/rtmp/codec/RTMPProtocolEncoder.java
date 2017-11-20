@@ -22,7 +22,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.io.object.Output;
 import org.red5.io.object.Serializer;
@@ -844,7 +843,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
         }
         if (!isPending && (command instanceof Invoke)) {
             IPendingServiceCall pendingCall = (IPendingServiceCall) call;
-            if (!call.isSuccess()) {
+            if (!call.isSuccess() && (call.getException() != null || pendingCall.getResult() == null)) {
                 log.debug("Call was not successful");
                 StatusObject status = generateErrorResult(StatusCodes.NC_CALL_FAILED, call.getException());
                 pendingCall.setResult(status);
