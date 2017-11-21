@@ -29,6 +29,8 @@ public class AppSettings {
 	private String hlsTime;
 
 	private boolean webRTCEnabled = false;
+	
+	private boolean deleteHLSFilesOnEnded = true;
 
 	//private String encoderSettingsString;
 
@@ -146,6 +148,14 @@ public class AppSettings {
 	public void setEncoderSettingsString(String encoderSettingsString) {
 		adaptiveResolutionList = getEncoderSettingsList(encoderSettingsString);
 		//this.encoderSettingsString = encoderSettingsString;
+	}
+
+	public boolean isDeleteHLSFilesOnExit() {
+		return deleteHLSFilesOnEnded;
+	}
+
+	public void setDeleteHLSFilesOnEnded(boolean deleteHLSFilesOnEnded) {
+		this.deleteHLSFilesOnEnded = deleteHLSFilesOnEnded;
 	}
 
 

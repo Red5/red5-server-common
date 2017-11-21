@@ -48,6 +48,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 
+/**
+ * Muxer base class, one muxer can be used by multiple encoder
+ * so some functions(init, writeTrailer) may be called multiple times, correct functions with guards and sync blocks
+ * @author mekya
+ *
+ */
 public abstract class Muxer {
 
 	protected String extension;

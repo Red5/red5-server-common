@@ -82,6 +82,8 @@ public class Broadcast {
 	
 	private String listenerHookURL;
 	
+	private String category;
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -193,6 +195,14 @@ public class Broadcast {
 
 	public void setListenerHookURL(String listenerHookURL) {
 		this.listenerHookURL = listenerHookURL;
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
 	}
 	
 

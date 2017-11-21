@@ -953,6 +953,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			String hlsListSize = null;
 			String hlsTime = null;
 			String hlsPlayListType = null;
+			boolean deleteHLSFilesOnExit = true;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
@@ -963,6 +964,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				hlsTime = appSettings.getHlsTime();
 				hlsPlayListType = appSettings.getHlsPlayListType();
 				webRTCEnabled = appSettings.isWebRTCEnabled();
+				deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
 			}
 			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
 
@@ -976,6 +978,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
 			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
+			localMuxAdaptor.setHLSFilesDeleteOnExit(deleteHLSFilesOnExit);
 
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
@@ -1045,7 +1048,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		try {
 			if (adaptiveResolutionList != null && adaptiveResolutionList.size() > 0) 
 			{
-				Class transraterClass = Class.forName("io.antmedia.enterprise.ant_media_adaptive.EncoderAdaptor");
+				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
 
 				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class)
 						.newInstance(this, adaptiveResolutionList);

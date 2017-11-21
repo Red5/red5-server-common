@@ -334,7 +334,7 @@ public class HLSMuxer extends Muxer  {
 
 
 	@Override
-	public void writeTrailer() {
+	public synchronized void writeTrailer() {
 		if (outputFormatContext == null) {
 			//return if it is already null
 			return;

@@ -83,6 +83,7 @@ public class Mp4Muxer extends Muxer {
 	private int totalSize = 0;
 	private StorageClient storageClient = null;
 	private QuartzSchedulingService scheduler;
+	private String streamId;
 
 
 
@@ -154,6 +155,7 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
+			this.streamId = name;
 			isInitialized = true;
 			if (addDateTimeToMp4FileName) {
 				SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
@@ -317,7 +319,7 @@ public class Mp4Muxer extends Muxer {
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			Object bean = appCtx.getBean("web.handler");
 			if (bean instanceof IMuxerListener) {
-				((IMuxerListener)bean).muxingFinished(f, getDuration(f));
+				((IMuxerListener)bean).muxingFinished(this.streamId, f, getDuration(f));
 			}
 
 			if (storageClient != null) {
