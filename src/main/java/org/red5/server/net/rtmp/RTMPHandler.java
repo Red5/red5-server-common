@@ -15,12 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.red5.server.net.rtmp;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.red5.io.object.StreamAction;
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection.Encoding;
@@ -94,9 +92,8 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     /**
      * Setter for server object.
-     * 
-     * @param server
-     *            Red5 server instance
+     *
+     * @param server Red5 server instance
      */
     public void setServer(IServer server) {
         this.server = server;
@@ -104,9 +101,8 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     /**
      * Setter for status object service.
-     * 
-     * @param statusObjectService
-     *            Status object service.
+     *
+     * @param statusObjectService Status object service.
      */
     public void setStatusObjectService(StatusObjectService statusObjectService) {
         this.statusObjectService = statusObjectService;
@@ -128,14 +124,15 @@ public class RTMPHandler extends BaseRTMPHandler {
     }
 
     /**
-     * @param dispatchStreamActions
-     *            the dispatchStreamActions to set
+     * @param dispatchStreamActions the dispatchStreamActions to set
      */
     public void setDispatchStreamActions(boolean dispatchStreamActions) {
         this.dispatchStreamActions = dispatchStreamActions;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void onChunkSize(RTMPConnection conn, Channel channel, Header source, ChunkSize chunkSize) {
         int requestedChunkSize = chunkSize.getSize();
@@ -168,11 +165,9 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     /**
      * Remoting call invocation handler.
-     * 
-     * @param conn
-     *            RTMP connection
-     * @param call
-     *            Service call
+     *
+     * @param conn RTMP connection
+     * @param call Service call
      */
     protected void invokeCall(RTMPConnection conn, IServiceCall call) {
         final IScope scope = conn.getScope();
@@ -196,13 +191,10 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     /**
      * Remoting call invocation handler.
-     * 
-     * @param conn
-     *            RTMP connection
-     * @param call
-     *            Service call
-     * @param service
-     *            Server-side service object
+     *
+     * @param conn RTMP connection
+     * @param call Service call
+     * @param service Server-side service object
      * @return true if the call was performed, otherwise false
      */
     private boolean invokeCall(RTMPConnection conn, IServiceCall call, Object service) {
@@ -214,8 +206,10 @@ public class RTMPHandler extends BaseRTMPHandler {
         return context.getServiceInvoker().invoke(call, service);
     }
 
-    /** {@inheritDoc} */
-    @SuppressWarnings({ "unchecked" })
+    /**
+     * {@inheritDoc}
+     */
+    @SuppressWarnings({"unchecked"})
     @Override
     protected void onCommand(RTMPConnection conn, Channel channel, Header source, ICommand command) {
         log.debug("onCommand {}", command);
@@ -272,7 +266,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                     case RECEIVE_AUDIO:
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
-                            log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
+                            log.debug("Invoking {} from {} with service: {}", new Object[]{call, conn.getSessionId(), streamService});
                             if (invokeCall(conn, call, streamService)) {
                                 log.debug("Stream service invoke {} success", action);
                             } else {
@@ -326,7 +320,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                         if (scope != null) {
                             if (log.isDebugEnabled()) {
                                 log.debug("Connecting to: {}", scope.getName());
-                                log.debug("Conn {}, scope {}, call {} args {}", new Object[] { conn, scope, call, call.getArguments() });
+                                log.debug("Conn {}, scope {}, call {} args {}", new Object[]{conn, scope, call, call.getArguments()});
                             }
                             // if scope connection is allowed
                             if (scope.isConnectionAllowed(conn)) {
@@ -489,7 +483,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                 channel.write(reply);
                 if (disconnectOnReturn) {
                     log.debug("Close connection due to connect handling exception: {}", conn.getSessionId());
-                    conn.close();
+                    conn.getIoSession().closeOnFlush(); //must wait until flush to close as we just wrote asynchronously to the stream
                 }
             }
         } else if (log.isDebugEnabled()) {
@@ -501,7 +495,9 @@ public class RTMPHandler extends BaseRTMPHandler {
         return statusObjectService.getStatusObject(code);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void onPing(RTMPConnection conn, Channel channel, Header source, Ping ping) {
         switch (ping.getEventType()) {
@@ -539,10 +535,9 @@ public class RTMPHandler extends BaseRTMPHandler {
 
     /**
      * Create and send SO message stating that a SO could not be created.
-     * 
+     *
      * @param conn
-     * @param message
-     *            Shared object message that incurred the failure
+     * @param message Shared object message that incurred the failure
      */
     private void sendSOCreationFailed(RTMPConnection conn, SharedObjectMessage message) {
         log.debug("sendSOCreationFailed - message: {} conn: {}", message, conn);
@@ -560,11 +555,13 @@ public class RTMPHandler extends BaseRTMPHandler {
         }
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void onSharedObject(RTMPConnection conn, Channel channel, Header source, SharedObjectMessage message) {
         if (log.isDebugEnabled()) {
-            log.debug("onSharedObject - conn: {} channel: {} so message: {}", new Object[] { conn.getSessionId(), channel.getId(), message });
+            log.debug("onSharedObject - conn: {} channel: {} so message: {}", new Object[]{conn.getSessionId(), channel.getId(), message});
         }
         final IScope scope = conn.getScope();
         if (scope != null) {
