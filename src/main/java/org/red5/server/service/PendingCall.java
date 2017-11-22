@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.red5.server.service;
 
 import java.io.IOException;
@@ -22,13 +23,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.red5.server.api.service.IPendingServiceCall;
 import org.red5.server.api.service.IPendingServiceCallback;
 
 /**
- * Pending call is remote call operation that is in pending state. Remote calls
- * to services are asynchronous, that is, after call but before result callback
- * remote calls are in pending state.
+ * Pending call is remote call operation that is in pending state. Remote calls to services are asynchronous, that is, after call but before result callback remote calls are in pending state.
  */
 public class PendingCall extends Call implements IPendingServiceCall {
 
@@ -49,8 +49,9 @@ public class PendingCall extends Call implements IPendingServiceCall {
 
     /**
      * Creates pending call with given method name
-     *
-     * @param method Method name
+     * 
+     * @param method
+     *            Method name
      */
     public PendingCall(String method) {
         super(method);
@@ -58,21 +59,25 @@ public class PendingCall extends Call implements IPendingServiceCall {
 
     /**
      * Creates pending call with given method name and array of parameters
-     *
-     * @param method Method name
-     * @param args Parameters
+     * 
+     * @param method
+     *            Method name
+     * @param args
+     *            Parameters
      */
     public PendingCall(String method, Object[] args) {
         super(method, args);
     }
 
     /**
-     * Creates pending call with given method name, service name and array of
-     * parameters
+     * Creates pending call with given method name, service name and array of parameters
      *
-     * @param name Service name
-     * @param method Method name
-     * @param args Parameters
+     * @param name
+     *            Service name
+     * @param method
+     *            Method name
+     * @param args
+     *            Parameters
      */
     public PendingCall(String name, String method, Object[] args) {
         super(name, method, args);
@@ -95,23 +100,17 @@ public class PendingCall extends Call implements IPendingServiceCall {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     public void registerCallback(IPendingServiceCallback callback) {
         callbacks.add(callback);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     public void unregisterCallback(IPendingServiceCallback callback) {
         callbacks.remove(callback);
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /** {@inheritDoc} */
     public Set<IPendingServiceCallback> getCallbacks() {
         return callbacks;
     }
