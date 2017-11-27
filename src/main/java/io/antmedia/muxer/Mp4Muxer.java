@@ -82,7 +82,6 @@ public class Mp4Muxer extends Muxer {
 	private boolean addDateTimeToMp4FileName;
 	private int totalSize = 0;
 	private StorageClient storageClient = null;
-	private QuartzSchedulingService scheduler;
 	private String streamId;
 
 
@@ -96,7 +95,6 @@ public class Mp4Muxer extends Muxer {
 		//options.put("movflags", "faststart+rtphint");  	
 		options.put("movflags", "faststart");  
 		this.storageClient = storageClient;
-		this.scheduler = scheduler;
 	}
 
 	public static int[] mp4_supported_codecs = {

@@ -77,7 +77,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	
 
-	protected static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
+	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 
 	protected String packetFeederJobName;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
