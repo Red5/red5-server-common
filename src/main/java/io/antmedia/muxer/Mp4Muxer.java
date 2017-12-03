@@ -79,7 +79,6 @@ public class Mp4Muxer extends Muxer {
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 	private File fileTmp;
-	private boolean addDateTimeToMp4FileName;
 	private int totalSize = 0;
 	private StorageClient storageClient = null;
 	private String streamId;
@@ -151,34 +150,10 @@ public class Mp4Muxer extends Muxer {
 	}
 
 	@Override
-	public void init(IScope scope, String name, int resolutionHeight) {
-		if (!isInitialized) {
-			this.streamId = name;
-			isInitialized = true;
-			if (addDateTimeToMp4FileName) {
-				SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
-				Date dt = new Date();
-				name = name + "-" + dtFormat.format(dt);
-			}
-
-			if (resolutionHeight != 0) {
-				name += "_" + resolutionHeight + "p"; 
-			}
-			String tmpName = name;
-			
-			int i = 1;
-			do {
-				file = getRecordFile(scope, tmpName, extension);
-				tmpName = name + "_" + i;
-				i++;
-			} while (file.exists());
-
-			File parentFile = file.getParentFile();
-			if (!parentFile.exists()) {
-				parentFile.mkdir();
-			}
-			this.scope = scope;
-		}
+	public void init(IScope scope, final String name, int resolutionHeight) {
+		super.init(scope, name, resolutionHeight, false);
+		
+		this.streamId = name;
 	}
 
 
@@ -276,7 +251,7 @@ public class Mp4Muxer extends Muxer {
 			}
 		}
 
-		logger.warn("before writing header");
+		logger.info("before writing header");
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
@@ -294,7 +269,8 @@ public class Mp4Muxer extends Muxer {
 
 	@Override
 	public void writeTrailer() {
-		if (outputFormatContext == null) {
+		
+		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
 			return;
 		}
@@ -427,7 +403,5 @@ public class Mp4Muxer extends Muxer {
 		pkt.pos(pos);
 
 	}
-	public void setAddDateTimeToFileNames(boolean addDateTimeToMp4FileName) {
-		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
-	}
+
 }

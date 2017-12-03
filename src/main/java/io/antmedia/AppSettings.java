@@ -31,6 +31,8 @@ public class AppSettings {
 	private boolean webRTCEnabled = false;
 	
 	private boolean deleteHLSFilesOnEnded = true;
+	
+	private String listenerHookURL;
 
 	//private String encoderSettingsString;
 
@@ -156,6 +158,14 @@ public class AppSettings {
 
 	public void setDeleteHLSFilesOnEnded(boolean deleteHLSFilesOnEnded) {
 		this.deleteHLSFilesOnEnded = deleteHLSFilesOnEnded;
+	}
+
+	public String getListenerHookURL() {
+		return listenerHookURL;
+	}
+
+	public void setListenerHookURL(String listenerHookURL) {
+		this.listenerHookURL = listenerHookURL;
 	}
 
 

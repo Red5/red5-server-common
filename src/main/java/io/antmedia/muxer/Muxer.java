@@ -12,6 +12,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -73,6 +75,8 @@ public abstract class Muxer {
 	protected QuartzSchedulingService scheduler;
 
 	protected IScope scope;
+	
+	private boolean addDateTimeToResourceName = false;
 
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;
@@ -173,21 +177,86 @@ public abstract class Muxer {
 	 * It is redundant to init multiple times.
 	 */
 	public void init(IScope scope, String name, int resolution) {
+		init(scope, name, resolution, true);
+	}
+	
+	/**
+	 * Init file name 
+	 * 
+	 * file format is   NAME[-{DATETIME}][_{RESOLUTION_HEIGHT}p].{EXTENSION} 
+	 * 
+	 * Datetime format is yyyy-MM-dd_HH:mm
+	 * 
+	 * sample naming ->  stream1-yyyy-MM-dd_HH:mm_480p.mp4 if datetime is added
+	 *stream1_480p.mp4 if no datetime
+	 * 
+	 * @param scope
+	 * @param name, 
+	 * name of the stream
+	 * @param resolution
+	 * height of the stream, if it is zero, then no resolution will be added to resource name
+	 * @param overrideIfExist
+	 * whether override if a file exists with the same name
+	 */
+	public void init(IScope scope, final String name, int resolution, boolean overrideIfExist) {
+		
 		if (!isInitialized) {
-			isInitialized = true;
+			isInitialized = true; 
+			this.scope = scope;
+			
+			//set default name
+			String resourceName = name;
+			
+			// add date time parameter to resource name if it is set
+			if (addDateTimeToResourceName) {
+				SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
+				Date dt = new Date();
+				resourceName = name + "-" + dtFormat.format(dt);
+			}
+			
+			//add resolution height parameter if it is different than 0
 			if (resolution != 0) {
-				file = getRecordFile(scope, name + "_" + resolution + "p", extension);
+				resourceName += "_" + resolution + "p"; 
+			}
+		
+			file = getResourceFile(scope, resourceName, extension);
+			File parentFile = file.getParentFile();
+			
+			if (!parentFile.exists()) {
+				// check if parent file exist
+				parentFile.mkdir();
 			}
 			else {
-				file = getRecordFile(scope, name, extension);
-			}
-
-			File parentFile = file.getParentFile();
-			if (!parentFile.exists()) {
-				parentFile.mkdir();
+				//if parent file does not exist, 
+				//check overrideIfExist and file.exists 
+				if (!overrideIfExist && file.exists()) 
+				{
+					String tmpName = resourceName;
+					int i = 1;
+					do {
+						file = getResourceFile(scope, tmpName, extension);
+						tmpName = resourceName + "_" + i;
+						i++;
+					} while (file.exists());
+				}
 			}
 			
 		}
+	}
+	
+	
+	public File getResourceFile(IScope scope, String name, String extension) {
+		return getRecordFile(scope, name, extension);
+	}
+
+
+	public boolean isAddDateTimeToSourceName() {
+		return addDateTimeToResourceName;
+	}
+
+
+	public void setAddDateTimeToSourceName(boolean addDateTimeToSourceName) {
+		this.addDateTimeToResourceName = addDateTimeToSourceName;
 	}
 
 }

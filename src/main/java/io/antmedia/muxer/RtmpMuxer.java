@@ -199,10 +199,11 @@ public class RtmpMuxer extends Muxer {
 	@Override
 	public void writeTrailer() {
 		
-		if (outputFormatContext == null) {
+		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
 			return;
 		}
+
 
 		av_write_trailer(outputFormatContext);
 		clearResource();

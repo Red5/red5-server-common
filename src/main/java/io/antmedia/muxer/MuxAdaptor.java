@@ -200,7 +200,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
-			mp4Muxer.setAddDateTimeToFileNames(addDateTimeToMp4FileName);
+			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			addMuxer(mp4Muxer);
 		}
 		if (hlsMuxingEnabled) {

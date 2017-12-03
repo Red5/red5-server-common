@@ -335,7 +335,7 @@ public class HLSMuxer extends Muxer  {
 
 	@Override
 	public synchronized void writeTrailer() {
-		if (outputFormatContext == null) {
+		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
 			return;
 		}
@@ -368,7 +368,6 @@ public class HLSMuxer extends Muxer  {
 					
 					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 					
-					
 					File[] files = file.getParentFile().listFiles(new FilenameFilter() {
 						@Override
 						public boolean accept(File dir, String name) {
@@ -378,6 +377,9 @@ public class HLSMuxer extends Muxer  {
 					
 					for (int i = 0; i < files.length; i++) {
 						try {
+							if (!files[i].exists()) {
+								continue;
+							}
 							Files.delete(files[i].toPath());
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -422,31 +424,6 @@ public class HLSMuxer extends Muxer  {
 			AVStream out_stream = avformat_new_stream(context, codec);
 			out_stream.index(streamIndex);
 			if (codecContext.codec_type() == AVMEDIA_TYPE_VIDEO) {
-				/*
-				int ret = avcodec_parameters_from_context(bsfContext.par_in(), codecContext);
-				//int ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
-				if (ret < 0) {
-					logger.info("cannot copy input codec parameters");
-					return false;
-				}
-				//TODO: do we need to set codec context, it may cause some memory problems if 
-				//codec context is used in a same way with another muxer
-				//out_stream.codec(codecContext);
-				out_stream.codec().time_base(codecContext.time_base());
-				bsfContext.time_base_in(codecContext.time_base());
-
-				ret = av_bsf_init(bsfContext);
-				if (ret < 0) {
-					logger.info("cannot init bit stream filter context");
-					return false;
-				}
-
-				ret = avcodec_parameters_copy(out_stream.codecpar(), bsfContext.par_out());
-				if (ret < 0) {
-					logger.info("cannot copy codec parameters to output");
-					return false;
-				}
-				 */
 				videoWidth = codecContext.width();
 				videoHeight = codecContext.height();
 
@@ -459,8 +436,8 @@ public class HLSMuxer extends Muxer  {
 				//codec context is used in a same way with another muxer
 				out_stream.codec().time_base(codecContext.time_base());
 				int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
-
-				//out_stream.codec(codecContext);
+				
+			
 			}
 			out_stream.codec().codec_tag(0);
 
