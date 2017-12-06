@@ -244,6 +244,12 @@ public class RtmpMuxer extends Muxer {
 	{
 
 		AVFormatContext context = getOutputFormatContext();
+		
+		if (context == null || context.pb() == null) {
+			//return if it is already null
+			logger.warn("output context or .pb field is null");
+			return;
+		}
 
 		totalSize += pkt.size();
 

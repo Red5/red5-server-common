@@ -246,11 +246,16 @@ public class HLSMuxer extends Muxer  {
 
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
+	
+		
 		int packetIndex = pkt.stream_index();
 
-		if (!registeredStreamIndexList.contains(packetIndex))  {
+		if (!registeredStreamIndexList.contains(packetIndex) || 
+				outputFormatContext == null || outputFormatContext.pb() == null)  {
+			logger.error("OutputFormatContext is not initialized correctly");
 			return;
 		}
+
 
 		long pts = pkt.pts();
 		long dts = pkt.dts();
@@ -461,7 +466,7 @@ public class HLSMuxer extends Muxer  {
 
 		int ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
-			logger.warn("Could not open output file");
+			logger.warn("Could not open output file: " + file.getAbsolutePath());
 			return false;
 		}
 		context.pb(pb);

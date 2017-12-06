@@ -148,8 +148,22 @@ public abstract class Muxer {
 	 */
 	public abstract void writeTrailer();
 
+	
+	/**
+	 * write packets to the output
+	 * 
+	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
+	 * @param pkt
+	 */
 	public abstract void writePacket(AVPacket avpacket,  AVStream inStream);
 
+	
+	/**
+	 * write packets to the output
+	 * 
+	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
+	 * @param pkt
+	 */
 	public abstract void writePacket(AVPacket pkt);
 
 
@@ -220,11 +234,13 @@ public abstract class Muxer {
 			}
 		
 			file = getResourceFile(scope, resourceName, extension);
+			
+			
 			File parentFile = file.getParentFile();
 			
 			if (!parentFile.exists()) {
 				// check if parent file exist
-				parentFile.mkdir();
+				parentFile.mkdirs();
 			}
 			else {
 				//if parent file does not exist, 

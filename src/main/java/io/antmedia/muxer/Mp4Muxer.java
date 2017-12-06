@@ -236,9 +236,11 @@ public class Mp4Muxer extends Muxer {
 
 		int ret = avformat.avio_open(pb, fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
-			logger.warn("Could not open output file");
+			logger.warn("Could not open output file: " + fileTmp.getAbsolutePath() + 
+						 " parent file exists:" + fileTmp.getParentFile().exists());
 			return false;
 		}
+	
 		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
@@ -272,6 +274,7 @@ public class Mp4Muxer extends Muxer {
 		
 		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
+			logger.error("OutputFormatContext is not initialized correctly");
 			return;
 		}
 
@@ -371,6 +374,12 @@ public class Mp4Muxer extends Muxer {
 	{
 
 		AVFormatContext context = getOutputFormatContext();
+		if (context.pb() == null) {
+			logger.warn("output context.pb field is null");
+			return;
+		}
+		
+		
 
 		totalSize += pkt.size();
 
