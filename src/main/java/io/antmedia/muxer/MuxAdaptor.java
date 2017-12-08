@@ -139,7 +139,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						}
 					}
 					else {
-						logger.error("input ququququ nulllllllllllllllllllllll------------------");
+						logger.error("input queue null");
 					}
 
 					if (packet != null) {

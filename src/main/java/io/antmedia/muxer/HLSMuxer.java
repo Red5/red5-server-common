@@ -8,6 +8,7 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.event.CachedEvent;
 import org.red5.server.scheduling.QuartzSchedulingService;
+import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.concurrent.FailureCallback;
@@ -123,17 +124,20 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
+			super.init(scope, name, resolutionHeight);
+			
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
 			options.put("hls_flags", "delete_segments");
-			options.put("hls_segment_filename", "webapps/" + scope.getName() + "/streams/" + name +"_" + resolutionHeight +"p"+ "%04d.ts");
+			String segmentFilename =  file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
+			options.put("hls_segment_filename", segmentFilename);
+		
 			if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
-			super.init(scope, name, resolutionHeight);
 			isInitialized = true;
 		}
 
@@ -246,8 +250,8 @@ public class HLSMuxer extends Muxer  {
 
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
-	
-		
+
+
 		int packetIndex = pkt.stream_index();
 
 		if (!registeredStreamIndexList.contains(packetIndex) || 
@@ -362,24 +366,24 @@ public class HLSMuxer extends Muxer  {
 
 			outputFormatContext = null;
 		}
-		
+
 		if (scheduler != null && deleteFileOnExit ) {
-			
+
 			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
 					new IScheduledJob() {
-				
+
 				@Override
 				public void execute(ISchedulingService service) throws CloneNotSupportedException {
-					
+
 					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
-					
+
 					File[] files = file.getParentFile().listFiles(new FilenameFilter() {
 						@Override
 						public boolean accept(File dir, String name) {
 							return name.contains(filenameWithoutExtension) && name.endsWith(".ts");
 						}
 					});
-					
+
 					for (int i = 0; i < files.length; i++) {
 						try {
 							if (!files[i].exists()) {
@@ -395,11 +399,11 @@ public class HLSMuxer extends Muxer  {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					
-					
+
+
 				}
 			});
-			
+
 		}
 
 		isRecording = false;	
@@ -441,8 +445,8 @@ public class HLSMuxer extends Muxer  {
 				//codec context is used in a same way with another muxer
 				out_stream.codec().time_base(codecContext.time_base());
 				int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
-				
-			
+
+
 			}
 			out_stream.codec().codec_tag(0);
 
@@ -482,7 +486,9 @@ public class HLSMuxer extends Muxer  {
 		}
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
-			logger.warn("could not write header");
+			byte[] data = new byte[1024];
+			av_strerror(ret, data, data.length);
+			logger.warn("could not write header. File: " + file.getAbsolutePath() + " Error: " + new String(data, 0, data.length));
 			return false;
 		}
 
