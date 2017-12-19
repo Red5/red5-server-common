@@ -51,8 +51,19 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 
 /**
- * Muxer base class, one muxer can be used by multiple encoder
- * so some functions(init, writeTrailer) may be called multiple times, correct functions with guards and sync blocks
+ * PLEASE READ HERE BEFORE YOU IMPLEMENT A MUXER THAT INHERITS THIS CLASS
+ * 
+ *
+ * One muxer can be used by multiple encoder
+ * so some functions(init, writeTrailer) may be called multiple times, save functions with guards and sync blocks
+ * 
+ * Muxer MUST NOT changed packet content somehow, data, stream index, pts, dts, duration, etc.
+ * because packets are shared with other muxers. If packet content changes, other muxer cannot do their job correctly.
+ * 
+ * Muxers generally run in multi-thread environment so that 
+ * writePacket functions can be called by different thread at the same time. Protect writePacket with synchronized keyword
+ * 
+ * 
  * @author mekya
  *
  */
@@ -118,15 +129,17 @@ public abstract class Muxer {
 	/**
 	 * All in one function, it is great for transmuxing.
 	 * Just call prepare and then write packets. 
+	 * 
 	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
 	 * @param inputFormatContext
-	 * @return
+	 * @return true if it succeeds, return false if it fails
 	 */
 	public abstract boolean prepare(AVFormatContext inputFormatContext);
 
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index parameters.
 	 * After adding streams with funcitons need to call prepareIO()
+	 * 
 	 * @param codec
 	 * @param codecContext
 	 * @param streamIndex
@@ -136,7 +149,12 @@ public abstract class Muxer {
 
 	/**
 	 * This function may be called by multiple encoders. 
-	 * Make sure that it is called once.
+	 * Make sure that it is called once. 
+	 * 
+	 * See the sample implementations how it is being protected
+	 * 
+	 * Implement this function with synchronized keyword as the subclass
+	 * 
 	 * @return
 	 */
 	public abstract boolean prepareIO();
@@ -144,25 +162,39 @@ public abstract class Muxer {
 	/**
 	 * This function may be called by multiple encoders. 
 	 * Make sure that it is called once.
+	 * 
+	 * See the sample implementations how it is being protected
+	 * 
+	 * Implement this function with synchronized keyword as the subclass
+	 * 
 	 * @return
 	 */
 	public abstract void writeTrailer();
 
 	
 	/**
-	 * write packets to the output
+	 * Write packets to the output. This function is used in by MuxerAdaptor which is in community edition
 	 * 
 	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
-	 * @param pkt
+	 * 
+	 * Implement this function with synchronized keyword as the subclass
+	 * 
+	 * @param pkt 
+	 * The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket avpacket,  AVStream inStream);
 
 	
 	/**
-	 * write packets to the output
+	 * Write packets to the output.
+	 * This function is used by EncoderAdaptor in enterprise edition
 	 * 
 	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
-	 * @param pkt
+	 * 
+	 * Implement this function with synchronized keyword as the subclass
+	 * 
+	 * @param pkt 
+	 * The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket pkt);
 

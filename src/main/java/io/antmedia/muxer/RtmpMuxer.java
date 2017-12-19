@@ -88,7 +88,11 @@ public class RtmpMuxer extends Muxer {
 		this.url = url;
 	}
 
-	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public synchronized boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
 
 		AVFormatContext outputContext = getOutputFormatContext();
 
@@ -127,8 +131,11 @@ public class RtmpMuxer extends Muxer {
 	}
 
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
+	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
 		AVFormatContext context = getOutputFormatContext();
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
@@ -155,7 +162,11 @@ public class RtmpMuxer extends Muxer {
 		return true;
 	}
 
-	public boolean prepareIO() {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public synchronized boolean prepareIO() {
 		AVFormatContext context = getOutputFormatContext();
 		if (context.pb() != null) {
 			//return false if it is already prepared
@@ -196,8 +207,11 @@ public class RtmpMuxer extends Muxer {
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writeTrailer() {
+	public synchronized void writeTrailer() {
 		
 		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
@@ -221,8 +235,11 @@ public class RtmpMuxer extends Muxer {
 		outputFormatContext = null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket pkt, AVStream stream) {
+	public synchronized void writePacket(AVPacket pkt, AVStream stream) {
 		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
 			return;
 		}
@@ -230,8 +247,11 @@ public class RtmpMuxer extends Muxer {
 		writePacket(pkt, stream.time_base(),  out_stream.time_base()); 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt) {
 		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
 			return;
 		}

@@ -2,7 +2,7 @@ package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
 import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
+import static org.bytedeco.javacpp.avcodec.*;
 import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.javacpp.avcodec.avcodec_parameters_to_context;
 import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
@@ -15,7 +15,7 @@ import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
 import static org.bytedeco.javacpp.avformat.avformat_new_stream;
 import static org.bytedeco.javacpp.avformat.avformat_open_input;
 import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
+import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
 import static org.bytedeco.javacpp.avutil.av_dict_set;
@@ -115,6 +115,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsListSize;
 	protected String hlsPlayListType;
 	protected AVPacket pkt = avcodec.av_packet_alloc(); // new AVPacket();
+	
+	protected boolean firstKeyFrameReceived = false;
+	private String name;
 
 	static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override 
@@ -183,7 +186,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public boolean init(IConnection conn, String name, boolean isAppend) {
-		
 
 		return init(conn.getScope(), name, isAppend);
 	}
@@ -191,7 +193,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
-		
+		this.name = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans");
@@ -245,6 +247,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 		
+		if (av_log_get_level() >= AV_LOG_INFO) {
+            // Dump information about file onto standard error
+            av_dump_format(inputFormatContext, 0, name, 0);
+        }
 
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
@@ -274,12 +280,28 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
 				//logger.info("input read...");
+				
 
 				if (ret >= 0) {
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
+					
+					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
+						if (keyFrame == 1) {
+							firstKeyFrameReceived = true;
+						}
+						else {
+							logger.warn("First video packet is not key frame. Dropping..." );
+							av_packet_unref(pkt);
+							continue;
+						}
+					}
+					
 					for(Muxer muxer : muxerList) {
+						logger.info("pkt index: " + pkt.stream_index());
 						muxer.writePacket(pkt, stream);
 					}
+					
 					av_packet_unref(pkt);
 					
 				}

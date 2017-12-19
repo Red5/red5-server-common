@@ -98,6 +98,8 @@ public class HLSMuxer extends Muxer  {
 	int videoHeight;
 	private AVPacket tmpPacket;
 	private boolean deleteFileOnExit = true;
+	private int audioIndex;
+	private int videoIndex;
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
@@ -121,6 +123,9 @@ public class HLSMuxer extends Muxer  {
 		avRationalTimeBase.den(1);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
@@ -156,18 +161,28 @@ public class HLSMuxer extends Muxer  {
 		return outputFormatContext;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public boolean prepare(AVFormatContext inputFormatContext) {
 
 		AVFormatContext context = getOutputFormatContext();
 
-		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
+		int streamIndex = 0;
+		for (int i=0; i < inputFormatContext.nb_streams(); i++) 
+		{
 			AVStream in_stream = inputFormatContext.streams(i);
-			if (isCodecSupported(in_stream.codecpar().codec_id())) {
+			if (isCodecSupported(in_stream.codecpar().codec_id())) 
+			{
 				registeredStreamIndexList.add(i);
+				
 				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
-
-				if (in_stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
-
+				int codecType = in_stream.codec().codec_type();
+				if (codecType == AVMEDIA_TYPE_VIDEO) 
+				{
+					videoIndex = streamIndex;
+					logger.info("creating video stream");
 					h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
 					bsfContext = new AVBSFContext(null);
 
@@ -200,15 +215,23 @@ public class HLSMuxer extends Muxer  {
 					out_stream.time_base(bsfContext.time_base_out());
 				}
 				else {
-
+					audioIndex = streamIndex;
+					logger.info("creating audio stream");
 					int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 					if (ret < 0) {
 						logger.info("Cannot get codec parameters\n");
 						return false;
 					}
+					
+					if (codecType != AVMEDIA_TYPE_AUDIO) {
+						logger.warn("codec type should be audio but it is " + codecType);
+						
+					}
 
 				}
 				out_stream.codec().codec_tag(0);
+				
+				streamIndex++;
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
@@ -248,14 +271,12 @@ public class HLSMuxer extends Muxer  {
 	}
 
 
-	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
+	private  void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
-
 
 		int packetIndex = pkt.stream_index();
 
-		if (!registeredStreamIndexList.contains(packetIndex) || 
-				outputFormatContext == null || outputFormatContext.pb() == null)  {
+		if (outputFormatContext == null || outputFormatContext.pb() == null)  {
 			logger.error("OutputFormatContext is not initialized correctly");
 			return;
 		}
@@ -288,7 +309,11 @@ public class HLSMuxer extends Muxer  {
 			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 			pkt.pos(-1);
 
-			av_copy_packet(tmpPacket , pkt);
+			ret = av_copy_packet(tmpPacket , pkt);
+			if (ret < 0) {
+				logger.error("Cannot copy packet!!!");
+				return;
+			}
 
 			if (bsfContext != null) {
 
@@ -321,8 +346,7 @@ public class HLSMuxer extends Muxer  {
 			pkt.pos(pos);
 		}
 		else {
-
-
+			
 			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
@@ -342,6 +366,9 @@ public class HLSMuxer extends Muxer  {
 	}
 
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public synchronized void writeTrailer() {
 		if (outputFormatContext == null || outputFormatContext.pb() == null) {
@@ -410,8 +437,11 @@ public class HLSMuxer extends Muxer  {
 	}
 
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt) {
 		if (!registeredStreamIndexList.contains(pkt.stream_index()))  {
 			return;
 		}
@@ -420,8 +450,11 @@ public class HLSMuxer extends Muxer  {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
+	public synchronized boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
 
 		AVFormatContext context = getOutputFormatContext();
 
@@ -445,6 +478,11 @@ public class HLSMuxer extends Muxer  {
 				//codec context is used in a same way with another muxer
 				out_stream.codec().time_base(codecContext.time_base());
 				int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
+				logger.info("copy codec parameter from context: " + ret + " stream index: " + streamIndex);
+				if (codecContext.codec_type() != AVMEDIA_TYPE_AUDIO) {
+					logger.warn("This should be audio codec ");
+				}
+				
 
 
 			}
@@ -459,8 +497,11 @@ public class HLSMuxer extends Muxer  {
 	}
 
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public boolean prepareIO() {
+	public synchronized boolean prepareIO() {
 		AVFormatContext context = getOutputFormatContext();
 		if (context.pb() != null) {
 			//return false if it is already prepared
@@ -498,13 +539,30 @@ public class HLSMuxer extends Muxer  {
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket avpacket, AVStream inStream) {
+	public synchronized void writePacket(AVPacket avpacket, AVStream inStream) {
 		if (!registeredStreamIndexList.contains(avpacket.stream_index()))  {
 			return;
 		}
-		AVStream out_stream = getOutputFormatContext().streams(avpacket.stream_index());
-		writePacket(avpacket, inStream.time_base(),  out_stream.time_base(), inStream.codecpar().codec_type()); 
+		int streamIndex;
+		if (inStream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
+			streamIndex = videoIndex;
+		}
+		else if (inStream.codecpar().codec_type() == AVMEDIA_TYPE_AUDIO) {
+			streamIndex = audioIndex;
+		}
+		else {
+			logger.error("Undefined codec type ");
+			return;
+		}
+		AVStream out_stream = getOutputFormatContext().streams(streamIndex);
+		int index = avpacket.stream_index();
+		avpacket.stream_index(streamIndex);
+		writePacket(avpacket, inStream.time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
+		avpacket.stream_index(index);
 
 	}
 

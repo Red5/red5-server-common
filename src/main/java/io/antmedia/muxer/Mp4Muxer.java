@@ -82,6 +82,8 @@ public class Mp4Muxer extends Muxer {
 	private int totalSize = 0;
 	private StorageClient storageClient = null;
 	private String streamId;
+	private int videoIndex;
+	private int audioIndex;
 
 
 
@@ -149,6 +151,9 @@ public class Mp4Muxer extends Muxer {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void init(IScope scope, final String name, int resolutionHeight) {
 		super.init(scope, name, resolutionHeight, false);
@@ -156,8 +161,11 @@ public class Mp4Muxer extends Muxer {
 		this.streamId = name;
 	}
 
-
-	public boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public synchronized boolean addStream(AVCodec codec, AVCodecContext codecContext, int streamIndex) {
 
 		AVFormatContext outputContext = getOutputFormatContext();
 
@@ -195,15 +203,34 @@ public class Mp4Muxer extends Muxer {
 	}
 
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
+	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
 		AVFormatContext context = getOutputFormatContext();
 
+		int streamIndex = 0;
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream in_stream = inputFormatContext.streams(i);
 			if (isCodecSupported(in_stream.codecpar())) {
 
+				int codec_type = in_stream.codecpar().codec_type();
+				if ( codec_type == AVMEDIA_TYPE_VIDEO) {
+					videoIndex = streamIndex;
+				}
+				else if (codec_type == AVMEDIA_TYPE_AUDIO) {
+					audioIndex = streamIndex;
+				}
+				else {
+					logger.error("undefined codec type: " + codec_type);
+					continue;
+				}
+				
+				streamIndex++;
 				registeredStreamIndexList.add(i);
+				
+				logger.info(" in_stream.index() : " + in_stream.index());
 
 				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
 
@@ -224,7 +251,11 @@ public class Mp4Muxer extends Muxer {
 		return true;
 	}
 
-	public boolean prepareIO() {
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public synchronized boolean prepareIO() {
 		
 		AVFormatContext context = getOutputFormatContext();
 		if (context.pb() != null) {
@@ -269,8 +300,11 @@ public class Mp4Muxer extends Muxer {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writeTrailer() {
+	public synchronized void writeTrailer() {
 		
 		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
@@ -315,7 +349,7 @@ public class Mp4Muxer extends Muxer {
 		}
 	}
 
-
+	
 	public long getDuration(File f) {
 		AVFormatContext inputFormatContext = avformat.avformat_alloc_context();
 		int ret;
@@ -349,27 +383,63 @@ public class Mp4Muxer extends Muxer {
 		outputFormatContext = null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket pkt, AVStream stream) {
+	public synchronized void writePacket(AVPacket pkt, AVStream stream) {
 		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+			logger.info("not registered stream index");
 			return;
 		}
-		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
+		int streamIndex;
+		if (stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+			streamIndex = videoIndex;
+		}
+		else if (stream.codec().codec_type() == AVMEDIA_TYPE_AUDIO) {
+			streamIndex = audioIndex;
+		}
+		else {
+			logger.error("Undefined codec type ");
+			return;
+		}
+		AVStream out_stream = outputFormatContext.streams(streamIndex);
+		int index = pkt.stream_index();
+		pkt.stream_index(streamIndex);
+		
 		writePacket(pkt, stream.time_base(),  out_stream.time_base()); 
+		
+		pkt.stream_index(index);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt) {
 		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+			logger.info("not registered stream index");
 			return;
 		}
-		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		
+		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
 		  
 		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base()); 
 	}
 
 
+	/**
+	 * All other writePacket functions call this function to make the job
+	 * 
+	 * @param pkt 
+	 * Content of the data in AVPacket class
+	 * 
+	 * @param inputTimebase
+	 * input time base is required to calculate the correct dts and pts values for the container
+	 * 
+	 * @param outputTimebase
+	 * output time base is required to calculate the correct dts and pts values for the container
+	 */
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase) 
 	{
 
@@ -378,17 +448,8 @@ public class Mp4Muxer extends Muxer {
 			logger.warn("output context.pb field is null");
 			return;
 		}
-		
-		
 
 		totalSize += pkt.size();
-
-		int packetIndex = pkt.stream_index();
-		//TODO: find a better frame to check if stream exists in outputFormatContext
-
-		if (!registeredStreamIndexList.contains(packetIndex)) {
-			return;
-		}
 
 		long pts = pkt.pts();
 		long dts = pkt.dts();
