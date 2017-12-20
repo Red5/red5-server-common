@@ -298,7 +298,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 					
 					for(Muxer muxer : muxerList) {
-						logger.info("pkt index: " + pkt.stream_index());
 						muxer.writePacket(pkt, stream);
 					}
 					
