@@ -308,7 +308,7 @@ public class Mp4Muxer extends Muxer {
 		
 		if (outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
-			logger.error("OutputFormatContext is not initialized correctly");
+			logger.warn("OutputFormatContext is not initialized or it is freed");
 			return;
 		}
 
