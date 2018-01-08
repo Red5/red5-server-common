@@ -444,6 +444,7 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index()))  {
+			logger.trace("not registered stream index");
 			return;
 		}
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
@@ -547,6 +548,7 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized void writePacket(AVPacket avpacket, AVStream inStream) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(avpacket.stream_index()))  {
+			logger.trace("not registered stream index");
 			return;
 		}
 		int streamIndex;
