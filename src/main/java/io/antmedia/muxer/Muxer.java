@@ -88,6 +88,8 @@ public abstract class Muxer {
 	protected IScope scope;
 	
 	private boolean addDateTimeToResourceName = false;
+	
+	protected AtomicBoolean isRunning = new AtomicBoolean(false);
 
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;

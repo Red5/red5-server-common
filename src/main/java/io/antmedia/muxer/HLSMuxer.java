@@ -371,10 +371,11 @@ public class HLSMuxer extends Muxer  {
 	 */
 	@Override
 	public synchronized void writeTrailer() {
-		if (outputFormatContext == null || outputFormatContext.pb() == null) {
-			//return if it is already null
+		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
+			//return if it is already null or not running
 			return;
 		}
+		isRunning.set(false);
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 		}
@@ -442,7 +443,7 @@ public class HLSMuxer extends Muxer  {
 	 */
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
-		if (!registeredStreamIndexList.contains(pkt.stream_index()))  {
+		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index()))  {
 			return;
 		}
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
@@ -536,6 +537,7 @@ public class HLSMuxer extends Muxer  {
 		if (optionsDictionary != null) {
 			av_dict_free(optionsDictionary);
 		}
+		isRunning.set(true);
 		return true;
 	}
 
@@ -544,7 +546,7 @@ public class HLSMuxer extends Muxer  {
 	 */
 	@Override
 	public synchronized void writePacket(AVPacket avpacket, AVStream inStream) {
-		if (!registeredStreamIndexList.contains(avpacket.stream_index()))  {
+		if (!isRunning.get() || !registeredStreamIndexList.contains(avpacket.stream_index()))  {
 			return;
 		}
 		int streamIndex;

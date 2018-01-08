@@ -295,6 +295,8 @@ public class Mp4Muxer extends Muxer {
 		if (optionsDictionary != null) {
 			av_dict_free(optionsDictionary);
 		}
+		
+		isRunning.set(true);
 
 		return true;
 
@@ -306,11 +308,13 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writeTrailer() {
 		
-		if (outputFormatContext == null || outputFormatContext.pb() == null) {
+		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
 			logger.warn("OutputFormatContext is not initialized or it is freed");
 			return;
 		}
+		
+		isRunning.set(false);
 
 		av_write_trailer(outputFormatContext);
 
@@ -388,7 +392,8 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized void writePacket(AVPacket pkt, AVStream stream) {
-		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+		
+		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			logger.info("not registered stream index");
 			return;
 		}
@@ -403,6 +408,7 @@ public class Mp4Muxer extends Muxer {
 			logger.error("Undefined codec type ");
 			return;
 		}
+		
 		AVStream out_stream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
@@ -417,7 +423,7 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
-		if (!registeredStreamIndexList.contains(pkt.stream_index())) {
+		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			logger.info("not registered stream index");
 			return;
 		}
@@ -444,7 +450,7 @@ public class Mp4Muxer extends Muxer {
 	{
 
 		AVFormatContext context = getOutputFormatContext();
-		if (context.pb() == null) {
+		if (context == null || context.pb() == null) {
 			logger.warn("output context.pb field is null");
 			return;
 		}
