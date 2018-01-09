@@ -422,13 +422,13 @@ public class HLSMuxer extends Muxer  {
 							e.printStackTrace();
 						}
 					}
-					try {
-						Files.delete(file.toPath());
-					} catch (IOException e) {
-						e.printStackTrace();
+					if (file.exists()) {
+						try {
+							Files.delete(file.toPath());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
-
-
 				}
 			});
 
