@@ -79,7 +79,37 @@ public class Broadcast {
 	 */
 	private boolean is360 = false;;
 	
-	
+	/**
+	 * This is the url that will be notified when stream is published, ended and muxing finished
+	 * 
+	 * It sends some variables with POST UrlEncodedForm
+	 * 
+	 * variables are
+	 * "id" mandatory 
+	 * This is the id of the broadcast
+	 * 
+	 * "action" mandatory
+	 * 	This parameter defines what happened. Values can be
+	 * 		"liveStreamStarted"
+	 * 		this parameter is sent when stream is started
+	 * 
+	 * 		"liveStreamEnded"
+	 *  		this parameter is sent when stream is finished
+	 *  
+	 *  		"vodReady"
+	 *  		this parameter is sent when vod(mp4) file ready. It is typically a few seconds later after "liveStreamEnded"
+	 * 
+	 * 
+	 * "vodName" 
+	 * 	It is send with "vodReady" action. This is the name of the file physicall recorded file
+	 *  
+	 * "streamName" optional
+	 *  It is send with above parameters if stream name exists
+	 *  
+	 * "category" optional
+	 *  It is send if category exists
+	 * 
+	 */
 	private String listenerHookURL;
 	
 	private String category;
