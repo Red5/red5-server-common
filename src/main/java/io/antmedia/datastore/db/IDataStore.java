@@ -29,4 +29,16 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
+	boolean addCamera(Broadcast camera);
+
+	boolean editCameraInfo(String name, String ipAddr, String username, String password, String rtspUrl);
+
+	boolean deleteCamera(String ipAddr);
+
+	Broadcast getCamera(String ip);
+
+	List<Broadcast> getCameraList();
+
+	void close();
+
 }

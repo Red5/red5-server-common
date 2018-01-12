@@ -9,45 +9,46 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
-import org.mongodb.morphia.annotations.Reference;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity("broadcast")
-@Indexes(
-	    @Index(fields = @Field("name"))
-	)
+@Indexes(@Index(fields = @Field("name")))
 public class Broadcast {
-	
+
 	/**
 	 * id of the broadcast
 	 */
 	@JsonIgnore
 	@Id
 	private ObjectId dbId;
-	
-	
+
 	private String streamId;
 
 	/**
-	 * "finished", "broadcasting", "created" 
+	 * "finished", "broadcasting", "created"
 	 */
 	private String status;
+
+	/**
+	 * "liveStream", "ipCamera", "streamSource"
+	 */
+
+	private String type;
 
 	/**
 	 * name of the broadcast
 	 */
 	private String name;
-	
+
 	/**
 	 * description of the broadcast
 	 */
 	private String description;
-	
+
 	/**
-	 * It is a video filter for the service, 
-	 * this value is controlled by the user, 
-	 * default value is true in the db
+	 * It is a video filter for the service, this value is controlled by the
+	 * user, default value is true in the db
 	 */
 	private boolean publish = true;
 
@@ -55,7 +56,7 @@ public class Broadcast {
 	 * date when record is created in milliseconds
 	 */
 	private Long date;
-	
+
 	/**
 	 * Planned start date
 	 */
@@ -78,56 +79,21 @@ public class Broadcast {
 	 * If this stream is a 360 degree video
 	 */
 	private boolean is360 = false;;
-	
-	/**
-	 * This is the url that will be notified when stream is published, ended and muxing finished
-	 * 
-	 * It sends some variables with POST UrlEncodedForm
-	 * 
-	 * variables are
-	 * "id" mandatory 
-	 * This is the id of the broadcast
-	 * 
-	 * "action" mandatory
-	 * 	This parameter defines what happened. Values can be
-	 * 		"liveStreamStarted"
-	 * 		this parameter is sent when stream is started
-	 * 
-	 * 		"liveStreamEnded"
-	 *  		this parameter is sent when stream is finished
-	 *  
-	 *  		"vodReady"
-	 *  		this parameter is sent when vod(mp4) file ready. It is typically a few seconds later after "liveStreamEnded"
-	 * 
-	 * 
-	 * "vodName" 
-	 * 	It is send with "vodReady" action. This is the name of the file physicall recorded file
-	 *  
-	 * "streamName" optional
-	 *  It is send with above parameters if stream name exists
-	 *  
-	 * "category" optional
-	 *  It is send if category exists
-	 * 
-	 */
+
 	private String listenerHookURL;
-	
+
 	private String category;
-	
 
-	public Broadcast(String status, String name) {
-		this.setStatus(status);
-		this.setName(name);
-	}
-
-	public Broadcast() {
-	}
+	private String ipAddr;
+	private String username;
+	private String password;
+	private String rtspUrl;
 
 	public String getStreamId() {
 		if (streamId != null) {
 			return streamId;
 		}
-		if (dbId == null){
+		if (dbId == null) {
 			return null;
 		}
 		return dbId.toString();
@@ -202,7 +168,6 @@ public class Broadcast {
 		this.endPointList = endPointList;
 	}
 
-
 	public boolean isIs360() {
 		return is360;
 	}
@@ -234,6 +199,68 @@ public class Broadcast {
 	public void setCategory(String category) {
 		this.category = category;
 	}
-	
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getIpAddr() {
+		return ipAddr;
+	}
+
+	public void setIpAddr(String ipAddr) {
+		this.ipAddr = ipAddr;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getRtspUrl() {
+		return rtspUrl;
+	}
+
+	public void setRtspUrl(String rtspUrl) {
+		this.rtspUrl = rtspUrl;
+	}
+
+	public Broadcast() {
+	}
+
+	public Broadcast(String status, String name) {
+		this.setStatus(status);
+		this.setName(name);
+	}
+
+	public Broadcast(String name) {
+
+		this.name = name;
+	}
+
+	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
+
+		this.name = name;
+		this.ipAddr = ipAddr;
+		this.username = username;
+		this.password = password;
+		this.rtspUrl = rtspUrl;
+		this.type = type;
+	}
 
 }
