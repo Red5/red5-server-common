@@ -114,6 +114,15 @@ public class Broadcast {
 	
 	private String category;
 	
+	/**
+	 * This is the expire time in milliseconds 
+	 * For instance if this value is 10000 then
+	 * broadcast should be started in 10 seconds after it is created.
+	 * 
+	 * If expire duration is 0, then stream will never expire
+	 */
+	private int expireDurationMS;
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -233,6 +242,14 @@ public class Broadcast {
 
 	public void setCategory(String category) {
 		this.category = category;
+	}
+
+	public int getExpireDurationMS() {
+		return expireDurationMS;
+	}
+
+	public void setExpireDurationMS(int expireDurationMS) {
+		this.expireDurationMS = expireDurationMS;
 	}
 	
 
