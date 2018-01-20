@@ -14,19 +14,20 @@ import org.mongodb.morphia.annotations.Reference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity("broadcast")
-@Indexes(
-	    @Index(fields = @Field("name"))
-	)
+@Indexes({
+		@Index(fields = @Field("name")),
+		@Index(fields = @Field("streamId"))
+})
 public class Broadcast {
-	
+
 	/**
 	 * id of the broadcast
 	 */
 	@JsonIgnore
 	@Id
 	private ObjectId dbId;
-	
-	
+
+
 	private String streamId;
 
 	/**
@@ -38,12 +39,12 @@ public class Broadcast {
 	 * name of the broadcast
 	 */
 	private String name;
-	
+
 	/**
 	 * description of the broadcast
 	 */
 	private String description;
-	
+
 	/**
 	 * It is a video filter for the service, 
 	 * this value is controlled by the user, 
@@ -55,7 +56,7 @@ public class Broadcast {
 	 * date when record is created in milliseconds
 	 */
 	private Long date;
-	
+
 	/**
 	 * Planned start date
 	 */
@@ -78,7 +79,7 @@ public class Broadcast {
 	 * If this stream is a 360 degree video
 	 */
 	private boolean is360 = false;;
-	
+
 	/**
 	 * This is the url that will be notified when stream is published, ended and muxing finished
 	 * 
@@ -111,9 +112,9 @@ public class Broadcast {
 	 * 
 	 */
 	private String listenerHookURL;
-	
+
 	private String category;
-	
+
 	/**
 	 * This is the expire time in milliseconds 
 	 * For instance if this value is 10000 then
@@ -122,7 +123,12 @@ public class Broadcast {
 	 * If expire duration is 0, then stream will never expire
 	 */
 	private int expireDurationMS;
-	
+
+	/**
+	 * RTMP URL where to publish live stream to
+	 */
+	private String rtmpURL;
+
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -133,18 +139,11 @@ public class Broadcast {
 	}
 
 	public String getStreamId() {
-		if (streamId != null) {
-			return streamId;
-		}
-		if (dbId == null){
-			return null;
-		}
-		return dbId.toString();
+		return streamId;
 	}
 
 	public void setStreamId(String id) {
 		this.streamId = id;
-		dbId = new ObjectId(id);
 	}
 
 	public String getStatus() {
@@ -251,6 +250,22 @@ public class Broadcast {
 	public void setExpireDurationMS(int expireDurationMS) {
 		this.expireDurationMS = expireDurationMS;
 	}
-	
+
+	public String getRtmpURL() {
+		return rtmpURL;
+	}
+
+	public void setRtmpURL(String rtmpURL) {
+		this.rtmpURL = rtmpURL;
+	}
+
+	public ObjectId getDbId() {
+		return dbId;
+	}
+
+	public void setDbId(ObjectId dbId) {
+		this.dbId = dbId;
+	}
+
 
 }

@@ -34,7 +34,10 @@ public class AppSettings {
 	
 	private String listenerHookURL;
 
-	//private String encoderSettingsString;
+	/**
+	 * Fully qualified server name
+	 */
+	private String serverName;
 
 
 	/**
@@ -166,6 +169,14 @@ public class AppSettings {
 
 	public void setListenerHookURL(String listenerHookURL) {
 		this.listenerHookURL = listenerHookURL;
+	}
+
+	public String getServerName() {
+		return serverName;
+	}
+
+	public void setServerName(String serverName) {
+		this.serverName = serverName;
 	}
 
 
