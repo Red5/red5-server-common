@@ -214,7 +214,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	private IClusterNotifier clusterNotifier;
 
-	private WeakReference<MuxAdaptor> endPointMuxAdaptor;
+	//private WeakReference<MuxAdaptor> endPointMuxAdaptor;
 
 
 	/**
@@ -253,10 +253,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor.get().stop();
 		}
 
-		if (endPointMuxAdaptor != null) {
-			endPointMuxAdaptor.get().stop();
-		}
-
 		sendPublishStopNotify();
 		// TODO: can we send the client something to make sure he stops sending data?
 		if (connMsgOut != null) {
@@ -273,12 +269,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor = null;
 		}
 
-		if (endPointMuxAdaptor != null) {
-			endPointMuxAdaptor.clear();
-			endPointMuxAdaptor = null;
-		}
-
-		IClusterNotifier clusterNotifier = getClusterNotifier();
+				IClusterNotifier clusterNotifier = getClusterNotifier();
 		if (clusterNotifier != null) {
 			IScope scope = Red5.getConnectionLocal().getScope();
 			clusterNotifier.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
@@ -938,9 +929,10 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-		setUpEndPoints(appCtx, publishedName, conn);
+		
 
-		if (automaticMp4Recording || automaticHlsRecording)  {
+		//if (automaticMp4Recording || automaticHlsRecording)  
+		{
 			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
 
 
@@ -983,6 +975,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
+			
+			
+			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
 
 			try {
 				if (conn == null) {
@@ -1001,22 +996,19 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 	}
 
-	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, IStreamCapableConnection conn) {
+	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor,  IStreamCapableConnection conn) {
 		if (appCtx.containsBean("db.datastore")) 
 		{
 			IDataStore dataStore = (IDataStore)appCtx.getBean("db.datastore");
 			Broadcast broadcast = dataStore.get(publishedName);
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
-				if (endPointList != null && endPointList.size() > 0) {
-					MuxAdaptor endPointMuxAdaptor = new MuxAdaptor(this);
+				
+				if (endPointList != null && endPointList.size() > 0) 
+				{
 					for (Endpoint endpoint : endPointList) {
-						endPointMuxAdaptor.addMuxer(new RtmpMuxer(endpoint.rtmpUrl));
+						muxAdaptor.addMuxer(new RtmpMuxer(endpoint.rtmpUrl));
 					}
-					endPointMuxAdaptor.init(conn, publishedName, false);
-					addStreamListener(endPointMuxAdaptor);
-					this.endPointMuxAdaptor = new WeakReference<MuxAdaptor>(endPointMuxAdaptor);
-					endPointMuxAdaptor.start();
 				}
 			}
 		}
@@ -1093,13 +1085,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.stop();
 			muxAdaptor.clear();
 			muxAdaptor = null;
-		}
-		if (endPointMuxAdaptor != null) {
-			MuxAdaptor adaptor = endPointMuxAdaptor.get();
-			removeStreamListener(adaptor);
-			adaptor.stop();
-			endPointMuxAdaptor.clear();
-			endPointMuxAdaptor = null;
 		}
 	}
 
