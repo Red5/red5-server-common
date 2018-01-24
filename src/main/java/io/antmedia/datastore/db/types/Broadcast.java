@@ -142,7 +142,10 @@ public class Broadcast {
 		return streamId;
 	}
 
-	public void setStreamId(String id) {
+	public void setStreamId(String id) throws Exception {
+		if (id == null) {
+			throw new Exception("stream id cannot be null");
+		}
 		this.streamId = id;
 	}
 
