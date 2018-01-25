@@ -27,6 +27,8 @@ public interface IDataStore {
 
 	List<Broadcast> getBroadcastList(int offset, int size);
 
+	List<Broadcast> filterBroadcastList(int offset, int size, String type);
+
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
 	boolean addCamera(Broadcast camera);
