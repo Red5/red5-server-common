@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
 
@@ -20,6 +21,8 @@ public interface IDataStore {
 	boolean updatePublish(String id, boolean publish);
 
 	boolean addEndpoint(String id, Endpoint endpoint);
+
+	boolean addVod(String id, Vod vod);
 
 	long getBroadcastCount();
 
@@ -43,4 +46,7 @@ public interface IDataStore {
 
 	void close();
 
+	List<Vod> getVodList(int offset, int size);
+
+	List<Vod> filterVoDList(int offset, int size, String keyword, long startdate, long endDate);
 }

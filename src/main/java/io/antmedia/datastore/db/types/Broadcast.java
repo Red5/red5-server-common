@@ -31,7 +31,7 @@ public class Broadcast {
 	private String status;
 
 	/**
-	 * "liveStream", "ipCamera", "streamSource"
+	 * "liveStream", "ipCamera", "streamSource", "vod"
 	 */
 
 	private String type;
@@ -88,6 +88,29 @@ public class Broadcast {
 	private String username;
 	private String password;
 	private String rtspUrl;
+
+	public Broadcast() {
+	}
+
+	public Broadcast(String status, String name) {
+		this.setStatus(status);
+		this.setName(name);
+	}
+
+	public Broadcast(String name) {
+
+		this.name = name;
+	}
+
+	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
+
+		this.name = name;
+		this.ipAddr = ipAddr;
+		this.username = username;
+		this.password = password;
+		this.rtspUrl = rtspUrl;
+		this.type = type;
+	}
 
 	public String getStreamId() {
 		if (streamId != null) {
@@ -238,29 +261,6 @@ public class Broadcast {
 
 	public void setRtspUrl(String rtspUrl) {
 		this.rtspUrl = rtspUrl;
-	}
-
-	public Broadcast() {
-	}
-
-	public Broadcast(String status, String name) {
-		this.setStatus(status);
-		this.setName(name);
-	}
-
-	public Broadcast(String name) {
-
-		this.name = name;
-	}
-
-	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
-
-		this.name = name;
-		this.ipAddr = ipAddr;
-		this.username = username;
-		this.password = password;
-		this.rtspUrl = rtspUrl;
-		this.type = type;
 	}
 
 }
