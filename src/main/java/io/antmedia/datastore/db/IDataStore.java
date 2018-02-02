@@ -28,6 +28,8 @@ public interface IDataStore {
 
 	boolean delete(String id);
 
+	boolean deleteVod(String id);
+
 	List<Broadcast> getBroadcastList(int offset, int size);
 
 	List<Broadcast> filterBroadcastList(int offset, int size, String type);

@@ -90,16 +90,19 @@ public class Broadcast {
 	private String rtspUrl;
 
 	public Broadcast() {
+		this.type = "liveStream";
 	}
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
 		this.setName(name);
+		this.type = "liveStream";
 	}
 
 	public Broadcast(String name) {
 
 		this.name = name;
+		this.type = "liveStream";
 	}
 
 	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
