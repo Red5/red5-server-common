@@ -679,6 +679,8 @@ public class FFmpegFrameRecorder extends FrameRecorder {
 			for (Entry<String, String> e : videoOptions.entrySet()) {
 				av_dict_set(options, e.getKey(), e.getValue(), 0);
 			}
+			
+			av_opt_set(video_c.priv_data(), "tune", "zerolatency", 0);
 			/* open the codec */
 			if ((ret = avcodec_open2(video_c, video_codec, options)) < 0) {
 				release();
