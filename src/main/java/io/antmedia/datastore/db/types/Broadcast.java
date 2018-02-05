@@ -129,6 +129,13 @@ public class Broadcast {
 	 */
 	private String rtmpURL;
 
+	/**
+	 * zombi
+	 * It is true, if a broadcast that is not added to data store through rest service or management console
+	 * It is false by default
+	 * 
+	 */
+	private boolean zombi = false;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -268,6 +275,18 @@ public class Broadcast {
 
 	public void setDbId(ObjectId dbId) {
 		this.dbId = dbId;
+	}
+
+	public boolean isZombi() {
+		return zombi;
+	}
+
+	public void setZombi(boolean zombi) {
+		this.zombi = zombi;
+	}
+
+	public void resetStreamId() {
+		this.streamId = null;
 	}
 
 
