@@ -392,7 +392,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope " + thisScope.getName() + " item name: " + itemName + " type:" + type);
 			if (cluster != null) {
-				StreamNotificationMessage notification = cluster.getStreamNotification(itemName);
+				StreamNotificationMessage notification = cluster.getStreamNotification(itemName, thisScope.getName());
 				if (notification != null) 
 				{
 					RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
