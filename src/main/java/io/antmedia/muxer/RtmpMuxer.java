@@ -135,7 +135,9 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
+	public boolean prepare(AVFormatContext inputFormatContext) {
+		
+		logger.info("preparing rtmp muxer");
 		AVFormatContext context = getOutputFormatContext();
 
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
@@ -159,6 +161,7 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		prepareIO();
+		
 		return true;
 	}
 
@@ -166,7 +169,7 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized boolean prepareIO() {
+	public  boolean prepareIO() {
 		AVFormatContext context = getOutputFormatContext();
 		if (context.pb() != null) {
 			//return false if it is already prepared
@@ -175,12 +178,15 @@ public class RtmpMuxer extends Muxer {
 		
 		AVIOContext pb = new AVIOContext(null);
 
+		logger.info("rtmp muxer opening: " + url);
 		int ret = avformat.avio_open(pb,  url, AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file");
 			return false;
 		}
 		context.pb(pb);
+		
+		
 
 		AVDictionary optionsDictionary = null;
 
@@ -192,7 +198,7 @@ public class RtmpMuxer extends Muxer {
 			}
 		}
 
-		logger.warn("before writing header");
+		logger.warn("before writing rtmp muxer header");
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
@@ -212,7 +218,7 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized void writeTrailer() {
+	public void writeTrailer() {
 		
 		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
@@ -286,6 +292,7 @@ public class RtmpMuxer extends Muxer {
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
+	
 
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));

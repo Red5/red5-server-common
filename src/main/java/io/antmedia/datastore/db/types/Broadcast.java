@@ -13,7 +13,9 @@ import org.mongodb.morphia.annotations.Indexes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity("broadcast")
-@Indexes(@Index(fields = @Field("name")))
+
+@Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")) })
+
 public class Broadcast {
 
 	/**
@@ -80,6 +82,33 @@ public class Broadcast {
 	 */
 	private boolean is360 = false;;
 
+	/**
+	 * This is the url that will be notified when stream is published, ended and
+	 * muxing finished
+	 * 
+	 * It sends some variables with POST UrlEncodedForm
+	 * 
+	 * variables are "id" mandatory This is the id of the broadcast
+	 * 
+	 * "action" mandatory This parameter defines what happened. Values can be
+	 * "liveStreamStarted" this parameter is sent when stream is started
+	 * 
+	 * "liveStreamEnded" this parameter is sent when stream is finished
+	 * 
+	 * "vodReady" this parameter is sent when vod(mp4) file ready. It is
+	 * typically a few seconds later after "liveStreamEnded"
+	 * 
+	 * 
+	 * "vodName" It is send with "vodReady" action. This is the name of the file
+	 * physicall recorded file
+	 * 
+	 * "streamName" optional It is send with above parameters if stream name
+	 * exists
+	 * 
+	 * "category" optional It is send if category exists
+	 * 
+	 */
+
 	private String listenerHookURL;
 
 	private String category;
@@ -92,6 +121,26 @@ public class Broadcast {
 	public Broadcast() {
 		this.type = "liveStream";
 	}
+
+	/**
+	 * This is the expire time in milliseconds For instance if this value is
+	 * 10000 then broadcast should be started in 10 seconds after it is created.
+	 * 
+	 * If expire duration is 0, then stream will never expire
+	 */
+	private int expireDurationMS;
+
+	/**
+	 * RTMP URL where to publish live stream to
+	 */
+	private String rtmpURL;
+
+	/**
+	 * zombi It is true, if a broadcast that is not added to data store through
+	 * rest service or management console It is false by default
+	 * 
+	 */
+	private boolean zombi = false;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -116,6 +165,7 @@ public class Broadcast {
 	}
 
 	public String getStreamId() {
+
 		if (streamId != null) {
 			return streamId;
 		}
@@ -123,11 +173,14 @@ public class Broadcast {
 			return null;
 		}
 		return dbId.toString();
+
 	}
 
-	public void setStreamId(String id) {
+	public void setStreamId(String id) throws Exception {
+		if (id == null) {
+			throw new Exception("stream id cannot be null");
+		}
 		this.streamId = id;
-		dbId = new ObjectId(id);
 	}
 
 	public String getStatus() {
@@ -264,6 +317,42 @@ public class Broadcast {
 
 	public void setRtspUrl(String rtspUrl) {
 		this.rtspUrl = rtspUrl;
+	}
+
+	public int getExpireDurationMS() {
+		return expireDurationMS;
+	}
+
+	public void setExpireDurationMS(int expireDurationMS) {
+		this.expireDurationMS = expireDurationMS;
+	}
+
+	public String getRtmpURL() {
+		return rtmpURL;
+	}
+
+	public void setRtmpURL(String rtmpURL) {
+		this.rtmpURL = rtmpURL;
+	}
+
+	public ObjectId getDbId() {
+		return dbId;
+	}
+
+	public void setDbId(ObjectId dbId) {
+		this.dbId = dbId;
+	}
+
+	public boolean isZombi() {
+		return zombi;
+	}
+
+	public void setZombi(boolean zombi) {
+		this.zombi = zombi;
+	}
+
+	public void resetStreamId() {
+		this.streamId = null;
 	}
 
 }

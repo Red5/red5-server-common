@@ -67,6 +67,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 
 	// private ReadCallback readCallback;
+
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	protected AVIOContext avio_alloc_context;
 	protected AVFormatContext inputFormatContext;
@@ -103,9 +104,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
+	protected long startTime;
 
-	static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
+	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
+
 		public int call(Pointer opaque, BytePointer buf, int buf_size) {
 			int length = -1;
 			try {
@@ -119,7 +122,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 								logger.info("stop request ");
 								break;
 							}
-							Thread.sleep(30);
+							Thread.sleep(5);
 						}
 					} else {
 						logger.error("input queue null");
@@ -202,7 +205,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		// readCallback = new ReadCallback();
 
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
-				inputFormatContext, readCallback, null, null);
+				inputFormatContext, getReadCallback(), null, null);
+
 		inputFormatContext.pb(avio_alloc_context);
 
 		queueReferences.put(inputFormatContext, new InputContext(inputQueue));
@@ -244,7 +248,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxerList.isEmpty()) {
 			return false;
 		}
+
+		startTime = System.currentTimeMillis();
 		return true;
+	}
+
+	protected Read_packet_Pointer_BytePointer_int getReadCallback() {
+		return readCallback;
 	}
 
 	@Override
