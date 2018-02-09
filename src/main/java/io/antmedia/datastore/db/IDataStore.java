@@ -38,7 +38,7 @@ public interface IDataStore {
 
 	boolean addCamera(Broadcast camera);
 
-	boolean editCameraInfo(String name, String ipAddr, String username, String password, String rtspUrl);
+	boolean editCameraInfo(Broadcast camera);
 
 	boolean deleteCamera(String ipAddr);
 
@@ -51,4 +51,7 @@ public interface IDataStore {
 	List<Vod> getVodList(int offset, int size);
 
 	List<Vod> filterVoDList(int offset, int size, String keyword, long startdate, long endDate);
+
+	boolean resetBroadcastStatus();
+
 }

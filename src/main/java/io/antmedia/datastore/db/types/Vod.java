@@ -4,7 +4,11 @@ import java.io.Serializable;
 
 public class Vod implements Serializable {
 	/**
-	 * describes vod properties it should be located in broadcast object
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
+	 * describes vod properties it should be seperated from broadcast object
 	 */
 
 	private String streamName;
@@ -26,6 +30,10 @@ public class Vod implements Serializable {
 		this.duration = duration;
 		this.filePath = filePath;
 		this.fileSize = fileSize;
+
+	}
+
+	public Vod() {
 
 	}
 
