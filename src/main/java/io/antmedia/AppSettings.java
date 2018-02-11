@@ -33,6 +33,9 @@ public class AppSettings {
 	private boolean deleteHLSFilesOnEnded = true;
 	
 	private String listenerHookURL;
+	
+	
+	private boolean acceptOnlyStreamsInDataStore;
 
 	/**
 	 * Fully qualified server name
@@ -177,6 +180,14 @@ public class AppSettings {
 
 	public void setServerName(String serverName) {
 		this.serverName = serverName;
+	}
+
+	public boolean isAcceptOnlyStreamsInDataStore() {
+		return acceptOnlyStreamsInDataStore;
+	}
+
+	public void setAcceptOnlyStreamsInDataStore(boolean acceptOnlyStreamsInDataStore) {
+		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
 	}
 
 
