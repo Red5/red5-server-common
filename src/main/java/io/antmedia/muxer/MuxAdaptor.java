@@ -79,7 +79,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 
-	protected String packetFeederJobName;
+	protected String packetFeederJobName = null;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	
 	//private ReadCallback readCallback;
@@ -291,7 +291,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 				//logger.info("input read...");
 				
-
 				if (ret >= 0) {
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
 					
@@ -315,30 +314,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					
 				}
 				else {
-					System.out.println("removing scheduled job " + MuxAdaptor.this);
-					scheduler.removeScheduledJob(packetFeederJobName);
-					for(Muxer muxer : muxerList) {
-						muxer.writeTrailer();
-					}
-					logger.info("closing input");
-
-					queueReferences.remove(inputFormatContext);
+					closeResources();
 					
-					
-					av_packet_free(pkt);
-					avformat_close_input(inputFormatContext);
-
-					if (avio_alloc_context != null) {
-						if (avio_alloc_context.buffer() != null) {
-							av_free(avio_alloc_context.buffer());
-							avio_alloc_context.buffer(null);
-						}
-						av_free(avio_alloc_context);
-						avio_alloc_context = null;
-					}
-
-					inputFormatContext = null;
-					isRecording = false;	
 				}
 
 				
@@ -357,8 +334,34 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public void closeInput() {
+	public void closeResources() {
+	
+		System.out.println("removing scheduled job " + MuxAdaptor.this);
+		if (packetFeederJobName != null) {
+			scheduler.removeScheduledJob(packetFeederJobName);
+		}
+		for(Muxer muxer : muxerList) {
+			muxer.writeTrailer();
+		}
+		logger.info("closing input");
+
+		queueReferences.remove(inputFormatContext);
+		
+		
+		av_packet_free(pkt);
 		avformat_close_input(inputFormatContext);
+
+		if (avio_alloc_context != null) {
+			if (avio_alloc_context.buffer() != null) {
+				av_free(avio_alloc_context.buffer());
+				avio_alloc_context.buffer(null);
+			}
+			av_free(avio_alloc_context);
+			avio_alloc_context = null;
+		}
+
+		inputFormatContext = null;
+		isRecording = false;	
 	}
 
 	public static byte[] getFLVFrame(IStreamPacket packet) throws IOException {
@@ -458,7 +461,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						if (broadcastStream != null) {
 							broadcastStream.removeStreamListener(MuxAdaptor.this);
 						}
-						closeInput();
+						logger.warn("closing adaptor");
+						closeResources();
+						//stop();
+						logger.warn("closed adaptor");
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -470,10 +476,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void stop() {
+		logger.info("Calling stop");
+		if (inputFormatContext == null) {
+			logger.warn("Mux adaptor stopped returning");
+			return;
+		}
 		InputContext inputContext = queueReferences.get(inputFormatContext);
 		if (inputContext != null) {
 			inputContext.stopRequestExist = true;
 		}
+		
 	}
 
 	@Override
