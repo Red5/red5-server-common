@@ -28,5 +28,7 @@ public interface IDataStore {
 	List<Broadcast> getBroadcastList(int offset, int size);
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
-
+	
+	boolean removeAllEndpoints(String id);
+	
 }
