@@ -1,9 +1,13 @@
 package io.antmedia.cluster;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.catalina.ha.ClusterMessageBase;
 import org.apache.catalina.tribes.Member;
 
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
+import io.antmedia.cluster.StreamNotificationMessage.StreamIdentifier;
 
 public class StreamNotificationMessage extends ClusterMessageBase {
 
@@ -11,6 +15,18 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 	private StreamEvent event;
 	private String contextName;
 	private String streamName;
+	
+	public static class StreamIdentifier {
+		public int videoBitrate;
+		public String videoMulticastAddr;
+		public int videoMulticastPort;
+		
+		public int audioBitrate;
+		public String audioMulticastAddr;
+		public int audioMulticastPort;
+	}
+	
+	private List<StreamIdentifier> streamIdentifier = new ArrayList<StreamIdentifier>();
 	
 	public StreamNotificationMessage(Member source, String streamName, String contextName, StreamEvent event ) {
 		this.address = source;
@@ -63,6 +79,16 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 
 	public void setStreamName(String streamName) {
 		this.streamName = streamName;
+	}
+
+
+	public List<StreamIdentifier> getStreamIdentifier() {
+		return streamIdentifier;
+	}
+
+
+	public void setStreamIdentifier(List<StreamIdentifier> streamIdentifier) {
+		this.streamIdentifier = streamIdentifier;
 	}
 	
 	

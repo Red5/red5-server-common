@@ -250,7 +250,14 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		}
 
 		if (muxAdaptor != null) {
-			muxAdaptor.get().stop();
+			MuxAdaptor realAdaptor = muxAdaptor.get();
+			if (realAdaptor != null) {
+				realAdaptor.stop();
+			}
+			else {
+				log.warn("Mux adaptor reference is null");
+			}
+			log.info("Mux Adaptor stop called");
 		}
 
 		sendPublishStopNotify();

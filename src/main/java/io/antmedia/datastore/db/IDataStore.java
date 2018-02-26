@@ -54,4 +54,6 @@ public interface IDataStore {
 
 	boolean resetBroadcastStatus();
 
+	boolean removeAllEndpoints(String id);
+
 }
