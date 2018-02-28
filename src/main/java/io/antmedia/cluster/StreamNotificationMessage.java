@@ -2,12 +2,14 @@ package io.antmedia.cluster;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.catalina.ha.ClusterMessageBase;
 import org.apache.catalina.tribes.Member;
 
+import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
-import io.antmedia.cluster.StreamNotificationMessage.StreamIdentifier;
+import io.antmedia.cluster.IClusterNotifier.StreamInfo;
 
 public class StreamNotificationMessage extends ClusterMessageBase {
 
@@ -15,18 +17,11 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 	private StreamEvent event;
 	private String contextName;
 	private String streamName;
+	private List<StreamInfo> videoStreamInfo;
+	private List<StreamInfo> audioStreamInfo;
+	private boolean multicastEnabled = false;
 	
-	public static class StreamIdentifier {
-		public int videoBitrate;
-		public String videoMulticastAddr;
-		public int videoMulticastPort;
-		
-		public int audioBitrate;
-		public String audioMulticastAddr;
-		public int audioMulticastPort;
-	}
-	
-	private List<StreamIdentifier> streamIdentifier = new ArrayList<StreamIdentifier>();
+	private Map<Integer, Integer[]> streamPortMap = null;
 	
 	public StreamNotificationMessage(Member source, String streamName, String contextName, StreamEvent event ) {
 		this.address = source;
@@ -82,15 +77,47 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 	}
 
 
-	public List<StreamIdentifier> getStreamIdentifier() {
-		return streamIdentifier;
+
+
+	public boolean isMulticastEnabled() {
+		return multicastEnabled;
 	}
 
 
-	public void setStreamIdentifier(List<StreamIdentifier> streamIdentifier) {
-		this.streamIdentifier = streamIdentifier;
+	public void setMulticastEnabled(boolean multicastEnabled) {
+		this.multicastEnabled = multicastEnabled;
+	}
+
+
+	public void setStreamPortMap(Map<Integer, Integer[]> streamPortMap) {
+		this.streamPortMap = streamPortMap;
 	}
 	
+	public Map<Integer, Integer[]> getStreamPortMap() {
+		return streamPortMap;
+	}
+
+
+	public List<StreamInfo> getVideoStreamInfo() {
+		return videoStreamInfo;
+	}
+
+
+	public void setVideoStreamInfo(List<StreamInfo> videoStreamInfo) {
+		this.videoStreamInfo = videoStreamInfo;
+	}
+
+
+	public List<StreamInfo> getAudioStreamInfo() {
+		return audioStreamInfo;
+	}
+
+
+	public void setAudioStreamInfo(List<StreamInfo> audioStreamInfo) {
+		this.audioStreamInfo = audioStreamInfo;
+	}
+
+
 	
 
 }

@@ -270,7 +270,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (recordingListener != null) {
 			recordingListener.clear();
 		}
-
+		
 		if (muxAdaptor != null) {
 			muxAdaptor.clear();
 			muxAdaptor = null;
