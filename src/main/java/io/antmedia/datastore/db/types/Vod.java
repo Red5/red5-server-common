@@ -19,9 +19,10 @@ public class Vod implements Serializable {
 	private long fileSize;
 	private String filePath;
 	private String vodId;
+	private String type;
 
 	public Vod(String streamName, String streamId, String filePath, String vodName, long creationDate, long duration,
-			long fileSize) {
+			long fileSize, String type) {
 
 		this.streamName = streamName;
 		this.streamId = streamId;
@@ -30,11 +31,20 @@ public class Vod implements Serializable {
 		this.duration = duration;
 		this.filePath = filePath;
 		this.fileSize = fileSize;
+		this.type = type;
 
 	}
 
 	public Vod() {
 
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	public String getFilePath() {
