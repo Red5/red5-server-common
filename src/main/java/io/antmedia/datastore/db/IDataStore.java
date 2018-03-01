@@ -56,4 +56,6 @@ public interface IDataStore {
 
 	boolean removeAllEndpoints(String id);
 
+	long getTotalVodNumber();
+
 }
