@@ -9,7 +9,6 @@ import org.apache.catalina.tribes.Member;
 
 import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
-import io.antmedia.cluster.IClusterNotifier.StreamInfo;
 
 public class StreamNotificationMessage extends ClusterMessageBase {
 
@@ -17,11 +16,10 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 	private StreamEvent event;
 	private String contextName;
 	private String streamName;
-	private List<StreamInfo> videoStreamInfo;
-	private List<StreamInfo> audioStreamInfo;
 	private boolean multicastEnabled = false;
 	
 	private Map<Integer, Integer[]> streamPortMap = null;
+	private List<StreamInfo> streamInfo;
 	
 	public StreamNotificationMessage(Member source, String streamName, String contextName, StreamEvent event ) {
 		this.address = source;
@@ -98,26 +96,14 @@ public class StreamNotificationMessage extends ClusterMessageBase {
 	}
 
 
-	public List<StreamInfo> getVideoStreamInfo() {
-		return videoStreamInfo;
+	public void setStreamInfo(List<StreamInfo> streamInfo) {
+		this.streamInfo = streamInfo;
 	}
 
 
-	public void setVideoStreamInfo(List<StreamInfo> videoStreamInfo) {
-		this.videoStreamInfo = videoStreamInfo;
+	public List<StreamInfo> getStreamInfo() {
+		return streamInfo;
 	}
-
-
-	public List<StreamInfo> getAudioStreamInfo() {
-		return audioStreamInfo;
-	}
-
-
-	public void setAudioStreamInfo(List<StreamInfo> audioStreamInfo) {
-		this.audioStreamInfo = audioStreamInfo;
-	}
-
-
 	
 
 }

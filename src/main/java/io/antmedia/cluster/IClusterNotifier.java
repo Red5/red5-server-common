@@ -10,19 +10,13 @@ public interface IClusterNotifier {
 	public enum StreamEvent {
 		STREAM_PUBLISHED,
 		STREAM_UNPUBLISHED,
-		PLAY,	
+		PLAY, STOP,	
 	}
-	
-	public static class StreamInfo implements Serializable {
-		public int width;
-		public int height;
-		public int bitrate;
-		public int rtimebase;
-	}
+
 	
 	public void sendStreamNotification(String streamName, String contextName, StreamEvent event) ;
 
-	public void sendStreamNotification(String streamId, String scopeName, List<StreamInfo> videoStreamInfo, List<StreamInfo> audioStreamInfo,
+	public void sendStreamNotification(String streamId, String scopeName, List<StreamInfo> streamInfo, 
 			StreamEvent streamPublished);
 
 }
