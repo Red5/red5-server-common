@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
 
@@ -21,14 +22,40 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
+	boolean addVod(String id, Vod vod);
+
 	long getBroadcastCount();
 
 	boolean delete(String id);
 
+	boolean deleteVod(String id);
+
 	List<Broadcast> getBroadcastList(int offset, int size);
 
+	List<Broadcast> filterBroadcastList(int offset, int size, String type);
+
 	boolean removeEndpoint(String id, Endpoint endpoint);
-	
+
+	boolean addCamera(Broadcast camera);
+
+	boolean editCameraInfo(Broadcast camera);
+
+	boolean deleteCamera(String ipAddr);
+
+	Broadcast getCamera(String ip);
+
+	List<Broadcast> getCameraList();
+
+	void close();
+
+	List<Vod> getVodList(int offset, int size);
+
+	List<Vod> filterVoDList(int offset, int size, String keyword, long startdate, long endDate);
+
+	boolean resetBroadcastStatus();
+
 	boolean removeAllEndpoints(String id);
-	
+
+	long getTotalVodNumber();
+
 }

@@ -9,15 +9,13 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
-import org.mongodb.morphia.annotations.Reference;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity("broadcast")
-@Indexes({
-		@Index(fields = @Field("name")),
-		@Index(fields = @Field("streamId"))
-})
+
+@Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")) })
+
 public class Broadcast {
 
 	/**
@@ -27,13 +25,18 @@ public class Broadcast {
 	@Id
 	private ObjectId dbId;
 
-
 	private String streamId;
 
 	/**
-	 * "finished", "broadcasting", "created" 
+	 * "finished", "broadcasting", "created"
 	 */
 	private String status;
+
+	/**
+	 * "liveStream", "ipCamera", "streamSource", "vod"
+	 */
+
+	private String type;
 
 	/**
 	 * name of the broadcast
@@ -46,9 +49,8 @@ public class Broadcast {
 	private String description;
 
 	/**
-	 * It is a video filter for the service, 
-	 * this value is controlled by the user, 
-	 * default value is true in the db
+	 * It is a video filter for the service, this value is controlled by the
+	 * user, default value is true in the db
 	 */
 	private boolean publish = true;
 
@@ -81,44 +83,48 @@ public class Broadcast {
 	private boolean is360 = false;;
 
 	/**
-	 * This is the url that will be notified when stream is published, ended and muxing finished
+	 * This is the url that will be notified when stream is published, ended and
+	 * muxing finished
 	 * 
 	 * It sends some variables with POST UrlEncodedForm
 	 * 
-	 * variables are
-	 * "id" mandatory 
-	 * This is the id of the broadcast
+	 * variables are "id" mandatory This is the id of the broadcast
 	 * 
-	 * "action" mandatory
-	 * 	This parameter defines what happened. Values can be
-	 * 		"liveStreamStarted"
-	 * 		this parameter is sent when stream is started
+	 * "action" mandatory This parameter defines what happened. Values can be
+	 * "liveStreamStarted" this parameter is sent when stream is started
 	 * 
-	 * 		"liveStreamEnded"
-	 *  		this parameter is sent when stream is finished
-	 *  
-	 *  		"vodReady"
-	 *  		this parameter is sent when vod(mp4) file ready. It is typically a few seconds later after "liveStreamEnded"
+	 * "liveStreamEnded" this parameter is sent when stream is finished
+	 * 
+	 * "vodReady" this parameter is sent when vod(mp4) file ready. It is
+	 * typically a few seconds later after "liveStreamEnded"
 	 * 
 	 * 
-	 * "vodName" 
-	 * 	It is send with "vodReady" action. This is the name of the file physicall recorded file
-	 *  
-	 * "streamName" optional
-	 *  It is send with above parameters if stream name exists
-	 *  
-	 * "category" optional
-	 *  It is send if category exists
+	 * "vodName" It is send with "vodReady" action. This is the name of the file
+	 * physicall recorded file
+	 * 
+	 * "streamName" optional It is send with above parameters if stream name
+	 * exists
+	 * 
+	 * "category" optional It is send if category exists
 	 * 
 	 */
+
 	private String listenerHookURL;
 
 	private String category;
 
+	private String ipAddr;
+	private String username;
+	private String password;
+	private String rtspUrl;
+
+	public Broadcast() {
+		this.type = "liveStream";
+	}
+
 	/**
-	 * This is the expire time in milliseconds 
-	 * For instance if this value is 10000 then
-	 * broadcast should be started in 10 seconds after it is created.
+	 * This is the expire time in milliseconds For instance if this value is
+	 * 10000 then broadcast should be started in 10 seconds after it is created.
 	 * 
 	 * If expire duration is 0, then stream will never expire
 	 */
@@ -130,9 +136,8 @@ public class Broadcast {
 	private String rtmpURL;
 
 	/**
-	 * zombi
-	 * It is true, if a broadcast that is not added to data store through rest service or management console
-	 * It is false by default
+	 * zombi It is true, if a broadcast that is not added to data store through
+	 * rest service or management console It is false by default
 	 * 
 	 */
 	private boolean zombi = false;
@@ -140,13 +145,35 @@ public class Broadcast {
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
 		this.setName(name);
+		this.type = "liveStream";
 	}
 
-	public Broadcast() {
+	public Broadcast(String name) {
+
+		this.name = name;
+		this.type = "liveStream";
+	}
+
+	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
+
+		this.name = name;
+		this.ipAddr = ipAddr;
+		this.username = username;
+		this.password = password;
+		this.rtspUrl = rtspUrl;
+		this.type = type;
 	}
 
 	public String getStreamId() {
-		return streamId;
+
+		if (streamId != null) {
+			return streamId;
+		}
+		if (dbId == null) {
+			return null;
+		}
+		return dbId.toString();
+
 	}
 
 	public void setStreamId(String id) throws Exception {
@@ -220,7 +247,6 @@ public class Broadcast {
 		this.endPointList = endPointList;
 	}
 
-
 	public boolean isIs360() {
 		return is360;
 	}
@@ -251,6 +277,46 @@ public class Broadcast {
 
 	public void setCategory(String category) {
 		this.category = category;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
+	public String getIpAddr() {
+		return ipAddr;
+	}
+
+	public void setIpAddr(String ipAddr) {
+		this.ipAddr = ipAddr;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getRtspUrl() {
+		return rtspUrl;
+	}
+
+	public void setRtspUrl(String rtspUrl) {
+		this.rtspUrl = rtspUrl;
 	}
 
 	public int getExpireDurationMS() {
@@ -288,6 +354,5 @@ public class Broadcast {
 	public void resetStreamId() {
 		this.streamId = null;
 	}
-
 
 }
