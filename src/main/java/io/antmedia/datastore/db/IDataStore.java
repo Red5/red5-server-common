@@ -44,7 +44,7 @@ public interface IDataStore {
 
 	Broadcast getCamera(String ip);
 
-	List<Broadcast> getCameraList();
+	List<Broadcast> getExternalStreamsList();
 
 	void close();
 
