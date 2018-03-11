@@ -40,7 +40,7 @@ public interface IDataStore {
 
 	boolean editCameraInfo(Broadcast camera);
 
-	boolean deleteCamera(String ipAddr);
+	boolean deleteStream(String ipAddr);
 
 	Broadcast getCamera(String ip);
 
