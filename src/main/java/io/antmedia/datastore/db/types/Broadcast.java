@@ -116,7 +116,7 @@ public class Broadcast {
 	private String ipAddr;
 	private String username;
 	private String password;
-	private String streamUrl;
+	private String rtspUrl;
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -154,13 +154,13 @@ public class Broadcast {
 		this.type = "liveStream";
 	}
 
-	public Broadcast(String name, String ipAddr, String username, String password, String streamUrl, String type) {
+	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
 
 		this.name = name;
 		this.ipAddr = ipAddr;
 		this.username = username;
 		this.password = password;
-		this.streamUrl = streamUrl;
+		this.rtspUrl = rtspUrl;
 		this.type = type;
 	}
 
@@ -311,12 +311,12 @@ public class Broadcast {
 		this.password = password;
 	}
 
-	public String getstreamUrl() {
-		return streamUrl;
+	public String getRtspUrl() {
+		return rtspUrl;
 	}
 
-	public void setstreamUrl(String streamUrl) {
-		this.streamUrl = streamUrl;
+	public void setRtspUrl(String rtspUrl) {
+		this.rtspUrl = rtspUrl;
 	}
 
 	public int getExpireDurationMS() {
