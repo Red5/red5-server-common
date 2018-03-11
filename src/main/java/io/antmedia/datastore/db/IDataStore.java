@@ -1,5 +1,6 @@
 package io.antmedia.datastore.db;
 
+import java.io.File;
 import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
@@ -57,5 +58,12 @@ public interface IDataStore {
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
+	
+
+	List<Vod> fetchUserVodList(File file);
+
+	boolean addUserVod(String id, Vod vod);
+
+	List<Vod> getUserVodList(int offset, int size);
 
 }
