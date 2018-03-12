@@ -60,10 +60,12 @@ public interface IDataStore {
 	long getTotalVodNumber();
 	
 
-	List<Vod> fetchUserVodList(File file);
+	List<Vod> fetchUserVodList(File file,int offset,int size);
 
 	boolean addUserVod(String id, Vod vod);
 
 	List<Vod> getUserVodList(int offset, int size);
+
+	long getTotalUserVodNumber();
 
 }
