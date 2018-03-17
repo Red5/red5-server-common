@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
@@ -57,5 +58,9 @@ public interface IDataStore {
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
+	
+	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
+	
+	List<TensorFlowObject> getDetectionList(String id);
 
 }
