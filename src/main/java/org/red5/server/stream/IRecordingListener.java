@@ -5,7 +5,7 @@ import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
-import org.red5.server.api.stream.consumer.IFileConsumer;
+import org.red5.server.stream.consumer.FileConsumer;
 
 /**
  * Recording listener interface.
@@ -66,13 +66,13 @@ public interface IRecordingListener extends IStreamListener {
     /**
      * @return the recordingConsumer
      */
-    public IFileConsumer getFileConsumer();
+    public FileConsumer getFileConsumer();
 
     /**
      * @param recordingConsumer
      *            the recordingConsumer to set
      */
-    public void setFileConsumer(IFileConsumer recordingConsumer);
+    public void setFileConsumer(FileConsumer recordingConsumer);
 
     /**
      * @return the fileName
