@@ -1,21 +1,3 @@
-/*
- * RED5 Open Source Media Server - https://github.com/Red5/
- * 
- * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.red5.server.stream.consumer;
 
 import java.io.File;
@@ -24,22 +6,16 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.apache.mina.core.buffer.IoBuffer;
-import org.red5.codec.AudioCodec;
-import org.red5.codec.VideoCodec;
 import org.red5.io.ITag;
 import org.red5.io.ITagWriter;
 import org.red5.io.flv.impl.FLVWriter;
@@ -47,6 +23,7 @@ import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IClientStream;
 import org.red5.server.api.stream.IStreamFilenameGenerator;
 import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
+import org.red5.server.api.stream.consumer.IFileConsumer;
 import org.red5.server.messaging.IMessage;
 import org.red5.server.messaging.IMessageComponent;
 import org.red5.server.messaging.IPipe;
@@ -55,8 +32,6 @@ import org.red5.server.messaging.IPushableConsumer;
 import org.red5.server.messaging.OOBControlMessage;
 import org.red5.server.messaging.PipeConnectionEvent;
 import org.red5.server.net.rtmp.event.IRTMPEvent;
-import org.red5.server.net.rtmp.event.VideoData;
-import org.red5.server.net.rtmp.event.VideoData.FrameType;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.stream.DefaultStreamFilenameGenerator;
 import org.red5.server.stream.IStreamData;
@@ -66,17 +41,14 @@ import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 
 /**
- * Consumer that pushes messages to file. Used when recording live streams.
+ * Consumer that pushes messages to a writer using priority / comparison.
  * 
  * @author The Red5 Project
  * @author Paul Gregoire (mondain@gmail.com)
- * @author Vladimir Hmelyoff (vlhm@splitmedialabs.com)
- * @author Octavian Naicu (naicuoctavian@gmail.com)
  */
-public class FileConsumer implements Constants, IPushableConsumer, IPipeConnectionListener, DisposableBean {
+public class FileConsumer implements Constants, IPushableConsumer, IPipeConnectionListener, DisposableBean, IFileConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(FileConsumer.class);
 
@@ -85,37 +57,18 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Executor for all instance writer jobs
      */
-    private ScheduledExecutorService scheduledExecutorService;
+    private ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    private static QueuedMediaDataComparator comparator = new QueuedMediaDataComparator();
 
     /**
-     * Queue writer thread count
+     * Queue to hold data awaiting writing
      */
-    private int schedulerThreadSize = 1;
-
-    /**
-     * Queue to hold data for delayed writing
-     */
-    private PriorityQueue<QueuedData> queue;
-
-    /**
-     * Reentrant lock
-     */
-    private ReentrantReadWriteLock reentrantLock = new ReentrantReadWriteLock();
-
-    /**
-     * Write lock
-     */
-    private volatile Lock writeLock = reentrantLock.writeLock();
-
-    /**
-     * Read lock
-     */
-    private volatile Lock readLock = reentrantLock.readLock();
+    private BlockingQueue<QueuedMediaData> queue;
 
     /**
      * Scope
      */
-    @SuppressWarnings("unused")
     private IScope scope;
 
     /**
@@ -146,22 +99,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Audio decoder configuration
      */
+    @SuppressWarnings("unused")
     private ITag audioConfigurationTag;
-
-    /**
-     * Number of queued items needed before writes are initiated
-     */
-    private int queueThreshold = -1;
-
-    /**
-     * Percentage of the queue which is sliced for writing
-     */
-    private int percentage = 25;
-
-    /**
-     * Tracks the last timestamp written to prevent backwards time stamped data.
-     */
-    private volatile int lastWrittenTs = -1;
 
     /**
      * Keeps track of the last spawned write worker.
@@ -169,11 +108,24 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     private volatile Future<?> writerFuture;
 
     /**
+     * Threshold / size for the queue.
+     */
+    private int queueThreshold = 240;
+
+    /**
      * Whether or not to wait until a video keyframe arrives before writing video.
      */
     private boolean waitForVideoKeyframe = true;
 
-    private volatile boolean gotVideoKeyframe;
+    /**
+     * Whether or not to use a comparator with a priority queue.
+     */
+    private boolean usePriority = true;
+
+    /**
+     * Queue offer timeout in milliseconds.
+     */
+    private long offerTimeout = 100L;
 
     /**
      * Default ctor
@@ -226,174 +178,86 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
         if (message instanceof RTMPMessage) {
             final IRTMPEvent msg = ((RTMPMessage) message).getBody();
-            // get the type
-            byte dataType = msg.getDataType();
-            // get the timestamp
-            int timestamp = msg.getTimestamp();
-            log.trace("Data type: {} timestamp: {}", dataType, timestamp);
             // if writes are delayed, queue the data and sort it by time
             if (queue == null) {
-                // if we plan to use a queue, create one
-                queue = new PriorityQueue<QueuedData>(queueThreshold <= 0 ? 11 : queueThreshold);
+                if (usePriority) {
+                    // if we want ordering / comparing built-in
+                    queue = new PriorityBlockingQueue<>(queueThreshold <= 0 ? 240 : queueThreshold, comparator);
+                } else {
+                    // process as received
+                    queue = new LinkedBlockingQueue<>();
+                }
             }
-            QueuedData queued = null;
             if (msg instanceof IStreamData) {
+                // get the type
+                byte dataType = msg.getDataType();
+                // get the timestamp
+                int timestamp = msg.getTimestamp();
                 if (log.isTraceEnabled()) {
-                    log.trace("Stream data, body saved. Data type: {} class type: {}", dataType, msg.getClass().getName());
+                    log.trace("Stream data, body saved, timestamp: {} data type: {} class type: {}", timestamp, dataType, msg.getClass().getName());
                 }
-                // ensure that our first video frame written is a key frame
-                if (msg instanceof VideoData) {
-                    log.debug("pushMessage video - waitForVideoKeyframe: {} gotVideoKeyframe: {}", waitForVideoKeyframe, gotVideoKeyframe);
-                    if (!gotVideoKeyframe) {
-                        VideoData video = (VideoData) msg;
-                        if (video.getFrameType() == FrameType.KEYFRAME) {
-                            log.debug("Got our first keyframe");
-                            gotVideoKeyframe = true;
-                        }
-                        if (waitForVideoKeyframe && !gotVideoKeyframe) {
-                            // skip this frame bail out
-                            log.debug("Skipping video data since keyframe has not been written yet");
-                            return;
-                        }
-                    }
+                // if the last message was a reset or we just started, use the header timer
+                if (startTimestamp == -1) {
+                    startTimestamp = timestamp;
+                    timestamp = 0;
+                } else {
+                    timestamp -= startTimestamp;
                 }
-                queued = new QueuedData(timestamp, dataType, (IStreamData) msg);
-            } else {
-                // XXX what type of message are we saving that has no body data??
-                if (log.isTraceEnabled()) {
-                    log.trace("Non-stream data, body not saved. Data type: {} class type: {}", dataType, msg.getClass().getName());
-                }
-                queued = new QueuedData(timestamp, dataType);
-            }
-            if (queued != null) {
-                writeLock.lock();
+                // offer to the queue
                 try {
-                    // add to the queue
-                    queue.add(queued);
-                } finally {
-                    writeLock.unlock();
+                    queue.offer(new QueuedMediaData(timestamp, dataType, (IStreamData) msg), offerTimeout, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    log.warn("Stream data was not accepted by the queue - timestamp: {} data type: {}", timestamp, dataType, e);
                 }
-            }
-            int queueSize = 0;
-            readLock.lock();
-            try {
-                queueSize = queue.size();
-            } finally {
-                readLock.unlock();
             }
             // initialize a writer
             if (writer == null) {
-                init();
-                if (msg instanceof VideoData) {
-                    writeQueuedDataSlice(createTimestampLimitedSlice(msg.getTimestamp()));
-                } else if (queueThreshold >= 0 && queueSize >= queueThreshold) {
-                    writeQueuedDataSlice(createFixedLengthSlice(queueThreshold / (100 / percentage)));
-                }
+                executor.submit(new Runnable() {
+                    public void run() {
+                        Thread.currentThread().setName("ProFileConsumer-" + path.getFileName());
+                        try {
+                            init();
+                            while (writer != null) {
+                                QueuedMediaData queued = queue.take();
+                                if (queued != null) {
+                                    // get data type
+                                    byte dataType = queued.getDataType();
+                                    // get timestamp
+                                    int timestamp = queued.getTimestamp();
+                                    ITag tag = queued.getData();
+                                    // ensure that our first video frame written is a key frame
+                                    if (queued.isVideo()) {
+                                        log.debug("pushMessage video - waitForVideoKeyframe: {} gotVideoKeyframe: {}", waitForVideoKeyframe, (videoConfigurationTag != null));
+                                        if (queued.isConfig()) {
+                                            videoConfigurationTag = tag;
+                                        }
+                                        if (videoConfigurationTag == null && waitForVideoKeyframe) {
+                                            continue;
+                                        }
+                                    } else if (queued.isAudio()) {
+                                        if (queued.isConfig()) {
+                                            audioConfigurationTag = tag;
+                                        }
+                                    }
+                                    // write
+                                    write(dataType, timestamp, tag);
+                                    // clean up
+                                    queued.dispose();
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.warn("{}", e.getMessage(), e);
+                        } finally {
+                            queue.clear();
+                        }
+                    }
+                });
             }
         } else if (message instanceof ResetMessage) {
             startTimestamp = -1;
         } else if (log.isDebugEnabled()) {
             log.debug("Ignoring pushed message: {}", message);
         }
-    }
-
-    private void writeQueuedDataSlice(final QueuedData[] slice) {
-        if (acquireWriteFuture(slice.length)) {
-            // spawn a writer
-            writerFuture = scheduledExecutorService.submit(new Runnable() {
-                public void run() {
-                    log.trace("Spawning queue writer thread");
-                    doWrites(slice);
-                }
-            });
-        } else {
-            // since we failed to write, put the sliced data back into the queue
-            writeLock.lock();
-            try {
-                List<QueuedData> unwritten = Arrays.asList(slice);
-                for (QueuedData queued : unwritten) {
-                    if (queued.hasData()) {
-                        queue.add(queued);
-                    }
-                }
-            } finally {
-                writeLock.unlock();
-            }
-        }
-    }
-
-    private QueuedData[] createFixedLengthSlice(int sliceLength) {
-        log.debug("Creating data slice to write of length {}.", sliceLength);
-        // get the slice
-        final QueuedData[] slice = new QueuedData[sliceLength];
-        log.trace("Slice length: {}", slice.length);
-        writeLock.lock();
-        try {
-            // sort the queue
-            if (log.isTraceEnabled()) {
-                log.trace("Queue length: {}", queue.size());
-            }
-            for (int q = 0; q < sliceLength; q++) {
-                slice[q] = queue.remove();
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("Queue length (after removal): {}", queue.size());
-            }
-        } finally {
-            writeLock.unlock();
-        }
-        return slice;
-    }
-
-    private QueuedData[] createTimestampLimitedSlice(int timestamp) {
-        log.debug("Creating data slice up until timestamp {}", timestamp);
-        // get the slice
-        final ArrayList<QueuedData> slice = new ArrayList<QueuedData>();
-        writeLock.lock();
-        try {
-            // sort the queue
-            if (log.isTraceEnabled()) {
-                log.trace("Queue length: {}", queue.size());
-            }
-            if (!queue.isEmpty()) {
-                while (!queue.isEmpty() && queue.peek().getTimestamp() <= timestamp) {
-                    slice.add(queue.remove());
-                }
-                if (log.isTraceEnabled()) {
-                    log.trace("Queue length (after removal): {}", queue.size());
-                }
-            }
-        } finally {
-            writeLock.unlock();
-        }
-        return slice.toArray(new QueuedData[slice.size()]);
-    }
-
-    /**
-     * Get the WriteFuture with a timeout based on the length of the slice to write.
-     * 
-     * @param sliceLength
-     * @return true if successful and false otherwise
-     */
-    private boolean acquireWriteFuture(int sliceLength) {
-        if (sliceLength > 0) {
-            Object writeResult = null;
-            // determine a good timeout value based on the slice length to write
-            int timeout = sliceLength * 500;
-            // check for existing future
-            if (writerFuture != null) {
-                try {
-                    // wait for a result from the last writer
-                    writeResult = writerFuture.get(timeout, TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
-                    log.warn("Exception waiting for write result. Timeout: {}ms", timeout, e);
-                    return false;
-                }
-            }
-            log.debug("Write future result (expect null): {}", writeResult);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -438,8 +302,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     private void init() throws IOException {
         if (initialized.compareAndSet(false, true)) {
             log.debug("Init: {}", mode);
-            // instance an executor for queue handling
-            scheduledExecutorService = Executors.newScheduledThreadPool(schedulerThreadSize, new CustomizableThreadFactory("FileConsumerExecutor-"));
             // if the path is null, the consumer has been uninitialized
             if (path != null) {
                 if (log.isDebugEnabled()) {
@@ -470,15 +332,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     }
                     log.debug("Path: {}\nRead: {} write: {}", path, Files.isReadable(path), Files.isWritable(path));
                     writer = new FLVWriter(path, false);
-                    if (audioConfigurationTag != null) {
-                        writer.writeTag(audioConfigurationTag);
-                    }
-                    if (videoConfigurationTag != null) {
-                        writer.writeTag(videoConfigurationTag);
-                        gotVideoKeyframe = true;
-                    }
                 } else {
-                    //throw new IllegalStateException(String.format("Illegal mode type: %s", mode));
                     try {
                         // delete existing file since we're not recording nor appending
                         if (Files.deleteIfExists(path)) {
@@ -513,8 +367,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     }
                 }
                 writerFuture = null;
-                // write all the queued items
-                doWrites();
                 // clear the queue
                 queue.clear();
                 queue = null;
@@ -528,149 +380,32 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     }
 
     /**
-     * Write all the queued items to the writer.
-     */
-    public final void doWrites() {
-        QueuedData[] slice = null;
-        writeLock.lock();
-        try {
-            slice = queue.toArray(new QueuedData[0]);
-            if (queue.removeAll(Arrays.asList(slice))) {
-                log.debug("Queued writes transfered, count: {}", slice.length);
-            }
-        } finally {
-            writeLock.unlock();
-        }
-        // sort
-        Arrays.sort(slice);
-        // write
-        doWrites(slice);
-    }
-
-    /**
-     * Write a slice of the queued items to the writer.
-     * 
-     * @param slice
-     *            set of queued data
-     */
-    public final void doWrites(QueuedData[] slice) {
-        // empty the queue
-        for (QueuedData queued : slice) {
-            int tmpTs = queued.getTimestamp();
-            if (lastWrittenTs <= tmpTs) {
-                if (queued.hasData()) {
-                    // write the data
-                    write(queued);
-                    lastWrittenTs = tmpTs;
-                    // clear the data, because we're done with it
-                    queued.dispose();
-                } else {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Queued data was not available");
-                    }
-                }
-            } else {
-                // clear the data, since its too old
-                queued.dispose();
-            }
-        }
-        // clear and null-out
-        slice = null;
-    }
-
-    /**
-     * Write incoming data to the file.
-     * 
-     * @param timestamp
-     *            adjusted timestamp
-     * @param msg
-     *            stream data
-     */
-    //    private final void write(int timestamp, IRTMPEvent msg) {
-    //        // get data type
-    //        byte dataType = msg.getDataType();
-    //        log.debug("Write - timestamp: {} type: {}", timestamp, dataType);
-    //        // get data bytes
-    //        IoBuffer data = ((IStreamData<?>) msg).getData();
-    //        if (data != null) {
-    //            // if the last message was a reset or we just started, use the header timer
-    //            if (startTimestamp == -1) {
-    //                startTimestamp = timestamp;
-    //                timestamp = 0;
-    //            } else {
-    //                timestamp -= startTimestamp;
-    //            }
-    //            // create a tag
-    //            ITag tag = ImmutableTag.build(dataType, timestamp, data, 0);
-    //            // only allow blank tags if they are of audio type
-    //            if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
-    //                try {
-    //                    if (timestamp >= 0) {
-    //                        if (!writer.writeTag(tag)) {
-    //                            log.warn("Tag was not written");
-    //                        }
-    //                    } else {
-    //                        log.warn("Skipping message with negative timestamp.");
-    //                    }
-    //                } catch (IOException e) {
-    //                    log.error("Error writing tag", e);
-    //                } finally {
-    //                    if (data != null) {
-    //                        data.clear();
-    //                        data.free();
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
-
-    /**
      * Adjust timestamp and write to the file.
      * 
      * @param queued
      *            queued data for write
      */
-    private final void write(QueuedData queued) {
-        // get data type
-        byte dataType = queued.getDataType();
-        // get timestamp
-        int timestamp = queued.getTimestamp();
-        log.debug("Write - timestamp: {} type: {}", timestamp, dataType);
-        // get queued
-        ITag tag = queued.getData();
+    private final void write(byte dataType, int timestamp, ITag tag) {
         if (tag != null) {
             // only allow blank tags if they are of audio type
             if (tag.getBodySize() > 0 || dataType == ITag.TYPE_AUDIO) {
-                // if the last message was a reset or we just started, use the header timer
-                if (startTimestamp == -1) {
-                    startTimestamp = timestamp;
-                    timestamp = 0;
-                } else {
-                    timestamp -= startTimestamp;
-                }
-                // update the timestamp
-                tag.setTimestamp(timestamp);
                 try {
                     if (timestamp >= 0) {
                         if (!writer.writeTag(tag)) {
                             log.warn("Tag was not written");
                         }
                     } else {
-                        log.warn("Skipping message with negative timestamp.");
+                        log.warn("Skipping message with negative timestamp");
                     }
                 } catch (ClosedChannelException cce) {
-                    // the channel we tried to write to is closed, we should not try
-                    // again on that writer
+                    // the channel we tried to write to is closed, we should not try again on that writer
                     log.error("The writer is no longer able to write to the file: {} writable: {}", path.getFileName(), path.toFile().canWrite());
                 } catch (IOException e) {
                     log.warn("Error writing tag", e);
                     if (e.getCause() instanceof ClosedChannelException) {
-                        // the channel we tried to write to is closed, we should not
-                        // try again on that writer
+                        // the channel we tried to write to is closed, we should not try again on that writer
                         log.error("The writer is no longer able to write to the file: {} writable: {}", path.getFileName(), path.toFile().canWrite());
                     }
-                } finally {
-                    queued.dispose();
                 }
             }
         }
@@ -679,7 +414,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Sets up the output file path for writing.
      *
-     * @param name output filename to use
+     * @param name
+     *            output filename to use
      */
     public void setupOutputPath(String name) {
         // get stream filename generator
@@ -699,32 +435,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             } catch (IOException e) {
                 log.warn("Exception creating replacement file for append", e);
             }
-        }
-    }
-
-    /**
-     * Sets a video decoder configuration; some codecs require this, such as AVC.
-     * 
-     * @param decoderConfig
-     *            video codec configuration
-     */
-    public void setVideoDecoderConfiguration(IRTMPEvent decoderConfig) {
-        if (decoderConfig instanceof IStreamData) {
-            IoBuffer data = ((IStreamData<?>) decoderConfig).getData().asReadOnlyBuffer();
-            videoConfigurationTag = ImmutableTag.build(decoderConfig.getDataType(), 0, data, 0);
-        }
-    }
-
-    /**
-     * Sets a audio decoder configuration; some codecs require this, such as AAC.
-     * 
-     * @param decoderConfig
-     *            audio codec configuration
-     */
-    public void setAudioDecoderConfiguration(IRTMPEvent decoderConfig) {
-        if (decoderConfig instanceof IStreamData) {
-            IoBuffer data = ((IStreamData<?>) decoderConfig).getData().asReadOnlyBuffer();
-            audioConfigurationTag = ImmutableTag.build(decoderConfig.getDataType(), 0, data, 0);
         }
     }
 
@@ -768,25 +478,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     }
 
     /**
-     * Returns the size of the delayed writing queue.
-     * 
-     * @return queue length
-     */
-    public int getQueueThreshold() {
-        return queueThreshold;
-    }
-
-    /**
-     * Whether or not the queue should be utilized.
-     * 
-     * @return true if using the queue, false if sending directly to the writer
-     */
-    @Deprecated
-    public boolean isDelayWrite() {
-        return true;
-    }
-
-    /**
      * Sets whether or not to use the queue.
      * 
      * @param delayWrite
@@ -807,18 +498,21 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     }
 
     /**
-     * @return the schedulerThreadSize
+     * Whether or not to use a PriorityBlockingQueue or LinkedBlockingQueue for data queue.
+     * 
+     * @param usePriority
      */
-    public int getSchedulerThreadSize() {
-        return schedulerThreadSize;
+    public void setUsePriority(boolean usePriority) {
+        this.usePriority = usePriority;
     }
 
     /**
-     * @param schedulerThreadSize
-     *            the schedulerThreadSize to set
+     * Amount of time in milliseconds to wait for an offer to be accepted.
+     * 
+     * @param offerTimeout
      */
-    public void setSchedulerThreadSize(int schedulerThreadSize) {
-        this.schedulerThreadSize = schedulerThreadSize;
+    public void setOfferTimeout(long offerTimeout) {
+        this.offerTimeout = offerTimeout;
     }
 
     /**
@@ -831,121 +525,18 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
         this.mode = mode;
     }
 
-    /**
-     * Queued data wrapper.
-     */
-    private final static class QueuedData implements Comparable<QueuedData> {
+    public void setAudioDecoderConfiguration(IRTMPEvent audioConfig) {
+        // no-op
+    }
 
-        ITag tag;
-
-        QueuedData(int timestamp, byte dataType) {
-            this.tag = ImmutableTag.build(dataType, timestamp);
-        }
-
-        @SuppressWarnings("rawtypes")
-        QueuedData(int timestamp, byte dataType, IStreamData streamData) {
-            this.tag = ImmutableTag.build(dataType, timestamp, streamData.getData());
-        }
-
-        public int getTimestamp() {
-            return tag.getTimestamp();
-        }
-
-        public byte getDataType() {
-            return tag.getDataType();
-        }
-
-        public ITag getData() {
-            return tag;
-        }
-
-        public boolean hasData() {
-            return tag != null;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + tag.getDataType();
-            result = prime * result + tag.getTimestamp();
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            QueuedData other = (QueuedData) obj;
-            if (tag.getDataType() != other.getDataType()) {
-                return false;
-            }
-            if (tag.getTimestamp() != other.getTimestamp()) {
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public int compareTo(QueuedData other) {
-            int result = 0;
-            // config data needs precedence over non-config
-            byte type1 = tag.getDataType();
-            byte type2 = other.getDataType();
-            if (type1 == type2) {
-                byte[] buf1 = tag.getBody().array();
-                byte[] buf2 = other.getData().getBody().array();
-                if (type1 == ITag.TYPE_AUDIO) {
-                    // dont forget about silence!
-                    if (buf1.length > 0 && buf2.length > 0) {
-                        // if audio, check codec config
-                        if ((((buf1[0] & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4) == AudioCodec.AAC.getId()) {
-                            if (buf1[1] == 0 && buf2[1] != 0) {
-                                result = -1;
-                            } else if (buf1[1] != 0 && buf2[1] == 0) {
-                                result = 1;
-                            }
-                        }
-                    }
-                } else if (type1 == ITag.TYPE_VIDEO) {
-                    // if video, check codec config
-                    if (((buf1[0] & 0xff) & ITag.MASK_VIDEO_CODEC) == VideoCodec.AVC.getId()) {
-                        if (buf1[1] == 0 && buf2[1] != 0) {
-                            result = -1;
-                        } else if (buf1[1] != 0 && buf2[1] == 0) {
-                            result = 1;
-                        }
-                    }
-                }
-                if (tag.getTimestamp() > other.getTimestamp()) {
-                    result += 1;
-                } else if (tag.getTimestamp() < other.getTimestamp()) {
-                    result -= 1;
-                }
-            } else {
-                if (tag.getTimestamp() > other.getTimestamp()) {
-                    result = 1;
-                } else if (tag.getTimestamp() < other.getTimestamp()) {
-                    result = -1;
-                }
-            }
-            return result;
-        }
-
-        public void dispose() {
-            tag = null;
-        }
-
+    public void setVideoDecoderConfiguration(IRTMPEvent videoConfig) {
+        // no-op
     }
 
     @Override
     public void destroy() throws Exception {
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
+        if (executor != null) {
+            executor.shutdown();
         }
     }
 

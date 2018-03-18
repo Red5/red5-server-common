@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Base abstract class for connections. Adds connection specific functionality like work with clients to AttributeStore.
  */
-@SuppressWarnings("deprecation")
 public abstract class BaseConnection extends AttributeStore implements IConnection {
 
     private static final Logger log = LoggerFactory.getLogger(BaseConnection.class);
