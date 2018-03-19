@@ -117,6 +117,7 @@ public class Broadcast {
 	private String username;
 	private String password;
 	private String streamUrl;
+	private String quality;
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -181,6 +182,16 @@ public class Broadcast {
 			throw new Exception("stream id cannot be null");
 		}
 		this.streamId = id;
+	}
+	
+
+
+	public String getQuality() {
+		return quality;
+	}
+
+	public void setQuality(String quality) {
+		this.quality = quality;
 	}
 
 	public String getStatus() {

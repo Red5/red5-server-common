@@ -38,6 +38,7 @@ import org.bytedeco.javacpp.avutil;
 import org.bytedeco.javacpp.avutil.AVDictionary;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
@@ -49,6 +50,10 @@ import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+
+
+import io.antmedia.datastore.db.IDataStore;
 
 import io.antmedia.storage.StorageClient;
 
@@ -105,6 +110,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
+	private IScope scope;
+	private String oldQuality;
+	private String newQuality;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -172,6 +180,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public boolean init(IScope scope, String name, boolean isAppend) {
 		this.name = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+		this.scope=scope;
+
+
+
+
+
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans");
 			return false;
@@ -249,7 +263,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-		startTime = System.currentTimeMillis();
+
+
 		return true;
 	}
 
@@ -257,8 +272,29 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return readCallback;
 	}
 
+	public void changeSourceQuality(String id, String quality) {
+
+		if(oldQuality!=quality) {
+
+			IContext context = MuxAdaptor.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			Object bean = appCtx.getBean("web.handler");
+			if (bean instanceof IMuxerListener) {
+				((IMuxerListener)bean).sourceQualityChanged(id, quality);
+			}
+			
+			oldQuality=quality;
+		}
+	}
+
+
+
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
+
+
+
+
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
 			// logger.info("pipe reader job in running");
@@ -428,10 +464,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		flvHeader.setFlagAudio(true);
 		// create a buffer
 		ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH + 4); // FLVHeader
-																	// (9 bytes)
-																	// +
-																	// PreviousTagSize0
-																	// (4 bytes)
+		// (9 bytes)
+		// +
+		// PreviousTagSize0
+		// (4 bytes)
 		flvHeader.write(header);
 		return header.array();
 	}
@@ -448,6 +484,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					if (prepare()) {
 						logger.info("after prepare");
 						isRecording = true;
+						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
 					} else {
 						logger.warn("input format context cannot be created");

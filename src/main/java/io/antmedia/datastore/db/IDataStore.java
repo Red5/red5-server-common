@@ -16,6 +16,8 @@ public interface IDataStore {
 	boolean updateName(String id, String name, String description);
 
 	boolean updateStatus(String id, String status);
+	
+	boolean updateSourceQuality(String id, String quality);
 
 	boolean updateDuration(String id, long duration);
 
