@@ -39,7 +39,7 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
-	boolean addCamera(Broadcast camera);
+	
 
 	boolean editCameraInfo(Broadcast camera);
 
@@ -53,21 +53,19 @@ public interface IDataStore {
 
 	List<Vod> getVodList(int offset, int size);
 
-	List<Vod> filterVoDList(int offset, int size, String keyword, long startdate, long endDate);
 
-	boolean resetBroadcastStatus();
 
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
 	
 
-	List<Vod> fetchUserVodList(File file,int offset,int size);
+	boolean fetchUserVodList(File file);
 
 	boolean addUserVod(String id, Vod vod);
 
-	List<Vod> getUserVodList(int offset, int size);
 
-	long getTotalUserVodNumber();
+
+
 
 }
