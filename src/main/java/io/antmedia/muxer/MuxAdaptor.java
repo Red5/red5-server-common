@@ -13,6 +13,7 @@ import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
 import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
 import static org.bytedeco.javacpp.avutil.av_free;
 import static org.bytedeco.javacpp.avutil.av_log_get_level;
+import static org.bytedeco.javacpp.avutil.av_rescale_q;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,6 +37,7 @@ import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
 import org.bytedeco.javacpp.avutil;
 import org.bytedeco.javacpp.avutil.AVDictionary;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -113,6 +115,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private IScope scope;
 	private String oldQuality;
 	private String newQuality;
+	private AVRational timeBaseForMS;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -164,6 +167,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 		this.broadcastStream = clientBroadcastStream;
+		
+		timeBaseForMS = new AVRational();
+		timeBaseForMS.num(1);
+		timeBaseForMS.den(1000);
 	}
 
 	public void addMuxer(Muxer muxer) {
@@ -307,7 +314,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				// logger.info("input read...");
 
 				if (ret >= 0) {
+					
+					long currentTime = System.currentTimeMillis();
+
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
+
+
+
+					long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
+
+
+					long timeDiff=(currentTime-startTime)-packetTime;
+
+					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
+
+					if(timeDiff<1800) {
+
+						changeSourceQuality(this.name, "good");
+						
+					}else if(timeDiff>1799 && timeDiff<3499 ) {
+
+						changeSourceQuality(this.name, "average");
+					}else {
+
+						changeSourceQuality(this.name, "poor");
+					}
+				
 
 					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
