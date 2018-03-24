@@ -17,12 +17,4 @@ public class BroadcastStatus {
 	public static final String UNPUBLISHED = "UNPUBLISHED";
 	public static final String LIVE_NOW = "LIVE";
 	public static final String LIVE_STOPPED = "LIVE_STOPPED";
-
-
-	
-	/**
-	 * One of UN_PUBLISHED, LIVE_NOW, LIVE_STOPPED
-	 */
-	public String state;
-
 }

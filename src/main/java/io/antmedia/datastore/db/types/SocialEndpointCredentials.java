@@ -1,5 +1,11 @@
 package io.antmedia.datastore.db.types;
 
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
+import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -7,6 +13,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author mekya
  *
  */
+@Entity("SocialEndpointCredentials")
+
+@Indexes({ @Index(fields = @Field("id"))})
+
 public class SocialEndpointCredentials {
 	
 	/**
@@ -42,6 +52,7 @@ public class SocialEndpointCredentials {
 	/**
 	 * Id of the record that is stored in db
 	 */
+	@Id
 	private String id;
 	
 	/**
