@@ -116,7 +116,8 @@ public class Broadcast {
 	private String ipAddr;
 	private String username;
 	private String password;
-	private String rtspUrl;
+	private String streamUrl;
+	private String quality;
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -154,13 +155,13 @@ public class Broadcast {
 		this.type = "liveStream";
 	}
 
-	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
+	public Broadcast(String name, String ipAddr, String username, String password, String streamUrl, String type) {
 
 		this.name = name;
 		this.ipAddr = ipAddr;
 		this.username = username;
 		this.password = password;
-		this.rtspUrl = rtspUrl;
+		this.streamUrl = streamUrl;
 		this.type = type;
 	}
 
@@ -181,6 +182,16 @@ public class Broadcast {
 			throw new Exception("stream id cannot be null");
 		}
 		this.streamId = id;
+	}
+	
+
+
+	public String getQuality() {
+		return quality;
+	}
+
+	public void setQuality(String quality) {
+		this.quality = quality;
 	}
 
 	public String getStatus() {
@@ -311,12 +322,12 @@ public class Broadcast {
 		this.password = password;
 	}
 
-	public String getRtspUrl() {
-		return rtspUrl;
+	public String getstreamUrl() {
+		return streamUrl;
 	}
 
-	public void setRtspUrl(String rtspUrl) {
-		this.rtspUrl = rtspUrl;
+	public void setstreamUrl(String streamUrl) {
+		this.streamUrl = streamUrl;
 	}
 
 	public int getExpireDurationMS() {

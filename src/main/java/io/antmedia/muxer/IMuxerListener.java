@@ -15,5 +15,6 @@ public interface IMuxerListener {
 	 * @param duration of the video in milliseconds
 	 */
 	public void muxingFinished(String id, File file, long duration);
-
+	
+	public void sourceQualityChanged(String id,String quality);
 }

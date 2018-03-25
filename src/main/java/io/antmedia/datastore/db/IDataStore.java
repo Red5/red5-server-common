@@ -1,9 +1,11 @@
 package io.antmedia.datastore.db;
 
+import java.io.File;
 import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
@@ -15,6 +17,8 @@ public interface IDataStore {
 	boolean updateName(String id, String name, String description);
 
 	boolean updateStatus(String id, String status);
+	
+	boolean updateSourceQuality(String id, String quality);
 
 	boolean updateDuration(String id, long duration);
 
@@ -36,26 +40,70 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
-	boolean addCamera(Broadcast camera);
 
 	boolean editCameraInfo(Broadcast camera);
 
-	boolean deleteCamera(String ipAddr);
+	boolean deleteStream(String ipAddr);
 
 	Broadcast getCamera(String ip);
 
-	List<Broadcast> getCameraList();
+	List<Broadcast> getExternalStreamsList();
 
 	void close();
 
 	List<Vod> getVodList(int offset, int size);
 
-	List<Vod> filterVoDList(int offset, int size, String keyword, long startdate, long endDate);
 
-	boolean resetBroadcastStatus();
 
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
+	
+
+	boolean fetchUserVodList(File file);
+
+	boolean addUserVod(String id, Vod vod);
+
+	
+	/**
+	 * Add social endpoint credentials to data store
+	 * Do not add id to the credentials, it will be added by data store
+	 * @param credentials 
+	 * The credentials that will be stored to datastore
+	 * 
+	 * @return SocialEndpointCredentials by settings id of the credentials
+	 * null if it is not saved to datastore
+	 * 
+	 */
+	SocialEndpointCredentials addSocialEndpointCredentials(SocialEndpointCredentials credentials);
+	
+	/**
+	 * Get list of social endpoints
+	 * 
+	 * @param offset
+	 * @param size
+	 * 
+	 * @return list of social endpoints
+	 */
+	List<SocialEndpointCredentials> getSocialEndpoints(int offset, int size);
+	
+	/**
+	 * Remove social endpoint from data store
+	 * @param id , this is the id of the credential
+	 * 
+	 * @return true if it is removed from datastore
+	 * false if it is not removed
+	 */
+	boolean removeSocialEndpointCredentials(String id);
+
+	/**
+	 * Return social endpoint credential that having the id
+	 * 
+	 * @param id the id of the credential to be returns
+	 * @return {@link SocialEndpointCredentials} if there is a matching credential with the id
+	 * <code>null</code> if there is no matching id
+	 */
+	SocialEndpointCredentials getSocialEndpointCredentials(String id);
+
 
 }

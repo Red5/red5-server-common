@@ -16,10 +16,13 @@ public class SocialEndpointChannel {
 		this.type = type;
 	}
 
-	public String type;
+	public SocialEndpointChannel() {
+	}
+
+	public String type = null;
 	
-	public String name;
+	public String name = null;
 	
-	public String id;
+	public String id = null;
 	
 }
