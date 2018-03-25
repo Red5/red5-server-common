@@ -47,7 +47,7 @@ public class SocialEndpointCredentials {
 	 * Authentication time in milli seconds
 	 */
 	@JsonIgnore
-	private String authTimeInMillisecoonds;
+	private String authTimeInMilliseconds;
 	
 	/**
 	 * Id of the record that is stored in db
@@ -79,7 +79,7 @@ public class SocialEndpointCredentials {
 	public SocialEndpointCredentials(String name, String serviceName, String authTimeInMillisecoonds, String expireTimeInSeconds, String tokenType, String accessToken, String refreshToken) {
 		this.accountName = name;
 		this.serviceName = serviceName;
-		this.authTimeInMillisecoonds = authTimeInMillisecoonds;
+		this.authTimeInMilliseconds = authTimeInMillisecoonds;
 		this.expireTimeInSeconds = expireTimeInSeconds;
 		this.tokenType = tokenType;
 		this.accessToken = accessToken;
@@ -121,12 +121,12 @@ public class SocialEndpointCredentials {
 		this.expireTimeInSeconds = expireTimeInSeconds;
 	}
 
-	public String getAuthTimeInMillisecoonds() {
-		return authTimeInMillisecoonds;
+	public String getAuthTimeInMilliseconds() {
+		return authTimeInMilliseconds;
 	}
 
-	public void setAuthTimeInMillisecoonds(String authTimeInMillisecoonds) {
-		this.authTimeInMillisecoonds = authTimeInMillisecoonds;
+	public void setAuthTimeInMilliseconds(String authTimeInMillisecoonds) {
+		this.authTimeInMilliseconds = authTimeInMillisecoonds;
 	}
 
 	public String getId() {
