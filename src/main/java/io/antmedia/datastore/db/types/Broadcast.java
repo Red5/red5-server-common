@@ -118,6 +118,9 @@ public class Broadcast {
 	private String password;
 	private String streamUrl;
 	private String quality;
+	private String speed;
+
+
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -185,6 +188,13 @@ public class Broadcast {
 	}
 	
 
+	public String getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(String speed) {
+		this.speed = speed;
+	}
 
 	public String getQuality() {
 		return quality;
