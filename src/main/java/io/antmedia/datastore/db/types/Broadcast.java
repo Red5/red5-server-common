@@ -118,7 +118,7 @@ public class Broadcast {
 	private String password;
 	private String streamUrl;
 	private String quality;
-	private String speed;
+	private double speed;
 
 
 
@@ -188,11 +188,11 @@ public class Broadcast {
 	}
 	
 
-	public String getSpeed() {
+	public double getSpeed() {
 		return speed;
 	}
 
-	public void setSpeed(String speed) {
+	public void setSpeed(double speed) {
 		this.speed = speed;
 	}
 

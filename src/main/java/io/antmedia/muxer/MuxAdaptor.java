@@ -116,6 +116,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private String oldQuality;
 	private String newQuality;
 	private AVRational timeBaseForMS;
+	private int speedCounter=0;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -167,7 +168,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 		this.broadcastStream = clientBroadcastStream;
-		
+
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
@@ -289,11 +290,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (bean instanceof IMuxerListener) {
 				((IMuxerListener)bean).sourceQualityChanged(id, quality);
 			}
-			
+
 			oldQuality=quality;
 		}
 	}
 
+	public void changeSourceSpeed(String id, double speed) {
+		
+	
+
+		speedCounter++;
+		
+
+
+		if(speedCounter % 600==0) {
+			
+		
+
+			IContext context = MuxAdaptor.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			Object bean = appCtx.getBean("web.handler");
+			if (bean instanceof IMuxerListener) {
+				((IMuxerListener)bean).sourceSpeedChanged(id, speed);
+			}
+
+		}
+	}
 
 
 	@Override
@@ -314,7 +336,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				// logger.info("input read...");
 
 				if (ret >= 0) {
-					
+
 					long currentTime = System.currentTimeMillis();
 
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
@@ -325,13 +347,17 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 
 					long timeDiff=(currentTime-startTime)-packetTime;
+					
+					long duration =currentTime-startTime;
+
+					double speed= (double)packetTime/duration;
 
 					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 
 					if(timeDiff<1800) {
 
 						changeSourceQuality(this.name, "good");
-						
+
 					}else if(timeDiff>1799 && timeDiff<3499 ) {
 
 						changeSourceQuality(this.name, "average");
@@ -339,7 +365,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 						changeSourceQuality(this.name, "poor");
 					}
-				
+					
+					changeSourceSpeed(this.name, speed);
+
 
 					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -382,6 +410,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					inputFormatContext = null;
 					isRecording = false;
+					
+					changeSourceQuality(this.name, "NA");
+					changeSourceSpeed(this.name, 0);
 
 				}
 

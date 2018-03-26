@@ -20,7 +20,7 @@ public interface IDataStore {
 	
 	boolean updateSourceQuality(String id, String quality);
 	
-	boolean updateSourceSpeed(String id, String speed);
+	boolean updateSourceSpeed(String id, double speed);
 
 	boolean updateDuration(String id, long duration);
 

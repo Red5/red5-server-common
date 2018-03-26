@@ -18,5 +18,5 @@ public interface IMuxerListener {
 	
 	public void sourceQualityChanged(String id,String quality);
 
-	public void sourceSpeedChanged(String id, String speed);
+	public void sourceSpeedChanged(String id, double speed);
 }
