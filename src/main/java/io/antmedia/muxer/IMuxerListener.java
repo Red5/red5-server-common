@@ -17,4 +17,6 @@ public interface IMuxerListener {
 	public void muxingFinished(String id, File file, long duration);
 	
 	public void sourceQualityChanged(String id,String quality);
+
+	public void sourceSpeedChanged(String id, double speed);
 }
