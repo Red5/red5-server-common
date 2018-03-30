@@ -76,6 +76,9 @@ public class AppSettings {
 	 * Youtube client secret
 	 */
 	private String youtubeClientSecret;
+	
+	private String vodFolder;
+
 
 
 	public boolean isAddDateTimeToMp4FileName() {
@@ -264,6 +267,15 @@ public class AppSettings {
 
 	public void setFacebookClientId(String facebookClientId) {
 		this.facebookClientId = facebookClientId;
+	}
+	
+
+	public String getVodFolder() {
+		return vodFolder;
+	}
+
+	public void setVodFolder(String vodFolder) {
+		this.vodFolder = vodFolder;
 	}
 
 
