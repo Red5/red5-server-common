@@ -119,8 +119,7 @@ public class Broadcast {
 
 	private String quality;
 	private double speed;
-	private String rtspUrl;
-
+	private String streamUrl;
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -164,7 +163,7 @@ public class Broadcast {
 		this.ipAddr = ipAddr;
 		this.username = username;
 		this.password = password;
-		this.rtspUrl = rtspUrl;
+		this.streamUrl = rtspUrl;
 		this.type = type;
 	}
 
@@ -332,13 +331,7 @@ public class Broadcast {
 		this.password = password;
 	}
 
-	public String getRtspUrl() {
-		return rtspUrl;
-	}
 
-	public void setRtspUrl(String rtspUrl) {
-		this.rtspUrl = rtspUrl;
-	}
 
 	public int getExpireDurationMS() {
 		return expireDurationMS;
@@ -374,6 +367,14 @@ public class Broadcast {
 
 	public void resetStreamId() {
 		this.streamId = null;
+	}
+	
+	public String getStreamUrl() {
+		return streamUrl;
+	}
+
+	public void setStreamUrl(String streamUrl) {
+		this.streamUrl = streamUrl;
 	}
 
 }
