@@ -49,7 +49,7 @@ public interface IDataStore {
 
 	Broadcast getCamera(String ip);
 
-	List<Broadcast> getExternalStreamsList();
+	List<Broadcast> getCameraList();
 
 	void close();
 
