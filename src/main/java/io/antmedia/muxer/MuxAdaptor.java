@@ -96,6 +96,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 
 	protected static final int BUFFER_SIZE = 4096;
+	
+	public static final String QUALITY_GOOD = "good";
+	public static final String QUALITY_AVERAGE  = "average";
+	public static final String QUALITY_POOR ="poor";
+	public static final String QUALITY_NA ="NA";
+	
 
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
@@ -296,16 +302,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	public void changeSourceSpeed(String id, double speed) {
-		
-	
+
 
 		speedCounter++;
-		
-
 
 		if(speedCounter % 600==0) {
-			
-		
+
 
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
@@ -347,7 +349,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 
 					long timeDiff=(currentTime-startTime)-packetTime;
-					
+
 					long duration =currentTime-startTime;
 
 					double speed= (double)packetTime/duration;
@@ -356,16 +358,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					if(timeDiff<1800) {
 
-						changeSourceQuality(this.name, "good");
+						changeSourceQuality(this.name, QUALITY_GOOD);
 
 					}else if(timeDiff>1799 && timeDiff<3499 ) {
 
-						changeSourceQuality(this.name, "average");
+						changeSourceQuality(this.name, QUALITY_AVERAGE);
 					}else {
 
-						changeSourceQuality(this.name, "poor");
+						changeSourceQuality(this.name, QUALITY_POOR);
 					}
-					
+
 					changeSourceSpeed(this.name, speed);
 
 
@@ -410,8 +412,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					inputFormatContext = null;
 					isRecording = false;
-					
-					changeSourceQuality(this.name, "NA");
+
+					changeSourceQuality(this.name, QUALITY_NA);
 					changeSourceSpeed(this.name, 0);
 
 				}
