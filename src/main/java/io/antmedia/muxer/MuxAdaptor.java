@@ -36,6 +36,7 @@ import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
 import org.bytedeco.javacpp.avutil;
 import org.bytedeco.javacpp.avutil.AVDictionary;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.scheduling.IScheduledJob;
@@ -107,6 +108,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected long startTime;
 	
 	private String objectDetectionModelDir = null;
+	private IScope scope;
+	private String oldQuality;
+	private String newQuality;
+	private AVRational timeBaseForMS;
+	private int speedCounter=0;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override

@@ -41,12 +41,43 @@ public class AppSettings {
 	 * Fully qualified server name
 	 */
 	private String serverName;
-
-
+	
 	/**
 	 * event or vod
 	 */
 	private String hlsPlayListType;
+	
+	/**
+	 * Facebook client id
+	 */
+	private String facebookClientId;
+	
+	/**
+	 * Facebook client secret
+	 */
+	private String facebookClientSecret;
+  	
+	/**
+	 * Periscope app client id
+	 */
+	private String  periscopeClientId;
+	
+	/**
+	 * Periscope app client secret
+	 */
+	private String  periscopeClientSecret;
+	
+  	/**
+  	 * Youtube client id
+  	 */
+	private String youtubeClientId;
+	
+	/**
+	 * Youtube client secret
+	 */
+	private String youtubeClientSecret;
+	
+	private String vodFolder;
 
 	/**
 	 * The directory contains the tensorflow object detection model
@@ -200,6 +231,63 @@ public class AppSettings {
 	
 	public void setObjectDetectionDir(String modelDir) {
 		this.objectDetectionDir = modelDir;
+	}
+
+	public String getYoutubeClientSecret() {
+		return youtubeClientSecret;
+	}
+
+	public void setYoutubeClientSecret(String youtubeClientSecret) {
+		this.youtubeClientSecret = youtubeClientSecret;
+	}
+
+	public String getYoutubeClientId() {
+		return youtubeClientId;
+	}
+
+	public void setYoutubeClientId(String youtubeClientId) {
+		this.youtubeClientId = youtubeClientId;
+	}
+
+	public String getPeriscopeClientSecret() {
+		return periscopeClientSecret;
+	}
+
+	public void setPeriscopeClientSecret(String periscopeClientSecret) {
+		this.periscopeClientSecret = periscopeClientSecret;
+	}
+
+	public String getPeriscopeClientId() {
+		return periscopeClientId;
+	}
+
+	public void setPeriscopeClientId(String periscopeClientId) {
+		this.periscopeClientId = periscopeClientId;
+	}
+
+	public String getFacebookClientSecret() {
+		return facebookClientSecret;
+	}
+
+	public void setFacebookClientSecret(String facebookClientSecret) {
+		this.facebookClientSecret = facebookClientSecret;
+	}
+
+	public String getFacebookClientId() {
+		return facebookClientId;
+	}
+
+	public void setFacebookClientId(String facebookClientId) {
+		this.facebookClientId = facebookClientId;
+	}
+	
+
+	public String getVodFolder() {
+		return vodFolder;
+	}
+
+	public void setVodFolder(String vodFolder) {
+		this.vodFolder = vodFolder;
 	}
 
 

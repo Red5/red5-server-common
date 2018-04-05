@@ -14,15 +14,17 @@ public class Endpoint
 	public Endpoint() {
 		
 	}
-	public Endpoint(String broadcastId, String streamId, String name, String rtmpUrl, String type) {
+	public Endpoint(String broadcastId, String streamId, String name, String rtmpUrl, String type, String endpointServiceId) {
 		this.broadcastId = broadcastId;
 		this.streamId = streamId;
 		this.rtmpUrl = rtmpUrl;
 		this.name = name;
 		this.type = type;
+		this.endpointServiceId = endpointServiceId;
 	}
 	public  String broadcastId;
 	public  String streamId;
 	public  String rtmpUrl;
 	public  String name;
+	public 	String endpointServiceId;
 }
