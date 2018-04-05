@@ -105,6 +105,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
+	
+	private String objectDetectionModelDir = null;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -582,6 +584,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
 		this.deleteHLSFilesOnExit = deleteHLSFilesOnExit;
 
+	}
+
+	public String getObjectDetectionModelDir() {
+		return objectDetectionModelDir;
+	}
+
+	public void setObjectDetectionModelDir(String objectDetectionModelDir) {
+		this.objectDetectionModelDir = objectDetectionModelDir;
 	}
 
 }

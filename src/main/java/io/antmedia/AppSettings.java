@@ -48,6 +48,10 @@ public class AppSettings {
 	 */
 	private String hlsPlayListType;
 
+	/**
+	 * The directory contains the tensorflow object detection model
+	 */
+	private String objectDetectionDir;
 
 
 	public boolean isAddDateTimeToMp4FileName() {
@@ -188,6 +192,14 @@ public class AppSettings {
 
 	public void setAcceptOnlyStreamsInDataStore(boolean acceptOnlyStreamsInDataStore) {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
+	}
+
+	public String getObjectDetectionDir() {
+		return objectDetectionDir;
+	}
+	
+	public void setObjectDetectionDir(String modelDir) {
+		this.objectDetectionDir = modelDir;
 	}
 
 
