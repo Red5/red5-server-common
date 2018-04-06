@@ -85,6 +85,9 @@ public class AppSettings {
 	private String objectDetectionDir;
 
 
+	private int createPreviewPeriod;
+
+
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -288,6 +291,14 @@ public class AppSettings {
 
 	public void setVodFolder(String vodFolder) {
 		this.vodFolder = vodFolder;
+	}
+	
+	public int getCreatePreviewPeriod() {
+		return createPreviewPeriod;
+	}
+	
+	public void setCreatePreviewPeriod(int period) {
+		this.createPreviewPeriod = period;
 	}
 
 

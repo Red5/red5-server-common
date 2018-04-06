@@ -34,9 +34,12 @@ public class TensorFlowObject {
 	 */
 	public long detectionTime;
 	
-	public TensorFlowObject(String name, float probability) {
+	private String imageId;
+	
+	public TensorFlowObject(String name, float probability, String imageId) {
 		this.objectName = name;
 		this.probability = probability;
+		this.imageId = imageId;
 	}
 
 	public TensorFlowObject(String objectName, float probability, long detectionTime) {
@@ -77,5 +80,13 @@ public class TensorFlowObject {
 
 	public void setDbId(ObjectId dbId) {
 		this.dbId = dbId;
+	}
+
+	public String getImageId() {
+		return imageId;
+	}
+
+	public void setImageId(String imageId) {
+		this.imageId = imageId;
 	}
 }

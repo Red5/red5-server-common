@@ -13,6 +13,7 @@ import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
 import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
 import static org.bytedeco.javacpp.avutil.av_free;
 import static org.bytedeco.javacpp.avutil.av_log_get_level;
+import static org.bytedeco.javacpp.avutil.av_rescale_q;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -39,6 +40,7 @@ import org.bytedeco.javacpp.avutil.AVDictionary;
 import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
@@ -50,6 +52,7 @@ import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import io.antmedia.storage.StorageClient;
 
@@ -90,6 +93,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 
 	protected static final int BUFFER_SIZE = 4096;
+	
+	public static final String QUALITY_GOOD = "good";
+	public static final String QUALITY_AVERAGE  = "average";
+	public static final String QUALITY_POOR ="poor";
+	public static final String QUALITY_NA ="NA";
+	
 
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
@@ -113,6 +122,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
+	private int previewCreatePeriod;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -164,6 +174,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 		this.broadcastStream = clientBroadcastStream;
+
+		timeBaseForMS = new AVRational();
+		timeBaseForMS.num(1);
+		timeBaseForMS.den(1000);
 	}
 
 	public void addMuxer(Muxer muxer) {
@@ -180,6 +194,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public boolean init(IScope scope, String name, boolean isAppend) {
 		this.name = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+		this.scope=scope;
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans");
 			return false;
@@ -265,6 +280,35 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return readCallback;
 	}
 
+	public void changeSourceQuality(String id, String quality) {
+
+		if(oldQuality!=quality) {
+
+			IContext context = MuxAdaptor.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			Object bean = appCtx.getBean("web.handler");
+			if (bean instanceof IMuxerListener) {
+				((IMuxerListener)bean).sourceQualityChanged(id, quality);
+			}
+
+			oldQuality=quality;
+		}
+	}
+
+	public void changeSourceSpeed(String id, double speed) {
+		speedCounter++;
+
+		if(speedCounter % 600==0) {
+			IContext context = MuxAdaptor.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			Object bean = appCtx.getBean("web.handler");
+			if (bean instanceof IMuxerListener) {
+				((IMuxerListener)bean).sourceSpeedChanged(id, speed);
+			}
+		}
+	}
+
+
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
@@ -279,7 +323,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				// logger.info("input read...");
 
 				if (ret >= 0) {
+
+					long currentTime = System.currentTimeMillis();
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
+
+					long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
+					long timeDiff=(currentTime-startTime)-packetTime;
+					long duration =currentTime-startTime;
+
+					double speed= (double)packetTime/duration;
+
+					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
+
+					if(timeDiff<1800) {
+
+						changeSourceQuality(this.name, QUALITY_GOOD);
+
+					}else if(timeDiff>1799 && timeDiff<3499 ) {
+
+						changeSourceQuality(this.name, QUALITY_AVERAGE);
+					}else {
+
+						changeSourceQuality(this.name, QUALITY_POOR);
+					}
+
+					changeSourceSpeed(this.name, speed);
+
 
 					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -322,6 +391,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					inputFormatContext = null;
 					isRecording = false;
+
+					changeSourceQuality(this.name, QUALITY_NA);
+					changeSourceSpeed(this.name, 0);
 
 				}
 
@@ -436,10 +508,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		flvHeader.setFlagAudio(true);
 		// create a buffer
 		ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH + 4); // FLVHeader
-																	// (9 bytes)
-																	// +
-																	// PreviousTagSize0
-																	// (4 bytes)
+		// (9 bytes)
+		// +
+		// PreviousTagSize0
+		// (4 bytes)
 		flvHeader.write(header);
 		return header.array();
 	}
@@ -456,6 +528,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					if (prepare()) {
 						logger.info("after prepare");
 						isRecording = true;
+						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
 					} else {
 						logger.warn("input format context cannot be created");
@@ -598,6 +671,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setObjectDetectionModelDir(String objectDetectionModelDir) {
 		this.objectDetectionModelDir = objectDetectionModelDir;
+	}
+
+	public int getPreviewCreatePeriod() {
+		return previewCreatePeriod;
+	}
+	
+	public void setPreviewCreatePeriod(int previewCreatePeriod) {
+		this.previewCreatePeriod = previewCreatePeriod;
 	}
 
 }

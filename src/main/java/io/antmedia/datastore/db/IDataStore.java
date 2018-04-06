@@ -10,6 +10,11 @@ import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
+	
+	/**
+	 * This is the bean name that implements IDataStore
+	 */
+	public static final String BEAN_NAME = "db.datastore";
 
 	String save(Broadcast broadcast);
 
@@ -64,7 +69,9 @@ public interface IDataStore {
 	
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
 	
-	List<TensorFlowObject> getDetectionList(String id);
+	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
+	
+	List<TensorFlowObject> getDetection(String id);
 	
 
 	boolean fetchUserVodList(File file);

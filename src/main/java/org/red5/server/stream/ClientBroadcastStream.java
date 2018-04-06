@@ -954,6 +954,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			String hlsPlayListType = null;
 			boolean deleteHLSFilesOnExit = true;
 			String objectDetectionModelDir = null;
+			int createPreviewPeriod = 0;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
@@ -966,6 +967,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				webRTCEnabled = appSettings.isWebRTCEnabled();
 				deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
 				String tmp = appSettings.getObjectDetectionDir();
+				createPreviewPeriod = appSettings.getCreatePreviewPeriod();
 				if (tmp != null && tmp.length() > 0) {
 					objectDetectionModelDir = tmp;
 				}
@@ -988,6 +990,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
 			localMuxAdaptor.setObjectDetectionModelDir(objectDetectionModelDir);
+			localMuxAdaptor.setPreviewCreatePeriod(createPreviewPeriod);
 			
 			
 			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
