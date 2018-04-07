@@ -47,6 +47,10 @@ public class TensorFlowObject {
 		this.probability = probability;
 		this.detectionTime = detectionTime;
 	}
+	
+	public TensorFlowObject(){
+		
+	}
 
 	public long getDetectionTime() {
 		return detectionTime;
