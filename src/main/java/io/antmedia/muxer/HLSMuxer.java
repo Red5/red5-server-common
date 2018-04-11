@@ -130,13 +130,13 @@ public class HLSMuxer extends Muxer  {
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
 			super.init(scope, name, resolutionHeight);
-			
+
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
 			options.put("hls_flags", "delete_segments");
 			String segmentFilename =  file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
 			options.put("hls_segment_filename", segmentFilename);
-		
+
 			if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
@@ -176,7 +176,7 @@ public class HLSMuxer extends Muxer  {
 			if (isCodecSupported(in_stream.codecpar().codec_id())) 
 			{
 				registeredStreamIndexList.add(i);
-				
+
 				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
 				int codecType = in_stream.codec().codec_type();
 				if (codecType == AVMEDIA_TYPE_VIDEO) 
@@ -222,15 +222,15 @@ public class HLSMuxer extends Muxer  {
 						logger.info("Cannot get codec parameters\n");
 						return false;
 					}
-					
+
 					if (codecType != AVMEDIA_TYPE_AUDIO) {
 						logger.warn("codec type should be audio but it is " + codecType);
-						
+
 					}
 
 				}
 				out_stream.codec().codec_tag(0);
-				
+
 				streamIndex++;
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
@@ -346,7 +346,7 @@ public class HLSMuxer extends Muxer  {
 			pkt.pos(pos);
 		}
 		else {
-			
+
 			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
@@ -412,14 +412,17 @@ public class HLSMuxer extends Muxer  {
 						}
 					});
 
-					for (int i = 0; i < files.length; i++) {
-						try {
-							if (!files[i].exists()) {
-								continue;
+					if (files != null) 
+					{
+						for (int i = 0; i < files.length; i++) {
+							try {
+								if (!files[i].exists()) {
+									continue;
+								}
+								Files.delete(files[i].toPath());
+							} catch (IOException e) {
+								e.printStackTrace();
 							}
-							Files.delete(files[i].toPath());
-						} catch (IOException e) {
-							e.printStackTrace();
 						}
 					}
 					if (file.exists()) {
@@ -484,7 +487,7 @@ public class HLSMuxer extends Muxer  {
 				if (codecContext.codec_type() != AVMEDIA_TYPE_AUDIO) {
 					logger.warn("This should be audio codec ");
 				}
-				
+
 
 
 			}
