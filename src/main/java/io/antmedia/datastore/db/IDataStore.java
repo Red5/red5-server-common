@@ -9,7 +9,9 @@ import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
-
+	
+	public static final String BEAN_NAME = "db.datastore"; 
+	
 	String save(Broadcast broadcast);
 
 	Broadcast get(String id);
@@ -46,8 +48,6 @@ public interface IDataStore {
 	boolean editCameraInfo(Broadcast camera);
 
 	boolean deleteStream(String ipAddr);
-
-	Broadcast getCamera(String ip);
 
 	List<Broadcast> getExternalStreamsList();
 
