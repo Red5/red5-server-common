@@ -14,7 +14,6 @@ import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
 import static org.bytedeco.javacpp.avutil.av_free;
 import static org.bytedeco.javacpp.avutil.av_log_get_level;
 import static org.bytedeco.javacpp.avutil.av_rescale_q;
-import static org.bytedeco.javacpp.avformat.av_interleaved_write_frame;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -56,6 +55,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 
+import io.antmedia.datastore.db.IDataStore;
+
 import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
@@ -94,13 +95,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 
-	protected static final int BUFFER_SIZE = 10240;
-
+	protected static final int BUFFER_SIZE = 4096;
+	
 	public static final String QUALITY_GOOD = "good";
 	public static final String QUALITY_AVERAGE  = "average";
 	public static final String QUALITY_POOR ="poor";
 	public static final String QUALITY_NA ="NA";
-
+	
 
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
@@ -119,17 +120,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected long startTime;
 	private IScope scope;
 	private String oldQuality;
+	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
+
 		public int call(Pointer opaque, BytePointer buf, int buf_size) {
 			int length = -1;
 			try {
 				InputContext inputContext = queueReferences.get(opaque);
 				if (inputContext.isHeaderWritten) {
-				
 					byte[] packet = null;
 
 					if (inputContext.queue != null) {
@@ -148,21 +150,17 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						// ** this setting critical..
 						length = packet.length;
 						buf.put(packet, 0, length);
-						
-						logger.warn("packet is written to buf");
 					} else // if (stopRequestExist)
 					{
 						logger.info("packet is null and return length is:" + length);
 					}
 				} else {
-					
-					
-					//inputContext.isHeaderWritten = true;
+					inputContext.isHeaderWritten = true;
 					logger.info("writing header...");
-					//byte[] flvHeader = getFLVHeader();
-				//length = flvHeader.length;
+					byte[] flvHeader = getFLVHeader();
+					length = flvHeader.length;
 
-					//buf.put(flvHeader, 0, length);
+					buf.put(flvHeader, 0, length);
 				}
 
 			} catch (Exception e) {
@@ -197,6 +195,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.name = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
 		this.scope=scope;
+
+
+
 
 
 		if (scheduler == null) {
@@ -242,7 +243,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		logger.info("before avformat_open_input.............");
 
-		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("mp4"),
+		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
 				(AVDictionary) null)) < 0) {
 			logger.info("cannot open input context");
 			return false;
@@ -302,9 +303,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void changeSourceSpeed(String id, double speed) {
 
+
 		speedCounter++;
 
 		if(speedCounter % 600==0) {
+
 
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
@@ -319,6 +322,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
+
+
+
+
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
 			// logger.info("pipe reader job in running");
@@ -575,15 +582,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 	}
-	
-	public void writePacket(AVFormatContext inputFormatContext) {
-		
-		
-		
-		
-		
-		
-	}
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
@@ -595,10 +593,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (flvFrame.length <= BUFFER_SIZE) {
 				inputQueue.add(flvFrame);
 			} else {
-				//if frame length is bigger than BUFFER_SIZE
-				//segment byte array into BUFFER_SIZE arrays
-				//and add it to the queue
-
 				int numberOfBytes = flvFrame.length;
 				int startIndex = 0;
 				int copySize = 0;
@@ -619,47 +613,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			e.printStackTrace();
 		}
 	}
-
-
-	public void packetReceived(AVPacket pkt) {
-
-		
-		byte[] avFrame= new byte[pkt.size()];
-		
-		
-		if (pkt.size() <= BUFFER_SIZE) {
-			
-			pkt.data().get(avFrame,0,avFrame.length);
-			
-			inputQueue.add(avFrame);
-		} else {
-			//if frame length is bigger than BUFFER_SIZE
-			//segment byte array into BUFFER_SIZE arrays
-			//and add it to the queue
-
-			int numberOfBytes = pkt.size();
-			int startIndex = 0;
-			int copySize = 0;
-			while (numberOfBytes != 0) {
-				if (numberOfBytes > BUFFER_SIZE) {
-					copySize = BUFFER_SIZE;
-				} else {
-					copySize = numberOfBytes;
-				}
-				pkt.data().get(avFrame,0,avFrame.length);
-				
-				byte[] data = Arrays.copyOfRange(avFrame, startIndex, startIndex + copySize);
-			
-				inputQueue.add(data);
-				numberOfBytes -= copySize;
-				startIndex += copySize;
-			}
-		}
-
-	}
-
-
-
 
 	@Override
 	public boolean isRecording() {
