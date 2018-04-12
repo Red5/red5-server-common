@@ -129,6 +129,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			try {
 				InputContext inputContext = queueReferences.get(opaque);
 				if (inputContext.isHeaderWritten) {
+				
 					byte[] packet = null;
 
 					if (inputContext.queue != null) {
@@ -147,6 +148,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						// ** this setting critical..
 						length = packet.length;
 						buf.put(packet, 0, length);
+						
+						logger.warn("packet is written to buf");
 					} else // if (stopRequestExist)
 					{
 						logger.info("packet is null and return length is:" + length);
@@ -157,7 +160,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					//inputContext.isHeaderWritten = true;
 					logger.info("writing header...");
 					//byte[] flvHeader = getFLVHeader();
-				//	length = flvHeader.length;
+				//length = flvHeader.length;
 
 					//buf.put(flvHeader, 0, length);
 				}
@@ -316,10 +319,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
-
-
-
-
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
 			// logger.info("pipe reader job in running");
@@ -576,6 +575,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 	}
+	
+	public void writePacket(AVFormatContext inputFormatContext) {
+		
+		
+		
+		
+		
+		
+	}
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
@@ -621,7 +629,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		
 		if (pkt.size() <= BUFFER_SIZE) {
 			
-			pkt.data().get(avFrame);
+			pkt.data().get(avFrame,0,avFrame.length);
 			
 			inputQueue.add(avFrame);
 		} else {
@@ -638,7 +646,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				} else {
 					copySize = numberOfBytes;
 				}
-				pkt.data().get(avFrame);
+				pkt.data().get(avFrame,0,avFrame.length);
 				
 				byte[] data = Arrays.copyOfRange(avFrame, startIndex, startIndex + copySize);
 			
