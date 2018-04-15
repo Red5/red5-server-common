@@ -53,8 +53,6 @@ public interface IDataStore {
 
 	boolean deleteStream(String ipAddr);
 
-	Broadcast getCamera(String ip);
-
 	List<Broadcast> getExternalStreamsList();
 
 	void close();
