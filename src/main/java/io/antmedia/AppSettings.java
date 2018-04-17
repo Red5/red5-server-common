@@ -79,6 +79,12 @@ public class AppSettings {
 	
 	private String vodFolder;
 
+	
+	/**
+	 * Overwrite preview files if exist, default value is false
+	 */
+	private boolean previewOverwrite = false;
+
 
 
 	public boolean isAddDateTimeToMp4FileName() {
@@ -278,6 +284,11 @@ public class AppSettings {
 		this.vodFolder = vodFolder;
 	}
 
+	public boolean isPreviewOverwrite() {
+		return previewOverwrite;
+	}
 
-
+	public void setPreviewOverwrite(boolean previewOverwrite) {
+		this.previewOverwrite = previewOverwrite;
+	}
 }

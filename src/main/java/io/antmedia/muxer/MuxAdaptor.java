@@ -82,6 +82,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected ArrayList<Muxer> muxerList = new ArrayList<Muxer>();
 
 	protected boolean deleteHLSFilesOnExit = true;
+	
+	protected boolean previewOverwrite = false;
 
 	public static class InputContext {
 		public ConcurrentLinkedQueue<byte[]> queue;
@@ -683,7 +685,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
 		this.deleteHLSFilesOnExit = deleteHLSFilesOnExit;
+	}
+	
+	public void setPreviewOverwrite(boolean overwrite) {
+		this.previewOverwrite  = overwrite;
+	}
 
+	public boolean isPreviewOverwrite() {
+		return previewOverwrite;
 	}
 
 }
