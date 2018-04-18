@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
@@ -82,11 +83,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected ArrayList<Muxer> muxerList = new ArrayList<Muxer>();
 
 	protected boolean deleteHLSFilesOnExit = true;
+	
+	
+	protected int receivedPacketCount;
+	
 
 	public static class InputContext {
 		public ConcurrentLinkedQueue<byte[]> queue;
 		public volatile boolean isHeaderWritten = false;
 		public volatile boolean stopRequestExist = false;
+		public AtomicInteger queueSize = new AtomicInteger(0);
 
 		public InputContext(ConcurrentLinkedQueue<byte[]> queue) {
 			this.queue = queue;
@@ -123,6 +129,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
+	
+	private InputContext inputContext;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -142,6 +150,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 							}
 							Thread.sleep(5);
 						}
+						inputContext.queueSize.decrementAndGet();
+						
 					} else {
 						logger.error("input queue null");
 					}
@@ -178,6 +188,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
+		inputContext = new InputContext(inputQueue);
 	}
 
 	public void addMuxer(Muxer muxer) {
@@ -237,11 +248,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		inputFormatContext.pb(avio_alloc_context);
 
-		queueReferences.put(inputFormatContext, new InputContext(inputQueue));
+		
+		queueReferences.put(inputFormatContext, inputContext);
 
 		int ret;
 
-		logger.info("before avformat_open_input.............");
+		logger.debug("before avformat_open_input");
 
 		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
 				(AVDictionary) null)) < 0) {
@@ -249,15 +261,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-		logger.info("after avformat_open_input............. before avformat_find_stream");
-
+		logger.debug("after avformat_open_input..before avformat_find_stream");
+		long startFindStreamInfoTime = System.currentTimeMillis();
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information\n");
 			return false;
 		}
+		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
 
-		logger.info("after avformat_find_sream_info............. before av_log_get_level");
 
 		if (av_log_get_level() >= AV_LOG_INFO) {
 			// Dump information about file onto standard error
@@ -335,10 +347,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
 
-				// logger.info("input read...");
-
 				if (ret >= 0) {
-
+					receivedPacketCount++;
 					long currentTime = System.currentTimeMillis();
 
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
@@ -540,17 +550,20 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	@Override
 	public void start() {
 		isRecording = false;
+		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare");
+				logger.debug("before prepare");
 				try {
 					if (prepare()) {
-						logger.info("after prepare");
+						logger.debug("after prepare");
 						isRecording = true;
 						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
+						logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
+						
 					} else {
 						logger.warn("input format context cannot be created");
 						if (broadcastStream != null) {
@@ -592,6 +605,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 			if (flvFrame.length <= BUFFER_SIZE) {
 				inputQueue.add(flvFrame);
+				inputContext.queueSize.incrementAndGet();
 			} else {
 				int numberOfBytes = flvFrame.length;
 				int startIndex = 0;
@@ -604,6 +618,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 					byte[] data = Arrays.copyOfRange(flvFrame, startIndex, startIndex + copySize);
 					inputQueue.add(data);
+					inputContext.queueSize.incrementAndGet();
 					numberOfBytes -= copySize;
 					startIndex += copySize;
 				}
@@ -683,7 +698,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
 		this.deleteHLSFilesOnExit = deleteHLSFilesOnExit;
-
+	}
+	
+	public int getInputQueueSize() {
+		return inputContext.queueSize.get();
 	}
 
 }
