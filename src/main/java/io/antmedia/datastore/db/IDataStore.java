@@ -61,6 +61,8 @@ public interface IDataStore {
 
 	long getTotalVodNumber();
 	
+	long getTotalBroadcastNumber();
+	
 
 	boolean fetchUserVodList(File file);
 
