@@ -11,6 +11,8 @@ import io.antmedia.datastore.db.types.Vod;
 public interface IDataStore {
 	
 	public static final String BEAN_NAME = "db.datastore"; 
+	public static final int MAX_ITEM_IN_ONE_LIST = 50;
+	
 	
 	String save(Broadcast broadcast);
 
@@ -66,7 +68,7 @@ public interface IDataStore {
 
 	boolean fetchUserVodList(File file);
 
-	boolean addUserVod(String id, Vod vod);
+	boolean addUserVod(Vod vod);
 
 	
 	/**

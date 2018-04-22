@@ -10,6 +10,22 @@ public class Vod implements Serializable {
 	/**
 	 * describes vod properties it should be seperated from broadcast object
 	 */
+	
+	
+	/**
+	 * The vod files that is under a folder which is set in Settings
+	 */
+	public static final String USER_VOD = "userVod";
+	
+	/**
+	 * The vod files that is generated from live streams
+	 */
+	public static final String STREAM_VOD = "streamVod";
+	
+	/**
+	 * The vod file user is uploaded 
+	 */
+	public static final String UPLOADED_VOD = "uploadedVod";
 
 	private String streamName;
 	private String vodName;
@@ -35,9 +51,10 @@ public class Vod implements Serializable {
 
 	}
 
+	/* Commented out this constructor. If you add again, please comment why we need this default constructor
 	public Vod() {
-
 	}
+	*/
 
 	public String getType() {
 		return type;
