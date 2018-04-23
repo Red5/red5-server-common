@@ -2,15 +2,15 @@ package io.antmedia.datastore.db.types;
 
 import java.io.Serializable;
 
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Id;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class Vod implements Serializable {
-	/**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
-	/**
-	 * describes vod properties it should be seperated from broadcast object
-	 */
-	
+
 	
 	/**
 	 * The vod files that is under a folder which is set in Settings
@@ -26,6 +26,10 @@ public class Vod implements Serializable {
 	 * The vod file user is uploaded 
 	 */
 	public static final String UPLOADED_VOD = "uploadedVod";
+	
+	@JsonIgnore
+	@Id
+	private ObjectId dbId;
 
 	private String streamName;
 	private String vodName;
