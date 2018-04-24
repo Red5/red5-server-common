@@ -953,6 +953,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			String hlsTime = null;
 			String hlsPlayListType = null;
 			boolean deleteHLSFilesOnExit = true;
+			boolean isPreviewOverwrite = false;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
@@ -964,6 +965,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				hlsPlayListType = appSettings.getHlsPlayListType();
 				webRTCEnabled = appSettings.isWebRTCEnabled();
 				deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
+				isPreviewOverwrite = appSettings.isPreviewOverwrite();
 			}
 			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
 
@@ -982,6 +984,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
+			
+			localMuxAdaptor.setPreviewOverwrite(isPreviewOverwrite);
 			
 			
 			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);

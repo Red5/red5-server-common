@@ -78,8 +78,28 @@ public class AppSettings {
 	private String youtubeClientSecret;
 	
 	private String vodFolder;
+	
+	/**
+	 * Overwrite preview files if exist, default value is false
+	 */
+	private boolean previewOverwrite = false;
 
-
+	/**
+	 * Address of the Stalker Portal DB server 
+	 */
+	private String stalkerDBServer;
+	
+	/**
+	 * Username of stalker portal DB
+	 */
+	private String stalkerDBUsername;
+	
+	/**
+	 * Password of the stalker portal DB User
+	 */
+	private String stalkerDBPassword;
+	
+	
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -278,6 +298,35 @@ public class AppSettings {
 		this.vodFolder = vodFolder;
 	}
 
+	public boolean isPreviewOverwrite() {
+		return previewOverwrite;
+	}
 
+	public void setPreviewOverwrite(boolean previewOverwrite) {
+		this.previewOverwrite = previewOverwrite;
+	}
 
+	public String getStalkerDBServer() {
+		return stalkerDBServer;
+	}
+
+	public void setStalkerDBServer(String stalkerDBServer) {
+		this.stalkerDBServer = stalkerDBServer;
+	}
+
+	public String getStalkerDBUsername() {
+		return stalkerDBUsername;
+	}
+
+	public void setStalkerDBUsername(String stalkerDBUsername) {
+		this.stalkerDBUsername = stalkerDBUsername;
+	}
+
+	public String getStalkerDBPassword() {
+		return stalkerDBPassword;
+	}
+
+	public void setStalkerDBPassword(String stalkerDBPassword) {
+		this.stalkerDBPassword = stalkerDBPassword;
+	}
 }

@@ -119,6 +119,11 @@ public class Broadcast {
 
 	private String quality;
 	private double speed;
+	
+	/**
+	 * This is the stream url for fetching stream. 
+	 * It has a value for IPCameras and streams in the cloud
+	 */
 	private String streamUrl;
 
 	public Broadcast() {

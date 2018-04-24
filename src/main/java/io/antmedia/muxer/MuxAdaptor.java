@@ -84,9 +84,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected boolean deleteHLSFilesOnExit = true;
 	
-	
 	protected int receivedPacketCount;
-	
+	protected boolean previewOverwrite = false;
 
 	public static class InputContext {
 		public ConcurrentLinkedQueue<byte[]> queue;
@@ -702,6 +701,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	public int getInputQueueSize() {
 		return inputContext.queueSize.get();
+	}
+	
+	public void setPreviewOverwrite(boolean overwrite) {
+		this.previewOverwrite  = overwrite;
+	}
+
+	public boolean isPreviewOverwrite() {
+		return previewOverwrite;
 	}
 
 }
