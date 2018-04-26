@@ -66,7 +66,13 @@ public interface IDataStore {
 	long getTotalBroadcastNumber();
 	
 
-	boolean fetchUserVodList(File file);
+	/**
+	 * Gets the video files under the {@code fileDir} directory parameter
+	 * and saves them to the datastore as USER_VOD in {@code Vod} class
+	 * @param file
+	 * @return number of files that are saved to datastore
+	 */
+	int fetchUserVodList(File filedir);
 
 	boolean addUserVod(Vod vod);
 
