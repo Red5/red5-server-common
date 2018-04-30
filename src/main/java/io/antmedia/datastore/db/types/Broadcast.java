@@ -149,6 +149,12 @@ public class Broadcast {
 	 * 
 	 */
 	private boolean zombi = false;
+	
+	/**
+	 * Number of audio and video packets that is being pending to be encoded 
+	 * in the queue
+	 */
+	private int pendingPacketSize = 0;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -381,5 +387,17 @@ public class Broadcast {
 	public void setStreamUrl(String streamUrl) {
 		this.streamUrl = streamUrl;
 	}
+
+	public int getPendingPacketSize() {
+		return pendingPacketSize;
+	}
+
+	public void setPendingPacketSize(int pendingPacketSize) {
+		this.pendingPacketSize = pendingPacketSize;
+	}
+
+
+	
+	
 
 }

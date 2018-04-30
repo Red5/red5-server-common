@@ -22,10 +22,8 @@ public interface IDataStore {
 
 	boolean updateStatus(String id, String status);
 	
-	boolean updateSourceQuality(String id, String quality);
+	boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue);
 	
-	boolean updateSourceSpeed(String id, double speed);
-
 	boolean updateDuration(String id, long duration);
 
 	boolean updatePublish(String id, boolean publish);

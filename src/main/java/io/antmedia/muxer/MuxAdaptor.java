@@ -55,7 +55,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-
 import io.antmedia.datastore.db.IDataStore;
 
 import io.antmedia.storage.StorageClient;
@@ -130,6 +129,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int speedCounter=0;
 	
 	private InputContext inputContext;
+	private IAntMediaStreamHandler appAdapter;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		@Override
@@ -297,39 +297,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return readCallback;
 	}
 
-	public void changeSourceQuality(String id, String quality) {
-
-		if(oldQuality!=quality) {
-
-			IContext context = MuxAdaptor.this.scope.getContext(); 
-			ApplicationContext appCtx = context.getApplicationContext(); 
-			Object bean = appCtx.getBean("web.handler");
-			if (bean instanceof IMuxerListener) {
-				((IMuxerListener)bean).sourceQualityChanged(id, quality);
-			}
-
-			oldQuality=quality;
-		}
-	}
-
-	public void changeSourceSpeed(String id, double speed) {
-
-
+	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
 		speedCounter++;
-
-		if(speedCounter % 600==0) {
-
-
-			IContext context = MuxAdaptor.this.scope.getContext(); 
-			ApplicationContext appCtx = context.getApplicationContext(); 
-			Object bean = appCtx.getBean("web.handler");
-			if (bean instanceof IMuxerListener) {
-				((IMuxerListener)bean).sourceSpeedChanged(id, speed);
-			}
-
+		if(oldQuality != quality || speedCounter % 600 == 0) {
+			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
+			oldQuality = quality;
 		}
 	}
-
+	
+	private IAntMediaStreamHandler getStreamHandler() {
+		if (appAdapter == null) {
+			IContext context = MuxAdaptor.this.scope.getContext(); 
+			ApplicationContext appCtx = context.getApplicationContext(); 
+			appAdapter = (IAntMediaStreamHandler)appCtx.getBean("web.handler");
+		}
+		return appAdapter;
+	}
 
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
@@ -365,20 +348,21 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 
+					String sourceQuality = QUALITY_POOR;
 					if(timeDiff<1800) {
-
-						changeSourceQuality(this.name, QUALITY_GOOD);
-
-					}else if(timeDiff>1799 && timeDiff<3499 ) {
-
-						changeSourceQuality(this.name, QUALITY_AVERAGE);
-					}else {
-
-						changeSourceQuality(this.name, QUALITY_POOR);
+						sourceQuality = QUALITY_GOOD;
 					}
-
-					changeSourceSpeed(this.name, speed);
-
+					else if(timeDiff>1799 && timeDiff<3499 ) {
+						sourceQuality = QUALITY_AVERAGE;
+					}
+					
+					int inputQueueSize = getInputQueueSize();
+					if (receivedPacketCount % 100 == 0) {
+						logger.info("Number of items in the queue {}", inputQueueSize);
+					}
+					
+					changeStreamQualityParameters(this.name, sourceQuality, speed, inputQueueSize);
+					
 
 					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -421,9 +405,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					inputFormatContext = null;
 					isRecording = false;
-
-					changeSourceQuality(this.name, QUALITY_NA);
-					changeSourceSpeed(this.name, 0);
+				
+					changeStreamQualityParameters(this.name, QUALITY_NA, 0, getInputQueueSize());
 
 				}
 

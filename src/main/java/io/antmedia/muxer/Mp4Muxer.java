@@ -333,8 +333,8 @@ public class Mp4Muxer extends Muxer {
 			IContext context = Mp4Muxer.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			Object bean = appCtx.getBean("web.handler");
-			if (bean instanceof IMuxerListener) {
-				((IMuxerListener)bean).muxingFinished(this.streamId, f, getDuration(f));
+			if (bean instanceof IAntMediaStreamHandler) {
+				((IAntMediaStreamHandler)bean).muxingFinished(this.streamId, f, getDuration(f));
 			}
 
 			if (storageClient != null) {
