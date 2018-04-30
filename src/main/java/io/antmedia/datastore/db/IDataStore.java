@@ -28,8 +28,6 @@ public interface IDataStore {
 
 	boolean updateDuration(String id, long duration);
 
-	boolean updatePublish(String id, boolean publish);
-
 	boolean addEndpoint(String id, Endpoint endpoint);
 
 	boolean addVod(Vod vod);
@@ -49,7 +47,6 @@ public interface IDataStore {
 
 	boolean editCameraInfo(Broadcast camera);
 
-	boolean deleteStream(String ipAddr);
 
 	List<Broadcast> getExternalStreamsList();
 
