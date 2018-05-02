@@ -367,7 +367,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 					
 					int inputQueueSize = getInputQueueSize();
-					if (receivedPacketCount % 100 == 0) {
+					if (receivedPacketCount % 500 == 0) {
 						logger.info("Number of items in the queue {}", inputQueueSize);
 					}
 					
