@@ -297,9 +297,21 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return readCallback;
 	}
 
-	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
+	/**
+	 * 
+	 * @param streamId id of the stream
+	 * @param quality, quality string
+	 * @param packetTime, time of the packet in milliseconds
+	 * @param duration, the total elapsed time in milliseconds
+	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
+	 */
+	public void changeStreamQualityParameters(String streamId, String quality, double packetTime, double duration, int inputQueueSize) {
 		speedCounter++;
 		if(oldQuality != quality || speedCounter % 600 == 0) {
+			double speed = 0;
+			if (duration > 0) {
+				speed = packetTime/duration;
+			}
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
 		}
@@ -340,12 +352,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
 
 
-					long timeDiff=(currentTime-startTime)-packetTime;
+					long timeDiff = (currentTime-startTime)-packetTime;
 
-					long duration =currentTime-startTime;
-
-					double speed= (double)packetTime/duration;
-
+					long duration = currentTime-startTime;
+					
 					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 
 					String sourceQuality = QUALITY_POOR;
@@ -361,7 +371,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						logger.info("Number of items in the queue {}", inputQueueSize);
 					}
 					
-					changeStreamQualityParameters(this.name, sourceQuality, speed, inputQueueSize);
+					changeStreamQualityParameters(this.name, sourceQuality, packetTime, duration, inputQueueSize);
 					
 
 					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
@@ -406,7 +416,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					inputFormatContext = null;
 					isRecording = false;
 				
-					changeStreamQualityParameters(this.name, QUALITY_NA, 0, getInputQueueSize());
+					changeStreamQualityParameters(this.name, QUALITY_NA, 0, 0, getInputQueueSize());
 
 				}
 
