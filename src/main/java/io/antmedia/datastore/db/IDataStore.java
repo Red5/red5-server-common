@@ -112,5 +112,11 @@ public interface IDataStore {
 	 */
 	SocialEndpointCredentials getSocialEndpointCredentials(String id);
 
+	/**
+	 * Return the number of active broadcasts in the server
+	 * @return
+	 */
+	long getActiveBroadcastCount();
+
 
 }
