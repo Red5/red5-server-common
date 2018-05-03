@@ -11,6 +11,8 @@ import io.antmedia.datastore.db.types.Vod;
 public interface IDataStore {
 	
 	public static final String BEAN_NAME = "db.datastore"; 
+	public static final int MAX_ITEM_IN_ONE_LIST = 50;
+	
 	
 	String save(Broadcast broadcast);
 
@@ -26,11 +28,9 @@ public interface IDataStore {
 
 	boolean updateDuration(String id, long duration);
 
-	boolean updatePublish(String id, boolean publish);
-
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	boolean addVod(String id, Vod vod);
+	boolean addVod(Vod vod);
 
 	long getBroadcastCount();
 
@@ -47,7 +47,6 @@ public interface IDataStore {
 
 	boolean editCameraInfo(Broadcast camera);
 
-	boolean deleteStream(String ipAddr);
 
 	List<Broadcast> getExternalStreamsList();
 
@@ -64,9 +63,15 @@ public interface IDataStore {
 	long getTotalBroadcastNumber();
 	
 
-	boolean fetchUserVodList(File file);
+	/**
+	 * Gets the video files under the {@code fileDir} directory parameter
+	 * and saves them to the datastore as USER_VOD in {@code Vod} class
+	 * @param file
+	 * @return number of files that are saved to datastore
+	 */
+	int fetchUserVodList(File filedir);
 
-	boolean addUserVod(String id, Vod vod);
+	boolean addUserVod(Vod vod);
 
 	
 	/**
