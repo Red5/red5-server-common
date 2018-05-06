@@ -114,7 +114,11 @@ public class Broadcast {
 	private String category;
 
 	private String ipAddr;
+	
+	@JsonIgnore
 	private String username;
+	
+	@JsonIgnore
 	private String password;
 
 	private String quality;
