@@ -302,12 +302,14 @@ public class HLSMuxer extends Muxer  {
 		}
 
 		int ret;
+		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
+		pkt.pos(-1);
+		
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
-			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
-			pkt.pos(-1);
+			
 
 			ret = av_copy_packet(tmpPacket , pkt);
 			if (ret < 0) {
@@ -339,29 +341,17 @@ public class HLSMuxer extends Muxer  {
 			}
 
 			av_packet_unref(tmpPacket);
-
-			pkt.pts(pts);
-			pkt.dts(dts);
-			pkt.duration(duration);
-			pkt.pos(pos);
 		}
 		else {
-			
-			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
-			pkt.pos(-1);
-
 			ret = av_write_frame(outputFormatContext, pkt);
 			if (ret < 0) {
 				logger.info("cannot write frame to muxer");
 			}
-
-			pkt.pts(pts);
-			pkt.dts(dts);
-			pkt.duration(duration);
-			pkt.pos(pos);
 		}
+		pkt.pts(pts);
+		pkt.dts(dts);
+		pkt.duration(duration);
+		pkt.pos(pos);
 
 	}
 

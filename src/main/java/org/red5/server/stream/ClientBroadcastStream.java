@@ -76,6 +76,7 @@ import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
+import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
@@ -976,7 +977,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 			localMuxAdaptor.setStorageClient(storageClient);
 
-			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
+			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName, null);
+			
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
 			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
 			localMuxAdaptor.setHLSFilesDeleteOnExit(deleteHLSFilesOnExit);

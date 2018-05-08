@@ -66,6 +66,11 @@ public abstract class Muxer {
 	private boolean addDateTimeToResourceName = false;
 
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
+	
+	/**
+	 * Bitstream filter name that will be applied to packets
+	 */
+	protected String bsfName;
 
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;
@@ -185,6 +190,11 @@ public abstract class Muxer {
 	 *            The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket pkt);
+	
+	
+	public void setBitstreamFilter(String bsfName) {
+		this.bsfName = bsfName;
+	}
 
 	public File getFile() {
 		return file;
