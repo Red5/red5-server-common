@@ -7,11 +7,7 @@ RED5_DIR=~/softwares/ant-media-server
 
 RED5_LIB_DIR=$RED5_DIR/lib
 
-<<<<<<< HEAD
 RED5_JAR=./target/red5-server-common.jar
-=======
-RED5_JAR=./target/red5-server-common-1.3.4.jar
->>>>>>> refs/remotes/origin/dev
 
 SRC_CONF_DIR=../Ant-Media-Server/src/main/server/conf/
 
