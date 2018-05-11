@@ -552,6 +552,7 @@ public class HLSMuxer extends Muxer  {
 			logger.error("Undefined codec type ");
 			return;
 		}
+		
 		AVStream out_stream = getOutputFormatContext().streams(streamIndex);
 		int index = avpacket.stream_index();
 		avpacket.stream_index(streamIndex);

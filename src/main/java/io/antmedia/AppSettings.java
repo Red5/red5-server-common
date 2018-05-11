@@ -16,17 +16,17 @@ public class AppSettings {
 	public static final String BEAN_NAME = "app.settings";
 
 
-	private boolean mp4MuxingEnabled = true;
+	private boolean mp4MuxingEnabled = false;
 
 	private boolean addDateTimeToMp4FileName = false;
 
 	private boolean hlsMuxingEnabled = true;
 
-	private List<EncoderSettings> adaptiveResolutionList;
+	private List<EncoderSettings> adaptiveResolutionList = null;
 
-	private String hlsListSize;
+	private String hlsListSize = null;
 
-	private String hlsTime;
+	private String hlsTime = null;
 
 	private boolean webRTCEnabled = false;
 	
@@ -45,7 +45,7 @@ public class AppSettings {
 	/**
 	 * event or vod
 	 */
-	private String hlsPlayListType;
+	private String hlsPlayListType = null;
 	
 	/**
 	 * Facebook client id

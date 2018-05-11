@@ -937,13 +937,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-		
-
-		//if (automaticMp4Recording || automaticHlsRecording)  
-		{
-			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
-
-
 			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
 			boolean webRTCEnabled = false;
@@ -957,6 +950,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			boolean isPreviewOverwrite = false;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
+				
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
 				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
@@ -986,7 +980,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsTime(hlsTime);
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
-			
 			localMuxAdaptor.setPreviewOverwrite(isPreviewOverwrite);
 			
 			
@@ -1005,7 +998,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				e.printStackTrace();
 			}
 
-		}
+		
 
 	}
 
@@ -1062,6 +1055,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			//e.printStackTrace();
 		} 
 		if (muxAdaptor == null) {
+			
+			IStreamCapableConnection conn = getConnection();
+			
 			muxAdaptor = new MuxAdaptor(this);
 		}
 
@@ -1087,7 +1083,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			removeStreamListener(listener);
 			// stop the recording listener
 			listener.stop();
-			// clear and null-out the thread local
+			// clear and null-out the tsetHlsTimehread local
 			recordingListener.clear();
 			recordingListener = null;
 		}

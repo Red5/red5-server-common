@@ -467,8 +467,12 @@ public class Mp4Muxer extends Muxer {
 		AVStream out_stream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
-
+		
+		
+		
 		writePacket(pkt, stream.time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
+		
+
 
 		pkt.stream_index(index);
 	}
@@ -516,6 +520,8 @@ public class Mp4Muxer extends Muxer {
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
+		
+
 
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
@@ -540,7 +546,19 @@ public class Mp4Muxer extends Muxer {
 
 					ret = av_write_frame(context, tmpPacket);
 					if (ret < 0) {
-						logger.info("cannot write frame to muxer");
+						logger.info("cannot write frame to muxer in av_bsf_receive_packet");
+						
+						logger.info("input timebase den {}", inputTimebase.den());
+						logger.info("input timebase num {}", inputTimebase.num());
+						logger.info("output timebase den {}", outputTimebase.den());
+						logger.info("output timebase num {}", outputTimebase.num());
+						
+						
+						logger.info("received dts {}", dts);
+						logger.info("calculated dts {}", pkt.dts());
+						
+						
+						
 					}
 
 				}
@@ -548,7 +566,7 @@ public class Mp4Muxer extends Muxer {
 			else {
 				ret = av_write_frame(context, tmpPacket);
 				if (ret < 0) {
-					logger.info("cannot write frame to muxer");
+					logger.info("cannot write frame to muxer in av_write_frame");
 				}
 			}
 
@@ -557,12 +575,9 @@ public class Mp4Muxer extends Muxer {
 		else {
 			int ret = av_write_frame(context, pkt);
 			if (ret < 0) {
-				logger.warn("cannot write frame to muxer"); 
+				logger.warn("cannot write frame to muxer, not audio"); 
 			}
 		}
-
-
-
 
 
 		pkt.pts(pts);
