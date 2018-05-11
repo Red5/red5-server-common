@@ -277,7 +277,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor = null;
 		}
 
-				IClusterNotifier clusterNotifier = getClusterNotifier();
+		IClusterNotifier clusterNotifier = getClusterNotifier();
 		if (clusterNotifier != null) {
 			IScope scope = Red5.getConnectionLocal().getScope();
 			clusterNotifier.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
@@ -936,7 +936,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				log.warn("Start of automatic recording failed", e);
 			}
 		}
-
+		/*
 			boolean mp4MuxingEnabled = true;
 			boolean addDateTimeToMp4FileName=false;
 			boolean webRTCEnabled = false;
@@ -950,7 +950,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			boolean isPreviewOverwrite = false;
 			if (appCtx.containsBean("app.settings"))  {
 				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
-				
+
 				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
 				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
 				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
@@ -972,7 +972,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setStorageClient(storageClient);
 
 			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName, null);
-			
+
 			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
 			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
 			localMuxAdaptor.setHLSFilesDeleteOnExit(deleteHLSFilesOnExit);
@@ -981,24 +981,29 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			localMuxAdaptor.setHlsListSize(hlsListSize);
 			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
 			localMuxAdaptor.setPreviewOverwrite(isPreviewOverwrite);
-			
-			
+
+
 			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
 
-			try {
-				if (conn == null) {
-					throw new IOException("Stream is no longer connected");
-				}
-				localMuxAdaptor.init(conn, publishedName, false);
-				addStreamListener(localMuxAdaptor);
-				this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
-				localMuxAdaptor.start();
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
+		 */
 
-		
+		MuxAdaptor localMuxAdaptor = initializeMuxAdaptor();
+
+		try {
+			if (conn == null) {
+				throw new IOException("Stream is no longer connected");
+			}
+			localMuxAdaptor.init(conn, publishedName, false);
+			
+			addStreamListener(localMuxAdaptor);
+			this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
+			localMuxAdaptor.start();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
+
 
 	}
 
@@ -1009,7 +1014,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			Broadcast broadcast = dataStore.get(publishedName);
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
-				
+
 				if (endPointList != null && endPointList.size() > 0) 
 				{
 					for (Endpoint endpoint : endPointList) {
@@ -1041,23 +1046,22 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		return clusterNotifier;
 	}
 
-	private MuxAdaptor initializeMuxAdaptor(List<EncoderSettings> adaptiveResolutionList) {
+	private MuxAdaptor initializeMuxAdaptor() {
 		MuxAdaptor muxAdaptor = null;
 		try {
-			if (adaptiveResolutionList != null && adaptiveResolutionList.size() > 0) 
-			{
-				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
 
-				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class)
-						.newInstance(this, adaptiveResolutionList);
-			}
+			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+
+			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class)
+					.newInstance(this);
+
 		} catch (Exception e) {
 			//e.printStackTrace();
 		} 
 		if (muxAdaptor == null) {
-			
+
 			IStreamCapableConnection conn = getConnection();
-			
+
 			muxAdaptor = new MuxAdaptor(this);
 		}
 
