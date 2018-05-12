@@ -191,14 +191,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.scope=scope;
 
 		AppSettings appSettings = getAppSettings();
-		setHLSMuxingEnabled(appSettings.isHlsMuxingEnabled());
-		setMp4MuxingEnabled(appSettings.isMp4MuxingEnabled(), getAppSettings().isAddDateTimeToMp4FileName(), "aac_adtstoasc");
-		setWebRTCEnabled(getAppSettings().isWebRTCEnabled());
-		setHLSFilesDeleteOnExit(appSettings.isDeleteHLSFilesOnExit());
-		setHlsListSize(appSettings.getHlsListSize());
-		setHlsTime(appSettings.getHlsTime());
-		setHlsPlayListType(appSettings.getHlsPlayListType());
-		setPreviewOverwrite(appSettings.isPreviewOverwrite());
+		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
+		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
+		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
+		mp4Filtername = null;
+		webRTCEnabled = getAppSettings().isWebRTCEnabled();
+		deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
+		hlsListSize = appSettings.getHlsListSize();
+		hlsTime = appSettings.getHlsTime();
+		hlsPlayListType = appSettings.getHlsPlayListType();
+		previewOverwrite = appSettings.isPreviewOverwrite();
 		setAdaptiveResolutionList(appSettings.getAdaptiveResolutionList());
 		
 		if (scope.getContext().getApplicationContext().containsBean("app.storageClient")) {
@@ -221,7 +223,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			addMuxer(mp4Muxer);
 		}
 
-		if (appSettings.isHlsMuxingEnabled()) {
+		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
@@ -251,7 +253,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		queueReferences.put(inputFormatContext, new InputContext(inputQueue));
 
 		int ret;
-		logger.info("before avformat_open_input.............");
+		logger.info("before avformat_open_input");
 
 		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
 				(AVDictionary) null)) < 0) {
@@ -259,7 +261,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-		logger.info("after avformat_open_input............. before avformat_find_stream");
+		logger.info("after avformat_open_input");
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
@@ -267,7 +269,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-		logger.info("after avformat_find_sream_info............. before av_log_get_level");
+		logger.info("after avformat_find_sream_info");
 
 		return prepareMuxers(inputFormatContext);
 	}
@@ -291,8 +293,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxerList.isEmpty()) {
 			return false;
 		}
-
-
 		return true;
 	}
 
@@ -358,17 +358,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
 
-				// logger.info("input read...");
-
 				if (ret >= 0) {
-
 					writePacketToMuxers(inputFormatContext, pkt);
-
-				} else {
-
+				} 
+				else {
 					closeResources();
 				}
-
 				// if there is not element in the qeueue,
 				// break the loop
 				if (inputQueue.peek() == null || inputFormatContext == null) {
@@ -441,15 +436,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 
 	public void closeResources() {
+		logger.info("close resources");
 
-		System.out.println("removing scheduled job " + MuxAdaptor.this);
 		if (packetFeederJobName != null) {
+			logger.info("removing scheduled job {} ", packetFeederJobName);
 			scheduler.removeScheduledJob(packetFeederJobName);
 		}
+		
 		writeTrailer(inputFormatContext);
 
-		logger.info("closing input");
-
+		
 		queueReferences.remove(inputFormatContext);
 
 		av_packet_free(pkt);
@@ -565,6 +561,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						isRecording = true;
 						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
+						logger.info("Packet Feeder Job Name {}", packetFeederJobName);
 					} else {
 						logger.warn("input format context cannot be created");
 						if (broadcastStream != null) {
@@ -667,7 +664,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return muxerList;
 	}
 
-
+/*
 	public void setMp4MuxingEnabled(boolean mp4Enabled, boolean addDateTimeToMp4FileName, String bsfiltername) {
 		this.mp4MuxingEnabled = mp4Enabled;
 		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
@@ -677,11 +674,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setHLSMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
 	}
-
+*/
 	public void setStorageClient(StorageClient storageClient) {
 		this.storageClient = storageClient;
 	}
-
+/*
 	public void setHlsTime(String hlsTime) {
 		this.hlsTime = hlsTime;
 	}
@@ -693,23 +690,24 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setHlsPlayListType(String hlsPlayListType) {
 		this.hlsPlayListType = hlsPlayListType;
 	}
-
+*/
 	public boolean isWebRTCEnabled() {
 		return webRTCEnabled;
 	}
 
-	public void setWebRTCEnabled(boolean webRTCEnabled) {
+/*	public void setWebRTCEnabled(boolean webRTCEnabled) {
 		this.webRTCEnabled = webRTCEnabled;
 	}
 
 	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
 		this.deleteHLSFilesOnExit = deleteHLSFilesOnExit;
 	}
+	*/
 
-	public void setPreviewOverwrite(boolean overwrite) {
+/*	public void setPreviewOverwrite(boolean overwrite) {
 		this.previewOverwrite  = overwrite;
 	}
-
+*/
 	public boolean isPreviewOverwrite() {
 		return previewOverwrite;
 	}

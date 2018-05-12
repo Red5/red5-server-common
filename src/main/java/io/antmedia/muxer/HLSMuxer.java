@@ -309,8 +309,6 @@ public class HLSMuxer extends Muxer  {
 		
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
-			
-
 			ret = av_copy_packet(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
@@ -325,12 +323,10 @@ public class HLSMuxer extends Muxer  {
 
 				while ((ret = av_bsf_receive_packet(bsfContext, tmpPacket)) == 0) 
 				{
-
 					ret = av_write_frame(outputFormatContext, tmpPacket);
 					if (ret < 0) {
 						logger.info("cannot write frame to muxer");
 					}
-
 				}
 			}
 			else {

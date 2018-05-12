@@ -274,7 +274,11 @@ public class Mp4Muxer extends Muxer {
 						out_stream.time_base(bsfContext.time_base_out());
 					}
 					else {
-						
+						int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+						if (ret < 0) {
+							logger.info("Cannot get codec parameters\n");
+							return false;
+						}
 					}
 				}
 				else {
@@ -285,7 +289,7 @@ public class Mp4Muxer extends Muxer {
 				streamIndex++;
 				registeredStreamIndexList.add(i);
 
-				//out_stream.codec().codec_tag(0);
+				out_stream.codec().codec_tag(0);
 				out_stream.codecpar().codec_tag(0);
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
@@ -429,9 +433,11 @@ public class Mp4Muxer extends Muxer {
 
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
+			bsfContext = null;
 		}
 		if (tmpPacket != null) {
 			av_packet_free(tmpPacket);
+			tmpPacket = null;
 		}
 
 		/* close output */
@@ -467,13 +473,9 @@ public class Mp4Muxer extends Muxer {
 		AVStream out_stream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
-		
-		
-		
+			
 		writePacket(pkt, stream.time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
-		
-
-
+	
 		pkt.stream_index(index);
 	}
 
@@ -529,6 +531,8 @@ public class Mp4Muxer extends Muxer {
 		pkt.pos(-1);
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) {
+			
+			/*
 			int ret = av_copy_packet(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
@@ -553,11 +557,8 @@ public class Mp4Muxer extends Muxer {
 						logger.info("output timebase den {}", outputTimebase.den());
 						logger.info("output timebase num {}", outputTimebase.num());
 						
-						
 						logger.info("received dts {}", dts);
 						logger.info("calculated dts {}", pkt.dts());
-						
-						
 						
 					}
 
@@ -571,6 +572,13 @@ public class Mp4Muxer extends Muxer {
 			}
 
 			av_packet_unref(tmpPacket);
+			
+			*/
+			
+			int ret = av_write_frame(context, pkt);
+			if (ret < 0) {
+				logger.info("cannot write frame to muxer in av_write_frame");
+			}
 		}
 		else {
 			int ret = av_write_frame(context, pkt);
