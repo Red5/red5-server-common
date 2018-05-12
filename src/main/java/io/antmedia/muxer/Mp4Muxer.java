@@ -530,17 +530,14 @@ public class Mp4Muxer extends Muxer {
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
 
-		if (codecType == AVMEDIA_TYPE_AUDIO) {
-			
-			/*
+		if (codecType == AVMEDIA_TYPE_AUDIO) 
+		{
 			int ret = av_copy_packet(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
 				return;
 			}
-
 			if (bsfContext != null) {
-
 				ret = av_bsf_send_packet(bsfContext, tmpPacket);
 				if (ret < 0)
 					return;
@@ -572,13 +569,7 @@ public class Mp4Muxer extends Muxer {
 			}
 
 			av_packet_unref(tmpPacket);
-			
-			*/
-			
-			int ret = av_write_frame(context, pkt);
-			if (ret < 0) {
-				logger.info("cannot write frame to muxer in av_write_frame");
-			}
+	
 		}
 		else {
 			int ret = av_write_frame(context, pkt);

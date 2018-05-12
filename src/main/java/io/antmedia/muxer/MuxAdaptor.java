@@ -105,7 +105,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsListSize;
 	protected String hlsPlayListType;
 	List<EncoderSettings> adaptiveResolutionList = null;
-	protected AVPacket pkt = new AVPacket();
+	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
@@ -664,50 +664,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return muxerList;
 	}
 
-/*
-	public void setMp4MuxingEnabled(boolean mp4Enabled, boolean addDateTimeToMp4FileName, String bsfiltername) {
-		this.mp4MuxingEnabled = mp4Enabled;
-		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
-		this.mp4Filtername = bsfiltername;
-	}
 
-	public void setHLSMuxingEnabled(boolean hlsMuxingEnabled) {
-		this.hlsMuxingEnabled = hlsMuxingEnabled;
-	}
-*/
 	public void setStorageClient(StorageClient storageClient) {
 		this.storageClient = storageClient;
 	}
-/*
-	public void setHlsTime(String hlsTime) {
-		this.hlsTime = hlsTime;
-	}
 
-	public void setHlsListSize(String hlsListSize) {
-		this.hlsListSize = hlsListSize;
-	}
-
-	public void setHlsPlayListType(String hlsPlayListType) {
-		this.hlsPlayListType = hlsPlayListType;
-	}
-*/
 	public boolean isWebRTCEnabled() {
 		return webRTCEnabled;
 	}
 
-/*	public void setWebRTCEnabled(boolean webRTCEnabled) {
-		this.webRTCEnabled = webRTCEnabled;
-	}
-
-	public void setHLSFilesDeleteOnExit(boolean deleteHLSFilesOnExit) {
-		this.deleteHLSFilesOnExit = deleteHLSFilesOnExit;
-	}
-	*/
-
-/*	public void setPreviewOverwrite(boolean overwrite) {
-		this.previewOverwrite  = overwrite;
-	}
-*/
 	public boolean isPreviewOverwrite() {
 		return previewOverwrite;
 	}
@@ -726,7 +691,5 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setAdaptiveResolutionList(List<EncoderSettings> adaptiveResolutionList) {
 		this.adaptiveResolutionList = adaptiveResolutionList;
 	}
-
-
 
 }
