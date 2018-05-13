@@ -427,7 +427,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public void writeTrailer(AVFormatContext inputFormatContext) 
+	public void writeTrailer() 
 	{
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
@@ -445,7 +445,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			scheduler.removeScheduledJob(packetFeederJobName);
 		}
 		
-		writeTrailer(inputFormatContext);
+		writeTrailer();
 		
 		queueReferences.remove(inputFormatContext);
 		
