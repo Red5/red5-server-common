@@ -109,12 +109,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
-	private IScope scope;
+	protected IScope scope;
 	private String oldQuality;
 	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
 	private String mp4Filtername;
+	protected List<EncoderSettings> encoderSettingsList;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
@@ -182,14 +183,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		return init(conn.getScope(), name, isAppend);
 	}
-
-	@Override
-	public boolean init(IScope scope, String name, boolean isAppend) {
-		
-		this.name = name;
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-		this.scope=scope;
-
+	
+	protected void enableSettings() {
 		AppSettings appSettings = getAppSettings();
 		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
@@ -203,7 +198,17 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		hlsTime = appSettings.getHlsTime();
 		hlsPlayListType = appSettings.getHlsPlayListType();
 		previewOverwrite = appSettings.isPreviewOverwrite();
-		setAdaptiveResolutionList(appSettings.getAdaptiveResolutionList());
+		encoderSettingsList = appSettings.getAdaptiveResolutionList();
+	}
+
+	@Override
+	public boolean init(IScope scope, String name, boolean isAppend) {
+		
+		this.name = name;
+		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+		this.scope=scope;
+
+		enableSettings();
 		
 		if (scope.getContext().getApplicationContext().containsBean("app.storageClient")) {
 			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean("app.storageClient");
@@ -689,12 +694,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
 	}
-	public List<EncoderSettings> getAdaptiveResolutionList() {
-		return adaptiveResolutionList;
+
+	public List<EncoderSettings> getEncoderSettingsList() {
+		return encoderSettingsList;
 	}
 
-	public void setAdaptiveResolutionList(List<EncoderSettings> adaptiveResolutionList) {
-		this.adaptiveResolutionList = adaptiveResolutionList;
+	public void setEncoderSettingsList(List<EncoderSettings> encoderSettingsList) {
+		this.encoderSettingsList = encoderSettingsList;
 	}
+	
+	
 
 }

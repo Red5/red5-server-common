@@ -936,59 +936,11 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				log.warn("Start of automatic recording failed", e);
 			}
 		}
-		/*
-			boolean mp4MuxingEnabled = true;
-			boolean addDateTimeToMp4FileName=false;
-			boolean webRTCEnabled = false;
-			StorageClient storageClient = null;
-			boolean hlsMuxingEnabled = true;
-			List<EncoderSettings> adaptiveResolutionList = null;
-			String hlsListSize = null;
-			String hlsTime = null;
-			String hlsPlayListType = null;
-			boolean deleteHLSFilesOnExit = true;
-			boolean isPreviewOverwrite = false;
-			if (appCtx.containsBean("app.settings"))  {
-				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
-
-				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
-				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
-				adaptiveResolutionList = appSettings.getAdaptiveResolutionList();
-				hlsListSize = appSettings.getHlsListSize();
-				hlsTime = appSettings.getHlsTime();
-				hlsPlayListType = appSettings.getHlsPlayListType();
-				webRTCEnabled = appSettings.isWebRTCEnabled();
-				deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
-				isPreviewOverwrite = appSettings.isPreviewOverwrite();
-			}
-			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
-
-
-			if (appCtx.containsBean("app.storageClient")) {
-				storageClient = (StorageClient) appCtx.getBean("app.storageClient");
-			}
-
-			localMuxAdaptor.setStorageClient(storageClient);
-
-			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName, null);
-
-			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
-			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
-			localMuxAdaptor.setHLSFilesDeleteOnExit(deleteHLSFilesOnExit);
-
-			localMuxAdaptor.setHlsTime(hlsTime);
-			localMuxAdaptor.setHlsListSize(hlsListSize);
-			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
-			localMuxAdaptor.setPreviewOverwrite(isPreviewOverwrite);
-
-
-			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
-
-		 */
 
 		MuxAdaptor localMuxAdaptor = initializeMuxAdaptor();
 
+		setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
+		
 		try {
 			if (conn == null) {
 				throw new IOException("Stream is no longer connected");
@@ -1059,9 +1011,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			//e.printStackTrace();
 		} 
 		if (muxAdaptor == null) {
-
-			IStreamCapableConnection conn = getConnection();
-
 			muxAdaptor = new MuxAdaptor(this);
 		}
 
