@@ -193,7 +193,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		AppSettings appSettings = getAppSettings();
 		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-		logger.info("Mp4 Muxing {}", mp4MuxingEnabled);
+		
 		
 		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
 		mp4Filtername = null;
@@ -223,12 +223,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			mp4Muxer.setBitstreamFilter(mp4Filtername);
 			addMuxer(mp4Muxer);
+			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
 		}
 
 		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
+			logger.info("adding HLS Muxer");
 		}
 
 		for (Muxer muxer : muxerList) {
