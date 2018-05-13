@@ -193,6 +193,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		AppSettings appSettings = getAppSettings();
 		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
+		logger.info("Mp4 Muxing {}", mp4MuxingEnabled);
+		
 		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
 		mp4Filtername = null;
 		webRTCEnabled = getAppSettings().isWebRTCEnabled();
@@ -337,9 +339,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		AppSettings appSettings = null;
 		if(scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
-			appSettings = (AppSettings) MuxAdaptor.this.scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
+			appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
 		}
 		if (appSettings == null) {
+			logger.warn("No app settings in context, returning default AppSettings");
 			appSettings = new AppSettings();
 		}
 
