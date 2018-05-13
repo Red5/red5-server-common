@@ -432,6 +432,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
 		}
+		//This is allocated and needs to free for every case
+		av_packet_free(pkt);
 	}
 
 
@@ -444,11 +446,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		
 		writeTrailer(inputFormatContext);
-
 		
 		queueReferences.remove(inputFormatContext);
-
-		av_packet_free(pkt);
+		
 		avformat_close_input(inputFormatContext);
 
 		if (avio_alloc_context != null) {
