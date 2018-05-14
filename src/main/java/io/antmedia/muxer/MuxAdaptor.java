@@ -116,6 +116,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int speedCounter=0;
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
+	protected long timeDiffBetweenVideoandElapsed;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
@@ -164,8 +165,27 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 	};
+	
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+		MuxAdaptor muxAdaptor = null;
+		try {
 
-	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+
+			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
+					.newInstance(clientBroadcastStream);
+
+		} catch (Exception e) {
+			//e.printStackTrace();
+		} 
+		if (muxAdaptor == null) {
+			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
+		}
+
+		return muxAdaptor;
+	}
+
+	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
 		this.broadcastStream = clientBroadcastStream;
 
@@ -280,6 +300,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		logger.info("after avformat_find_sream_info");
 
+		return prepareInternal(inputFormatContext);
+	}
+	
+	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception{
 		return prepareMuxers(inputFormatContext);
 	}
 
@@ -369,7 +393,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
-					writePacketToMuxers(inputFormatContext, pkt);
+					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
+					av_packet_unref(pkt);
 				} 
 				else {
 					closeResources();
@@ -388,15 +413,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 
-	public void writePacketToMuxers(AVFormatContext inputFormatContext, AVPacket pkt) {
+	public void writePacket(AVStream stream, AVPacket pkt) {
 
 		long currentTime = System.currentTimeMillis();
-		AVStream stream = inputFormatContext.streams(pkt.stream_index());
+		//AVStream stream = inputFormatContext.streams(pkt.stream_index());
 
 
 		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
 
-		long timeDiff = (currentTime - startTime) - packetTime;
+		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
 		long duration = currentTime - startTime;
 
 		double speed= (double)packetTime/duration;
@@ -404,11 +429,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 		String quality = QUALITY_POOR;
 
-		if(timeDiff<1800) 
+		if(timeDiffBetweenVideoandElapsed<1800) 
 		{
 			quality = QUALITY_GOOD;
 		}
-		else if(timeDiff>1799 && timeDiff<3499 ) 
+		else if(timeDiffBetweenVideoandElapsed>1799 && timeDiffBetweenVideoandElapsed<3499 ) 
 		{
 			quality = QUALITY_AVERAGE;
 		}
@@ -423,21 +448,19 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (keyFrame == 1) {
 				firstKeyFrameReceived = true;
 			} else {
-				logger.warn("First video packet is not key frame. Dropping...");
-				av_packet_unref(pkt);
-
+				logger.warn("First video packet is not key frame. It will drop for direct muxing");
 			}
 		}
 
-		for (Muxer muxer : muxerList) {
-			muxer.writePacket(pkt, stream);
+		if (firstKeyFrameReceived) {
+			for (Muxer muxer : muxerList) {
+				muxer.writePacket(pkt, stream);
+			}
 		}
-
-		av_packet_unref(pkt);
 
 	}
 
-	public void writeTrailer() 
+	public void writeTrailer(AVFormatContext inputFormatContext) 
 	{
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
@@ -455,7 +478,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			scheduler.removeScheduledJob(packetFeederJobName);
 		}
 		
-		writeTrailer();
+		writeTrailer(inputFormatContext);
 		
 		queueReferences.remove(inputFormatContext);
 		

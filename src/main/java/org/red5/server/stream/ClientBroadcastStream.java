@@ -937,7 +937,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-		MuxAdaptor localMuxAdaptor = initializeMuxAdaptor();
+		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this);
 
 		setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
 		
@@ -998,24 +998,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		return clusterNotifier;
 	}
 
-	private MuxAdaptor initializeMuxAdaptor() {
-		MuxAdaptor muxAdaptor = null;
-		try {
-
-			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
-
-			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
-					.newInstance(this);
-
-		} catch (Exception e) {
-			//e.printStackTrace();
-		} 
-		if (muxAdaptor == null) {
-			muxAdaptor = new MuxAdaptor(this);
-		}
-
-		return muxAdaptor;
-	}
 
 	/** {@inheritDoc} */
 	public void stop() {
