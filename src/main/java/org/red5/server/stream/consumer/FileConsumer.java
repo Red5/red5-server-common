@@ -190,9 +190,6 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     }
                     // if we want ordering / comparing built-in
                     queue = new PriorityBlockingQueue<>(queueThreshold <= 0 ? 240 : queueThreshold, comparator);
-                    if (queue.size() > queueThreshold) {
-                        log.warn("Queue size is greater than threshold. queue size={} threshold={}", queue.size(), queueThreshold);
-                    }
                 } else {
                     if (log.isTraceEnabled()) {
                         log.trace("Creating non-priority typed packet queue");
@@ -222,7 +219,15 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     if (log.isTraceEnabled()) {
                         log.trace("Inserting packet into queue. timestamp: {} queue size: {}, codecId={}, isConfig={}", timestamp, queue.size(), queued.codecId, queued.config);
                     }
-                    queue.offer(queued, offerTimeout, TimeUnit.MILLISECONDS);
+                    if (queue.size() > queueThreshold) {
+                        if (queue.size() % 20 == 0) {
+                            log.warn("Queue size is greater than threshold. queue size={} threshold={}", queue.size(), queueThreshold);
+                        }
+                    }
+                    if (queue.size() < 2 * queueThreshold) {
+                        // Cap queue size to prevent a runaway stream causing OOM.
+                        queue.offer(queued, offerTimeout, TimeUnit.MILLISECONDS);
+                    }
                 } catch (InterruptedException e) {
                     log.warn("Stream data was not accepted by the queue - timestamp: {} data type: {}", timestamp, dataType, e);
                 }
