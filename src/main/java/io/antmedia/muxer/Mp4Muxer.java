@@ -547,16 +547,15 @@ public class Mp4Muxer extends Muxer {
 
 					ret = av_write_frame(context, tmpPacket);
 					if (ret < 0) {
-						logger.info("cannot write frame to muxer in av_bsf_receive_packet");
-						
-						logger.info("input timebase den {}", inputTimebase.den());
-						logger.info("input timebase num {}", inputTimebase.num());
-						logger.info("output timebase den {}", outputTimebase.den());
-						logger.info("output timebase num {}", outputTimebase.num());
+						byte[] data = new byte[2048];
+						av_strerror(ret, data, data.length);
+						logger.info("cannot write video frame to muxer av_bsf_receive_packet. Error is {} ", new String(data, 0, data.length));
+						logger.info("input timebase num/den {}/{}"
+								+ "output timebase num/den {}/{}", inputTimebase.num(), inputTimebase.den(),
+								outputTimebase.num(),  outputTimebase.den());
 						
 						logger.info("received dts {}", dts);
 						logger.info("calculated dts {}", pkt.dts());
-						
 					}
 
 				}
@@ -564,7 +563,10 @@ public class Mp4Muxer extends Muxer {
 			else {
 				ret = av_write_frame(context, tmpPacket);
 				if (ret < 0) {
-					logger.info("cannot write frame to muxer in av_write_frame");
+					
+					byte[] data = new byte[2048];
+					av_strerror(ret, data, data.length);
+					logger.info("cannot write video frame to muxer. Error is {} ", new String(data, 0, data.length));
 				}
 			}
 
@@ -574,7 +576,9 @@ public class Mp4Muxer extends Muxer {
 		else {
 			int ret = av_write_frame(context, pkt);
 			if (ret < 0) {
-				logger.warn("cannot write frame to muxer, not audio"); 
+				byte[] data = new byte[2048];
+				av_strerror(ret, data, data.length);
+				logger.info("cannot write video frame to muxer not audio. Error is {} ", new String(data, 0, data.length));
 			}
 		}
 
