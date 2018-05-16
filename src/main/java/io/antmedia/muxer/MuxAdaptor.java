@@ -334,9 +334,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	public void changeSourceQuality(String id, String quality) {
-
-		if(oldQuality!=quality) {
-
+		
+		if(!quality.equals(oldQuality)) {
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			Object bean = appCtx.getBean("web.handler");
@@ -344,7 +343,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				((IMuxerListener)bean).sourceQualityChanged(id, quality);
 			}
 
-			oldQuality=quality;
+			oldQuality = quality;
 		}
 	}
 
@@ -416,9 +415,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void writePacket(AVStream stream, AVPacket pkt) {
 
 		long currentTime = System.currentTimeMillis();
-		//AVStream stream = inputFormatContext.streams(pkt.stream_index());
-
-
 		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
 
 		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
@@ -429,7 +425,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 		String quality = QUALITY_POOR;
 
-		if(timeDiffBetweenVideoandElapsed<1800) 
+		if(timeDiffBetweenVideoandElapsed < 1800) 
 		{
 			quality = QUALITY_GOOD;
 		}
