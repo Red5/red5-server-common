@@ -939,7 +939,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this);
 
-		setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
+		setUpEndPoints(appCtx, publishedName, localMuxAdaptor);
 		
 		try {
 			if (conn == null) {
@@ -954,12 +954,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-
-
-
 	}
 
-	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor,  IStreamCapableConnection conn) {
+	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor) {
 		if (appCtx.containsBean("db.datastore")) 
 		{
 			IDataStore dataStore = (IDataStore)appCtx.getBean("db.datastore");

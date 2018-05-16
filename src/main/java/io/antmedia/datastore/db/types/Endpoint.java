@@ -10,10 +10,12 @@ public class Endpoint
 	 * it should match the VideoServiceEndpoint names or it can be generic
 	 */
 	public String type;
-	
+
+	//used in BroadcastRestService.addEndpoint
 	public Endpoint() {
-		
+
 	}
+	
 	public Endpoint(String broadcastId, String streamId, String name, String rtmpUrl, String type, String endpointServiceId) {
 		this.broadcastId = broadcastId;
 		this.streamId = streamId;
