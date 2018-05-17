@@ -302,13 +302,13 @@ public class HLSMuxer extends Muxer  {
 		}
 
 		int ret;
+		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
+		pkt.pos(-1);
+		
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
-			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
-			pkt.pos(-1);
-
 			ret = av_copy_packet(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
@@ -323,45 +323,37 @@ public class HLSMuxer extends Muxer  {
 
 				while ((ret = av_bsf_receive_packet(bsfContext, tmpPacket)) == 0) 
 				{
-
 					ret = av_write_frame(outputFormatContext, tmpPacket);
 					if (ret < 0) {
-						logger.info("cannot write frame to muxer");
+						byte[] data = new byte[2048];
+						av_strerror(ret, data, data.length);
+						logger.info("cannot write video frame to muxer. Error is {} ", new String(data, 0, data.length));
 					}
-
 				}
 			}
 			else {
 				ret = av_write_frame(outputFormatContext, tmpPacket);
 				if (ret < 0) {
-					logger.info("cannot write frame to muxer");
+					byte[] data = new byte[2048];
+					av_strerror(ret, data, data.length);
+					logger.info("cannot write video frame to muxer. Error is {} ", new String(data, 0, data.length));
 				}
 			}
 
 			av_packet_unref(tmpPacket);
-
-			pkt.pts(pts);
-			pkt.dts(dts);
-			pkt.duration(duration);
-			pkt.pos(pos);
 		}
 		else {
-
-			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
-			pkt.pos(-1);
-
 			ret = av_write_frame(outputFormatContext, pkt);
 			if (ret < 0) {
-				logger.info("cannot write frame to muxer");
+				byte[] data = new byte[2048];
+				av_strerror(ret, data, data.length);
+				logger.info("cannot write frame(not video) to muxer. Error is {} ", new String(data, 0, data.length));
 			}
-
-			pkt.pts(pts);
-			pkt.dts(dts);
-			pkt.duration(duration);
-			pkt.pos(pos);
 		}
+		pkt.pts(pts);
+		pkt.dts(dts);
+		pkt.duration(duration);
+		pkt.pos(pos);
 
 	}
 
@@ -565,6 +557,7 @@ public class HLSMuxer extends Muxer  {
 			logger.error("Undefined codec type ");
 			return;
 		}
+		
 		AVStream out_stream = getOutputFormatContext().streams(streamIndex);
 		int index = avpacket.stream_index();
 		avpacket.stream_index(streamIndex);
