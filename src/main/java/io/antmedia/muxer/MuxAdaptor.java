@@ -123,6 +123,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
 	protected long timeDiffBetweenVideoandElapsed;
+	protected long elapsedTime;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
@@ -431,9 +432,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
 
 		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
-		long duration = currentTime - startTime;
-
-		double speed= (double)packetTime/duration;
+		elapsedTime = currentTime - startTime;
 
 		//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 		String quality = QUALITY_POOR;
@@ -453,7 +452,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Number of items in the queue {}", inputQueueSize);
 		}
 
-		changeStreamQualityParameters(this.name, quality, packetTime, duration, inputQueueSize);
+		changeStreamQualityParameters(this.name, quality, packetTime, elapsedTime, inputQueueSize);
 		
 		if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
