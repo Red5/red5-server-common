@@ -170,7 +170,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource) {
 		MuxAdaptor muxAdaptor = null;
-		setStreamSource(isSource);
 		try {
 
 			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
@@ -184,6 +183,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxAdaptor == null) {
 			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
 		}
+		muxAdaptor.setStreamSource(isSource);
 
 		return muxAdaptor;
 	}
@@ -725,12 +725,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.encoderSettingsList = encoderSettingsList;
 	}
 	
-	public static boolean isStreamSource() {
+	public boolean isStreamSource() {
 		return isStreamSource;
 	}
 
-	public static void setStreamSource(boolean isStreamSource) {
-		MuxAdaptor.isStreamSource = isStreamSource;
+	public void setStreamSource(boolean isStreamSource) {
+		this.isStreamSource = isStreamSource;
 	}
 	
 	
