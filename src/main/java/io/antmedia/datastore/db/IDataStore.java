@@ -113,6 +113,12 @@ public interface IDataStore {
 	 * <code>null</code> if there is no matching id
 	 */
 	SocialEndpointCredentials getSocialEndpointCredentials(String id);
+	
+	/**
+	 * Return the number of active broadcasts in the server
+	 * @return
+	 */
+	long getActiveBroadcastCount();
 
 
 }
