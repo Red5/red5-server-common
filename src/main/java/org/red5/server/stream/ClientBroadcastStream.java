@@ -937,7 +937,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this);
+		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this,false);
 
 		setUpEndPoints(appCtx, publishedName, localMuxAdaptor);
 		

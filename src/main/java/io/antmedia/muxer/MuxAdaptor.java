@@ -117,6 +117,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
 	protected long timeDiffBetweenVideoandElapsed;
+	protected static boolean isStreamSource=false;
+
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
@@ -166,8 +168,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	};
 	
-	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource) {
 		MuxAdaptor muxAdaptor = null;
+		setStreamSource(isSource);
 		try {
 
 			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
@@ -252,7 +255,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
+			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, isStreamSource());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer");
@@ -720,6 +723,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setEncoderSettingsList(List<EncoderSettings> encoderSettingsList) {
 		this.encoderSettingsList = encoderSettingsList;
+	}
+	
+	public static boolean isStreamSource() {
+		return isStreamSource;
+	}
+
+	public static void setStreamSource(boolean isStreamSource) {
+		MuxAdaptor.isStreamSource = isStreamSource;
 	}
 	
 	
