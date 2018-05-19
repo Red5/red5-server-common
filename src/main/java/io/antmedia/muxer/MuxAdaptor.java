@@ -111,7 +111,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected long startTime;
 	protected IScope scope;
 	private String oldQuality;
-	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
 	private String mp4Filtername;
@@ -466,6 +465,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
+		
+		if (timeBaseForMS != null) {
+			timeBaseForMS.close();
+			timeBaseForMS = null;
+		}
 	}
 
 
@@ -494,6 +498,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		inputFormatContext = null;
 		isRecording = false;
+		
 
 		changeSourceQuality(this.name, QUALITY_NA);
 		changeSourceSpeed(this.name, 0);

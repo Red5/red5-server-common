@@ -383,11 +383,18 @@ public class HLSMuxer extends Muxer  {
 			return;
 		}
 		isRunning.set(false);
+		if (avRationalTimeBase != null) {
+			avRationalTimeBase.close();
+			avRationalTimeBase = null;
+		}
+		
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
+			bsfContext = null;
 		}
 		if (tmpPacket != null) {
 			av_packet_free(tmpPacket);
+			tmpPacket = null;
 		}
 
 		if (outputFormatContext != null) {
