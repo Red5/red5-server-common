@@ -108,9 +108,9 @@ public class HLSMuxer extends Muxer  {
 		extension = ".m3u8";
 		format = "hls";
 		this.isStreamSource = isSource;
-		
+
 		logger.info("HLS Muxer initialized with Stream Source : {}", String.valueOf(isStreamSource));
-		
+
 		if (hlsListSize != null) {
 			this.hlsListSize = hlsListSize;
 		}
@@ -135,7 +135,7 @@ public class HLSMuxer extends Muxer  {
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
 			super.init(scope, name, resolutionHeight);
-			
+
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
 
@@ -147,10 +147,10 @@ public class HLSMuxer extends Muxer  {
 			}
 
 			if(isStreamSource) {
-				
-	
+
+
 				options.put("hls_flags", "delete_segments+omit_endlist+append_list");
-		
+
 
 			} else {
 				options.put("hls_flags", "delete_segments");
@@ -387,7 +387,7 @@ public class HLSMuxer extends Muxer  {
 			avRationalTimeBase.close();
 			avRationalTimeBase = null;
 		}
-		
+
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 			bsfContext = null;
@@ -426,14 +426,16 @@ public class HLSMuxer extends Muxer  {
 						}
 					});
 
-					for (int i = 0; i < files.length; i++) {
-						try {
-							if (!files[i].exists()) {
-								continue;
+					if (files != null) {
+						for (int i = 0; i < files.length; i++) {
+							try {
+								if (!files[i].exists()) {
+									continue;
+								}
+								Files.delete(files[i].toPath());
+							} catch (IOException e) {
+								e.printStackTrace();
 							}
-							Files.delete(files[i].toPath());
-						} catch (IOException e) {
-							e.printStackTrace();
 						}
 					}
 					if (file.exists()) {
