@@ -54,12 +54,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+<<<<<<< HEAD
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
 import io.antmedia.datastore.db.IDataStore;
 
+=======
+>>>>>>> refs/remotes/origin/save_detection
 import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
@@ -109,14 +112,23 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
+
 	protected IScope scope;
+
+	
+	private String objectDetectionModelDir = null;
+
+
 	private String oldQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
+
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
 	protected long timeDiffBetweenVideoandElapsed;
 	protected static boolean isStreamSource=false;
+
+	private int previewCreatePeriod;
 
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
@@ -328,6 +340,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxerList.isEmpty()) {
 			return false;
 		}
+
+		startTime = System.currentTimeMillis();
+
 		return true;
 	}
 
@@ -350,20 +365,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	public void changeSourceSpeed(String id, double speed) {
-
-
 		speedCounter++;
 
 		if(speedCounter % 600==0) {
-
-
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			Object bean = appCtx.getBean("web.handler");
 			if (bean instanceof IMuxerListener) {
 				((IMuxerListener)bean).sourceSpeedChanged(id, speed);
 			}
-
 		}
 	}
 
@@ -394,7 +404,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
+
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
+
+
 					av_packet_unref(pkt);
 				} 
 				else {
@@ -718,6 +731,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return startTime;
 	}
 
+
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
 	}
@@ -740,4 +754,24 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	
 
+
+
+	public String getObjectDetectionModelDir() {
+		return objectDetectionModelDir;
+	}
+
+	public void setObjectDetectionModelDir(String objectDetectionModelDir) {
+		this.objectDetectionModelDir = objectDetectionModelDir;
+	}
+
+	public int getPreviewCreatePeriod() {
+		return previewCreatePeriod;
+	}
+	
+	public void setPreviewCreatePeriod(int previewCreatePeriod) {
+		this.previewCreatePeriod = previewCreatePeriod;
+	}
+
 }
+
+

@@ -941,11 +941,15 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
 		setUpEndPoints(appCtx, publishedName, localMuxAdaptor);
 		
+
 		try {
 			if (conn == null) {
 				throw new IOException("Stream is no longer connected");
+
 			}
+
 			localMuxAdaptor.init(conn, publishedName, false);
+
 			
 			addStreamListener(localMuxAdaptor);
 			this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);

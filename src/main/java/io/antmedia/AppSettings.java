@@ -85,6 +85,7 @@ public class AppSettings {
 	private boolean previewOverwrite = false;
 
 	/**
+<<<<<<< HEAD
 	 * Address of the Stalker Portal DB server 
 	 */
 	private String stalkerDBServer;
@@ -100,6 +101,15 @@ public class AppSettings {
 	private String stalkerDBPassword;
 	
 	
+=======
+	 * The directory contains the tensorflow object detection model
+	 */
+	private String objectDetectionDir;
+
+
+	private int createPreviewPeriod;
+
+>>>>>>> refs/remotes/origin/save_detection
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -241,6 +251,14 @@ public class AppSettings {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
 	}
 
+	public String getObjectDetectionDir() {
+		return objectDetectionDir;
+	}
+	
+	public void setObjectDetectionDir(String modelDir) {
+		this.objectDetectionDir = modelDir;
+	}
+
 	public String getYoutubeClientSecret() {
 		return youtubeClientSecret;
 	}
@@ -296,6 +314,14 @@ public class AppSettings {
 
 	public void setVodFolder(String vodFolder) {
 		this.vodFolder = vodFolder;
+	}
+	
+	public int getCreatePreviewPeriod() {
+		return createPreviewPeriod;
+	}
+	
+	public void setCreatePreviewPeriod(int period) {
+		this.createPreviewPeriod = period;
 	}
 
 	public boolean isPreviewOverwrite() {

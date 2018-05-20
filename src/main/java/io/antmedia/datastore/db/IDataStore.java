@@ -5,15 +5,24 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
 	
-	public static final String BEAN_NAME = "db.datastore"; 
+
+ 
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
 	
+
+	/**
+	 * This is the bean name that implements IDataStore
+	 */
+	public static final String BEAN_NAME = "db.datastore";
+
+
 	String save(Broadcast broadcast);
 
 	Broadcast get(String id);
@@ -60,7 +69,15 @@ public interface IDataStore {
 
 	long getTotalVodNumber();
 	
+
 	long getTotalBroadcastNumber();
+
+	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
+	
+	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
+	
+	List<TensorFlowObject> getDetection(String id);
+
 	
 
 	/**
