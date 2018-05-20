@@ -6,7 +6,6 @@
 		<version>1.3.5-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
-	<version>${project.parent.version}</version>
 	<artifactId>red5-server-common</artifactId>
 	<name>Red5 :: Common server classes</name>
 	<description>Classes common for multiple red5 projects</description>
@@ -278,4 +277,5 @@
 		</dependency>
 	</dependencies>
 	
+	<groupId>org.red5</groupId>
 </project>
