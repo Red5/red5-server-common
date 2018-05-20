@@ -54,15 +54,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-<<<<<<< HEAD
+
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
 import io.antmedia.datastore.db.IDataStore;
 
-=======
->>>>>>> refs/remotes/origin/save_detection
 import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
