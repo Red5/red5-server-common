@@ -100,12 +100,17 @@ public class HLSMuxer extends Muxer  {
 	private boolean deleteFileOnExit = true;
 	private int audioIndex;
 	private int videoIndex;
+	private boolean isStreamSource=false;
 
 
-	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType) {
+	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType, boolean isSource) {
 		super(scheduler);
 		extension = ".m3u8";
 		format = "hls";
+		this.isStreamSource = isSource;
+
+		logger.info("HLS Muxer initialized with Stream Source : {}", String.valueOf(isStreamSource));
+
 		if (hlsListSize != null) {
 			this.hlsListSize = hlsListSize;
 		}
@@ -133,12 +138,22 @@ public class HLSMuxer extends Muxer  {
 
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
-			options.put("hls_flags", "delete_segments");
+
 			String segmentFilename =  file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
 			options.put("hls_segment_filename", segmentFilename);
 
 			if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
 				options.put("hls_playlist_type", hlsPlayListType);
+			}
+
+			if(isStreamSource) {
+
+
+				options.put("hls_flags", "delete_segments+omit_endlist+append_list");
+
+
+			} else {
+				options.put("hls_flags", "delete_segments");
 			}
 
 			tmpPacket = avcodec.av_packet_alloc();
@@ -306,7 +321,7 @@ public class HLSMuxer extends Muxer  {
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
-		
+
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
 			ret = av_copy_packet(tmpPacket , pkt);
@@ -368,11 +383,18 @@ public class HLSMuxer extends Muxer  {
 			return;
 		}
 		isRunning.set(false);
+		if (avRationalTimeBase != null) {
+			avRationalTimeBase.close();
+			avRationalTimeBase = null;
+		}
+
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
+			bsfContext = null;
 		}
 		if (tmpPacket != null) {
 			av_packet_free(tmpPacket);
+			tmpPacket = null;
 		}
 
 		if (outputFormatContext != null) {
@@ -406,6 +428,7 @@ public class HLSMuxer extends Muxer  {
 
 					if (files != null) 
 					{
+
 						for (int i = 0; i < files.length; i++) {
 							try {
 								if (!files[i].exists()) {
@@ -557,7 +580,7 @@ public class HLSMuxer extends Muxer  {
 			logger.error("Undefined codec type ");
 			return;
 		}
-		
+
 		AVStream out_stream = getOutputFormatContext().streams(streamIndex);
 		int index = avpacket.stream_index();
 		avpacket.stream_index(streamIndex);

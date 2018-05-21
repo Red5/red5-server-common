@@ -937,15 +937,19 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this);
+		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this,false);
 
 		setUpEndPoints(appCtx, publishedName, localMuxAdaptor);
 		
+
 		try {
 			if (conn == null) {
 				throw new IOException("Stream is no longer connected");
+
 			}
+
 			localMuxAdaptor.init(conn, publishedName, false);
+
 			
 			addStreamListener(localMuxAdaptor);
 			this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);

@@ -12,7 +12,7 @@ import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 public class AppSettings {
-	
+
 	public static final String BEAN_NAME = "app.settings";
 
 
@@ -29,56 +29,56 @@ public class AppSettings {
 	private String hlsTime = null;
 
 	private boolean webRTCEnabled = false;
-	
+
 	private boolean deleteHLSFilesOnEnded = true;
-	
+
 	private String listenerHookURL;
-	
-	
+
+
 	private boolean acceptOnlyStreamsInDataStore;
 
 	/**
 	 * Fully qualified server name
 	 */
 	private String serverName;
-	
+
 	/**
 	 * event or vod
 	 */
 	private String hlsPlayListType = null;
-	
+
 	/**
 	 * Facebook client id
 	 */
 	private String facebookClientId;
-	
+
 	/**
 	 * Facebook client secret
 	 */
 	private String facebookClientSecret;
-  	
+
 	/**
 	 * Periscope app client id
 	 */
 	private String  periscopeClientId;
-	
+
 	/**
 	 * Periscope app client secret
 	 */
 	private String  periscopeClientSecret;
-	
-  	/**
-  	 * Youtube client id
-  	 */
+
+	/**
+	 * Youtube client id
+	 */
 	private String youtubeClientId;
-	
+
 	/**
 	 * Youtube client secret
 	 */
 	private String youtubeClientSecret;
-	
+
 	private String vodFolder;
-	
+
 	/**
 	 * Overwrite preview files if exist, default value is false
 	 */
@@ -88,18 +88,28 @@ public class AppSettings {
 	 * Address of the Stalker Portal DB server 
 	 */
 	private String stalkerDBServer;
-	
+
 	/**
 	 * Username of stalker portal DB
 	 */
 	private String stalkerDBUsername;
-	
+
 	/**
 	 * Password of the stalker portal DB User
 	 */
 	private String stalkerDBPassword;
-	
-	
+
+
+
+	/**
+	 * The directory contains the tensorflow object detection model
+	 */
+	private String objectDetectionDir;
+
+
+	private int createPreviewPeriod;
+
+
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -241,6 +251,14 @@ public class AppSettings {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
 	}
 
+	public String getObjectDetectionDir() {
+		return objectDetectionDir;
+	}
+
+	public void setObjectDetectionDir(String modelDir) {
+		this.objectDetectionDir = modelDir;
+	}
+
 	public String getYoutubeClientSecret() {
 		return youtubeClientSecret;
 	}
@@ -288,7 +306,7 @@ public class AppSettings {
 	public void setFacebookClientId(String facebookClientId) {
 		this.facebookClientId = facebookClientId;
 	}
-	
+
 
 	public String getVodFolder() {
 		return vodFolder;
@@ -296,6 +314,14 @@ public class AppSettings {
 
 	public void setVodFolder(String vodFolder) {
 		this.vodFolder = vodFolder;
+	}
+
+	public int getCreatePreviewPeriod() {
+		return createPreviewPeriod;
+	}
+
+	public void setCreatePreviewPeriod(int period) {
+		this.createPreviewPeriod = period;
 	}
 
 	public boolean isPreviewOverwrite() {

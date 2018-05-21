@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
+
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 
 import io.antmedia.AppSettings;
@@ -112,18 +113,28 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean firstKeyFrameReceived = false;
 	private String name;
 	protected long startTime;
+
 	protected IScope scope;
+
+	
+	private String objectDetectionModelDir = null;
+
+
 	private String oldQuality;
-	private String newQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
 	
 	private InputContext inputContext;
 	private IAntMediaStreamHandler appAdapter;
+
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
 	protected long timeDiffBetweenVideoandElapsed;
 	protected long elapsedTime;
+	protected static boolean isStreamSource=false;
+
+	private int previewCreatePeriod;
+
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
@@ -175,7 +186,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	};
 	
-	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource) {
 		MuxAdaptor muxAdaptor = null;
 		try {
 
@@ -190,6 +201,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxAdaptor == null) {
 			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
 		}
+		muxAdaptor.setStreamSource(isSource);
 
 		return muxAdaptor;
 	}
@@ -262,7 +274,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
+			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, isStreamSource());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer");
@@ -340,6 +352,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (muxerList.isEmpty()) {
 			return false;
 		}
+
+		startTime = System.currentTimeMillis();
+
 		return true;
 	}
 
@@ -369,9 +384,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	private IAntMediaStreamHandler getStreamHandler() {
 		if (appAdapter == null) {
+
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			appAdapter = (IAntMediaStreamHandler)appCtx.getBean("web.handler");
+
 		}
 		return appAdapter;
 	}
@@ -403,11 +420,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
-					
-
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 					av_packet_unref(pkt);
-
 				} 
 				else {
 					closeResources();
@@ -478,6 +492,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
+		
+		if (timeBaseForMS != null) {
+			timeBaseForMS.close();
+			timeBaseForMS = null;
+		}
 	}
 
 
@@ -506,6 +525,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		inputFormatContext = null;
 		isRecording = false;
+		
 
 		changeStreamQualityParameters(this.name, QUALITY_NA, 0, 0, getInputQueueSize());
 	
@@ -747,6 +767,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return startTime;
 	}
 
+
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
 	}
@@ -759,6 +780,34 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.encoderSettingsList = encoderSettingsList;
 	}
 	
+	public boolean isStreamSource() {
+		return isStreamSource;
+	}
+
+	public void setStreamSource(boolean isStreamSource) {
+		this.isStreamSource = isStreamSource;
+	}
+	
 	
 
+
+
+	public String getObjectDetectionModelDir() {
+		return objectDetectionModelDir;
+	}
+
+	public void setObjectDetectionModelDir(String objectDetectionModelDir) {
+		this.objectDetectionModelDir = objectDetectionModelDir;
+	}
+
+	public int getPreviewCreatePeriod() {
+		return previewCreatePeriod;
+	}
+	
+	public void setPreviewCreatePeriod(int previewCreatePeriod) {
+		this.previewCreatePeriod = previewCreatePeriod;
+	}
+
 }
+
+
