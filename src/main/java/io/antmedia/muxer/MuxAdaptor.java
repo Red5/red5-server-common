@@ -111,7 +111,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected boolean firstKeyFrameReceived = false;
-	private String name;
+	protected String streamId;
 	protected long startTime;
 
 	protected IScope scope;
@@ -246,7 +246,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
 		
-		this.name = name;
+		this.streamId = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
 		this.scope=scope;
 
@@ -337,7 +337,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		if (av_log_get_level() >= AV_LOG_INFO) {
 			// Dump information about file onto standard error
-			av_dump_format(inputFormatContext, 0, name, 0);
+			av_dump_format(inputFormatContext, 0, streamId, 0);
 		}
 
 		Iterator<Muxer> iterator = muxerList.iterator();
@@ -466,7 +466,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Number of items in the queue {}", inputQueueSize);
 		}
 
-		changeStreamQualityParameters(this.name, quality, packetTime, elapsedTime, inputQueueSize);
+		changeStreamQualityParameters(this.streamId, quality, packetTime, elapsedTime, inputQueueSize);
 		
 		if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -527,7 +527,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		isRecording = false;
 		
 
-		changeStreamQualityParameters(this.name, QUALITY_NA, 0, 0, getInputQueueSize());
+		changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, 0, getInputQueueSize());
 	
 	}
 
@@ -806,6 +806,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	public void setPreviewCreatePeriod(int previewCreatePeriod) {
 		this.previewCreatePeriod = previewCreatePeriod;
+	}
+
+	public String getStreamId() {
+		return streamId;
+	}
+
+	public void setStreamId(String streamId) {
+		this.streamId = streamId;
 	}
 
 }
