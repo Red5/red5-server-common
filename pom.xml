@@ -138,7 +138,7 @@
 			<dependency>
 				<groupId>org.red5</groupId>
 				<artifactId>red5-io</artifactId>
-				<version>${project.parent.version}</version>
+				<version>${red5-io.version}</version>
 				<exclusions>
 					<exclusion>
 						<artifactId>bcprov-jdk15on</artifactId>
