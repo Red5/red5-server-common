@@ -30,7 +30,7 @@ public class AppSettings {
 
 	private boolean webRTCEnabled = false;
 
-	private boolean deleteHLSFilesOnEnded = true;
+	private boolean deleteHLSFilesOnEnded = false;
 
 	private String listenerHookURL;
 
