@@ -99,8 +99,6 @@ public class AppSettings {
 	 */
 	private String stalkerDBPassword;
 
-
-
 	/**
 	 * The directory contains the tensorflow object detection model
 	 */
@@ -109,6 +107,10 @@ public class AppSettings {
 
 	private int createPreviewPeriod;
 
+	/**
+	 * Restart stream fetcher period in seconds
+	 */
+	private int restartStreamFetcherPeriod = 0;
 
 
 	public boolean isAddDateTimeToMp4FileName() {
@@ -354,5 +356,13 @@ public class AppSettings {
 
 	public void setStalkerDBPassword(String stalkerDBPassword) {
 		this.stalkerDBPassword = stalkerDBPassword;
+	}
+
+	public int getRestartStreamFetcherPeriod() {
+		return this.restartStreamFetcherPeriod ;
+	}
+
+	public void setRestartStreamFetcherPeriod(int restartStreamFetcherPeriod) {
+		this.restartStreamFetcherPeriod = restartStreamFetcherPeriod;
 	}
 }
