@@ -53,23 +53,16 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
-
-	boolean editCameraInfo(Broadcast camera);
-
-
 	List<Broadcast> getExternalStreamsList();
 
 	void close();
 
 	List<Vod> getVodList(int offset, int size);
 
-
-
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
 	
-
 	long getTotalBroadcastNumber();
 
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
@@ -136,6 +129,8 @@ public interface IDataStore {
 	 * @return
 	 */
 	long getActiveBroadcastCount();
+
+	boolean editStreamSourceInfo(Broadcast broadcast);
 
 
 }
