@@ -55,11 +55,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.IDataStore;
 
 import io.antmedia.storage.StorageClient;
 
@@ -113,10 +111,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected IScope scope;
 
-	
 	private String objectDetectionModelDir = null;
-
-
+	
 	private String oldQuality;
 	private AVRational timeBaseForMS;
 	private int speedCounter=0;
@@ -127,8 +123,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected static boolean isStreamSource=false;
 
 	private int previewCreatePeriod;
-
-
+	
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 		
 		@Override
@@ -405,7 +400,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
-
 					av_packet_unref(pkt);
 				} 
 				else {
@@ -416,7 +410,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				if (inputQueue.peek() == null || inputFormatContext == null) {
 					break;
 				}
-				// break;
 			}
 
 			isPipeReaderJobRunning.compareAndSet(true, false);
