@@ -39,8 +39,7 @@
 		<developerConnection>scm:git:git@github.com:Red5/red5-server-common.git</developerConnection>
 	</scm>
 	<properties>
-		<javacpp.ffmpeg.version>3.2.1-1.3</javacpp.ffmpeg.version>
-		<guava.version>21.0</guava.version>
+		<finalName>${project.artifactId}</finalName>
 	</properties>
 	<developers>
 		<developer>
@@ -74,6 +73,7 @@
 	</repositories>
 	<build>
 		<defaultGoal>install</defaultGoal>
+		<finalName>${finalName}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
