@@ -43,6 +43,7 @@
 	</scm>
 	<properties>
 		<finalName>${project.artifactId}</finalName>
+		<guava.lib.version>21.0</guava.lib.version>
 	</properties>
 	<developers>
 		<developer>
