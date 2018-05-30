@@ -112,6 +112,11 @@ public class AppSettings {
 	 */
 	private int restartStreamFetcherPeriod = 0;
 
+	/**
+	 * Stream fetcher buffer time in milliseconds. 
+	 * Stream is buffered for this duration and after that it will be started.
+	 */
+	private int streamFetcherBufferTime = 0;
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -364,5 +369,13 @@ public class AppSettings {
 
 	public void setRestartStreamFetcherPeriod(int restartStreamFetcherPeriod) {
 		this.restartStreamFetcherPeriod = restartStreamFetcherPeriod;
+	}
+
+	public int getStreamFetcherBufferTime() {
+		return streamFetcherBufferTime;
+	}
+
+	public void setStreamFetcherBufferTime(int streamFetcherBufferTime) {
+		this.streamFetcherBufferTime = streamFetcherBufferTime;
 	}
 }
