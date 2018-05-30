@@ -56,11 +56,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.IDataStore;
 
 import io.antmedia.storage.StorageClient;
 
@@ -116,9 +114,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected IScope scope;
 
-	
 	private String objectDetectionModelDir = null;
-
 
 	private String oldQuality;
 	private AVRational timeBaseForMS;
@@ -135,9 +131,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private int previewCreatePeriod;
 
-
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
-		
+
 		@Override
 		public int call(Pointer opaque, BytePointer buf, int buf_size) {
 			int length = -1;
@@ -185,19 +180,34 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 	};
-	
-	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource) {
+
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource, IScope scope) {
 		MuxAdaptor muxAdaptor = null;
-		try {
+		ApplicationContext applicationContext = scope.getContext().getApplicationContext();
+		boolean tryEncoderAdaptor = false;
+		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) 
+		{
+			AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
+			List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
+			if (list != null && list.size() > 0) 
+			{
+				tryEncoderAdaptor = true;
+			}
+		}
 
-			Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+		if (tryEncoderAdaptor) {
+			//if adaptive bitrate enabled, take a look at encoder adaptor exists
+			//if it is not enabled, then initialize only mux adaptor
+			try {
+				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
 
-			muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
-					.newInstance(clientBroadcastStream);
+				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
+						.newInstance(clientBroadcastStream);
 
-		} catch (Exception e) {
-			//e.printStackTrace();
-		} 
+			} catch (Exception e) {
+				//e.printStackTrace();
+			} 
+		}
 		if (muxAdaptor == null) {
 			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
 		}
@@ -225,13 +235,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		return init(conn.getScope(), name, isAppend);
 	}
-	
+
 	protected void enableSettings() {
 		AppSettings appSettings = getAppSettings();
 		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-		
-		
+
+
 		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
 		mp4Filtername = null;
 		webRTCEnabled = getAppSettings().isWebRTCEnabled();
@@ -251,7 +261,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.scope=scope;
 
 		enableSettings();
-		
+
 		if (scope.getContext().getApplicationContext().containsBean("app.storageClient")) {
 			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean("app.storageClient");
 			setStorageClient(storageClient);
@@ -328,7 +338,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		return prepareInternal(inputFormatContext);
 	}
-	
+
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception{
 		return prepareMuxers(inputFormatContext);
 	}
@@ -421,6 +431,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 				if (ret >= 0) {
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
+
 					av_packet_unref(pkt);
 				} 
 				else {
@@ -431,7 +442,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				if (inputQueue.peek() == null || inputFormatContext == null) {
 					break;
 				}
-				// break;
 			}
 
 			isPipeReaderJobRunning.compareAndSet(true, false);
@@ -492,7 +502,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
-		
+
 		if (timeBaseForMS != null) {
 			timeBaseForMS.close();
 			timeBaseForMS = null;
@@ -507,11 +517,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("removing scheduled job {} ", packetFeederJobName);
 			scheduler.removeScheduledJob(packetFeederJobName);
 		}
-		
+
 		writeTrailer(inputFormatContext);
-		
+
 		queueReferences.remove(inputFormatContext);
-		
+
 		avformat_close_input(inputFormatContext);
 
 		if (avio_alloc_context != null) {
@@ -525,7 +535,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		inputFormatContext = null;
 		isRecording = false;
-		
+
 
 		changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, 0, getInputQueueSize());
 	
@@ -779,7 +789,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setEncoderSettingsList(List<EncoderSettings> encoderSettingsList) {
 		this.encoderSettingsList = encoderSettingsList;
 	}
-	
+
 	public boolean isStreamSource() {
 		return isStreamSource;
 	}
@@ -787,8 +797,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setStreamSource(boolean isStreamSource) {
 		this.isStreamSource = isStreamSource;
 	}
-	
-	
+
+
 
 
 
@@ -803,7 +813,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public int getPreviewCreatePeriod() {
 		return previewCreatePeriod;
 	}
-	
+
 	public void setPreviewCreatePeriod(int previewCreatePeriod) {
 		this.previewCreatePeriod = previewCreatePeriod;
 	}
