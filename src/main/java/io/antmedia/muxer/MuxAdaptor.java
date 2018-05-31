@@ -118,8 +118,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private String oldQuality;
 	private AVRational timeBaseForMS;
-	private int speedCounter=0;
-	
 	private InputContext inputContext;
 	private IAntMediaStreamHandler appAdapter;
 
@@ -382,7 +380,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double packetTime, double duration, int inputQueueSize) {
-		speedCounter++;
 		double speed = 0;
 		if (duration > 0) {
 			speed = packetTime/duration;
