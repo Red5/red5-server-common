@@ -130,6 +130,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected static boolean isStreamSource=false;
 
 	private int previewCreatePeriod;
+	private double oldspeed;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -382,13 +383,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double packetTime, double duration, int inputQueueSize) {
 		speedCounter++;
-		if((quality != null && !quality.equals(oldQuality)) || speedCounter % 600 == 0) {
-			double speed = 0;
-			if (duration > 0) {
-				speed = packetTime/duration;
-			}
+		double speed = 0;
+		if (duration > 0) {
+			speed = packetTime/duration;
+		}
+		
+		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.1) {
+			
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
+			oldspeed = speed;
 		}
 	}
 	
