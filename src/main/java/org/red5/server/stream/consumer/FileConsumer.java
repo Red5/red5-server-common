@@ -16,6 +16,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.red5.codec.VideoCodec;
 import org.red5.io.ITag;
 import org.red5.io.ITagWriter;
 import org.red5.io.flv.impl.FLVWriter;
@@ -32,6 +33,7 @@ import org.red5.server.messaging.IPushableConsumer;
 import org.red5.server.messaging.OOBControlMessage;
 import org.red5.server.messaging.PipeConnectionEvent;
 import org.red5.server.net.rtmp.event.IRTMPEvent;
+import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.stream.DefaultStreamFilenameGenerator;
 import org.red5.server.stream.IStreamData;
@@ -44,7 +46,7 @@ import org.springframework.beans.factory.DisposableBean;
 
 /**
  * Consumer that pushes messages to a writer using priority / comparison.
- * 
+ *
  * @author The Red5 Project
  * @author Paul Gregoire (mondain@gmail.com)
  */
@@ -107,6 +109,8 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
      */
     private volatile Future<?> writerFuture;
 
+    private volatile boolean gotKeyFrame = false;
+
     /**
      * Threshold / size for the queue.
      */
@@ -135,7 +139,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Creates file consumer
-     * 
+     *
      * @param scope
      *            Scope of consumer
      * @param file
@@ -149,7 +153,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Creates file consumer
-     * 
+     *
      * @param scope
      *            Scope of consumer
      * @param fileName
@@ -166,7 +170,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Push message through pipe
-     * 
+     *
      * @param pipe
      *            Pipe
      * @param message
@@ -181,9 +185,15 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
             // if writes are delayed, queue the data and sort it by time
             if (queue == null) {
                 if (usePriority) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("Creating priority typed packet queue. queueThreshold={}", queueThreshold);
+                    }
                     // if we want ordering / comparing built-in
                     queue = new PriorityBlockingQueue<>(queueThreshold <= 0 ? 240 : queueThreshold, comparator);
                 } else {
+                    if (log.isTraceEnabled()) {
+                        log.trace("Creating non-priority typed packet queue");
+                    }
                     // process as received
                     queue = new LinkedBlockingQueue<>();
                 }
@@ -205,7 +215,19 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                 }
                 // offer to the queue
                 try {
-                    queue.offer(new QueuedMediaData(timestamp, dataType, (IStreamData) msg), offerTimeout, TimeUnit.MILLISECONDS);
+                    QueuedMediaData queued = new QueuedMediaData(timestamp, dataType, (IStreamData) msg);
+                    if (log.isTraceEnabled()) {
+                        log.trace("Inserting packet into queue. timestamp: {} queue size: {}, codecId={}, isConfig={}", timestamp, queue.size(), queued.codecId, queued.config);
+                    }
+                    if (queue.size() > queueThreshold) {
+                        if (queue.size() % 20 == 0) {
+                            log.warn("Queue size is greater than threshold. queue size={} threshold={}", queue.size(), queueThreshold);
+                        }
+                    }
+                    if (queue.size() < 2 * queueThreshold) {
+                        // Cap queue size to prevent a runaway stream causing OOM.
+                        queue.offer(queued, offerTimeout, TimeUnit.MILLISECONDS);
+                    }
                 } catch (InterruptedException e) {
                     log.warn("Stream data was not accepted by the queue - timestamp: {} data type: {}", timestamp, dataType, e);
                 }
@@ -216,39 +238,77 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                     public void run() {
                         Thread.currentThread().setName("ProFileConsumer-" + path.getFileName());
                         try {
+                            if (log.isTraceEnabled()) {
+                                log.trace("Running FileConsumer thread. queue size: {} initialized: {} writerNotNull={}", queue.size(), initialized, (writer != null));
+                            }
                             init();
                             while (writer != null) {
-                                QueuedMediaData queued = queue.take();
-                                if (queued != null) {
-                                    // get data type
-                                    byte dataType = queued.getDataType();
-                                    // get timestamp
-                                    int timestamp = queued.getTimestamp();
-                                    ITag tag = queued.getData();
-                                    // ensure that our first video frame written is a key frame
-                                    if (queued.isVideo()) {
-                                        log.debug("pushMessage video - waitForVideoKeyframe: {} gotVideoKeyframe: {}", waitForVideoKeyframe, (videoConfigurationTag != null));
-                                        if (queued.isConfig()) {
-                                            videoConfigurationTag = tag;
+                                if (log.isTraceEnabled()) {
+                                    log.trace("Processing packet from queue. queue size: {}", queue.size());
+                                }
+
+                                try {
+                                    QueuedMediaData queued = queue.take();
+                                    if (queued != null) {
+                                        // get data type
+                                        byte dataType = queued.getDataType();
+                                        // get timestamp
+                                        int timestamp = queued.getTimestamp();
+                                        ITag tag = queued.getData();
+                                        // ensure that our first video frame written is a key frame
+                                        if (queued.isVideo()) {
+                                            if (log.isTraceEnabled()) {
+                                               log.trace("pushMessage video - waitForKeyframe: {} gotKeyframe: {} timestamp: {}", waitForVideoKeyframe, gotKeyFrame, queued.getTimestamp());
+                                            }
+                                            if (queued.codecId == VideoCodec.AVC.getId()) {
+                                                if (queued.isConfig()) {
+                                                    videoConfigurationTag = tag;
+                                                    gotKeyFrame = true;
+                                                }
+                                                if (videoConfigurationTag == null && waitForVideoKeyframe) {
+                                                 continue;
+                                                }
+                                            } else {
+                                                if (queued.frameType == VideoData.FrameType.KEYFRAME) {
+                                                    gotKeyFrame = true;
+                                                }
+                                                if (waitForVideoKeyframe && !gotKeyFrame) {
+                                                    continue;
+                                                }
+                                            }
+                                        } else if (queued.isAudio()) {
+                                            if (queued.isConfig()) {
+                                                audioConfigurationTag = tag;
+                                            }
                                         }
-                                        if (videoConfigurationTag == null && waitForVideoKeyframe) {
-                                            continue;
+
+                                        if (queued.isVideo()) {
+                                            if (log.isTraceEnabled()) {
+                                                log.trace("Writing packet. frameType={} timestamp={}", queued.frameType, queued.getTimestamp() );
+                                            }
                                         }
-                                    } else if (queued.isAudio()) {
-                                        if (queued.isConfig()) {
-                                            audioConfigurationTag = tag;
+
+                                        // write
+                                        write(dataType, timestamp, tag);
+                                        // clean up
+                                        queued.dispose();
+                                    } else {
+                                        if (log.isTraceEnabled()) {
+                                            log.trace("Queued media is null. queue size: {}", queue.size());
                                         }
                                     }
-                                    // write
-                                    write(dataType, timestamp, tag);
-                                    // clean up
-                                    queued.dispose();
+                                } catch (InterruptedException e) {
+                                    log.warn("{}", e.getMessage(), e);
                                 }
+                                //finally {
+                                //    if (log.isTraceEnabled()) {
+                                //        log.trace("Clearing queue. queue size: {}", queue.size());
+                                //    }
+                                //    queue.clear();
+                                //}
                             }
-                        } catch (Exception e) {
+                        } catch (IOException e) {
                             log.warn("{}", e.getMessage(), e);
-                        } finally {
-                            queue.clear();
                         }
                     }
                 });
@@ -262,7 +322,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Out-of-band control message handler
-     * 
+     *
      * @param source
      *            Source of message
      * @param pipe
@@ -275,7 +335,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Pipe connection event handler
-     * 
+     *
      * @param event
      *            Pipe connection event
      */
@@ -295,7 +355,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Initialization
-     * 
+     *
      * @throws IOException
      *             I/O exception
      */
@@ -381,7 +441,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Adjust timestamp and write to the file.
-     * 
+     *
      * @param queued
      *            queued data for write
      */
@@ -440,7 +500,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Sets the scope for this consumer.
-     * 
+     *
      * @param scope
      *            scope
      */
@@ -450,7 +510,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Sets the file we're writing to.
-     * 
+     *
      * @param file
      *            file
      */
@@ -460,7 +520,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Returns the file.
-     * 
+     *
      * @return file
      */
     public File getFile() {
@@ -469,7 +529,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Sets the threshold for the queue. When the threshold is met a worker is spawned to empty the sorted queue to the writer.
-     * 
+     *
      * @param queueThreshold
      *            number of items to queue before spawning worker
      */
@@ -479,7 +539,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Sets whether or not to use the queue.
-     * 
+     *
      * @param delayWrite
      *            true to use the queue, false if not
      */
@@ -489,7 +549,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Whether or not to wait for the first keyframe before processing video frames.
-     * 
+     *
      * @param waitForVideoKeyframe
      */
     public void setWaitForVideoKeyframe(boolean waitForVideoKeyframe) {
@@ -499,7 +559,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Whether or not to use a PriorityBlockingQueue or LinkedBlockingQueue for data queue.
-     * 
+     *
      * @param usePriority
      */
     public void setUsePriority(boolean usePriority) {
@@ -508,7 +568,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Amount of time in milliseconds to wait for an offer to be accepted.
-     * 
+     *
      * @param offerTimeout
      */
     public void setOfferTimeout(long offerTimeout) {
@@ -517,7 +577,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
     /**
      * Sets the recording mode.
-     * 
+     *
      * @param mode
      *            either "record" or "append" depending on the type of action to perform
      */

@@ -17,6 +17,10 @@ public class QueuedMediaData {
 
     boolean config;
 
+    int codecId;
+
+    VideoData.FrameType frameType;
+
     public QueuedMediaData(int timestamp, byte dataType) {
         this.tag = ImmutableTag.build(dataType, timestamp);
     }
@@ -27,6 +31,8 @@ public class QueuedMediaData {
         if (streamData instanceof VideoData) {
             video = true;
             config = ((VideoData) streamData).isConfig();
+            codecId = ((VideoData) streamData).getCodecId();
+            frameType = ((VideoData) streamData).getFrameType();
         } else if (streamData instanceof AudioData) {
             audio = true;
             config = ((AudioData) streamData).isConfig();
