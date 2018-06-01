@@ -98,6 +98,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean mp4MuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected boolean objectDetectionEnabled;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
@@ -110,8 +111,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected long startTime;
 
 	protected IScope scope;
-
-	private String objectDetectionModelDir = null;
 
 	private String oldQuality;
 	private AVRational timeBaseForMS;
@@ -230,8 +229,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		AppSettings appSettings = getAppSettings();
 		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-
-
+		objectDetectionEnabled = appSettings.isObjectDetectionEnabled();
+		
 		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
 		mp4Filtername = null;
 		webRTCEnabled = getAppSettings().isWebRTCEnabled();
@@ -757,17 +756,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setStreamSource(boolean isStreamSource) {
 		this.isStreamSource = isStreamSource;
 	}
-
-
-
-
-
-	public String getObjectDetectionModelDir() {
-		return objectDetectionModelDir;
+	
+	public boolean isObjectDetectionEnabled() {
+		return objectDetectionEnabled;
 	}
 
-	public void setObjectDetectionModelDir(String objectDetectionModelDir) {
-		this.objectDetectionModelDir = objectDetectionModelDir;
+	public void setObjectDetectionEnabled(Boolean objectDetectionEnabled) {
+		this.objectDetectionEnabled = objectDetectionEnabled;
 	}
 
 	public int getPreviewCreatePeriod() {

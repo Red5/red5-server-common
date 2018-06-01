@@ -102,7 +102,7 @@ public class AppSettings {
 	/**
 	 * The directory contains the tensorflow object detection model
 	 */
-	private String objectDetectionDir;
+	private boolean objectDetectionEnabled =false;
 
 
 	private int createPreviewPeriod;
@@ -253,12 +253,12 @@ public class AppSettings {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
 	}
 
-	public String getObjectDetectionDir() {
-		return objectDetectionDir;
+	public boolean isObjectDetectionEnabled() {
+		return objectDetectionEnabled;
 	}
 
-	public void setObjectDetectionDir(String modelDir) {
-		this.objectDetectionDir = modelDir;
+	public void setObjectDetectionEnabled(Boolean ObjectDetectionEnabled) {
+		this.objectDetectionEnabled = ObjectDetectionEnabled;
 	}
 
 	public String getYoutubeClientSecret() {
