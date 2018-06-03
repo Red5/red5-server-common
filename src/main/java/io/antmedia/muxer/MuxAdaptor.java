@@ -126,7 +126,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
 		@Override
-		public int call(Pointer opaque, BytePointer buf, int buf_size) {
+		public int call(Pointer opaque, BytePointer buf, int bufSize) {
 			int length = -1;
 			try {
 				InputContext inputContext = queueReferences.get(opaque);
@@ -259,7 +259,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		if (scheduler == null) {
-			logger.warn("scheduler is not available in beans");
+			logger.warn("scheduler is not available in beans for {}", name);
 			return false;
 		}
 
@@ -273,10 +273,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, isStreamSource());
+			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
-			logger.info("adding HLS Muxer");
+			logger.info("adding HLS Muxer for {}", name);
 		}
 
 		for (Muxer muxer : muxerList) {
@@ -294,7 +294,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-		// readCallback = new ReadCallback();
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
@@ -340,7 +339,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			Muxer muxer = (Muxer) iterator.next();
 			if (!muxer.prepare(inputFormatContext)) {
 				iterator.remove();
-				logger.warn("muxer prepare returns false " + muxer.getFormat());
+				logger.warn("muxer prepare returns false {}",  muxer.getFormat());
 			}
 		}
 
@@ -403,7 +402,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
-			// logger.info("pipe reader job in running");
 			while (true) {
 				if (inputFormatContext == null) {
 					break;
@@ -442,7 +440,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		double speed= (double)packetTime/duration;
 
-		//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
 		String quality = QUALITY_POOR;
 
 		if(timeDiffBetweenVideoandElapsed < 1800) 
@@ -464,7 +461,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (keyFrame == 1) {
 				firstKeyFrameReceived = true;
 			} else {
-				logger.warn("First video packet is not key frame. It will drop for direct muxing");
+				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}" , name);
 			}
 		}
 
