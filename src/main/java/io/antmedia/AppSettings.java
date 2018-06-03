@@ -118,6 +118,12 @@ public class AppSettings {
 	 */
 	private int streamFetcherBufferTime = 0;
 
+
+	/**
+	 * HLS Flags for FFmpeg HLS Muxer
+	 */
+	private String hlsflags;
+
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -218,12 +224,10 @@ public class AppSettings {
 
 	public String getEncoderSettingsString() {
 		return getEncoderSettingsString(adaptiveResolutionList);
-		//return encoderSettingsString;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
 		adaptiveResolutionList = getEncoderSettingsList(encoderSettingsString);
-		//this.encoderSettingsString = encoderSettingsString;
 	}
 
 	public boolean isDeleteHLSFilesOnExit() {
@@ -262,8 +266,8 @@ public class AppSettings {
 		return objectDetectionEnabled;
 	}
 
-	public void setObjectDetectionEnabled(Boolean ObjectDetectionEnabled) {
-		this.objectDetectionEnabled = ObjectDetectionEnabled;
+	public void setObjectDetectionEnabled(Boolean objectDetectionEnabled) {
+		this.objectDetectionEnabled = objectDetectionEnabled;
 	}
 
 	public String getYoutubeClientSecret() {
@@ -377,5 +381,13 @@ public class AppSettings {
 
 	public void setStreamFetcherBufferTime(int streamFetcherBufferTime) {
 		this.streamFetcherBufferTime = streamFetcherBufferTime;
+	}
+
+	public String getHlsFlags() {
+		return hlsflags;
+	}
+
+	public void setHlsflags(String hlsflags) {
+		this.hlsflags = hlsflags;
 	}
 }
