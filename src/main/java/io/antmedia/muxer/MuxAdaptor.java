@@ -195,7 +195,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						.newInstance(clientBroadcastStream);
 
 			} catch (Exception e) {
-				//e.printStackTrace();
+				logger.error(e.getMessage());
 			} 
 		}
 		if (muxAdaptor == null) {
