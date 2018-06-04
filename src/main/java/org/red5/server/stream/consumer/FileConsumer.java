@@ -59,7 +59,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Executor for all instance writer jobs
      */
-    private ExecutorService executor = Executors.newFixedThreadPool(2);
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
 
     private static QueuedMediaDataComparator comparator = new QueuedMediaDataComparator();
 
