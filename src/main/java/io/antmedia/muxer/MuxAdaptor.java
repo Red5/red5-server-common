@@ -480,7 +480,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (keyFrame == 1) {
 				firstKeyFrameReceived = true;
 			} else {
-				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}" , name);
+				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}" , streamId);
 			}
 		}
 
