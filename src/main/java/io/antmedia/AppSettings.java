@@ -102,7 +102,7 @@ public class AppSettings {
 	/**
 	 * The directory contains the tensorflow object detection model
 	 */
-	private String objectDetectionDir;
+	private boolean objectDetectionEnabled =false;
 
 
 	private int createPreviewPeriod;
@@ -112,6 +112,17 @@ public class AppSettings {
 	 */
 	private int restartStreamFetcherPeriod = 0;
 
+	/**
+	 * Stream fetcher buffer time in milliseconds. 
+	 * Stream is buffered for this duration and after that it will be started.
+	 */
+	private int streamFetcherBufferTime = 0;
+
+
+	/**
+	 * HLS Flags for FFmpeg HLS Muxer
+	 */
+	private String hlsflags;
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -213,12 +224,10 @@ public class AppSettings {
 
 	public String getEncoderSettingsString() {
 		return getEncoderSettingsString(adaptiveResolutionList);
-		//return encoderSettingsString;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
 		adaptiveResolutionList = getEncoderSettingsList(encoderSettingsString);
-		//this.encoderSettingsString = encoderSettingsString;
 	}
 
 	public boolean isDeleteHLSFilesOnExit() {
@@ -253,12 +262,12 @@ public class AppSettings {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
 	}
 
-	public String getObjectDetectionDir() {
-		return objectDetectionDir;
+	public boolean isObjectDetectionEnabled() {
+		return objectDetectionEnabled;
 	}
 
-	public void setObjectDetectionDir(String modelDir) {
-		this.objectDetectionDir = modelDir;
+	public void setObjectDetectionEnabled(Boolean objectDetectionEnabled) {
+		this.objectDetectionEnabled = objectDetectionEnabled;
 	}
 
 	public String getYoutubeClientSecret() {
@@ -364,5 +373,21 @@ public class AppSettings {
 
 	public void setRestartStreamFetcherPeriod(int restartStreamFetcherPeriod) {
 		this.restartStreamFetcherPeriod = restartStreamFetcherPeriod;
+	}
+
+	public int getStreamFetcherBufferTime() {
+		return streamFetcherBufferTime;
+	}
+
+	public void setStreamFetcherBufferTime(int streamFetcherBufferTime) {
+		this.streamFetcherBufferTime = streamFetcherBufferTime;
+	}
+
+	public String getHlsFlags() {
+		return hlsflags;
+	}
+
+	public void setHlsflags(String hlsflags) {
+		this.hlsflags = hlsflags;
 	}
 }
