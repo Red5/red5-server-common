@@ -21,7 +21,6 @@ package org.red5.server.stream;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.red5.codec.IStreamCodecInfo;
@@ -34,16 +33,12 @@ import org.red5.server.api.stream.StreamState;
 import org.red5.server.net.rtmp.event.Notify;
 
 /**
- * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling, and provides stream start and stop operations.
+ * Abstract base implementation of IStream. Contains codec information, stream name, scope, event handling, and provides stream start and
+ * stop operations.
  *
  * @see org.red5.server.api.stream.IStream
  */
 public abstract class AbstractStream implements IStream {
-
-    /**
-     * Current state
-     */
-    protected StreamState state = StreamState.UNINIT;
 
     /**
      * Stream name
@@ -58,7 +53,7 @@ public abstract class AbstractStream implements IStream {
     /**
      * Stores the streams metadata
      */
-    private AtomicReference<Notify> metaData = new AtomicReference<>();
+    private transient AtomicReference<Notify> metaData = new AtomicReference<>();
 
     /**
      * Stream scope
@@ -68,13 +63,12 @@ public abstract class AbstractStream implements IStream {
     /**
      * Contains {@link PropertyChangeListener}s registered with this stream and following its changes of state.
      */
-    private CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
+    private transient CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
 
     /**
      * Timestamp the stream was created.
      */
     protected long creationTime = System.currentTimeMillis();
-    
 
     /**
      * Timestamp the stream was started.
@@ -82,9 +76,9 @@ public abstract class AbstractStream implements IStream {
     protected long startTime;
 
     /**
-     * Lock for protecting critical sections
+     * Current state
      */
-    protected final transient Semaphore lock = new Semaphore(1, true);
+    protected final transient AtomicReference<StreamState> state = new AtomicReference<>(StreamState.UNINIT);
 
     /**
      * Creates a new {@link PropertyChangeEvent} and delivers it to all currently registered state listeners.
@@ -104,7 +98,8 @@ public abstract class AbstractStream implements IStream {
     /**
      * Adds to the list of listeners tracking changes of the {@link StreamState} of this stream.
      *
-     * @param listener the listener to register
+     * @param listener
+     *            the listener to register
      */
     public void addStateChangeListener(PropertyChangeListener listener) {
         if (!stateListeners.contains(listener)) {
@@ -115,7 +110,8 @@ public abstract class AbstractStream implements IStream {
     /**
      * Removes from the list of listeners tracking changes of the {@link StreamState} of this stream.
      *
-     * @param listener the listener to remove
+     * @param listener
+     *            the listener to remove
      */
     public void removeStateChangeListener(PropertyChangeListener listener) {
         stateListeners.remove(listener);
@@ -158,7 +154,8 @@ public abstract class AbstractStream implements IStream {
     /**
      * Set the metadata.
      * 
-     * @param metaData stream meta data
+     * @param metaData
+     *            stream meta data
      */
     public void setMetaData(Notify metaData) {
         this.metaData.set(metaData);
@@ -227,30 +224,18 @@ public abstract class AbstractStream implements IStream {
      * @return StreamState
      */
     public StreamState getState() {
-        try {
-            lock.acquireUninterruptibly();
-            return state;
-        } finally {
-            lock.release();
-        }
+        return state.get();
     }
 
     /**
      * Sets the stream state.
      * 
-     * @param state
-     *            stream state
+     * @param newState stream state
      */
-    public void setState(StreamState state) {
-        StreamState oldState = this.state;
-        if (!oldState.equals(state)) {
-            try {
-                lock.acquireUninterruptibly();
-                this.state = state;
-            } finally {
-                lock.release();
-                fireStateChange(oldState, state);
-            }
+    public void setState(StreamState newState) {
+        StreamState oldState = state.get();
+        if (!oldState.equals(newState) && state.compareAndSet(oldState, newState)) {
+            fireStateChange(oldState, newState);
         }
     }
 

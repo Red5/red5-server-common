@@ -332,7 +332,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public boolean isPaused() {
-        return state == StreamState.PAUSED;
+        return state.get() == StreamState.PAUSED;
     }
 
     /** {@inheritDoc} */
@@ -650,13 +650,14 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
      * {@inheritDoc}
      */
     public void onChange(final StreamState state, final Object... changed) {
-        Notifier notifier = null;
+        final IConnection conn = Red5.getConnectionLocal();
         IStreamAwareScopeHandler handler = getStreamAwareHandler();
+        Notifier notifier = null;
         switch (state) {
             case SEEK:
                 //notifies subscribers on seek
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
                             //make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
@@ -677,11 +678,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case PAUSED:
-                //set the paused state
-                this.setState(StreamState.PAUSED);
-                //notifies subscribers on pause
+                // set the paused state
+                setState(StreamState.PAUSED);
+                // notifies subscribers on pause
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
                             //make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
@@ -702,17 +703,17 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case RESUMED:
-                //resume playing
-                this.setState(StreamState.PLAYING);
-                //notifies subscribers on resume
+                // resume playing
+                setState(StreamState.PLAYING);
+                // notifies subscribers on resume
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
-                            //make sure those notified have the correct connection
+                            // make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
-                            //get item being played
+                            // get item being played
                             IPlayItem item = (IPlayItem) changed[0];
-                            //playback position
+                            // playback position
                             int position = (Integer) changed[1];
                             try {
                                 handler.streamPlayItemResume(stream, item, position);
@@ -727,15 +728,15 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case PLAYING:
-                //notifies subscribers on play
+                // notifies subscribers on play
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
-                            //make sure those notified have the correct connection
+                            // make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
-                            //get item being played
+                            // get item being played
                             IPlayItem item = (IPlayItem) changed[0];
-                            //is it a live broadcast
+                            // is it a live broadcast
                             boolean isLive = (Boolean) changed[1];
                             try {
                                 handler.streamPlayItemPlay(stream, item, isLive);
@@ -750,11 +751,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case CLOSED:
-                //notifies subscribers on close
+                // notifies subscribers on close
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
-                            //make sure those notified have the correct connection
+                            // make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
                             try {
                                 handler.streamSubscriberClose(stream);
@@ -769,11 +770,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case STARTED:
-                //notifies subscribers on start
+                // notifies subscribers on start
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
-                            //make sure those notified have the correct connection
+                            // make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
                             try {
                                 handler.streamSubscriberStart(stream);
@@ -788,11 +789,11 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case STOPPED:
-                //set the stopped state
-                this.setState(StreamState.STOPPED);
+                // set the stopped state
+                setState(StreamState.STOPPED);
                 //notifies subscribers on stop
                 if (handler != null) {
-                    notifier = new Notifier(this, handler) {
+                    notifier = new Notifier(this, handler, conn) {
                         public void execute(ISchedulingService service) {
                             //make sure those notified have the correct connection
                             Red5.setConnectionLocal(conn);
@@ -811,7 +812,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 }
                 break;
             case END:
-                //notified by the play engine when the current item reaches the end
+                // notified by the play engine when the current item reaches the end
                 nextItem();
                 break;
             default:
@@ -819,8 +820,6 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                 log.warn("Unhandled change: {}", state);
         }
         if (notifier != null) {
-            IConnection conn = Red5.getConnectionLocal();
-            notifier.setConnection(conn);
             scheduleOnceJob(notifier);
         }
     }
@@ -908,20 +907,17 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
      */
     public class Notifier implements IScheduledJob {
 
-        IPlaylistSubscriberStream stream;
+        final IPlaylistSubscriberStream stream;
 
-        IStreamAwareScopeHandler handler;
+        final IStreamAwareScopeHandler handler;
 
-        IConnection conn;
+        final IConnection conn;
 
-        public Notifier(IPlaylistSubscriberStream stream, IStreamAwareScopeHandler handler) {
+        public Notifier(IPlaylistSubscriberStream stream, IStreamAwareScopeHandler handler, IConnection conn) {
             log.trace("Notifier - stream: {} handler: {}", stream, handler);
+            this.conn = conn;
             this.stream = stream;
             this.handler = handler;
-        }
-
-        public void setConnection(IConnection conn) {
-            this.conn = conn;
         }
 
         public void execute(ISchedulingService service) {

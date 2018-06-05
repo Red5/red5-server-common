@@ -132,7 +132,7 @@ public class SingleItemSubscriberStream extends AbstractClientStream implements 
     }
 
     public boolean isPaused() {
-        return state == StreamState.PAUSED;
+        return state.get() == StreamState.PAUSED;
     }
 
     /** {@inheritDoc} */

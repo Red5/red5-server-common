@@ -84,7 +84,6 @@ public class StreamService implements IStreamService {
                 return streamId;
             } catch (IndexOutOfBoundsException e) {
                 log.error("Unable to create stream", e);
-                return -1;
             }
         }
         return -1;
@@ -107,7 +106,6 @@ public class StreamService implements IStreamService {
                 return streamId;
             } catch (IndexOutOfBoundsException e) {
                 log.error("Unable to create stream", e);
-                return -1;
             }
         }
         return -1;
