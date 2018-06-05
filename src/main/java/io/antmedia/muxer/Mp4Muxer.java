@@ -43,6 +43,7 @@ import org.bytedeco.javacpp.avformat.AVOutputFormat;
 import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
 import org.bytedeco.javacpp.avutil.AVDictionary;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.bytedeco.javacpp.avutil;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.io.ITag;
@@ -91,6 +92,7 @@ public class Mp4Muxer extends Muxer {
 	private AVBSFContext bsfContext;
 
 	private AVPacket tmpPacket;
+	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
 
 
@@ -100,7 +102,6 @@ public class Mp4Muxer extends Muxer {
 		super(scheduler);
 		extension = ".mp4";
 		format = "mp4";
-		//options.put("movflags", "faststart+rtphint");  	
 		options.put("movflags", "faststart");  
 		this.storageClient = storageClient;
 	}
@@ -184,17 +185,18 @@ public class Mp4Muxer extends Muxer {
 		}
 		if (isCodecSupported(codecContext.codec_id())) {
 			registeredStreamIndexList.add(streamIndex);
-			AVStream out_stream = avformat_new_stream(outputContext, codec);
-
-			out_stream.codec().time_base(codecContext.time_base());
-			int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
-
+			AVStream outStream = avformat_new_stream(outputContext, codec);
+			
+			int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 			if (ret < 0) {
-				System.out.println("codec context cannot be copied");
+				logger.error("codec context cannot be copied for {}", streamId);
 			}
-			out_stream.codec().codec_tag(0);
+			outStream.time_base(codecContext.time_base());
+			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
+			
+			outStream.codec().codec_tag(0);
 			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
+				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 		}
 		return true;
 	}
@@ -205,7 +207,7 @@ public class Mp4Muxer extends Muxer {
 			fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
 			int ret = avformat_alloc_output_context2(outputFormatContext, null, format, fileTmp.getAbsolutePath());
 			if (ret < 0) {
-				logger.info("Could not create output context\n");
+				logger.info("Could not create output context for {}", streamId);
 				return null;
 			}
 		}
@@ -222,17 +224,17 @@ public class Mp4Muxer extends Muxer {
 
 		int streamIndex = 0;
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
-			AVStream in_stream = inputFormatContext.streams(i);
-			if (isCodecSupported(in_stream.codecpar())) {
+			AVStream inStream = inputFormatContext.streams(i);
+			if (isCodecSupported(inStream.codecpar())) {
 
-				int codec_type = in_stream.codecpar().codec_type();
-				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
-				logger.info(" in_stream.index() : " + in_stream.index());
+				int codec_type = inStream.codecpar().codec_type();
+				AVStream outStream = avformat_new_stream(context, inStream.codec().codec());
+				logger.info(" in_stream.index() : {} ", inStream.index());
 
 				if ( codec_type == AVMEDIA_TYPE_VIDEO) {
 					videoIndex = streamIndex;
 
-					int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 					if (ret < 0) {
 						logger.info("Cannot get codec parameters\n");
 						return false;
@@ -252,12 +254,12 @@ public class Mp4Muxer extends Muxer {
 							return false;
 						}
 
-						ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
+						ret = avcodec_parameters_copy(bsfContext.par_in(), inStream.codecpar());
 						if (ret < 0) {
 							logger.info("cannot copy input codec parameters");
 							return false;
 						}
-						bsfContext.time_base_in(in_stream.time_base());
+						bsfContext.time_base_in(inStream.time_base());
 
 						ret = av_bsf_init(bsfContext);
 						if (ret < 0) {
@@ -265,16 +267,16 @@ public class Mp4Muxer extends Muxer {
 							return false;
 						}
 
-						ret = avcodec_parameters_copy(out_stream.codecpar(), bsfContext.par_out());
+						ret = avcodec_parameters_copy(outStream.codecpar(), bsfContext.par_out());
 						if (ret < 0) {
 							logger.info("cannot copy codec parameters to output");
 							return false;
 						}
 
-						out_stream.time_base(bsfContext.time_base_out());
+						outStream.time_base(bsfContext.time_base_out());
 					}
 					else {
-						int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+						int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 						if (ret < 0) {
 							logger.info("Cannot get codec parameters\n");
 							return false;
@@ -282,18 +284,16 @@ public class Mp4Muxer extends Muxer {
 					}
 				}
 				else {
-					logger.error("undefined codec type: " + codec_type);
+					logger.error("undefined codec type: {}", codec_type);
 					continue;
 				}
 
 				streamIndex++;
 				registeredStreamIndexList.add(i);
-
-				out_stream.codec().codec_tag(0);
-				out_stream.codecpar().codec_tag(0);
+				outStream.codecpar().codec_tag(0);
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
+					outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 
 			}
 		}
@@ -318,8 +318,8 @@ public class Mp4Muxer extends Muxer {
 
 		int ret = avformat.avio_open(pb, fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
-			logger.warn("Could not open output file: " + fileTmp.getAbsolutePath() + 
-					" parent file exists:" + fileTmp.getParentFile().exists());
+			logger.warn("Could not open output file: {}" +  
+					" parent file exists:{}" , fileTmp.getAbsolutePath() , fileTmp.getParentFile().exists());
 			return false;
 		}
 
@@ -335,7 +335,6 @@ public class Mp4Muxer extends Muxer {
 			}
 		}
 
-		logger.info("before writing header");
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header");
@@ -485,13 +484,13 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.trace("not registered stream index");
+			logger.trace("not registered stream index for {}", streamId);
 			return;
 		}
 
-		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
-
-		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
+		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
+		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
+		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
 	}
 
 
