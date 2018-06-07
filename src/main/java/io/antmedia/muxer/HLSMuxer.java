@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -98,6 +100,8 @@ public class HLSMuxer extends Muxer  {
 	private int audioIndex;
 	private int videoIndex;
 	private String hlsFlags;
+	
+	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
@@ -287,7 +291,7 @@ public class HLSMuxer extends Muxer  {
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
-
+		
 		totalSize += pkt.size();
 		partialTotalSize += pkt.size();
 		currentTime = av_rescale_q(dts, inputTimebase, avRationalTimeBase);
@@ -301,16 +305,17 @@ public class HLSMuxer extends Muxer  {
 			partialTotalSize = 0;
 			bitrateReferenceTime = currentTime;
 		}
-
+		
 		int ret;
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
+		
 
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
-			ret = av_copy_packet(tmpPacket , pkt);
+			ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet for {}", file.getName());
 				return;
@@ -448,7 +453,8 @@ public class HLSMuxer extends Muxer  {
 			return;
 		}
 		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
-		writePacket(pkt, outStream.codec().time_base(),  outStream.time_base(), outStream.codecpar().codec_type()); 
+		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
+		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
 
 	}
 
@@ -471,27 +477,23 @@ public class HLSMuxer extends Muxer  {
 				videoWidth = codecContext.width();
 				videoHeight = codecContext.height();
 
-				outStream.codec().time_base(codecContext.time_base());
 				avcodec_parameters_from_context(outStream.codecpar(), codecContext);
+				outStream.time_base(codecContext.time_base());
+				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			}
 			else {
-				//TODO: do we need this setting codec context, it may cause some memory problems if 
-				//codec context is used in a same way with another muxer
-				outStream.codec().time_base(codecContext.time_base());
+				outStream.time_base(codecContext.time_base());
 				int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
+				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 				logger.info("copy codec parameter from context {} stream index: {}", ret,  streamIndex);
 				if (codecContext.codec_type() != AVMEDIA_TYPE_AUDIO) {
 					logger.warn("This should be audio codec for {}", file.getName());
 				}
-
-
-
 			}
-			outStream.codec().codec_tag(0);
+			outStream.codecpar().codec_tag(0);
 
 			if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-
+				codecContext.flags( codecContext.flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 
 		}
 		return true;

@@ -91,8 +91,8 @@ public class Mp4Muxer extends Muxer {
 	private AVBSFContext bsfContext;
 
 	private AVPacket tmpPacket;
-
-
+	
+	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
@@ -186,15 +186,16 @@ public class Mp4Muxer extends Muxer {
 			registeredStreamIndexList.add(streamIndex);
 			AVStream out_stream = avformat_new_stream(outputContext, codec);
 
-			out_stream.codec().time_base(codecContext.time_base());
+			out_stream.time_base(codecContext.time_base());
 			int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
 
 			if (ret < 0) {
-				System.out.println("codec context cannot be copied");
+				logger.warn("codec context cannot be copied");
 			}
-			out_stream.codec().codec_tag(0);
+			out_stream.codecpar().codec_tag(0);
+			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
+				codecContext.flags( codecContext.flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 		}
 		return true;
 	}
@@ -490,8 +491,8 @@ public class Mp4Muxer extends Muxer {
 		}
 
 		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
-
-		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
+		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
+		writePacket(pkt, codecTimebase,  out_stream.time_base(), out_stream.codecpar().codec_type()); 
 	}
 
 
@@ -524,7 +525,6 @@ public class Mp4Muxer extends Muxer {
 		long pos = pkt.pos();
 		
 
-
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
@@ -532,7 +532,7 @@ public class Mp4Muxer extends Muxer {
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) 
 		{
-			int ret = av_copy_packet(tmpPacket , pkt);
+			int ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
 				return;
