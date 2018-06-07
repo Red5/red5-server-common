@@ -94,8 +94,6 @@ public class Mp4Muxer extends Muxer {
 	private AVPacket tmpPacket;
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
-
-
 	private static String TEMP_EXTENSION = ".tmp_extension";
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
@@ -188,15 +186,16 @@ public class Mp4Muxer extends Muxer {
 			AVStream outStream = avformat_new_stream(outputContext, codec);
 			
 			int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
+
 			if (ret < 0) {
 				logger.error("codec context cannot be copied for {}", streamId);
 			}
+
 			outStream.time_base(codecContext.time_base());
+			outStream.codecpar().codec_tag(0);
 			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
-			
-			outStream.codec().codec_tag(0);
 			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
+				codecContext.flags( codecContext.flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 		}
 		return true;
 	}
@@ -491,6 +490,7 @@ public class Mp4Muxer extends Muxer {
 		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
 		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
 		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
+
 	}
 
 
@@ -523,7 +523,6 @@ public class Mp4Muxer extends Muxer {
 		long pos = pkt.pos();
 		
 
-
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
@@ -531,7 +530,7 @@ public class Mp4Muxer extends Muxer {
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) 
 		{
-			int ret = av_copy_packet(tmpPacket , pkt);
+			int ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet!!!");
 				return;

@@ -291,7 +291,7 @@ public class HLSMuxer extends Muxer  {
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
-
+		
 		totalSize += pkt.size();
 		partialTotalSize += pkt.size();
 		currentTime = av_rescale_q(dts, inputTimebase, avRationalTimeBase);
@@ -305,16 +305,17 @@ public class HLSMuxer extends Muxer  {
 			partialTotalSize = 0;
 			bitrateReferenceTime = currentTime;
 		}
-
+		
 		int ret;
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
+		
 
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
-			ret = av_copy_packet(tmpPacket , pkt);
+			ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy packet for {}", file.getName());
 				return;
@@ -477,13 +478,15 @@ public class HLSMuxer extends Muxer  {
 			if (codecContext.codec_type() == AVMEDIA_TYPE_VIDEO) {
 				videoWidth = codecContext.width();
 				videoHeight = codecContext.height();
-				
+
 				avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 				outStream.time_base(codecContext.time_base());
 				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			}
 			else {
+
 				int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
+				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 				logger.info("copy codec parameter from context {} stream index: {}", ret,  streamIndex);
 				if (codecContext.codec_type() != AVMEDIA_TYPE_AUDIO) {
 					logger.warn("This should be audio codec for {}", file.getName());
@@ -494,8 +497,7 @@ public class HLSMuxer extends Muxer  {
 			outStream.codecpar().codec_tag(0);
 
 			if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-
+				codecContext.flags( codecContext.flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 
 		}
 		return true;
