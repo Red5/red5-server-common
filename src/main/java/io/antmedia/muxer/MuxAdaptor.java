@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,10 +64,10 @@ import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
-	private final static byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
+	private static final byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff) };
-	private final static int HEADER_LENGTH = 9;
-	private final static int TAG_HEADER_LENGTH = 11;
+	private static final int HEADER_LENGTH = 9;
+	private static final int TAG_HEADER_LENGTH = 11;
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 	protected String packetFeederJobName = null;
@@ -79,7 +80,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean deleteHLSFilesOnExit = true;
 	protected boolean previewOverwrite = false;
 	public static class InputContext {
-		public ConcurrentLinkedQueue<byte[]> queue;
+		public Queue<byte[]> queue;
 		public volatile boolean isHeaderWritten = false;
 		public volatile boolean stopRequestExist = false;
 
@@ -122,6 +123,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected static boolean isStreamSource=false;
 
 	private int previewCreatePeriod;
+	private long firstPacketTime = -1;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -434,11 +436,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		long currentTime = System.currentTimeMillis();
 		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
+		
+		if (firstPacketTime == -1) {
+			firstPacketTime = packetTime;
+			logger.info("first packet time {}", firstPacketTime);
+		}
 
 		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
 		long duration = currentTime - startTime;
 
-		double speed= (double)packetTime/duration;
+		double speed= (double)(packetTime - firstPacketTime)/duration;
 
 		String quality = QUALITY_POOR;
 
@@ -606,10 +613,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare");
+				logger.info("before prepare for {}", name);
 				try {
 					if (prepare()) {
-						logger.info("after prepare");
+						logger.info("after prepare for {}", name);
 						isRecording = true;
 						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
@@ -619,13 +626,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						if (broadcastStream != null) {
 							broadcastStream.removeStreamListener(MuxAdaptor.this);
 						}
-						logger.warn("closing adaptor");
+						logger.warn("closing adaptor for {}", name);
 						closeResources();
 						// stop();
-						logger.warn("closed adaptor");
+						logger.warn("closed adaptor for {}", name);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
 				}
 			}
 		});
@@ -634,9 +641,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void stop() {
-		logger.info("Calling stop");
+		logger.info("Calling stop for {}", name);
 		if (inputFormatContext == null) {
-			logger.warn("Mux adaptor stopped returning");
+			logger.warn("Mux adaptor stopped returning for {}", name);
 			return;
 		}
 		InputContext inputContext = queueReferences.get(inputFormatContext);
@@ -768,6 +775,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setPreviewCreatePeriod(int previewCreatePeriod) {
 		this.previewCreatePeriod = previewCreatePeriod;
+	}
+
+	public long getFirstPacketTime() {
+		return firstPacketTime;
 	}
 
 }
