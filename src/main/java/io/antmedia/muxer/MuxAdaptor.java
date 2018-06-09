@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,10 +65,10 @@ import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
-	private final static byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
+	private static final byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff) };
-	private final static int HEADER_LENGTH = 9;
-	private final static int TAG_HEADER_LENGTH = 11;
+	private static final int HEADER_LENGTH = 9;
+	private static final int TAG_HEADER_LENGTH = 11;
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 	protected String packetFeederJobName = null;
@@ -81,7 +82,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected int receivedPacketCount;
 	protected boolean previewOverwrite = false;
 	public static class InputContext {
-		public ConcurrentLinkedQueue<byte[]> queue;
+		public Queue<byte[]> queue;
 		public volatile boolean isHeaderWritten = false;
 		public volatile boolean stopRequestExist = false;
 		public AtomicInteger queueSize = new AtomicInteger(0);
@@ -128,6 +129,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private int previewCreatePeriod;
 	private double oldspeed;
+	private long firstPacketTime = -1;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -159,7 +161,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						buf.put(packet, 0, length);
 					} else // if (stopRequestExist)
 					{
-						logger.info("packet is null and return length is:" + length);
+						logger.info("packet is null and return length is {}", length);
 					}
 				} else {
 					inputContext.isHeaderWritten = true;
@@ -377,13 +379,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param duration, the total elapsed time in milliseconds
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
-	public void changeStreamQualityParameters(String streamId, String quality, double packetTime, double duration, int inputQueueSize) {
-		double speed = 0;
-		if (duration > 0) {
-			speed = packetTime/duration;
-		}
+	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
 		
-		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.1) {
+		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.01) {
 			
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
@@ -452,9 +450,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		long currentTime = System.currentTimeMillis();
 		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
+		
+		if (firstPacketTime == -1) {
+			firstPacketTime = packetTime;
+			logger.info("first packet time {}", firstPacketTime);
+		}
 
 		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
 		elapsedTime = currentTime - startTime;
+
+		double speed= (double)(packetTime - firstPacketTime)/elapsedTime;
 
 		String quality = QUALITY_POOR;
 
@@ -462,7 +467,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		{
 			quality = QUALITY_GOOD;
 		}
-		else if(timeDiffBetweenVideoandElapsed>1799 && timeDiffBetweenVideoandElapsed<3499 ) 
+		else if(timeDiffBetweenVideoandElapsed>1799) 
 		{
 			quality = QUALITY_AVERAGE;
 		}
@@ -473,7 +478,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Number of items in the queue {}", inputQueueSize);
 		}
 
-		changeStreamQualityParameters(this.streamId, quality, packetTime, elapsedTime, inputQueueSize);
+		changeStreamQualityParameters(this.streamId, quality, speed, inputQueueSize);
 		
 		if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -533,8 +538,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		inputFormatContext = null;
 		isRecording = false;
 
-
-		changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, 0, getInputQueueSize());
+		changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, getInputQueueSize());
 	
 	}
 
@@ -626,10 +630,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.debug("before prepare");
+				logger.info("before prepare for {}", streamId);
 				try {
 					if (prepare()) {
-						logger.debug("after prepare");
+						logger.info("after prepare for {}", streamId);
 						isRecording = true;
 						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
@@ -641,13 +645,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						if (broadcastStream != null) {
 							broadcastStream.removeStreamListener(MuxAdaptor.this);
 						}
-						logger.warn("closing adaptor");
+						logger.warn("closing adaptor for {}", streamId);
 						closeResources();
 						// stop();
-						logger.warn("closed adaptor");
+						logger.warn("closed adaptor for {}", streamId);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
 				}
 			}
 		});
@@ -656,9 +660,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void stop() {
-		logger.info("Calling stop");
+		logger.info("Calling stop for {}", streamId);
 		if (inputFormatContext == null) {
-			logger.warn("Mux adaptor stopped returning");
+			logger.warn("Mux adaptor stopped returning for {}", streamId);
 			return;
 		}
 		InputContext inputContext = queueReferences.get(inputFormatContext);
@@ -702,7 +706,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -817,6 +821,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setStreamId(String streamId) {
 		this.streamId = streamId;
+	}
+	
+	public long getFirstPacketTime() {
+		return firstPacketTime;
 	}
 
 }
