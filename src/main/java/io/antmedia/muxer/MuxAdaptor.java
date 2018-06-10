@@ -446,6 +446,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		long duration = currentTime - startTime;
 
 		double speed= (double)(packetTime - firstPacketTime)/duration;
+		if (Double.isNaN(speed)) {
+			logger.warn("speed is NaN, packetTime: {}, first packetTime: {}, duation:{}", packetTime, firstPacketTime, duration);
+			speed = 0L;
+		}
 
 		String quality = QUALITY_POOR;
 
