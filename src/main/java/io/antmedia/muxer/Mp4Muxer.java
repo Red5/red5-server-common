@@ -336,7 +336,7 @@ public class Mp4Muxer extends Muxer {
 
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
-			logger.warn("could not write header");
+			logger.warn("could not write header for {}", fileTmp.getName());
 
 			clearResource();
 			return false;
@@ -359,7 +359,7 @@ public class Mp4Muxer extends Muxer {
 
 		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
-			logger.warn("OutputFormatContext is not initialized or it is freed");
+			logger.warn("OutputFormatContext is not initialized or it is freed for file {}", fileTmp.getName());
 			return;
 		}
 
@@ -377,6 +377,14 @@ public class Mp4Muxer extends Muxer {
 		final File f = new File(origFileName);
 
 		try {
+			if (fileTmp.exists()) {
+				logger.error("File existssss {}", fileTmp.getAbsolutePath());
+			}
+			else {
+				logger.error("File not existssss {}", fileTmp.getAbsolutePath());
+			}
+			
+			
 			Files.move(fileTmp.toPath(),f.toPath());
 
 			IContext context = Mp4Muxer.this.scope.getContext(); 
@@ -397,8 +405,7 @@ public class Mp4Muxer extends Muxer {
 
 			}
 		} catch (IOException e) {
-
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 
