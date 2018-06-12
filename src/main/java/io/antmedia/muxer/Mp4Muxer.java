@@ -184,15 +184,15 @@ public class Mp4Muxer extends Muxer {
 		}
 		if (isCodecSupported(codecContext.codec_id())) {
 			registeredStreamIndexList.add(streamIndex);
-			AVStream out_stream = avformat_new_stream(outputContext, codec);
+			AVStream outStream = avformat_new_stream(outputContext, codec);
 
-			out_stream.time_base(codecContext.time_base());
-			int ret = avcodec_parameters_from_context(out_stream.codecpar(), codecContext);
+			outStream.time_base(codecContext.time_base());
+			int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 
 			if (ret < 0) {
 				logger.warn("codec context cannot be copied");
 			}
-			out_stream.codecpar().codec_tag(0);
+			outStream.codecpar().codec_tag(0);
 			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 				codecContext.flags( codecContext.flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
@@ -223,23 +223,23 @@ public class Mp4Muxer extends Muxer {
 
 		int streamIndex = 0;
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
-			AVStream in_stream = inputFormatContext.streams(i);
-			if (isCodecSupported(in_stream.codecpar())) {
+			AVStream inStream = inputFormatContext.streams(i);
+			if (isCodecSupported(inStream.codecpar())) {
 
-				int codec_type = in_stream.codecpar().codec_type();
-				AVStream out_stream = avformat_new_stream(context, in_stream.codec().codec());
-				logger.info(" in_stream.index() : " + in_stream.index());
+				int codecType = inStream.codecpar().codec_type();
+				AVStream outStream = avformat_new_stream(context, null);
+				logger.info(" in_stream.index() : {} ", inStream.index());
 
-				if ( codec_type == AVMEDIA_TYPE_VIDEO) {
+				if ( codecType == AVMEDIA_TYPE_VIDEO) {
 					videoIndex = streamIndex;
 
-					int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 					if (ret < 0) {
 						logger.info("Cannot get codec parameters\n");
 						return false;
 					}
 				}
-				else if (codec_type == AVMEDIA_TYPE_AUDIO) {
+				else if (codecType == AVMEDIA_TYPE_AUDIO) {
 					audioIndex = streamIndex;
 
 
@@ -253,12 +253,12 @@ public class Mp4Muxer extends Muxer {
 							return false;
 						}
 
-						ret = avcodec_parameters_copy(bsfContext.par_in(), in_stream.codecpar());
+						ret = avcodec_parameters_copy(bsfContext.par_in(), inStream.codecpar());
 						if (ret < 0) {
 							logger.info("cannot copy input codec parameters");
 							return false;
 						}
-						bsfContext.time_base_in(in_stream.time_base());
+						bsfContext.time_base_in(inStream.time_base());
 
 						ret = av_bsf_init(bsfContext);
 						if (ret < 0) {
@@ -266,16 +266,16 @@ public class Mp4Muxer extends Muxer {
 							return false;
 						}
 
-						ret = avcodec_parameters_copy(out_stream.codecpar(), bsfContext.par_out());
+						ret = avcodec_parameters_copy(outStream.codecpar(), bsfContext.par_out());
 						if (ret < 0) {
 							logger.info("cannot copy codec parameters to output");
 							return false;
 						}
 
-						out_stream.time_base(bsfContext.time_base_out());
+						outStream.time_base(bsfContext.time_base_out());
 					}
 					else {
-						int ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
+						int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 						if (ret < 0) {
 							logger.info("Cannot get codec parameters\n");
 							return false;
@@ -283,18 +283,17 @@ public class Mp4Muxer extends Muxer {
 					}
 				}
 				else {
-					logger.error("undefined codec type: " + codec_type);
+					logger.error("undefined codec type: {}" , codecType);
 					continue;
 				}
 
 				streamIndex++;
 				registeredStreamIndexList.add(i);
 
-				out_stream.codec().codec_tag(0);
-				out_stream.codecpar().codec_tag(0);
+				outStream.codecpar().codec_tag(0);
 
-				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
+				//if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
+				//	outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 
 			}
 		}
@@ -460,10 +459,10 @@ public class Mp4Muxer extends Muxer {
 			return;
 		}
 		int streamIndex;
-		if (stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+		if (stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			streamIndex = videoIndex;
 		}
-		else if (stream.codec().codec_type() == AVMEDIA_TYPE_AUDIO) {
+		else if (stream.codecpar().codec_type() == AVMEDIA_TYPE_AUDIO) {
 			streamIndex = audioIndex;
 		}
 		else {
@@ -471,11 +470,11 @@ public class Mp4Muxer extends Muxer {
 			return;
 		}
 
-		AVStream out_stream = outputFormatContext.streams(streamIndex);
+		AVStream outStream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
 			
-		writePacket(pkt, stream.time_base(),  out_stream.time_base(), out_stream.codecpar().codec_type()); 
+		writePacket(pkt, stream.time_base(),  outStream.time_base(), outStream.codecpar().codec_type()); 
 	
 		pkt.stream_index(index);
 	}

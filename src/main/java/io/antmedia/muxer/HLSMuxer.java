@@ -22,7 +22,7 @@ import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
 import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
 import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
 import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.av_write_frame;
+import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avformat.av_write_trailer;
 import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
 import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
@@ -190,7 +190,7 @@ public class HLSMuxer extends Muxer  {
 			{
 				registeredStreamIndexList.add(i);
 
-				AVStream outStream = avformat_new_stream(context, inStream.codec().codec());
+				AVStream outStream = avformat_new_stream(context, null);
 				int codecType = inStream.codec().codec_type();
 				if (codecType == AVMEDIA_TYPE_VIDEO) 
 				{
@@ -240,7 +240,7 @@ public class HLSMuxer extends Muxer  {
 					}
 
 				}
-				outStream.codec().codec_tag(0);
+				outStream.codecpar().codec_tag(0);
 
 				streamIndex++;
 
