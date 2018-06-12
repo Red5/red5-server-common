@@ -39,7 +39,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	boolean addVod(Vod vod);
+	String addVod(Vod vod);
 
 	long getBroadcastCount();
 
