@@ -151,6 +151,12 @@ public class Broadcast {
 	 * 
 	 */
 	private boolean zombi = false;
+	
+	private int hlsViewerCount = 0;
+
+	private int webRTCViewerCount = 0;
+	private int rtmpViewerCount = 0;
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -383,5 +389,29 @@ public class Broadcast {
 	public void setStreamUrl(String streamUrl) {
 		this.streamUrl = streamUrl;
 	}
+	public int getHlsViewerCount() {
+		return hlsViewerCount;
+	}
+
+	public void setHlsViewerCount(int hlsViewerCount) {
+		this.hlsViewerCount = hlsViewerCount;
+	}
+
+	public int getWebRTCViewerCount() {
+		return webRTCViewerCount;
+	}
+
+	public void setWebRTCViewerCount(int webRTCViewerCount) {
+		this.webRTCViewerCount = webRTCViewerCount;
+	}
+
+	public int getRtmpViewerCount() {
+		return rtmpViewerCount;
+	}
+
+	public void setRtmpViewerCount(int rtmpViewerCount) {
+		this.rtmpViewerCount = rtmpViewerCount;
+	}
+
 
 }
