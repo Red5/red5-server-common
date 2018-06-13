@@ -108,8 +108,12 @@ public class Broadcast {
 	 * "category" optional It is send if category exists
 	 * 
 	 */
-
 	private String listenerHookURL;
+	
+	/**
+	 * number of hls viewers of the stream
+	 */
+	private int hlsViewerCount;
 
 	private String category;
 
@@ -382,6 +386,14 @@ public class Broadcast {
 
 	public void setStreamUrl(String streamUrl) {
 		this.streamUrl = streamUrl;
+	}
+
+	public int getHlsViewerCount() {
+		return hlsViewerCount;
+	}
+
+	public void setHlsViewerCount(int hlsViewerCount) {
+		this.hlsViewerCount = hlsViewerCount;
 	}
 
 }
