@@ -80,7 +80,7 @@ public class Broadcast {
 	/**
 	 * If this stream is a 360 degree video
 	 */
-	private boolean is360 = false;;
+	private boolean is360 = false;
 
 	/**
 	 * This is the url that will be notified when stream is published, ended and
@@ -108,7 +108,6 @@ public class Broadcast {
 	 * "category" optional It is send if category exists
 	 * 
 	 */
-
 	private String listenerHookURL;
 
 	private String category;
@@ -152,6 +151,9 @@ public class Broadcast {
 	 */
 	private boolean zombi = false;
 	
+	/**
+	 * number of hls viewers of the stream
+	 */
 	private int hlsViewerCount = 0;
 
 	private int webRTCViewerCount = 0;
@@ -412,6 +414,5 @@ public class Broadcast {
 	public void setRtmpViewerCount(int rtmpViewerCount) {
 		this.rtmpViewerCount = rtmpViewerCount;
 	}
-
 
 }

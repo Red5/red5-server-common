@@ -68,6 +68,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			(byte) (0 & 0xff) };
 	private static final int HEADER_LENGTH = 9;
 	private static final int TAG_HEADER_LENGTH = 11;
+	public static final String ADAPTIVE_SUFFIX = "_adaptive";
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 	protected String packetFeederJobName = null;
