@@ -39,7 +39,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	boolean addVod(Vod vod);
+	String addVod(Vod vod);
 
 	long getBroadcastCount();
 
@@ -53,23 +53,16 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
-
-	boolean editCameraInfo(Broadcast camera);
-
-
 	List<Broadcast> getExternalStreamsList();
 
 	void close();
 
 	List<Vod> getVodList(int offset, int size);
 
-
-
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
 	
-
 	long getTotalBroadcastNumber();
 
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
@@ -136,6 +129,20 @@ public interface IDataStore {
 	 * @return
 	 */
 	long getActiveBroadcastCount();
+
+	/**
+	 * Updates the stream source
+	 * @param broadcast
+	 * @return
+	 */
+	boolean editStreamSourceInfo(Broadcast broadcast);
+
+	/**
+	 * Update the HLS viewer count field
+	 * @param streamId
+	 * @param viewerCount
+	 */
+	boolean updateHLSViewerCount(String streamId, int viewerCount);
 
 
 }

@@ -3,9 +3,12 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.3.5.1</version>
+		<version>1.3.6.1-SNAPSHOT</version>
+		<relativePath></relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.red5</groupId>
+	<version>${project.parent.version}</version>
 	<artifactId>red5-server-common</artifactId>
 	<name>Red5 :: Common server classes</name>
 	<description>Classes common for multiple red5 projects</description>
@@ -39,8 +42,8 @@
 		<developerConnection>scm:git:git@github.com:Red5/red5-server-common.git</developerConnection>
 	</scm>
 	<properties>
-		<javacpp.ffmpeg.version>3.2.1-1.3</javacpp.ffmpeg.version>
-		<guava.version>21.0</guava.version>
+		<finalName>${project.artifactId}</finalName>
+		<guava.lib.version>21.0</guava.lib.version>
 	</properties>
 	<developers>
 		<developer>
@@ -74,6 +77,7 @@
 	</repositories>
 	<build>
 		<defaultGoal>install</defaultGoal>
+		<finalName>${finalName}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -245,7 +249,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>${guava.version}</version>
+			<version>${guava.lib.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
@@ -277,5 +281,5 @@
 		</dependency>
 	</dependencies>
 	
-	<groupId>org.red5</groupId>
+	
 </project>
