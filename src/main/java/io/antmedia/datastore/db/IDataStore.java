@@ -67,11 +67,15 @@ public interface IDataStore {
 
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
 	
+	long getObjectDetectedTotal();
+	
 	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
 	
 	List<TensorFlowObject> getDetection(String id);
 
-	
+
+
+
 
 	/**
 	 * Gets the video files under the {@code fileDir} directory parameter
