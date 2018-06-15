@@ -67,7 +67,7 @@ public interface IDataStore {
 
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
 	
-	long getObjectDetectedTotal();
+	long getObjectDetectedTotal(String id);
 	
 	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
 	
