@@ -124,6 +124,9 @@ public class AppSettings {
 	 */
 	private String hlsflags;
 
+
+	private String mySqlClientPath = "/usr/local/antmedia/mysql";
+
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -389,5 +392,14 @@ public class AppSettings {
 
 	public void setHlsflags(String hlsflags) {
 		this.hlsflags = hlsflags;
+	}
+
+	public String getMySqlClientPath() {
+		return this.mySqlClientPath;
+		
+	}
+
+	public void setMySqlClientPath(String mySqlClientPath) {
+		this.mySqlClientPath = mySqlClientPath;
 	}
 }
