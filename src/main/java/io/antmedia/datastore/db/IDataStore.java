@@ -141,6 +141,9 @@ public interface IDataStore {
 	 * @param viewerCount
 	 */
 	boolean updateHLSViewerCount(String streamId, int viewerCount);
+	
+	
+	long getObjectDetectedTotal(String id);
 
 
 }
