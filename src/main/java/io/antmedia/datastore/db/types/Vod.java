@@ -2,10 +2,20 @@ package io.antmedia.datastore.db.types;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+
+@Entity("vod")
+
+@Indexes({ @Index(fields = @Field("vodId")) })
 
 public class Vod implements Serializable {
 
@@ -40,9 +50,10 @@ public class Vod implements Serializable {
 	private String filePath;
 	private String vodId;
 	private String type;
+	
 
 	public Vod(String streamName, String streamId, String filePath, String vodName, long creationDate, long duration,
-			long fileSize, String type) {
+			long fileSize, String type, String vodId) {
 
 		this.streamName = streamName;
 		this.streamId = streamId;
@@ -52,6 +63,7 @@ public class Vod implements Serializable {
 		this.filePath = filePath;
 		this.fileSize = fileSize;
 		this.type = type;
+		this.vodId = vodId;
 
 	}
 

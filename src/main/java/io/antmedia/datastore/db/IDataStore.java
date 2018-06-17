@@ -37,7 +37,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	boolean addVod(Vod vod);
+	String addVod(Vod vod);
 
 	long getBroadcastCount();
 
@@ -128,7 +128,19 @@ public interface IDataStore {
 	 */
 	long getActiveBroadcastCount();
 
+	/**
+	 * Updates the stream source
+	 * @param broadcast
+	 * @return
+	 */
 	boolean editStreamSourceInfo(Broadcast broadcast);
+
+	/**
+	 * Update the HLS viewer count field
+	 * @param streamId
+	 * @param viewerCount
+	 */
+	boolean updateHLSViewerCount(String streamId, int viewerCount);
 
 
 }

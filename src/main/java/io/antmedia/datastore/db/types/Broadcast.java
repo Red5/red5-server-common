@@ -80,7 +80,7 @@ public class Broadcast {
 	/**
 	 * If this stream is a 360 degree video
 	 */
-	private boolean is360 = false;;
+	private boolean is360 = false;
 
 	/**
 	 * This is the url that will be notified when stream is published, ended and
@@ -108,7 +108,6 @@ public class Broadcast {
 	 * "category" optional It is send if category exists
 	 * 
 	 */
-
 	private String listenerHookURL;
 
 	private String category;
@@ -153,10 +152,19 @@ public class Broadcast {
 	private boolean zombi = false;
 	
 	/**
+
 	 * Number of audio and video packets that is being pending to be encoded 
 	 * in the queue
 	 */
 	private int pendingPacketSize = 0;
+
+	/**
+	 * number of hls viewers of the stream
+	 */
+	private int hlsViewerCount = 0;
+
+	private int webRTCViewerCount = 0;
+	private int rtmpViewerCount = 0;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -388,6 +396,29 @@ public class Broadcast {
 
 	public void setStreamUrl(String streamUrl) {
 		this.streamUrl = streamUrl;
+	}
+	public int getHlsViewerCount() {
+		return hlsViewerCount;
+	}
+
+	public void setHlsViewerCount(int hlsViewerCount) {
+		this.hlsViewerCount = hlsViewerCount;
+	}
+
+	public int getWebRTCViewerCount() {
+		return webRTCViewerCount;
+	}
+
+	public void setWebRTCViewerCount(int webRTCViewerCount) {
+		this.webRTCViewerCount = webRTCViewerCount;
+	}
+
+	public int getRtmpViewerCount() {
+		return rtmpViewerCount;
+	}
+
+	public void setRtmpViewerCount(int rtmpViewerCount) {
+		this.rtmpViewerCount = rtmpViewerCount;
 	}
 
 	public int getPendingPacketSize() {
