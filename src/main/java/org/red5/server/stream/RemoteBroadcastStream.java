@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.apache.tika.utils.ExceptionUtils;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.avcodec;
@@ -84,21 +85,21 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 
 		inputFormatContext = avformat.avformat_alloc_context();
 		if (inputFormatContext == null) {
-			logger.info("cannot allocate input context");
+			logger.info("cannot allocate input context {}", remoteStreamUrl);
 			return false;
 		}
 
-		logger.info("input format context: " + inputFormatContext);
+		logger.info("input format context: {}" , inputFormatContext);
 
 		int ret;
 		if ((ret = avformat_open_input(inputFormatContext, remoteStreamUrl, avformat.av_find_input_format("flv"), (AVDictionary)null)) < 0) {
-			logger.info("cannot open input context");
+			logger.info("cannot open input context {}", remoteStreamUrl);
 			return false;
 		}
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
 		if (ret < 0) {
-			logger.info("Could not find stream information\n");
+			logger.info("Could not find stream information {}", remoteStreamUrl);
 			return false;
 		}
 
@@ -112,7 +113,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 
 				ret = avcodec_parameters_copy(out_stream.codecpar(), in_stream.codecpar());
 				if (ret < 0) {
-					logger.info("Cannot get codec parameters\n");
+					logger.info("Cannot get codec parameters {}", remoteStreamUrl);
 					return false;
 				}
 
@@ -141,10 +142,10 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare");
+				logger.info("before prepare {}", remoteStreamUrl);
 				try {
 					if (prepare()) {
-						logger.info("after prepare");
+						logger.info("after prepare {}", remoteStreamUrl);
 
 						packetFeederJobName = scheduler.addScheduledJob(10, RemoteBroadcastStream.this);
 					}
@@ -157,7 +158,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 						close();
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(ExceptionUtils.getStackTrace(e));
 				}
 			}
 		});
@@ -219,7 +220,10 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				
 				rbs.packetTimestamp = getTimeStamp(data[offset + 4], data[offset + 5], data[offset + 6], data[offset + 7]); // 4 byte
 				
-				int length = rbs.packetDataSize + 11 + 4; // 11 packet header + 4 trailer;
+				int length = rbs.packetDataSize + 11 + 4; 
+				/**
+				 * 11 is the length of the packet header  and 4 is the length of the trailer;
+				 */
 				
 				if (datalimit >= (length + offset)) {
 					
@@ -378,14 +382,13 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				//
 
 				if (ret >= 0) {
-					//logger.info("input read...");
 					AVStream stream = inputFormatContext.streams(pkt.stream_index());
 					
-					AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
+					AVStream outStream = outputFormatContext.streams(pkt.stream_index());
 					
-					pkt.pts(av_rescale_q_rnd(pkt.pts(), stream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-					pkt.dts(av_rescale_q_rnd(pkt.dts(), stream.time_base(), out_stream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-					pkt.duration(av_rescale_q(pkt.duration(),  stream.time_base(), out_stream.time_base()));
+					pkt.pts(av_rescale_q_rnd(pkt.pts(), stream.time_base(), outStream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+					pkt.dts(av_rescale_q_rnd(pkt.dts(), stream.time_base(), outStream.time_base(), AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+					pkt.duration(av_rescale_q(pkt.duration(),  stream.time_base(), outStream.time_base()));
 					pkt.pos(-1);
 
 					ret = av_write_frame(outputFormatContext, pkt);
