@@ -232,8 +232,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 					dataPosition = sendData(os.tempData, dataPosition, bufSize, os);
 				} while (dataPosition != 0 && dataPosition < bufSize);
 
-				logger.info("returning buf size {}", bufSize);
-
 				return bufSize;
 			}
 			catch (Exception t) {
@@ -285,8 +283,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 
 				rbs.packetDataType = data[offset];
 				rbs.packetDataSize = getSize(data[offset + 1], data[offset + 2], data[offset + 3]);
-				logger.info("Packet data size: {}  buffer capacity: {} data limit: {}", 
-						rbs.packetDataSize, rbs.buffer.capacity(), datalimit);
 
 				//only store data, not header or trailer
 				if (rbs.buffer.capacity() < rbs.packetDataSize) {
