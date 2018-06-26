@@ -229,9 +229,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				}
 				int dataPosition = offset;
 				do {
-					logger.info("buf size {}", bufSize);
 					dataPosition = sendData(os.tempData, dataPosition, bufSize, os);
-					logger.info("data position {}  buf size: {}", dataPosition, bufSize);
 				} while (dataPosition != 0 && dataPosition < bufSize);
 
 				logger.info("returning buf size {}", bufSize);
@@ -271,7 +269,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 		 */
 
 		try {
-			logger.info("buffer position {} offset {} datalimit {}", rbs.buffer.position(), offset, datalimit);
+			logger.trace("buffer position {} offset {} datalimit {}", rbs.buffer.position(), offset, datalimit);
 			int bufferPosition = rbs.buffer.position();
 			int remainingBytes = (datalimit - offset);
 			if (datalimit <= 4) {
@@ -303,7 +301,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				if (datalimit >= (totalPacketLength + offset - 4)) {
 					//if total data limit is bigger than length + offset
 					//it means that packet is complete
-					logger.info("data limit({}) bigger then length + offset", datalimit);
 
 					if (rbs.packetDataType == 9) {
 						rbs.buffer.put(data, offset + TAG_HEADER_LENGTH, rbs.packetDataSize);
@@ -338,7 +335,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 					//packet is not complete, just write the packet to buffer
 					//it only writes data not header or trailer this is why offset+11
 					//data contains header data as well so that remove header size this is why datalimit -11
-					logger.info("data limit({}) less then length + offset", datalimit);
 					rbs.buffer.put(data, offset + TAG_HEADER_LENGTH, datalimit - offset - TAG_HEADER_LENGTH);
 					return datalimit;
 				}
@@ -351,7 +347,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				int size = datalimit;
 				int position = datalimit;
 
-				logger.info("buffer position not zero datalimit: {} ", datalimit);
 				// if buffer size is perfectly matches the size
 				if ((rbs.buffer.position() + size - PREVIOUS_TAG_DATA_SIZE_LENGTH) == rbs.packetDataSize) {
 					size = datalimit - 4;
@@ -361,10 +356,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 					position = size;
 				}
 
-				logger.info("Packet data size: {}  buffer capacity: {} data limit: {} position: {} size:{}", 
-						rbs.packetDataSize, rbs.buffer.capacity(), datalimit, rbs.buffer.position(), size
-						);
-				
 				rbs.buffer.put(data, 0, size);
 				if (rbs.buffer.position() == rbs.packetDataSize) {
 					rbs.buffer.rewind();
