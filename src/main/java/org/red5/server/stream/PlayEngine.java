@@ -390,7 +390,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		IProviderService.INPUT_TYPE sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
 
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
-			log.warn("input type not found scope " + thisScope.getName() + " item name: " + itemName + " type:" + type);
+			log.warn("input type not found scope {} item name: {} type: {}" , thisScope.getName(), itemName, type);
 			if (cluster != null) {
 				StreamNotificationMessage notification = cluster.getStreamNotification(itemName, thisScope.getName());
 				if (notification != null) 
@@ -402,27 +402,26 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 						cbs.setName(UUID.randomUUID().toString());
 						cbs.setConnection(null);
 						cbs.setScope(thisScope);
-						//cbs.setStreamId(streamId);
 						String hostName = java.net.InetAddress.getByAddress(notification.getAddress().getHost()).getHostName();
 						String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
-						log.info("url of the stream in the cluster: " + url);
+						log.info("url of the stream in the cluster: {}" , url);
 						cbs.setRemoteStreamUrl(url);
 						cbs.setScheduler(schedulingService);
 						
 						boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
 
-						log.warn("Cluster is not null register result: " + result);
+						log.warn("Cluster is not null register result: {}" , result);
 						//cbs.setS
 						cbs.start();
 						
-						 sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
+						sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
 					}
 
 					
 				}
 			}
 			else {
-				log.warn("Cluster null");
+				log.warn("Cluster null for {}", itemName);
 			}
 		}
 

@@ -277,10 +277,10 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			muxAdaptor = null;
 		}
 
-		IClusterNotifier clusterNotifier = getClusterNotifier();
-		if (clusterNotifier != null) {
+		IClusterNotifier clusterNotifierTmp = getClusterNotifier();
+		if (clusterNotifierTmp != null) {
 			IScope scope = Red5.getConnectionLocal().getScope();
-			clusterNotifier.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
+			clusterNotifierTmp.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
 		}
 
 		// clear listeners
@@ -992,9 +992,12 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					}
 				}
 			}
+			else {
+				log.warn("There is no local connection for this BroadcastStream. It is an instance of RemoteBroadcastStream {}", this instanceof RemoteBroadcastStream);
+			}
 		}
 		if (clusterNotifier == null) {
-			log.warn("cluster notifier null");
+			log.warn("cluster notifier null for {}", publishedName);
 		}
 		return clusterNotifier;
 	}
