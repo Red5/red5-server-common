@@ -250,6 +250,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			recordingListener.get().stop();
 		}
 
+		log.info("Checking mux adaptor to stop {}", publishedName);
 		if (muxAdaptor != null) {
 			MuxAdaptor realAdaptor = muxAdaptor.get();
 			if (realAdaptor != null) {
@@ -258,8 +259,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			else {
 				log.warn("Mux adaptor reference is null");
 			}
-			log.info("Mux Adaptor stop called");
+			
 		}
+		log.info("Mux Adaptor stop called {}", publishedName);
 
 		sendPublishStopNotify();
 		// TODO: can we send the client something to make sure he stops sending data?
@@ -271,7 +273,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (recordingListener != null) {
 			recordingListener.clear();
 		}
-		
 		if (muxAdaptor != null) {
 			muxAdaptor.clear();
 			muxAdaptor = null;
@@ -1007,6 +1008,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	public void stop() {
 		log.info("Stream stop: {}", publishedName);
 		stopRecording();
+		log.info("Stream close: {}", publishedName);
 		close();
 	}
 

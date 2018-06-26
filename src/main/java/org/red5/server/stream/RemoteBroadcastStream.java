@@ -404,12 +404,14 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 	public void close() 
 	{
 
-		av_write_trailer(outputFormatContext);
+		if (outputFormatContext != null) {
+			av_write_trailer(outputFormatContext);
 
-		queueReferences.remove(outputFormatContext);
+			queueReferences.remove(outputFormatContext);
 
-		avformat_free_context(outputFormatContext);
-		outputFormatContext = null;
+			avformat_free_context(outputFormatContext);
+			outputFormatContext = null;
+		}
 
 		if (avio != null) {
 			if (avio.buffer() != null) {
@@ -420,8 +422,10 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 			avio = null;
 		}	
 
-		avformat_close_input(inputFormatContext);
-		inputFormatContext = null;
+		if (inputFormatContext != null) {
+			avformat_close_input(inputFormatContext);
+			inputFormatContext = null;
+		}
 
 		/*
 		 * Remote Broacdast Stream does not have a real local connection so that
