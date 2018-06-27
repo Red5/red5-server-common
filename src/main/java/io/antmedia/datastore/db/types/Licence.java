@@ -28,6 +28,10 @@ public class Licence {
 	
 	private String licenceCount;
 	
+	public Licence() {
+		
+		this.type = "regular";
+	}
 
 	public ObjectId getDbId() {
 		return dbId;
