@@ -28,6 +28,8 @@ public class Licence {
 	
 	private String licenceCount;
 	
+	private String owner;
+	
 	public Licence() {
 		
 		this.type = "regular";
@@ -79,6 +81,14 @@ public class Licence {
 
 	public void setLicenceCount(String licenceCount) {
 		this.licenceCount = licenceCount;
+	}
+
+	public String getOwner() {
+		return owner;
+	}
+
+	public void setOwner(String owner) {
+		this.owner = owner;
 	}
 	
 	
