@@ -1887,10 +1887,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                                     // update the timestamp to match our update
                                     lastBytesReadTime = now;
                                 }
-                                // check idle
-                                if (isIdle()) {
-                                    onInactive();
-                                }
                             } else {
                                 // client didn't send response to ping command and didn't sent data for too long, disconnect
                                 long lastPingTime = lastPingSentOn.get();
