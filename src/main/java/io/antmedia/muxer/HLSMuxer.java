@@ -143,6 +143,9 @@ public class HLSMuxer extends Muxer  {
 
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
+			
+			
+			logger.info("hls time: {}, hls list size: {}", hlsTime, hlsListSize);
 
 			String segmentFilename = file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
 			options.put("hls_segment_filename", segmentFilename);
