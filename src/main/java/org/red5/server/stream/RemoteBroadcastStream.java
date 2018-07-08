@@ -101,6 +101,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				av_strerror(ret, data, data.length);
 				logger.warn("cannot open input context: {}  error: {}", remoteStreamUrl, new String(data, 0, data.length));
 			}
+
 			return false;
 		}
 
@@ -297,6 +298,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 				if (datalimit >= (totalPacketLength + offset - 4)) {
 					//if total data limit is bigger than length + offset
 					//it means that packet is complete
+
 
 					if (rbs.packetDataType == 9) {
 						rbs.buffer.put(data, offset + TAG_HEADER_LENGTH, rbs.packetDataSize);

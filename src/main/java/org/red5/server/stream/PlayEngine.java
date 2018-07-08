@@ -390,7 +390,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		IProviderService.INPUT_TYPE sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
 
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
-			log.warn("input type not found scope {} item name: {} type: {}" , thisScope.getName(), itemName, type);
+			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
+
 			if (cluster != null) {
 				StreamNotificationMessage notification = cluster.getStreamNotification(itemName, thisScope.getName());
 				if (notification != null) 
