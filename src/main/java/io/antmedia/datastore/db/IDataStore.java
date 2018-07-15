@@ -31,10 +31,8 @@ public interface IDataStore {
 
 	boolean updateStatus(String id, String status);
 	
-	boolean updateSourceQuality(String id, String quality);
+	boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue);
 	
-	boolean updateSourceSpeed(String id, double speed);
-
 	boolean updateDuration(String id, long duration);
 
 	boolean addEndpoint(String id, Endpoint endpoint);
@@ -66,8 +64,6 @@ public interface IDataStore {
 	long getTotalBroadcastNumber();
 
 	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
-	
-	long getObjectDetectedTotal(String id);
 	
 	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
 	
@@ -147,6 +143,9 @@ public interface IDataStore {
 	 * @param viewerCount
 	 */
 	boolean updateHLSViewerCount(String streamId, int viewerCount);
+	
+	
+	long getObjectDetectedTotal(String id);
 
 
 }

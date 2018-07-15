@@ -11,7 +11,9 @@ RED5_JAR=./target/red5-server-common.jar
 
 SRC_CONF_DIR=../Ant-Media-Server/src/main/server/conf/
 
-rm $RED5_DIR/lib/red5-server-common*.jar
+#remove older version
+rm $RED5_LIB_DIR/red5-server-common*
+
 #copy red5 jar from target dir to red5 dir
 cp  $RED5_JAR  $RED5_LIB_DIR/
 
