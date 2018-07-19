@@ -12,73 +12,73 @@ import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
 public class AppSettings {
-	
+
 	public static final String BEAN_NAME = "app.settings";
 
 
-	private boolean mp4MuxingEnabled = true;
+	private boolean mp4MuxingEnabled = false;
 
 	private boolean addDateTimeToMp4FileName = false;
 
 	private boolean hlsMuxingEnabled = true;
 
-	private List<EncoderSettings> adaptiveResolutionList;
+	private List<EncoderSettings> adaptiveResolutionList = null;
 
-	private String hlsListSize;
+	private String hlsListSize = null;
 
-	private String hlsTime;
+	private String hlsTime = null;
 
 	private boolean webRTCEnabled = false;
-	
+
 	private boolean deleteHLSFilesOnEnded = true;
-	
+
 	private String listenerHookURL;
-	
-	
+
+
 	private boolean acceptOnlyStreamsInDataStore;
 
 	/**
 	 * Fully qualified server name
 	 */
 	private String serverName;
-	
+
 	/**
 	 * event or vod
 	 */
-	private String hlsPlayListType;
-	
+	private String hlsPlayListType = null;
+
 	/**
 	 * Facebook client id
 	 */
 	private String facebookClientId;
-	
+
 	/**
 	 * Facebook client secret
 	 */
 	private String facebookClientSecret;
-  	
+
 	/**
 	 * Periscope app client id
 	 */
 	private String  periscopeClientId;
-	
+
 	/**
 	 * Periscope app client secret
 	 */
 	private String  periscopeClientSecret;
-	
-  	/**
-  	 * Youtube client id
-  	 */
+
+	/**
+	 * Youtube client id
+	 */
 	private String youtubeClientId;
-	
+
 	/**
 	 * Youtube client secret
 	 */
 	private String youtubeClientSecret;
-	
+
 	private String vodFolder;
-	
+
 	/**
 	 * Overwrite preview files if exist, default value is false
 	 */
@@ -88,18 +88,44 @@ public class AppSettings {
 	 * Address of the Stalker Portal DB server 
 	 */
 	private String stalkerDBServer;
-	
+
 	/**
 	 * Username of stalker portal DB
 	 */
 	private String stalkerDBUsername;
-	
+
 	/**
 	 * Password of the stalker portal DB User
 	 */
 	private String stalkerDBPassword;
-	
-	
+
+	/**
+	 * The directory contains the tensorflow object detection model
+	 */
+	private boolean objectDetectionEnabled =false;
+
+
+	private int createPreviewPeriod;
+
+	/**
+	 * Restart stream fetcher period in seconds
+	 */
+	private int restartStreamFetcherPeriod = 0;
+
+	/**
+	 * Stream fetcher buffer time in milliseconds. 
+	 * Stream is buffered for this duration and after that it will be started.
+	 */
+	private int streamFetcherBufferTime = 0;
+
+
+	/**
+	 * HLS Flags for FFmpeg HLS Muxer
+	 */
+	private String hlsflags;
+
+
+	private String mySqlClientPath = "/usr/local/antmedia/mysql";
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -201,12 +227,10 @@ public class AppSettings {
 
 	public String getEncoderSettingsString() {
 		return getEncoderSettingsString(adaptiveResolutionList);
-		//return encoderSettingsString;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
 		adaptiveResolutionList = getEncoderSettingsList(encoderSettingsString);
-		//this.encoderSettingsString = encoderSettingsString;
 	}
 
 	public boolean isDeleteHLSFilesOnExit() {
@@ -239,6 +263,14 @@ public class AppSettings {
 
 	public void setAcceptOnlyStreamsInDataStore(boolean acceptOnlyStreamsInDataStore) {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
+	}
+
+	public boolean isObjectDetectionEnabled() {
+		return objectDetectionEnabled;
+	}
+
+	public void setObjectDetectionEnabled(Boolean objectDetectionEnabled) {
+		this.objectDetectionEnabled = objectDetectionEnabled;
 	}
 
 	public String getYoutubeClientSecret() {
@@ -288,7 +320,7 @@ public class AppSettings {
 	public void setFacebookClientId(String facebookClientId) {
 		this.facebookClientId = facebookClientId;
 	}
-	
+
 
 	public String getVodFolder() {
 		return vodFolder;
@@ -296,6 +328,14 @@ public class AppSettings {
 
 	public void setVodFolder(String vodFolder) {
 		this.vodFolder = vodFolder;
+	}
+
+	public int getCreatePreviewPeriod() {
+		return createPreviewPeriod;
+	}
+
+	public void setCreatePreviewPeriod(int period) {
+		this.createPreviewPeriod = period;
 	}
 
 	public boolean isPreviewOverwrite() {
@@ -328,5 +368,38 @@ public class AppSettings {
 
 	public void setStalkerDBPassword(String stalkerDBPassword) {
 		this.stalkerDBPassword = stalkerDBPassword;
+	}
+
+	public int getRestartStreamFetcherPeriod() {
+		return this.restartStreamFetcherPeriod ;
+	}
+
+	public void setRestartStreamFetcherPeriod(int restartStreamFetcherPeriod) {
+		this.restartStreamFetcherPeriod = restartStreamFetcherPeriod;
+	}
+
+	public int getStreamFetcherBufferTime() {
+		return streamFetcherBufferTime;
+	}
+
+	public void setStreamFetcherBufferTime(int streamFetcherBufferTime) {
+		this.streamFetcherBufferTime = streamFetcherBufferTime;
+	}
+
+	public String getHlsFlags() {
+		return hlsflags;
+	}
+
+	public void setHlsflags(String hlsflags) {
+		this.hlsflags = hlsflags;
+	}
+
+	public String getMySqlClientPath() {
+		return this.mySqlClientPath;
+		
+	}
+
+	public void setMySqlClientPath(String mySqlClientPath) {
+		this.mySqlClientPath = mySqlClientPath;
 	}
 }

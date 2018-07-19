@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true
+mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
 
 RED5_DIR=$TMPDIR/ant-media-server
 RED5_DIR=~/softwares/ant-media-server
@@ -28,7 +28,7 @@ cp $RED5_JAR $ANT_MEDIA_2/lib
 #go to red5 dir
 cd $RED5_DIR
 
-#shutdown red5 
+#shutdown red5
 #./red5-shutdown.sh
 
 

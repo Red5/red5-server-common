@@ -5,15 +5,24 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.Vod;
 
 public interface IDataStore {
 	
-	public static final String BEAN_NAME = "db.datastore"; 
+
+ 
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
 	
+
+	/**
+	 * This is the bean name that implements IDataStore
+	 */
+	public static final String BEAN_NAME = "db.datastore";
+
+
 	String save(Broadcast broadcast);
 
 	Broadcast get(String id);
@@ -28,7 +37,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	boolean addVod(Vod vod);
+	String addVod(Vod vod);
 
 	long getBroadcastCount();
 
@@ -42,24 +51,27 @@ public interface IDataStore {
 
 	boolean removeEndpoint(String id, Endpoint endpoint);
 
-
-	boolean editCameraInfo(Broadcast camera);
-
-
 	List<Broadcast> getExternalStreamsList();
 
 	void close();
 
 	List<Vod> getVodList(int offset, int size);
 
-
-
 	boolean removeAllEndpoints(String id);
 
 	long getTotalVodNumber();
 	
 	long getTotalBroadcastNumber();
+
+	void saveDetection(String id,long timeElapsed,List<TensorFlowObject> detectedObjects);
 	
+	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
+	
+	List<TensorFlowObject> getDetection(String id);
+
+
+
+
 
 	/**
 	 * Gets the video files under the {@code fileDir} directory parameter
@@ -111,12 +123,29 @@ public interface IDataStore {
 	 * <code>null</code> if there is no matching id
 	 */
 	SocialEndpointCredentials getSocialEndpointCredentials(String id);
-
+	
 	/**
 	 * Return the number of active broadcasts in the server
 	 * @return
 	 */
 	long getActiveBroadcastCount();
+
+	/**
+	 * Updates the stream source
+	 * @param broadcast
+	 * @return
+	 */
+	boolean editStreamSourceInfo(Broadcast broadcast);
+
+	/**
+	 * Update the HLS viewer count field
+	 * @param streamId
+	 * @param viewerCount
+	 */
+	boolean updateHLSViewerCount(String streamId, int viewerCount);
+	
+	
+	long getObjectDetectedTotal(String id);
 
 
 }

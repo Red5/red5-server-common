@@ -48,7 +48,6 @@ public abstract class Muxer {
 	protected String extension;
 	protected String format;
 	protected boolean isInitialized = false;
-	// protected boolean isFinished = false;
 
 	protected Map<String, String> options = new HashMap();
 	private static Logger logger = LoggerFactory.getLogger(Muxer.class);
@@ -66,6 +65,11 @@ public abstract class Muxer {
 	private boolean addDateTimeToResourceName = false;
 
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
+	
+	/**
+	 * Bitstream filter name that will be applied to packets
+	 */
+	protected String bsfName;
 
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;
@@ -185,6 +189,11 @@ public abstract class Muxer {
 	 *            The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket pkt);
+	
+	
+	public void setBitstreamFilter(String bsfName) {
+		this.bsfName = bsfName;
+	}
 
 	public File getFile() {
 		return file;

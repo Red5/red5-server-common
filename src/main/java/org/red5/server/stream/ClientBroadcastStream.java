@@ -76,6 +76,7 @@ import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
+import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
@@ -249,6 +250,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			recordingListener.get().stop();
 		}
 
+		log.info("Checking mux adaptor to stop {}", publishedName);
 		if (muxAdaptor != null) {
 			MuxAdaptor realAdaptor = muxAdaptor.get();
 			if (realAdaptor != null) {
@@ -257,8 +259,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			else {
 				log.warn("Mux adaptor reference is null");
 			}
-			log.info("Mux Adaptor stop called");
+			
 		}
+		log.info("Mux Adaptor stop called {}", publishedName);
 
 		sendPublishStopNotify();
 		// TODO: can we send the client something to make sure he stops sending data?
@@ -270,16 +273,15 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (recordingListener != null) {
 			recordingListener.clear();
 		}
-		
 		if (muxAdaptor != null) {
 			muxAdaptor.clear();
 			muxAdaptor = null;
 		}
 
-				IClusterNotifier clusterNotifier = getClusterNotifier();
-		if (clusterNotifier != null) {
+		IClusterNotifier clusterNotifierTmp = getClusterNotifier();
+		if (clusterNotifierTmp != null) {
 			IScope scope = Red5.getConnectionLocal().getScope();
-			clusterNotifier.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
+			clusterNotifierTmp.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
 		}
 
 		// clear listeners
@@ -936,85 +938,37 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
+		MuxAdaptor localMuxAdaptor = MuxAdaptor.initializeMuxAdaptor(this, false, conn.getScope());
+
+		setUpEndPoints(appCtx, publishedName, localMuxAdaptor);
 		
 
-		//if (automaticMp4Recording || automaticHlsRecording)  
-		{
-			//MuxAdaptor localMuxAdaptor = new MuxAdaptor(this);
+		try {
+			if (conn == null) {
+				throw new IOException("Stream is no longer connected");
 
-
-			boolean mp4MuxingEnabled = true;
-			boolean addDateTimeToMp4FileName=false;
-			boolean webRTCEnabled = false;
-			StorageClient storageClient = null;
-			boolean hlsMuxingEnabled = true;
-			List<EncoderSettings> adaptiveResolutionList = null;
-			String hlsListSize = null;
-			String hlsTime = null;
-			String hlsPlayListType = null;
-			boolean deleteHLSFilesOnExit = true;
-			boolean isPreviewOverwrite = false;
-			if (appCtx.containsBean("app.settings"))  {
-				AppSettings appSettings = (AppSettings) appCtx.getBean("app.settings");
-				mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-				addDateTimeToMp4FileName = appSettings.isAddDateTimeToMp4FileName();
-				hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
-				adaptiveResolutionList = appSettings.getAdaptiveResolutionList();
-				hlsListSize = appSettings.getHlsListSize();
-				hlsTime = appSettings.getHlsTime();
-				hlsPlayListType = appSettings.getHlsPlayListType();
-				webRTCEnabled = appSettings.isWebRTCEnabled();
-				deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
-				isPreviewOverwrite = appSettings.isPreviewOverwrite();
-			}
-			MuxAdaptor localMuxAdaptor = initializeMuxAdaptor(adaptiveResolutionList);
-
-
-			if (appCtx.containsBean("app.storageClient")) {
-				storageClient = (StorageClient) appCtx.getBean("app.storageClient");
 			}
 
-			localMuxAdaptor.setStorageClient(storageClient);
+			localMuxAdaptor.init(conn, publishedName, false);
 
-			localMuxAdaptor.setMp4MuxingEnabled(automaticMp4Recording && mp4MuxingEnabled, addDateTimeToMp4FileName);
-			localMuxAdaptor.setHLSMuxingEnabled(automaticHlsRecording && hlsMuxingEnabled);
-			localMuxAdaptor.setWebRTCEnabled(webRTCEnabled);
-			localMuxAdaptor.setHLSFilesDeleteOnExit(deleteHLSFilesOnExit);
-
-			localMuxAdaptor.setHlsTime(hlsTime);
-			localMuxAdaptor.setHlsListSize(hlsListSize);
-			localMuxAdaptor.setHlsPlayListType(hlsPlayListType);
 			
-			localMuxAdaptor.setPreviewOverwrite(isPreviewOverwrite);
-			
-			
-			setUpEndPoints(appCtx, publishedName, localMuxAdaptor, conn);
-
-			try {
-				if (conn == null) {
-					throw new IOException("Stream is no longer connected");
-				}
-				localMuxAdaptor.init(conn, publishedName, false);
-				addStreamListener(localMuxAdaptor);
-				this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
-				localMuxAdaptor.start();
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-
+			addStreamListener(localMuxAdaptor);
+			this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
+			localMuxAdaptor.start();
 		}
-
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
-	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor,  IStreamCapableConnection conn) {
+	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor) {
 		if (appCtx.containsBean("db.datastore")) 
 		{
 			IDataStore dataStore = (IDataStore)appCtx.getBean("db.datastore");
 			Broadcast broadcast = dataStore.get(publishedName);
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
-				
+
 				if (endPointList != null && endPointList.size() > 0) 
 				{
 					for (Endpoint endpoint : endPointList) {
@@ -1039,37 +993,22 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					}
 				}
 			}
+			else {
+				log.warn("There is no local connection for this BroadcastStream. It is an instance of RemoteBroadcastStream {}", this instanceof RemoteBroadcastStream);
+			}
 		}
 		if (clusterNotifier == null) {
-			log.warn("cluster notifier null");
+			log.warn("cluster notifier null for {}", publishedName);
 		}
 		return clusterNotifier;
 	}
 
-	private MuxAdaptor initializeMuxAdaptor(List<EncoderSettings> adaptiveResolutionList) {
-		MuxAdaptor muxAdaptor = null;
-		try {
-			if (adaptiveResolutionList != null && adaptiveResolutionList.size() > 0) 
-			{
-				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
-
-				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class, List.class)
-						.newInstance(this, adaptiveResolutionList);
-			}
-		} catch (Exception e) {
-			//e.printStackTrace();
-		} 
-		if (muxAdaptor == null) {
-			muxAdaptor = new MuxAdaptor(this);
-		}
-
-		return muxAdaptor;
-	}
 
 	/** {@inheritDoc} */
 	public void stop() {
 		log.info("Stream stop: {}", publishedName);
 		stopRecording();
+		log.info("Stream close: {}", publishedName);
 		close();
 	}
 
@@ -1085,7 +1024,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			removeStreamListener(listener);
 			// stop the recording listener
 			listener.stop();
-			// clear and null-out the thread local
+			// clear and null-out the tsetHlsTimehread local
 			recordingListener.clear();
 			recordingListener = null;
 		}

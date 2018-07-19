@@ -154,6 +154,7 @@ public class RtmpMuxer extends Muxer {
 				}
 
 				out_stream.codec().codec_tag(0);
+				out_stream.codecpar().codec_tag(0);
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					out_stream.codec().flags( out_stream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);

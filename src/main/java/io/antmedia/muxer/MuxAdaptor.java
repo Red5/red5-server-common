@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,39 +56,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import io.antmedia.datastore.db.IDataStore;
+
+
+import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
 
 import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
-	private final static byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
+	private static final byte[] DEFAULT_STREAM_ID = new byte[] { (byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff) };
-	private final static int HEADER_LENGTH = 9;
-	private final static int TAG_HEADER_LENGTH = 11;
-
+	private static final int HEADER_LENGTH = 9;
+	private static final int TAG_HEADER_LENGTH = 11;
+	public static final String ADAPTIVE_SUFFIX = "_adaptive";
 	protected QuartzSchedulingService scheduler;
-
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
-
 	protected String packetFeederJobName = null;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
-
-	// private ReadCallback readCallback;
-
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	protected AVIOContext avio_alloc_context;
 	protected AVFormatContext inputFormatContext;
 
 	protected ArrayList<Muxer> muxerList = new ArrayList<Muxer>();
-
 	protected boolean deleteHLSFilesOnExit = true;
-	
 	protected int receivedPacketCount;
 	protected boolean previewOverwrite = false;
-
 	public static class InputContext {
-		public ConcurrentLinkedQueue<byte[]> queue;
+		public Queue<byte[]> queue;
 		public volatile boolean isHeaderWritten = false;
 		public volatile boolean stopRequestExist = false;
 		public AtomicInteger queueSize = new AtomicInteger(0);
@@ -96,45 +92,50 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			this.queue = queue;
 		}
 	}
-
 	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
-
 	protected static final int BUFFER_SIZE = 4096;
-	
 	public static final String QUALITY_GOOD = "good";
 	public static final String QUALITY_AVERAGE  = "average";
 	public static final String QUALITY_POOR ="poor";
 	public static final String QUALITY_NA ="NA";
-	
-
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected boolean objectDetectionEnabled;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
 	protected String hlsListSize;
 	protected String hlsPlayListType;
-	protected AVPacket pkt = avcodec.av_packet_alloc(); // new AVPacket();
-
+	List<EncoderSettings> adaptiveResolutionList = null;
+	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected boolean firstKeyFrameReceived = false;
-	private String name;
+	protected String streamId;
 	protected long startTime;
-	private IScope scope;
+
+	protected IScope scope;
+
 	private String oldQuality;
-	private String newQuality;
 	private AVRational timeBaseForMS;
-	private int speedCounter=0;
-	
 	private InputContext inputContext;
 	private IAntMediaStreamHandler appAdapter;
 
-	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
-		@Override
+	private String mp4Filtername;
+	protected List<EncoderSettings> encoderSettingsList;
+	protected long timeDiffBetweenVideoandElapsed;
+	protected long elapsedTime;
+	protected static boolean isStreamSource=false;
 
-		public int call(Pointer opaque, BytePointer buf, int buf_size) {
+	private int previewCreatePeriod;
+	private double oldspeed;
+	private long firstPacketTime = -1;
+
+	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
+
+		@Override
+		public int call(Pointer opaque, BytePointer buf, int bufSize) {
 			int length = -1;
 			try {
 				InputContext inputContext = queueReferences.get(opaque);
@@ -161,7 +162,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						buf.put(packet, 0, length);
 					} else // if (stopRequestExist)
 					{
-						logger.info("packet is null and return length is:" + length);
+						logger.info("packet is null and return length is {}", length);
 					}
 				} else {
 					inputContext.isHeaderWritten = true;
@@ -181,7 +182,43 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	};
 
-	public MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource, IScope scope) {
+		MuxAdaptor muxAdaptor = null;
+		ApplicationContext applicationContext = scope.getContext().getApplicationContext();
+		boolean tryEncoderAdaptor = false;
+		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) 
+		{
+			AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
+			List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
+			if (list != null && list.size() > 0) 
+			{
+				tryEncoderAdaptor = true;
+			}
+		}
+
+		if (tryEncoderAdaptor) {
+			//if adaptive bitrate enabled, take a look at encoder adaptor exists
+			//if it is not enabled, then initialize only mux adaptor
+			try {
+				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+
+				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
+						.newInstance(clientBroadcastStream);
+
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+			} 
+		}
+		if (muxAdaptor == null) {
+			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
+		}
+		muxAdaptor.setStreamSource(isSource);
+
+		return muxAdaptor;
+	}
+
+	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
+
 		this.broadcastStream = clientBroadcastStream;
 
 		timeBaseForMS = new AVRational();
@@ -200,30 +237,58 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return init(conn.getScope(), name, isAppend);
 	}
 
+	protected void enableSettings() {
+		AppSettings appSettings = getAppSettings();
+		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
+		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
+		objectDetectionEnabled = appSettings.isObjectDetectionEnabled();
+		
+		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
+		mp4Filtername = null;
+		webRTCEnabled = getAppSettings().isWebRTCEnabled();
+		deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
+		hlsListSize = appSettings.getHlsListSize();
+		hlsTime = appSettings.getHlsTime();
+		hlsPlayListType = appSettings.getHlsPlayListType();
+		previewOverwrite = appSettings.isPreviewOverwrite();
+		encoderSettingsList = appSettings.getAdaptiveResolutionList();
+	}
+
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
-		this.name = name;
+		
+		this.streamId = name;
 		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
 		this.scope=scope;
 
+		enableSettings();
 
-
-
+		if (scope.getContext().getApplicationContext().containsBean("app.storageClient")) {
+			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean("app.storageClient");
+			setStorageClient(storageClient);
+		}else {
+			setStorageClient(null);	
+		}
 
 		if (scheduler == null) {
-			logger.warn("scheduler is not available in beans");
+			logger.warn("scheduler is not available in beans for {}", name);
 			return false;
 		}
+
 
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
 			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
+			mp4Muxer.setBitstreamFilter(mp4Filtername);
 			addMuxer(mp4Muxer);
+			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
 		}
+
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType);
+			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
+			logger.info("adding HLS Muxer for {}", name);
 		}
 
 		for (Muxer muxer : muxerList) {
@@ -232,6 +297,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return true;
 	}
 
+
 	public boolean prepare() throws Exception {
 
 		inputFormatContext = avformat.avformat_alloc_context();
@@ -239,8 +305,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("cannot allocate input context");
 			return false;
 		}
-
-		// readCallback = new ReadCallback();
 
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
@@ -251,7 +315,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		queueReferences.put(inputFormatContext, inputContext);
 
 		int ret;
-
 		logger.debug("before avformat_open_input");
 
 		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
@@ -262,6 +325,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		logger.debug("after avformat_open_input..before avformat_find_stream");
 		long startFindStreamInfoTime = System.currentTimeMillis();
+
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information\n");
@@ -270,9 +334,20 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
 
 
+		logger.info("after avformat_find_sream_info");
+
+		return prepareInternal(inputFormatContext);
+	}
+
+	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception{
+		return prepareMuxers(inputFormatContext);
+	}
+
+	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
+
 		if (av_log_get_level() >= AV_LOG_INFO) {
 			// Dump information about file onto standard error
-			av_dump_format(inputFormatContext, 0, name, 0);
+			av_dump_format(inputFormatContext, 0, streamId, 0);
 		}
 
 		Iterator<Muxer> iterator = muxerList.iterator();
@@ -280,7 +355,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			Muxer muxer = (Muxer) iterator.next();
 			if (!muxer.prepare(inputFormatContext)) {
 				iterator.remove();
-				logger.warn("muxer prepare returns false " + muxer.getFormat());
+				logger.warn("muxer prepare returns false {}",  muxer.getFormat());
 			}
 		}
 
@@ -288,7 +363,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 
-
+		startTime = System.currentTimeMillis();
 
 		return true;
 	}
@@ -305,36 +380,46 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param duration, the total elapsed time in milliseconds
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
-	public void changeStreamQualityParameters(String streamId, String quality, double packetTime, double duration, int inputQueueSize) {
-		speedCounter++;
-		if(oldQuality != quality || speedCounter % 600 == 0) {
-			double speed = 0;
-			if (duration > 0) {
-				speed = packetTime/duration;
-			}
+	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
+		
+		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.01) {
+			
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
+			oldspeed = speed;
 		}
 	}
 	
 	private IAntMediaStreamHandler getStreamHandler() {
 		if (appAdapter == null) {
+
 			IContext context = MuxAdaptor.this.scope.getContext(); 
 			ApplicationContext appCtx = context.getApplicationContext(); 
 			appAdapter = (IAntMediaStreamHandler)appCtx.getBean("web.handler");
+
 		}
 		return appAdapter;
+	}
+	
+	public AppSettings getAppSettings() {
+
+		AppSettings appSettings = null;
+		if(scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
+			appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
+		}
+		if (appSettings == null) {
+			logger.warn("No app settings in context, returning default AppSettings");
+			appSettings = new AppSettings();
+		}
+
+		return appSettings;
+
 	}
 
 	@Override
 	public void execute(ISchedulingService service) throws CloneNotSupportedException {
 
-
-
-
-
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
-			// logger.info("pipe reader job in running");
 			while (true) {
 				if (inputFormatContext == null) {
 					break;
@@ -342,90 +427,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
-					receivedPacketCount++;
-					long currentTime = System.currentTimeMillis();
-
-					AVStream stream = inputFormatContext.streams(pkt.stream_index());
-
-
-
-					long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
-
-
-					long timeDiff = (currentTime-startTime)-packetTime;
-
-					long duration = currentTime-startTime;
-					
-					//logger.info("time difference :  "+String.valueOf((currentTime-startTime)-packetTime));
-
-					String sourceQuality = QUALITY_POOR;
-					if(timeDiff<1800) {
-						sourceQuality = QUALITY_GOOD;
-					}
-					else if(timeDiff>1799 && timeDiff<3499 ) {
-						sourceQuality = QUALITY_AVERAGE;
-					}
-					
-					int inputQueueSize = getInputQueueSize();
-					if (receivedPacketCount % 500 == 0) {
-						logger.info("Number of items in the queue {}", inputQueueSize);
-					}
-					
-					changeStreamQualityParameters(this.name, sourceQuality, packetTime, duration, inputQueueSize);
-					
-
-					if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
-						int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
-						if (keyFrame == 1) {
-							firstKeyFrameReceived = true;
-						} else {
-							logger.warn("First video packet is not key frame. Dropping...");
-							av_packet_unref(pkt);
-							continue;
-						}
-					}
-
-					for (Muxer muxer : muxerList) {
-						muxer.writePacket(pkt, stream);
-					}
+					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
-
-				} else {
-					System.out.println("removing scheduled job " + MuxAdaptor.this);
-					scheduler.removeScheduledJob(packetFeederJobName);
-					for (Muxer muxer : muxerList) {
-						muxer.writeTrailer();
-					}
-					logger.info("closing input");
-
-					queueReferences.remove(inputFormatContext);
-
-					av_packet_free(pkt);
-					avformat_close_input(inputFormatContext);
-
-					if (avio_alloc_context != null) {
-						if (avio_alloc_context.buffer() != null) {
-							av_free(avio_alloc_context.buffer());
-							avio_alloc_context.buffer(null);
-						}
-						av_free(avio_alloc_context);
-						avio_alloc_context = null;
-					}
-
-					inputFormatContext = null;
-					isRecording = false;
-				
-					changeStreamQualityParameters(this.name, QUALITY_NA, 0, 0, getInputQueueSize());
-
+				} 
+				else {
+					closeResources();
 				}
-
 				// if there is not element in the qeueue,
 				// break the loop
 				if (inputQueue.peek() == null || inputFormatContext == null) {
 					break;
 				}
-				// break;
 			}
 
 			isPipeReaderJobRunning.compareAndSet(true, false);
@@ -433,20 +446,90 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public void closeResources() {
 
-		System.out.println("removing scheduled job " + MuxAdaptor.this);
-		if (packetFeederJobName != null) {
-			scheduler.removeScheduledJob(packetFeederJobName);
+	public void writePacket(AVStream stream, AVPacket pkt) {
+
+		long currentTime = System.currentTimeMillis();
+		long packetTime = av_rescale_q(pkt.pts(), stream.time_base(), timeBaseForMS);
+		
+		if (firstPacketTime == -1) {
+			firstPacketTime = packetTime;
+			logger.info("first packet time {}", firstPacketTime);
 		}
+
+		timeDiffBetweenVideoandElapsed = (currentTime - startTime) - packetTime;
+		elapsedTime = currentTime - startTime;
+
+		double speed = 0L;
+		if (elapsedTime > 0) {
+			speed= (double)(packetTime - firstPacketTime)/elapsedTime;
+			if (Double.isNaN(speed) && logger.isWarnEnabled()) {
+				logger.warn("speed is NaN, packetTime: {}, first packetTime: {}, elapsedTime:{}", packetTime, firstPacketTime, elapsedTime);
+			}
+		}
+		String quality = QUALITY_POOR;
+
+		if(timeDiffBetweenVideoandElapsed < 1800) 
+		{
+			quality = QUALITY_GOOD;
+		}
+		else if(timeDiffBetweenVideoandElapsed>1799) 
+		{
+			quality = QUALITY_AVERAGE;
+		}
+
+		receivedPacketCount++;
+		int inputQueueSize = getInputQueueSize();
+		if (receivedPacketCount % 500 == 0) {
+			logger.info("Number of items in the queue {}", inputQueueSize);
+		}
+
+		changeStreamQualityParameters(this.streamId, quality, speed, inputQueueSize);
+		
+		if (!firstKeyFrameReceived && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
+			if (keyFrame == 1) {
+				firstKeyFrameReceived = true;
+			} else {
+				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}" , streamId);
+			}
+		}
+
+		if (firstKeyFrameReceived) {
+			for (Muxer muxer : muxerList) {
+				muxer.writePacket(pkt, stream);
+			}
+		}
+
+	}
+
+	public void writeTrailer(AVFormatContext inputFormatContext) 
+	{
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
 		}
-		logger.info("closing input");
+		//This is allocated and needs to free for every case
+		av_packet_free(pkt);
+
+		if (timeBaseForMS != null) {
+			timeBaseForMS.close();
+			timeBaseForMS = null;
+		}
+	}
+
+
+	public void closeResources() {
+		logger.info("close resources");
+
+		if (packetFeederJobName != null) {
+			logger.info("removing scheduled job {} ", packetFeederJobName);
+			scheduler.removeScheduledJob(packetFeederJobName);
+		}
+
+		writeTrailer(inputFormatContext);
 
 		queueReferences.remove(inputFormatContext);
 
-		av_packet_free(pkt);
 		avformat_close_input(inputFormatContext);
 
 		if (avio_alloc_context != null) {
@@ -460,7 +543,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		inputFormatContext = null;
 		isRecording = false;
+
+		changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, getInputQueueSize());
+	
 	}
+
+
+
 
 	public static byte[] getFLVFrame(IStreamPacket packet) throws IOException {
 		/*
@@ -547,27 +636,28 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.debug("before prepare");
+				logger.info("before prepare for {}", streamId);
 				try {
 					if (prepare()) {
-						logger.debug("after prepare");
+						logger.info("after prepare for {}", streamId);
 						isRecording = true;
 						startTime = System.currentTimeMillis();
 						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
 						logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
 						
+						logger.info("Packet Feeder Job Name {}", packetFeederJobName);
 					} else {
 						logger.warn("input format context cannot be created");
 						if (broadcastStream != null) {
 							broadcastStream.removeStreamListener(MuxAdaptor.this);
 						}
-						logger.warn("closing adaptor");
+						logger.warn("closing adaptor for {}", streamId);
 						closeResources();
 						// stop();
-						logger.warn("closed adaptor");
+						logger.warn("closed adaptor for {}", streamId);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
 				}
 			}
 		});
@@ -576,9 +666,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void stop() {
-		logger.info("Calling stop");
+		logger.info("Calling stop for {}", streamId);
 		if (inputFormatContext == null) {
-			logger.warn("Mux adaptor stopped returning");
+			logger.warn("Mux adaptor stopped returning for {}", streamId);
 			return;
 		}
 		InputContext inputContext = queueReferences.get(inputFormatContext);
@@ -587,6 +677,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 	}
+
+
+
+
+
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
@@ -617,7 +712,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			}
 
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 
@@ -655,29 +750,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return muxerList;
 	}
 
-	public void setMp4MuxingEnabled(boolean mp4Enabled, boolean addDateTimeToMp4FileName) {
-		this.mp4MuxingEnabled = mp4Enabled;
-		this.addDateTimeToMp4FileName = addDateTimeToMp4FileName;
-	}
-
-	public void setHLSMuxingEnabled(boolean hlsMuxingEnabled) {
-		this.hlsMuxingEnabled = hlsMuxingEnabled;
-	}
 
 	public void setStorageClient(StorageClient storageClient) {
 		this.storageClient = storageClient;
-	}
-
-	public void setHlsTime(String hlsTime) {
-		this.hlsTime = hlsTime;
-	}
-
-	public void setHlsListSize(String hlsListSize) {
-		this.hlsListSize = hlsListSize;
-	}
-
-	public void setHlsPlayListType(String hlsPlayListType) {
-		this.hlsPlayListType = hlsPlayListType;
 	}
 
 	public boolean isWebRTCEnabled() {
@@ -700,8 +775,64 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		this.previewOverwrite  = overwrite;
 	}
 
+
 	public boolean isPreviewOverwrite() {
 		return previewOverwrite;
 	}
 
+	public long getStartTime() {
+		return startTime;
+	}
+
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	public List<EncoderSettings> getEncoderSettingsList() {
+		return encoderSettingsList;
+	}
+
+	public void setEncoderSettingsList(List<EncoderSettings> encoderSettingsList) {
+		this.encoderSettingsList = encoderSettingsList;
+	}
+
+	public boolean isStreamSource() {
+		return isStreamSource;
+	}
+
+	public void setStreamSource(boolean isStreamSource) {
+		this.isStreamSource = isStreamSource;
+	}
+	
+	public boolean isObjectDetectionEnabled() {
+		return objectDetectionEnabled;
+	}
+
+	public void setObjectDetectionEnabled(Boolean objectDetectionEnabled) {
+		this.objectDetectionEnabled = objectDetectionEnabled;
+	}
+
+	public int getPreviewCreatePeriod() {
+		return previewCreatePeriod;
+	}
+
+	public void setPreviewCreatePeriod(int previewCreatePeriod) {
+		this.previewCreatePeriod = previewCreatePeriod;
+	}
+
+	public String getStreamId() {
+		return streamId;
+	}
+
+	public void setStreamId(String streamId) {
+		this.streamId = streamId;
+	}
+	
+	public long getFirstPacketTime() {
+		return firstPacketTime;
+	}
+
 }
+
+
