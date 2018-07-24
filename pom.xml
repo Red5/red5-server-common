@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.3.7.1-SNAPSHOT</version>
+		<version>1.4.0-SNAPSHOT</version>
 		<relativePath></relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -279,7 +279,5 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
-	
-	
+	</dependencies>	
 </project>
