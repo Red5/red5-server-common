@@ -109,6 +109,7 @@ public class Mp4Muxer extends Muxer {
 	private int videoIndex;
 	private int audioIndex;
 	private AVBSFContext bsfContext;
+	private int resolution; 
 
 	private AVPacket tmpPacket;
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
@@ -186,6 +187,7 @@ public class Mp4Muxer extends Muxer {
 		super.init(scope, name, resolutionHeight, false);
 
 		this.streamId = name;
+		this.resolution = resolutionHeight;
 
 		tmpPacket = avcodec.av_packet_alloc();
 		av_init_packet(tmpPacket);
@@ -481,7 +483,7 @@ public class Mp4Muxer extends Muxer {
 					ApplicationContext appCtx = context.getApplicationContext(); 
 					Object bean = appCtx.getBean("web.handler");
 					if (bean instanceof IAntMediaStreamHandler) {
-						((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f));
+						((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
 					}
 
 					if (storageClient != null) {
