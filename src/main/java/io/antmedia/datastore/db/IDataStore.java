@@ -12,6 +12,7 @@ import io.antmedia.datastore.db.types.Vod;
 public interface IDataStore {
 	
 
+	//Do not forget to write function descriptions especially if you are adding new functions
  
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
@@ -138,14 +139,35 @@ public interface IDataStore {
 	boolean editStreamSourceInfo(Broadcast broadcast);
 
 	/**
-	 * Update the HLS viewer count field
+	 * Add or subtract the HLS viewer count from current value
 	 * @param streamId
-	 * @param viewerCount
+	 * @param diffCount
 	 */
-	boolean updateHLSViewerCount(String streamId, int viewerCount);
+	boolean updateHLSViewerCount(String streamId, int diffCount);
 	
 	
-	long getObjectDetectedTotal(String id);
+	/**
+	 * Returns the total number of detected objects in the stream
+	 * @param id is the stream id
+	 * @return total number of detected objects
+	 */
+	long getObjectDetectedTotal(String streamId);
+	
+	/**
+	 * Update the WebRTC viewer count
+	 * @param streamId
+	 * @param increment if it is true, increment viewer count by one
+	 * if it is false, decrement viewer count by one
+	 */
+	boolean updateWebRTCViewerCount(String streamId, boolean increment);
+	
+	/**
+	 * Update the RTMP viewer count
+	 * @param streamId
+	 * @param increment if it is true, increment viewer count by one
+	 * if it is false, decrement viewer count by one
+	 */
+	boolean updateRtmpViewerCount(String streamId, boolean increment);
 
 
 }
