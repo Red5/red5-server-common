@@ -1,7 +1,34 @@
 language: java
 jdk:
   - oraclejdk8
-  
+
+before_install:
+#  - openssl aes-256-cbc -K $encrypted_5fef4fa28306_key -iv $encrypted_5fef4fa28306_iv -in codesigning.asc.enc -out codesigning.asc -d
+#  - gpg --fast-import codesigning.asc
+
 install:
   - mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
+
+cache:
+  directories:
+    - '$HOME/.m2/repository'
+
+deploy:
+  - provider: script
+    script: "mvn deploy -DskipTests --quiet --settings mvn-settings.xml"
+    skip_cleanup: true
+    on:
+      tags: false
+      branch: master
+      condition: $(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}' --non-recursive exec:exec)  = *"SNAPSHOT"*
+
+  - provider: script
+    script: "mvn deploy -DskipTests --quiet --settings mvn-settings.xml"
+    skip_cleanup: true
+    on:
+      #deploy to maven if it is master branch and tagged
+      tags: true
+      branch: master
+
+#above configuration prevents deploying a new release(not snapshot) if it is not tagged
 
