@@ -48,7 +48,6 @@ public abstract class Muxer {
 	protected String extension;
 	protected String format;
 	protected boolean isInitialized = false;
-	// protected boolean isFinished = false;
 
 	protected Map<String, String> options = new HashMap();
 	private static Logger logger = LoggerFactory.getLogger(Muxer.class);
@@ -110,10 +109,10 @@ public abstract class Muxer {
 		return file;
 	}
 	
-	public static File getUploadRecordFile(IScope scope, String name, String extension) {
+	public static File getUserRecordFile(IScope scope, String userVoDFolder, String name) {
 		String appScopeName = ScopeUtils.findApplication(scope).getName();
 		File file = new File(String.format("%s/webapps/%s/%s", System.getProperty("red5.root"), appScopeName,
-				"uploads/" + name + extension));
+				"streams/" + userVoDFolder + "/" + name ));
 	
 			
 		return file;

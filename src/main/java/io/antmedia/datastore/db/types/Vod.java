@@ -67,11 +67,6 @@ public class Vod implements Serializable {
 
 	}
 
-	/* Commented out this constructor. If you add again, please comment why we need this default constructor
-	public Vod() {
-	}
-	*/
-
 	public String getType() {
 		return type;
 	}

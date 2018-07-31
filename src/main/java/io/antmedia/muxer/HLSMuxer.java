@@ -143,6 +143,9 @@ public class HLSMuxer extends Muxer  {
 
 			options.put("hls_list_size", hlsListSize);
 			options.put("hls_time", hlsTime);
+			
+			
+			logger.info("hls time: {}, hls list size: {}", hlsTime, hlsListSize);
 
 			String segmentFilename = file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
 			options.put("hls_segment_filename", segmentFilename);
@@ -333,7 +336,7 @@ public class HLSMuxer extends Muxer  {
 					if (ret < 0 && logger.isInfoEnabled()) {
 						byte[] data = new byte[2048];
 						av_strerror(ret, data, data.length);
-						logger.info("cannot write video frame to muxer. Error is {} ", new String(data, 0, data.length));
+						logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
 					}
 				}
 			}
@@ -342,7 +345,7 @@ public class HLSMuxer extends Muxer  {
 				if (ret < 0 && logger.isInfoEnabled()) {
 					byte[] data = new byte[2048];
 					av_strerror(ret, data, data.length);
-					logger.info("cannot write video frame to muxer. Error is {} ", new String(data, 0, data.length));
+					logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
 				}
 			}
 
@@ -415,7 +418,9 @@ public class HLSMuxer extends Muxer  {
 						}
 					});
 
-					if (files != null) {
+					if (files != null) 
+					{
+
 						for (int i = 0; i < files.length; i++) {
 							try {
 								if (!files[i].exists()) {
@@ -482,13 +487,15 @@ public class HLSMuxer extends Muxer  {
 				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			}
 			else {
-				outStream.time_base(codecContext.time_base());
+
 				int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 				logger.info("copy codec parameter from context {} stream index: {}", ret,  streamIndex);
 				if (codecContext.codec_type() != AVMEDIA_TYPE_AUDIO) {
 					logger.warn("This should be audio codec for {}", file.getName());
 				}
+				outStream.time_base(codecContext.time_base());
+				codecTimeBaseMap.put(streamIndex, codecContext.time_base());
 			}
 			outStream.codecpar().codec_tag(0);
 

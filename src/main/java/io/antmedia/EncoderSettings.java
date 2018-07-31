@@ -1,6 +1,8 @@
 package io.antmedia;
 
-public class EncoderSettings {
+import java.io.Serializable;
+
+public class EncoderSettings implements Serializable{
 	
 	private  int height;
 	

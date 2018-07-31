@@ -3,12 +3,13 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.3.6.2</version>
+		<version>1.4.0</version>
 		<relativePath></relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.red5</groupId>
-	<version>1.3.6.3-SNAPSHOT</version>
+	<version>${red5-server-common.version}</version>
+
 	<artifactId>red5-server-common</artifactId>
 	<name>Red5 :: Common server classes</name>
 	<description>Classes common for multiple red5 projects</description>
@@ -279,7 +280,5 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
-	
-	
+	</dependencies>	
 </project>
