@@ -7,7 +7,7 @@ import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
-import io.antmedia.datastore.db.types.Vod;
+import io.antmedia.datastore.db.types.VoD;
 
 public interface IDataStore {
 	
@@ -26,7 +26,19 @@ public interface IDataStore {
 
 	String save(Broadcast broadcast);
 
+	/**
+	 * Return the broadcast in data store
+	 * @param id
+	 * @return broadcast
+	 */
 	Broadcast get(String id);
+	
+	/**
+	 * Return the vod by id
+	 * @param id
+	 * @return Vod object
+	 */
+	VoD getVoD(String id);
 
 	boolean updateName(String id, String name, String description);
 
@@ -38,7 +50,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	String addVod(Vod vod);
+	String addVod(VoD vod);
 
 	long getBroadcastCount();
 
@@ -56,7 +68,7 @@ public interface IDataStore {
 
 	void close();
 
-	List<Vod> getVodList(int offset, int size);
+	List<VoD> getVodList(int offset, int size);
 
 	boolean removeAllEndpoints(String id);
 
@@ -82,9 +94,6 @@ public interface IDataStore {
 	 */
 	int fetchUserVodList(File filedir);
 
-	boolean addUserVod(Vod vod);
-
-	
 	/**
 	 * Add social endpoint credentials to data store
 	 * Do not add id to the credentials, it will be added by data store
