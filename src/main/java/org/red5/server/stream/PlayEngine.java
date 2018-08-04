@@ -242,7 +242,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	// Keep count of dropped packets so we can log every so often.
 	private long droppedPacketsCount = 0;
 	private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-	private long droppedPacketsCountLogInterval = 1 * 60 * 1000L; // 5 minutes
+	private long droppedPacketsCountLogInterval = 25; // 25ms 
 
 	private IMediaCluster cluster;
 
