@@ -7,6 +7,8 @@ import io.antmedia.storage.StorageClient.FileType;
 public abstract class StorageClient {
 	
 	
+	public static final String BEAN_NAME = "app.storageClient";
+	
 	public enum FileType {
 		TYPE_PREVIEW("previews"),
 		TYPE_STREAM("streams");
@@ -20,7 +22,7 @@ public abstract class StorageClient {
 		public String getValue() {
 			return value;
 		}
-	};
+	}
 	
 	private String accessKey;
 	private String secretKey;
