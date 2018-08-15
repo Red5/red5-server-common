@@ -6,8 +6,11 @@ import java.util.List;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.TensorFlowObject;
+import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.VoD;
+
+
 
 public interface IDataStore {
 	
@@ -81,9 +84,33 @@ public interface IDataStore {
 	List<TensorFlowObject> getDetectionList(String idFilter, int offsetSize, int batchSize);
 	
 	List<TensorFlowObject> getDetection(String id);
+	
 
-
-
+	/**
+	 * Creates token for stream
+	 * @param streamId
+	 * @param expireDate
+	 * @return  token
+	 */
+	
+	Token createToken (String streamId, long expireDate);
+	
+	/**
+	 * Validates token
+	 * @param token
+	 * @param streamId
+	 * @return token if validated, null if not
+	 */
+	
+	Token validateToken (Token token);
+	
+	/**
+	 * Delete all tokens of the stream
+	 * @param streamId
+	 *
+	 */
+	
+	boolean revokeTokens (String streamId);
 
 
 	/**
