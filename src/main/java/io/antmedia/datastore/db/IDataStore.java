@@ -95,13 +95,23 @@ public interface IDataStore {
 	
 	Token createToken (String streamId, long expireDate);
 	
+
+	/**
+	 * Lists all tokens of requested stream
+	 * @param streamId
+	 * @param offset
+	 * @param size
+	 * @return lists of tokens
+	 */
+	List<Token> listAllTokens (String streamId, int offset, int size);
+	
+	
 	/**
 	 * Validates token
 	 * @param token
 	 * @param streamId
 	 * @return token if validated, null if not
 	 */
-	
 	Token validateToken (Token token);
 	
 	/**
