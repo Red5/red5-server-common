@@ -47,7 +47,7 @@ public class AppSettings {
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
 	
-	private boolean tokenControlEnabled = false;
+	private boolean tokenControlEnabled ;
 
 
 	/**
