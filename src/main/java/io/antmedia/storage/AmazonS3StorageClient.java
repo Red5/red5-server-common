@@ -2,21 +2,13 @@ package io.antmedia.storage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
-import javax.management.MXBean;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.red5.io.IStreamableFile;
-import org.red5.io.ITagReader;
-import org.red5.io.ITagWriter;
-import org.red5.server.api.scope.IScope;
-import org.red5.server.api.stream.IStreamFilenameGenerator;
-import org.red5.server.stream.DefaultStreamFilenameGenerator;
-import org.red5.server.util.ScopeUtils;
-
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressEventType;
 import com.amazonaws.event.ProgressListener;
@@ -24,15 +16,14 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 
 public class AmazonS3StorageClient extends StorageClient {
 
 	private AmazonS3Client amazonS3;
+	
+	protected static Logger logger = LoggerFactory.getLogger(AmazonS3StorageClient.class);
 
 	private AmazonS3 getAmazonS3() {
 		if (amazonS3 == null) {
@@ -40,8 +31,6 @@ public class AmazonS3StorageClient extends StorageClient {
 			BasicAWSCredentials awsCredentials = new BasicAWSCredentials(getAccessKey(), getSecretKey());
 			amazonS3 = new AmazonS3Client(awsCredentials);
 
-			//AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
-			//amazonS3 = AmazonS3ClientBuilder.standard().withCredentials(credentialsProvider).build();
 			amazonS3.setRegion(Region.getRegion(Regions.fromName(getRegion())));
 			
 			
@@ -75,11 +64,15 @@ public class AmazonS3StorageClient extends StorageClient {
 			@Override
 			public void progressChanged(ProgressEvent event) {
 				if (event.getEventType() == ProgressEventType.TRANSFER_FAILED_EVENT){
-					System.out.println("s3-error: upload failed. Stream: " + file.getName());
+					logger.error("S3 - Error: Upload failed for {}", file.getName());
 				}
 				else if (event.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT){
-					file.delete();
-					System.out.println(file.getName() + " uploaded");
+					try {
+						Files.delete(file.toPath());
+					} catch (IOException e) {
+						logger.error(ExceptionUtils.getStackTrace(e));
+					}
+					logger.info("File {} uploaded to S3", file.getName());
 				}
 			}
 		});

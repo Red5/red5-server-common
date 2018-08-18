@@ -190,7 +190,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		{
 			AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
 			List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
-			if (list != null && list.size() > 0) 
+			if (list != null && !list.isEmpty()) 
 			{
 				tryEncoderAdaptor = true;
 			}
@@ -263,8 +263,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		enableSettings();
 
-		if (scope.getContext().getApplicationContext().containsBean("app.storageClient")) {
-			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean("app.storageClient");
+		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
+			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
 			setStorageClient(storageClient);
 		}else {
 			setStorageClient(null);	

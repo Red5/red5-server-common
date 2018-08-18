@@ -13,8 +13,9 @@ public interface IAntMediaStreamHandler {
 	 * @param id is the name of the stream published 
 	 * @param file video file that muxed is finished
 	 * @param duration of the video in milliseconds
+	 * @param resolution height of the video 
 	 */
-	public void muxingFinished(String id, File file, long duration);
+	public void muxingFinished(String id, File file, long duration , int resolution);
 	
 	
 	/**

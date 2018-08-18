@@ -8,11 +8,12 @@ import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
-import io.antmedia.datastore.db.types.Vod;
+import io.antmedia.datastore.db.types.VoD;
 
 public interface IDataStore {
 	
 
+	//Do not forget to write function descriptions especially if you are adding new functions
  
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
@@ -26,7 +27,19 @@ public interface IDataStore {
 
 	String save(Broadcast broadcast);
 
+	/**
+	 * Return the broadcast in data store
+	 * @param id
+	 * @return broadcast
+	 */
 	Broadcast get(String id);
+	
+	/**
+	 * Return the vod by id
+	 * @param id
+	 * @return Vod object
+	 */
+	VoD getVoD(String id);
 
 	boolean updateName(String id, String name, String description);
 
@@ -38,7 +51,7 @@ public interface IDataStore {
 
 	boolean addEndpoint(String id, Endpoint endpoint);
 
-	String addVod(Vod vod);
+	String addVod(VoD vod);
 
 	long getBroadcastCount();
 
@@ -56,7 +69,7 @@ public interface IDataStore {
 
 	void close();
 
-	List<Vod> getVodList(int offset, int size);
+	List<VoD> getVodList(int offset, int size);
 
 	boolean removeAllEndpoints(String id);
 
@@ -82,9 +95,6 @@ public interface IDataStore {
 	 */
 	int fetchUserVodList(File filedir);
 
-	boolean addUserVod(Vod vod);
-
-	
 	/**
 	 * Add social endpoint credentials to data store
 	 * Do not add id to the credentials, it will be added by data store
@@ -139,14 +149,35 @@ public interface IDataStore {
 	boolean editStreamSourceInfo(Broadcast broadcast);
 
 	/**
-	 * Update the HLS viewer count field
+	 * Add or subtract the HLS viewer count from current value
 	 * @param streamId
-	 * @param viewerCount
+	 * @param diffCount
 	 */
-	boolean updateHLSViewerCount(String streamId, int viewerCount);
+	boolean updateHLSViewerCount(String streamId, int diffCount);
 	
 	
-	long getObjectDetectedTotal(String id);
+	/**
+	 * Returns the total number of detected objects in the stream
+	 * @param id is the stream id
+	 * @return total number of detected objects
+	 */
+	long getObjectDetectedTotal(String streamId);
+	
+	/**
+	 * Update the WebRTC viewer count
+	 * @param streamId
+	 * @param increment if it is true, increment viewer count by one
+	 * if it is false, decrement viewer count by one
+	 */
+	boolean updateWebRTCViewerCount(String streamId, boolean increment);
+	
+	/**
+	 * Update the RTMP viewer count
+	 * @param streamId
+	 * @param increment if it is true, increment viewer count by one
+	 * if it is false, decrement viewer count by one
+	 */
+	boolean updateRtmpViewerCount(String streamId, boolean increment);
 
 	void addStreamInfoList(List<StreamInfo> streamInfoList);
 

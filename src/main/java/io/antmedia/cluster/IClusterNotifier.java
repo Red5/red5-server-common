@@ -1,9 +1,6 @@
 package io.antmedia.cluster;
 
-import java.io.Serializable;
 import java.util.List;
-
-import io.antmedia.EncoderSettings;
 
 public interface IClusterNotifier {
 	
@@ -18,5 +15,7 @@ public interface IClusterNotifier {
 
 	public void sendStreamNotification(String streamId, String scopeName, List<StreamInfo> streamInfo, 
 			StreamEvent streamPublished);
+	
+	public void stopActiveSenders(String contextName, String streamId);
 
 }
