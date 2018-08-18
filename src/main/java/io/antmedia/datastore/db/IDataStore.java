@@ -3,6 +3,7 @@ package io.antmedia.datastore.db;
 import java.io.File;
 import java.util.List;
 
+import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -146,6 +147,12 @@ public interface IDataStore {
 	
 	
 	long getObjectDetectedTotal(String id);
+
+	void addStreamInfoList(List<StreamInfo> streamInfoList);
+
+	List<StreamInfo> getStreamInfoList(String streamId);
+	
+	void clearStreamInfoList(String streamId);
 
 
 }
