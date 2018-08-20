@@ -2093,24 +2093,10 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		Object ret = null;
 		try {
 
-			System.out.println("deneme 0x");
-
 			Class provider = Class.forName("io.antmedia.enterprise.cluster.OriginInfoProvider");
-
-			System.out.println("deneme 1:"+provider.getCanonicalName());
-
 			Object instance = provider.getDeclaredField("instance").get(null);
-
-			System.out.println("deneme 2:"+instance);
-
 			Method getOriginMethod = provider.getMethod("getOriginAddress", String.class, String.class);
-
-			System.out.println("deneme 3:"+getOriginMethod.getName());
-
 			ret = getOriginMethod.invoke(instance, streamName, "live");
-
-			System.out.println("deneme 4:"+ ret);
-
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
