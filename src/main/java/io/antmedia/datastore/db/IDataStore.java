@@ -90,10 +90,11 @@ public interface IDataStore {
 	 * Creates token for stream
 	 * @param streamId
 	 * @param expireDate
+	 * @param type
 	 * @return  token
 	 */
 	
-	Token createToken (String streamId, long expireDate);
+	Token createToken (String streamId, long expireDate, String type);
 	
 
 	/**

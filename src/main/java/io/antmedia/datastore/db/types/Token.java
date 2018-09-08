@@ -19,6 +19,9 @@ public class Token {
 	@Id
 	private ObjectId dbId;
 	
+	public static final String PUBLISH_TOKEN = "publish";
+	public static final String PLAY_TOKEN = "play";
+	
 	/**
 	 * random tokenID
 	 */
@@ -35,6 +38,19 @@ public class Token {
 	 */
 	private long expireDate;
 	
+	/**
+	 * type of the token, such as publish, play etc.
+	 */
+	private String type;
+	
+	
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	public String getTokenId() {
 		return tokenId;
