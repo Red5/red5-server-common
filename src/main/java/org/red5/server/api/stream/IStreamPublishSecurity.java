@@ -18,6 +18,9 @@
 
 package org.red5.server.api.stream;
 
+
+import java.util.Map;
+
 import org.red5.server.api.scope.IScope;
 
 /**
@@ -47,6 +50,6 @@ public interface IStreamPublishSecurity {
      * False
      * </pre>
      */
-    public boolean isPublishAllowed(IScope scope, String name, String mode);
+    public boolean isPublishAllowed(IScope scope, String name, String mode, Map<String, String> queryParams);
 
 }

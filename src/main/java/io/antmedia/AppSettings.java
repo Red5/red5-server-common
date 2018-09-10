@@ -31,11 +31,24 @@ public class AppSettings {
 	private boolean webRTCEnabled = false;
 
 	private boolean deleteHLSFilesOnEnded = true;
+	
+	/**
+	 * The URL for action callback
+	 */
 
 	private String listenerHookURL;
 
-
+	/**
+	 * The control for publishers
+	 */
 	private boolean acceptOnlyStreamsInDataStore;
+	
+	/**
+	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 */
+	
+	private boolean tokenControlEnabled = false ;
+
 
 	/**
 	 * Fully qualified server name
@@ -76,6 +89,10 @@ public class AppSettings {
 	 * Youtube client secret
 	 */
 	private String youtubeClientSecret;
+	
+	/**
+	 * The path for manually saved used VoDs
+	 */
 
 	private String vodFolder;
 
@@ -401,5 +418,14 @@ public class AppSettings {
 
 	public void setMySqlClientPath(String mySqlClientPath) {
 		this.mySqlClientPath = mySqlClientPath;
+	}
+	
+
+	public boolean isTokenControlEnabled() {
+		return tokenControlEnabled;
+	}
+
+	public void setTokenControlEnabled(boolean tokenControlEnabled) {
+		this.tokenControlEnabled = tokenControlEnabled;
 	}
 }
