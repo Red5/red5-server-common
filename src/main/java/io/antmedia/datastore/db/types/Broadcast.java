@@ -99,13 +99,13 @@ public class Broadcast {
 	 * typically a few seconds later after "liveStreamEnded"
 	 * 
 	 * 
-	 * "vodName" It is send with "vodReady" action. This is the name of the file
+	 * "vodName" It is sent with "vodReady" action. This is the name of the file
 	 * physicall recorded file
 	 * 
-	 * "streamName" optional It is send with above parameters if stream name
+	 * "streamName" optional It is sent with above parameters if stream name
 	 * exists
 	 * 
-	 * "category" optional It is send if category exists
+	 * "category" optional It is sent if category exists
 	 * 
 	 */
 	private String listenerHookURL;
@@ -356,7 +356,6 @@ public class Broadcast {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-
 
 
 	public int getExpireDurationMS() {
