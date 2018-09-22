@@ -394,7 +394,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
 
-			if (isClusterMode()) {
+			String hostName = getHostName(itemName, thisScope.getName());
+			if (hostName != null) {
 				RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
 				IConnection conn = Red5.getConnectionLocal();
 				if (conn instanceof IStreamCapableConnection) {
@@ -402,7 +403,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 					cbs.setName(UUID.randomUUID().toString());
 					cbs.setConnection(null);
 					cbs.setScope(thisScope);
-					String hostName = getHostName(itemName, thisScope.getName());
+					
 					String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
 					log.info("url of the stream in the cluster: {}" , url);
 					cbs.setRemoteStreamUrl(url);
@@ -2081,14 +2082,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		this.maxSequentialPendingVideoFrames = maxSequentialPendingVideoFrames;
 	}
 
-	private boolean isClusterMode() {
-		//FIXME:determine
-		return true;
-	}
-
 	private String getHostName(String streamName, String scopeName) {
-		//TODO: Fix embedded db name
-		//DBReader.instance.getHost(streamName, "live");
 
 		Object ret = null;
 		try {
@@ -2096,7 +2090,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 			Class provider = Class.forName("io.antmedia.enterprise.cluster.OriginInfoProvider");
 			Object instance = provider.getDeclaredField("instance").get(null);
 			Method getOriginMethod = provider.getMethod("getOriginAddress", String.class, String.class);
-			ret = getOriginMethod.invoke(instance, streamName, "live");
+			ret = getOriginMethod.invoke(instance, streamName, scopeName);
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

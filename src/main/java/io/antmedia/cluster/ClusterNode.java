@@ -18,7 +18,6 @@ public class ClusterNode {
 	private String status;
 	
 	public ClusterNode() {
-		// TODO Auto-generated constructor stub
 	}
 	
 	public ClusterNode(String ip) {
