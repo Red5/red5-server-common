@@ -184,31 +184,37 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	};
 
 	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource, IScope scope) {
+		return initializeMuxAdaptor(clientBroadcastStream, isSource, scope, true);
+	}
+	
+	public static MuxAdaptor initializeMuxAdaptor(ClientBroadcastStream clientBroadcastStream, boolean isSource, IScope scope, boolean encoderAdapterAcceptible) {
 		MuxAdaptor muxAdaptor = null;
-		ApplicationContext applicationContext = scope.getContext().getApplicationContext();
-		boolean tryEncoderAdaptor = false;
-		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) 
-		{
-			AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
-			List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
-			if (list != null && !list.isEmpty()) 
+		if(encoderAdapterAcceptible) {
+			ApplicationContext applicationContext = scope.getContext().getApplicationContext();
+			boolean tryEncoderAdaptor = false;
+			if (applicationContext.containsBean(AppSettings.BEAN_NAME)) 
 			{
-				tryEncoderAdaptor = true;
+				AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
+				List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
+				if (list != null && !list.isEmpty()) 
+				{
+					tryEncoderAdaptor = true;
+				}
 			}
-		}
 
-		if (tryEncoderAdaptor) {
-			//if adaptive bitrate enabled, take a look at encoder adaptor exists
-			//if it is not enabled, then initialize only mux adaptor
-			try {
-				Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+			if (tryEncoderAdaptor) {
+				//if adaptive bitrate enabled, take a look at encoder adaptor exists
+				//if it is not enabled, then initialize only mux adaptor
+				try {
+					Class transraterClass = Class.forName("io.antmedia.enterprise.adaptive.EncoderAdaptor");
 
-				muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
-						.newInstance(clientBroadcastStream);
+					muxAdaptor = (MuxAdaptor) transraterClass.getConstructor(ClientBroadcastStream.class)
+							.newInstance(clientBroadcastStream);
 
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-			} 
+				} catch (Exception e) {
+					logger.error(e.getMessage());
+				} 
+			}
 		}
 		if (muxAdaptor == null) {
 			muxAdaptor = new MuxAdaptor(clientBroadcastStream);
@@ -217,6 +223,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		return muxAdaptor;
 	}
+	
 
 	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
@@ -841,6 +848,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public boolean isAudioOnly() {
 		return audioOnly;
 	}
+
 
 }
 
