@@ -131,6 +131,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int previewCreatePeriod;
 	private double oldspeed;
 	private long firstPacketTime = -1;
+	private boolean audioOnly= false;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -495,7 +496,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			}
 		}
 
-		if (firstKeyFrameReceived) {
+		if (firstKeyFrameReceived || isAudioOnly()) {
 			for (Muxer muxer : muxerList) {
 				muxer.writePacket(pkt, stream);
 			}
@@ -831,6 +832,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	public long getFirstPacketTime() {
 		return firstPacketTime;
+	}
+
+	public void setAudioOnly(boolean audioOnly) {
+		this.audioOnly = audioOnly;
+	}
+	
+	public boolean isAudioOnly() {
+		return audioOnly;
 	}
 
 }
