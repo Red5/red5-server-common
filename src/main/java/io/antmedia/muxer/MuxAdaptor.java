@@ -267,6 +267,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		hlsPlayListType = appSettings.getHlsPlayListType();
 		previewOverwrite = appSettings.isPreviewOverwrite();
 		encoderSettingsList = appSettings.getAdaptiveResolutionList();
+		previewCreatePeriod = appSettings.getCreatePreviewPeriod();
 	}
 
 	@Override
@@ -423,7 +424,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
 		}
 		if (appSettings == null) {
-			logger.warn("No app settings in context, returning default AppSettings");
+			logger.warn("No app settings in context, returning default AppSettings for {}", streamId);
 			appSettings = new AppSettings();
 		}
 
