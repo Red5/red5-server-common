@@ -144,8 +144,9 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             int eventTime = msg.getTimestamp();
             log.debug("Message timestamp: {}", eventTime);
             if (eventTime < 0) {
-                log.debug("Message has negative timestamp: {}", eventTime);
-                return;
+                eventTime += Integer.MIN_VALUE;
+                msg.setTimestamp(eventTime);
+                log.debug("Message has negative timestamp, applying {} offset: {}", Integer.MIN_VALUE, eventTime);
             }
             // get the data type
             byte dataType = msg.getDataType();
