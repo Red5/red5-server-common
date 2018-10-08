@@ -2,6 +2,7 @@ package io.antmedia.cluster;
 
 import java.util.List;
 
+
 public interface IClusterNotifier {
 	
 	public enum StreamEvent {
@@ -18,4 +19,5 @@ public interface IClusterNotifier {
 	
 	public void stopActiveSenders(String contextName, String streamId);
 
+	public void addMembers(List<ClusterNode> clusterNodes);
 }

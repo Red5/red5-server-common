@@ -19,6 +19,8 @@
 package org.red5.server.stream;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -392,33 +394,28 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
 
-			if (cluster != null) {
-				StreamNotificationMessage notification = cluster.getStreamNotification(itemName, thisScope.getName());
-				if (notification != null) 
-				{
-					RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
-					IConnection conn = Red5.getConnectionLocal();
-					if (conn instanceof IStreamCapableConnection) {
-						
-						cbs.setName(UUID.randomUUID().toString());
-						cbs.setConnection(null);
-						cbs.setScope(thisScope);
-						String hostName = java.net.InetAddress.getByAddress(notification.getAddress().getHost()).getHostName();
-						String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
-						log.info("url of the stream in the cluster: {}" , url);
-						cbs.setRemoteStreamUrl(url);
-						cbs.setScheduler(schedulingService);
-						
-						boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
+			String hostName = getHostName(itemName, thisScope.getName());
+			if (hostName != null) {
+				RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
+				IConnection conn = Red5.getConnectionLocal();
+				if (conn instanceof IStreamCapableConnection) {
 
-						log.warn("Cluster is not null register result: {}" , result);
-						//cbs.setS
-						cbs.start();
-						
-						sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
-					}
-
+					cbs.setName(UUID.randomUUID().toString());
+					cbs.setConnection(null);
+					cbs.setScope(thisScope);
 					
+					String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
+					log.info("url of the stream in the cluster: {}" , url);
+					cbs.setRemoteStreamUrl(url);
+					cbs.setScheduler(schedulingService);
+
+					boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
+
+					log.warn("Cluster is not null register result: {}" , result);
+					//cbs.setS
+					cbs.start();
+
+					sourceType = providerService.lookupProviderInput(thisScope, itemName, type);					
 				}
 			}
 			else {
@@ -2083,5 +2080,40 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 */
 	public void setMaxSequentialPendingVideoFrames(int maxSequentialPendingVideoFrames) {
 		this.maxSequentialPendingVideoFrames = maxSequentialPendingVideoFrames;
+	}
+
+	private String getHostName(String streamName, String scopeName) {
+
+		Object ret = null;
+		try {
+
+			Class provider = Class.forName("io.antmedia.enterprise.cluster.OriginInfoProvider");
+			Object instance = provider.getDeclaredField("instance").get(null);
+			Method getOriginMethod = provider.getMethod("getOriginAddress", String.class, String.class);
+			ret = getOriginMethod.invoke(instance, streamName, scopeName);
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return (String)ret;
 	}
 }

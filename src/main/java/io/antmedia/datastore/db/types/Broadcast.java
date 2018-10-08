@@ -127,6 +127,11 @@ public class Broadcast {
 	 */
 	private String streamUrl;
 
+	/**
+	 * This is the origin address server broadcasting. 
+	 */
+	private String originAdress;
+	
 	public Broadcast() {
 		this.type = "liveStream";
 	}
@@ -427,5 +432,15 @@ public class Broadcast {
 	public void setPendingPacketSize(int pendingPacketSize) {
 		this.pendingPacketSize = pendingPacketSize;
 	}
+
+
+	public String getOriginAdress() {
+		return originAdress;
+	}
+
+	public void setOriginAdress(String originAdress) {
+		this.originAdress = originAdress;
+	}	
+	
 
 }

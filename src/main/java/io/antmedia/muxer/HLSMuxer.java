@@ -258,7 +258,7 @@ public class HLSMuxer extends Muxer  {
 	}
 
 	private boolean isCodecSupported(int codecId) {
-		return (codecId == AV_CODEC_ID_H264 || codecId == AV_CODEC_ID_AAC);
+		return (codecId == AV_CODEC_ID_H264 || codecId == AV_CODEC_ID_AAC || codecId == AV_CODEC_ID_MP3);
 	}
 
 	/**
