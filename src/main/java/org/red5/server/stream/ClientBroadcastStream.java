@@ -89,6 +89,7 @@ import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
 import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.muxer.HLSMuxer;
@@ -962,9 +963,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	}
 
 	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor) {
-		if (appCtx.containsBean("db.datastore")) 
+		if (appCtx.containsBean(IDataStoreFactory.BEAN_NAME)) 
 		{
-			IDataStore dataStore = (IDataStore)appCtx.getBean("db.datastore");
+			IDataStore dataStore = ((IDataStoreFactory)appCtx.getBean(IDataStoreFactory.BEAN_NAME)).getDataStore();
 			Broadcast broadcast = dataStore.get(publishedName);
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
