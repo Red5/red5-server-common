@@ -1,8 +1,4 @@
-red5-server-common
+Ant Media Server Common
 ==================
 
-![TravisCI](https://travis-ci.org/Red5/red5-server-common.svg?branch=master) 
-
-Red5 Servers common classes
-
-The code contained herein is common between the red5-server and red5-client projects. This code is meant to eliminate the overhead of the server content in the client project.
+Please open issues on main repository https://github.com/ant-media/Ant-Media-Server/issues
