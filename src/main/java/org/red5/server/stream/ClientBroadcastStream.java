@@ -924,11 +924,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		IContext context = conn.getScope().getContext(); 
 		ApplicationContext appCtx = context.getApplicationContext(); 
 
-		IClusterNotifier notifier = getClusterNotifier();
-		if (notifier != null) {
-			notifier.sendStreamNotification(publishedName, conn.getScope().getName(), StreamEvent.STREAM_PUBLISHED);;
-		}
-
 		// force recording if set
 		if (automaticRecording) {
 			log.debug("Starting automatic recording of {}", publishedName);

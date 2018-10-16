@@ -6,9 +6,8 @@ import java.util.List;
 public interface IClusterNotifier {
 	
 	public enum StreamEvent {
-		STREAM_PUBLISHED,
 		STREAM_UNPUBLISHED,
-		PLAY, STOP,	
+		STOP,	
 	}
 
 	
