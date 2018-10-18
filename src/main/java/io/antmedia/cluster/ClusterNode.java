@@ -12,10 +12,16 @@ import org.mongodb.morphia.annotations.Indexes;
 
 public class ClusterNode {
 	
+	public static final String ALIVE = "alive";
+	public static final String DEAD = "dead";
+	public static final long NODE_UPDATE_PERIOD = 30000;
+	
 	@Id
 	private String id;
 	private String ip;
 	private String status;
+	private long lastUpdateTime;
+	private boolean inTheCluster;
 	
 	public ClusterNode() {
 	}
@@ -24,6 +30,7 @@ public class ClusterNode {
 		super();
 		this.ip = ip;
 		this.id = ip.replace(".", "_");
+		this.lastUpdateTime= System.currentTimeMillis();
 	}
 
 	public String getId() {
@@ -45,8 +52,30 @@ public class ClusterNode {
 	public String getStatus() {
 		return status;
 	}
+	
+	public String updateStatus() {
+		if(System.currentTimeMillis() - lastUpdateTime > NODE_UPDATE_PERIOD*2) {
+			status = ClusterNode.DEAD;
+		}
+		else {
+			status = ClusterNode.ALIVE;
+		}
+		return status;
+	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public long getLastUpdateTime() {
+		return lastUpdateTime;
+	}
+
+	public void setLastUpdateTime(long lastUpdateTime) {
+		this.lastUpdateTime = lastUpdateTime;
+	}
+
+	public boolean isInTheCluster() {
+		return inTheCluster;
+	}
+
+	public void setInTheCluster(boolean inTheCluster) {
+		this.inTheCluster = inTheCluster;
 	}
 }

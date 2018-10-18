@@ -14,6 +14,7 @@ public class DBReader {
 	
 	ConcurrentHashMap<String, IDataStore> dbMap = new ConcurrentHashMap<>();	
 	IClusterStore clusterStore;
+	private IClusterNotifier cluster;
 	
 	public String getHost(String streamName, String appName) {
 		Broadcast broadcast = dbMap.get(appName).get(streamName);
@@ -38,5 +39,17 @@ public class DBReader {
 
 	public List<StreamInfo> getWebRTCStreamInfo(String streamId, String appName) {
 		return dbMap.get(appName).getStreamInfoList(streamId);
+	}
+	
+	public boolean isNodeInTheCluster(ClusterNode node) {
+		return getCluster().isNodeInTheCluster(node);
+	}
+
+	public IClusterNotifier getCluster() {
+		return cluster;
+	}
+
+	public void setCluster(IClusterNotifier cluster) {
+		this.cluster = cluster;
 	}
 }

@@ -19,4 +19,6 @@ public interface IClusterNotifier {
 	public void stopActiveSenders(String contextName, String streamId);
 
 	public void addMembers(List<ClusterNode> clusterNodes);
+
+	public boolean isNodeInTheCluster(ClusterNode node);
 }
