@@ -5,6 +5,7 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
+import org.mongodb.morphia.annotations.NotSaved;
 
 @Entity("clusternode")
 
@@ -19,9 +20,14 @@ public class ClusterNode {
 	@Id
 	private String id;
 	private String ip;
-	private String status;
 	private long lastUpdateTime;
+	private String memory;
+	private String cpu;
+	
+	@NotSaved
 	private boolean inTheCluster;
+	@NotSaved
+	private String status;
 	
 	public ClusterNode() {
 	}
@@ -77,5 +83,21 @@ public class ClusterNode {
 
 	public void setInTheCluster(boolean inTheCluster) {
 		this.inTheCluster = inTheCluster;
+	}
+
+	public String getMemory() {
+		return memory;
+	}
+
+	public void setMemory(String memory) {
+		this.memory = memory;
+	}
+
+	public String getCpu() {
+		return cpu;
+	}
+
+	public void setCpu(String cpu) {
+		this.cpu = cpu;
 	}
 }
