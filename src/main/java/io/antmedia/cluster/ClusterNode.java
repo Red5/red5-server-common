@@ -15,7 +15,7 @@ public class ClusterNode {
 	
 	public static final String ALIVE = "alive";
 	public static final String DEAD = "dead";
-	public static final long NODE_UPDATE_PERIOD = 30000;
+	public static final long NODE_UPDATE_PERIOD = 5000;
 	
 	@Id
 	private String id;
