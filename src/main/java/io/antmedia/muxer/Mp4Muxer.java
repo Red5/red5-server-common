@@ -473,13 +473,15 @@ public class Mp4Muxer extends Muxer {
 				try {
 					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
 					if (isAVCConversionRequired ) {
+						logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
 						remux(fileTmp.getAbsolutePath(),f.getAbsolutePath());
 						Files.delete(fileTmp.toPath());
 					}
 					else {
 						Files.move(fileTmp.toPath(),f.toPath());
 					}
-
+					logger.info("MP4 {} is ready", f.getName());
+					
 					IContext context = Mp4Muxer.this.scope.getContext(); 
 					ApplicationContext appCtx = context.getApplicationContext(); 
 					Object bean = appCtx.getBean("web.handler");
@@ -488,6 +490,7 @@ public class Mp4Muxer extends Muxer {
 					}
 
 					if (storageClient != null) {
+						logger.info("Storage client is available saving {} to storage", f.getName());
 						scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
 
 							@Override
