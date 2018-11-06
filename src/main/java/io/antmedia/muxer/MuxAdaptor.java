@@ -275,9 +275,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
 			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
-			setStorageClient(storageClient);
-		}else {
-			setStorageClient(null);	
 		}
 
 		if (scheduler == null) {

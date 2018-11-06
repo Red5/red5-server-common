@@ -87,6 +87,10 @@ public class RtmpMuxer extends Muxer {
 		format = "flv";
 		this.url = url;
 	}
+	
+	public String getURL() {
+		return url;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -252,8 +256,8 @@ public class RtmpMuxer extends Muxer {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			return;
 		}
-		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
-		writePacket(pkt, stream.time_base(),  out_stream.time_base()); 
+		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
+		writePacket(pkt, stream.time_base(),  outStream.time_base()); 
 	}
 
 	/**
@@ -264,8 +268,8 @@ public class RtmpMuxer extends Muxer {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			return;
 		}
-		AVStream out_stream = outputFormatContext.streams(pkt.stream_index());
-		writePacket(pkt, out_stream.codec().time_base(),  out_stream.time_base()); 
+		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
+		writePacket(pkt, outStream.codec().time_base(),  outStream.time_base()); 
 	}
 
 
