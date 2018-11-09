@@ -263,25 +263,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		encoderSettingsList = appSettings.getAdaptiveResolutionList();
 		previewCreatePeriod = appSettings.getCreatePreviewPeriod();
 	}
+	
+	public void initStorageClient() {
+		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
+			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
+		}
+	}
+	
+	protected void initScheduler() {
+		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+		
+	}
 
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
 
 		this.streamId = name;
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-		this.scope=scope;
-
-		enableSettings();
-
-		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
-			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
-		}
-
+		this.scope = scope;
+		initScheduler();
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans for {}", name);
 			return false;
 		}
-
+		
+		
+		enableSettings();
+		initStorageClient();
 
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
@@ -833,6 +840,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return firstPacketTime;
 	}
 
+	public StorageClient getStorageClient() {
+		return storageClient;
+	}
 
 	/**
 	 * Setter for {@link #firstKeyFrameReceivedChecked}
