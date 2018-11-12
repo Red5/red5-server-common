@@ -24,15 +24,12 @@ import org.red5.server.api.stream.IClientStream;
 import org.red5.server.api.stream.IStreamCapableConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import io.antmedia.cluster.IMediaCluster;
-
 /**
  * Abstract base for client streams
  */
 public abstract class AbstractClientStream extends AbstractStream implements IClientStream {
     
 	@Autowired(required=false)
-	protected IMediaCluster cluster;
     /**
      * Stream identifier. Unique across server.
      */
