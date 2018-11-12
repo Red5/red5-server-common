@@ -20,14 +20,6 @@ public interface IDataStore {
  
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
-	
-
-	/**
-	 * This is the bean name that implements IDataStore
-	 */
-	public static final String BEAN_NAME = "db.datastore";
-
-
 	String save(Broadcast broadcast);
 
 	/**
@@ -216,6 +208,9 @@ public interface IDataStore {
 	 * if it is false, decrement viewer count by one
 	 */
 	boolean updateRtmpViewerCount(String streamId, boolean increment);
+	
+	
+	//Do not forget to write function descriptions especially if you are adding new functions
 
 	void addStreamInfoList(List<StreamInfo> streamInfoList);
 

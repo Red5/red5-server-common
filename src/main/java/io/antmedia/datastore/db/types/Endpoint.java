@@ -1,8 +1,5 @@
 package io.antmedia.datastore.db.types;
 
-import org.mongodb.morphia.annotations.Embedded;
-import org.mongodb.morphia.annotations.Entity;
-
 public class Endpoint 
 {
 	/**
