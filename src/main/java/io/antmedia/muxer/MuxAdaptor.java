@@ -396,7 +396,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
 
-		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.01) {
+		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.05) {
 
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
