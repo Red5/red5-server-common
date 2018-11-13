@@ -89,7 +89,7 @@ import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import io.antmedia.cluster.IMediaCluster;
+import io.antmedia.cluster.DBReader;
 import io.antmedia.cluster.StreamNotificationMessage;
 
 /**
@@ -246,8 +246,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
 	private long droppedPacketsCountLogInterval = 25; // 25ms 
 
-	private IMediaCluster cluster;
-
 	/**
 	 * Constructs a new PlayEngine.
 	 */
@@ -256,7 +254,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		schedulingService = builder.schedulingService;
 		consumerService = builder.consumerService;
 		providerService = builder.providerService;
-		cluster = builder.clusterService;
 		// get the stream id
 		streamId = subscriberStream.getStreamId();
 	}
@@ -265,8 +262,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 * Builder pattern
 	 */
 	public final static class Builder {
-		public IMediaCluster clusterService;
-
 		//Required for play engine
 		private ISubscriberStream subscriberStream;
 
@@ -279,12 +274,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		//Required for play engine
 		private IProviderService providerService;
 
-		public Builder(ISubscriberStream subscriberStream, ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService, IMediaCluster clusterService) {
+		public Builder(ISubscriberStream subscriberStream, ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService) {
 			this.subscriberStream = subscriberStream;
 			this.schedulingService = schedulingService;
 			this.consumerService = consumerService;
 			this.providerService = providerService;
-			this.clusterService = clusterService;
 		}
 
 		public PlayEngine build() {
@@ -394,7 +388,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
 
-			String hostName = getHostName(itemName, thisScope.getName());
+			String hostName = DBReader.instance.getHost(itemName, thisScope.getName());
 			if (hostName != null) {
 				RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
 				IConnection conn = Red5.getConnectionLocal();
@@ -2080,40 +2074,5 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 */
 	public void setMaxSequentialPendingVideoFrames(int maxSequentialPendingVideoFrames) {
 		this.maxSequentialPendingVideoFrames = maxSequentialPendingVideoFrames;
-	}
-
-	private String getHostName(String streamName, String scopeName) {
-
-		Object ret = null;
-		try {
-
-			Class provider = Class.forName("io.antmedia.enterprise.cluster.OriginInfoProvider");
-			Object instance = provider.getDeclaredField("instance").get(null);
-			Method getOriginMethod = provider.getMethod("getOriginAddress", String.class, String.class);
-			ret = getOriginMethod.invoke(instance, streamName, scopeName);
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		return (String)ret;
 	}
 }

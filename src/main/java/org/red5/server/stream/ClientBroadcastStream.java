@@ -924,11 +924,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		IContext context = conn.getScope().getContext(); 
 		ApplicationContext appCtx = context.getApplicationContext(); 
 
-		IClusterNotifier notifier = getClusterNotifier();
-		if (notifier != null) {
-			notifier.sendStreamNotification(publishedName, conn.getScope().getName(), StreamEvent.STREAM_PUBLISHED);;
-		}
-
 		// force recording if set
 		if (automaticRecording) {
 			log.debug("Starting automatic recording of {}", publishedName);
@@ -970,7 +965,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
 
-				if (endPointList != null && endPointList.size() > 0) 
+				if (endPointList != null && !endPointList.isEmpty()) 
 				{
 					for (Endpoint endpoint : endPointList) {
 						muxAdaptor.addMuxer(new RtmpMuxer(endpoint.getRtmpUrl()));

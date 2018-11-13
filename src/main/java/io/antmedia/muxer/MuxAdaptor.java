@@ -139,6 +139,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private double oldspeed;
 	private long firstPacketTime = -1;
 	private boolean audioOnly= false;
+	private long lastQualityUpdateTime = 0;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -263,28 +264,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		encoderSettingsList = appSettings.getAdaptiveResolutionList();
 		previewCreatePeriod = appSettings.getCreatePreviewPeriod();
 	}
+	
+	public void initStorageClient() {
+		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
+			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
+		}
+	}
+	
+	protected void initScheduler() {
+		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+		
+	}
 
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
 
 		this.streamId = name;
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-		this.scope=scope;
-
-		enableSettings();
-
-		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
-			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
-			setStorageClient(storageClient);
-		}else {
-			setStorageClient(null);	
-		}
-
+		this.scope = scope;
+		initScheduler();
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans for {}", name);
 			return false;
 		}
-
+		
+		
+		enableSettings();
+		initStorageClient();
 
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
@@ -391,9 +396,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
+		long now = System.currentTimeMillis();
+		if((now - lastQualityUpdateTime) > 1000 &&
+				((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.05)) {
 
-		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.01) {
-
+			lastQualityUpdateTime = now;
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
 			oldspeed = speed;
@@ -836,6 +843,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return firstPacketTime;
 	}
 
+	public StorageClient getStorageClient() {
+		return storageClient;
+	}
 
 	/**
 	 * Setter for {@link #firstKeyFrameReceivedChecked}
