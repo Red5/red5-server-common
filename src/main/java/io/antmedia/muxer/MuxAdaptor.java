@@ -139,6 +139,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private double oldspeed;
 	private long firstPacketTime = -1;
 	private boolean audioOnly= false;
+	private long lastQualityUpdateTime = 0;
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -395,9 +396,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
+		long now = System.currentTimeMillis();
+		if((now - lastQualityUpdateTime) > 1000 &&
+				((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.05)) {
 
-		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.05) {
-
+			lastQualityUpdateTime = now;
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
 			oldspeed = speed;
