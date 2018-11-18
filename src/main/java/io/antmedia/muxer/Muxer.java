@@ -2,6 +2,7 @@ package io.antmedia.muxer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -292,6 +293,16 @@ public abstract class Muxer {
 
 	public void setAddDateTimeToSourceName(boolean addDateTimeToSourceName) {
 		this.addDateTimeToResourceName = addDateTimeToSourceName;
+	}
+
+	/**
+	 * Write encoded video buffer to muxer
+	 * 
+	 * @param buffer
+	 * @param timestamp
+	 * @param streamIndex
+	 */
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int streamIndex) {
 	}
 
 }

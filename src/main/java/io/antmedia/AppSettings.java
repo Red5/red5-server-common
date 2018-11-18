@@ -223,9 +223,7 @@ public class AppSettings {
 	}
 
 	public static List<EncoderSettings> getEncoderSettingsList(String encoderSettingsString) {
-		if (encoderSettingsString == null) {
-			return null;
-		}
+
 		String[] values = encoderSettingsString.split(",");
 
 		List<EncoderSettings> encoderSettingsList = new ArrayList();
