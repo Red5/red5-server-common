@@ -144,6 +144,11 @@ public class AppSettings {
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
 
+	/**
+	 * This is a script file path that is called by Runtime when muxing is finished
+	 */
+	private String muxerFinishScript;
+
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -425,5 +430,13 @@ public class AppSettings {
 
 	public void setTokenControlEnabled(boolean tokenControlEnabled) {
 		this.tokenControlEnabled = tokenControlEnabled;
+	}
+
+	public String getMuxerFinishScript() {
+		return muxerFinishScript;
+	}
+	
+	public void setMuxerFinishScript(String muxerFinishScript) {
+		this.muxerFinishScript = muxerFinishScript;
 	}
 }
