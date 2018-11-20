@@ -132,6 +132,13 @@ public class Broadcast {
 	 */
 	private String originAdress;
 	
+	/**
+	 * Mp4 muxing is enabled or not for the stream
+	 * 1 means enabled, -1 means disabled, 0 means no settings for the stream
+	 */
+	private int mp4Enabled = 0;
+	
+
 	public Broadcast() {
 		this.type = "liveStream";
 	}
@@ -169,7 +176,12 @@ public class Broadcast {
 	private int hlsViewerCount = 0;
 
 	private int webRTCViewerCount = 0;
+	
 	private int rtmpViewerCount = 0;
+	
+
+	
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -441,6 +453,14 @@ public class Broadcast {
 	public void setOriginAdress(String originAdress) {
 		this.originAdress = originAdress;
 	}	
+	public int getMp4Enabled() {
+		return mp4Enabled;
+	}
+
+	public void setMp4Enabled(int mp4Enabled) {
+		this.mp4Enabled = mp4Enabled;
+	}
+
 	
 
 }
