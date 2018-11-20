@@ -155,15 +155,16 @@ public class WebRtcAudioTrack {
 
 	@CalledByNative
 	WebRtcAudioTrack(Object context, Object audioManager) {
-		this(context, audioManager, null /* errorCallback */);
+		this(context, audioManager, null /* errorCallback */, null);
 	}
 
 	WebRtcAudioTrack(
-			Object context, Object audioManager, @Nullable AudioTrackErrorCallback errorCallback) {
+			Object context, Object audioManager, @Nullable AudioTrackErrorCallback errorCallback, IAudioTrackListener audioTrackListener) {
 		//threadChecker.detachThread();
 		//this.context = context;
 		//this.audioManager = audioManager;
 		this.errorCallback = errorCallback;
+		this.audioTrackListener = audioTrackListener;
 		//this.volumeLogger = new VolumeLogger(audioManager);
 	}
 
@@ -296,9 +297,5 @@ public class WebRtcAudioTrack {
 
 	public int getChannels() {
 		return channels;
-	}
-
-	public void setAudioTrackListener(IAudioTrackListener audioTrackListener) {
-		this.audioTrackListener = audioTrackListener;
 	}
 }
