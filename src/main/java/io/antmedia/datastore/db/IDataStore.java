@@ -6,9 +6,9 @@ import java.util.List;
 import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
-import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.VoD;
 
 
@@ -113,6 +113,14 @@ public interface IDataStore {
 	 */
 	
 	boolean revokeTokens (String streamId);
+	
+	/**
+	 * enables or disables mp4 muxing for the stream
+	 * @param streamId- id of the stream
+	 * @param enabled- 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @return- true if set, false if not
+	 */
+	boolean setMp4Muxing(String streamId, int enabled);
 
 
 	/**
