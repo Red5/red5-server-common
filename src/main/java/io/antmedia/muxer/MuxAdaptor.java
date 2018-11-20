@@ -111,7 +111,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsPlayListType;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
-	private IDataStore dataStore;
+	protected IDataStore dataStore;
 
 	/**
 	 * By default first video key frame should be checked 
