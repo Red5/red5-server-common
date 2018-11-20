@@ -294,7 +294,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		
 		Broadcast broadcast = dataStore.get(this.streamId);
 
-		if (broadcast.getMp4Enabled() == 1 || (mp4MuxingEnabled && broadcast.getMp4Enabled() == 0)) {
+		if ((broadcast != null && broadcast.getMp4Enabled() == 1) || (mp4MuxingEnabled && broadcast.getMp4Enabled() == 0)) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
 			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			mp4Muxer.setBitstreamFilter(mp4Filtername);
