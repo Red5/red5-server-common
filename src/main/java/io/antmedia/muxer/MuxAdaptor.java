@@ -141,6 +141,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private long firstPacketTime = -1;
 	private boolean audioOnly= false;
 	private long lastQualityUpdateTime = 0;
+	private Broadcast broadcast;
+
+
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -291,10 +294,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		initializeDataStore();
 		enableSettings();
 		initStorageClient();
-		
-		Broadcast broadcast = dataStore.get(this.streamId);
+	
 
-		if (broadcast != null && (broadcast.getMp4Enabled() == 1 || (mp4MuxingEnabled && broadcast.getMp4Enabled() == 0))) {
+
+		if (getBroadcast() != null && (getBroadcast().getMp4Enabled() == 1 || (mp4MuxingEnabled && getBroadcast().getMp4Enabled() == 0))) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
 			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			mp4Muxer.setBitstreamFilter(mp4Filtername);
@@ -865,6 +868,20 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 */
 	public void setFirstKeyFrameReceivedChecked(boolean firstKeyFrameReceivedChecked) {
 		this.firstKeyFrameReceivedChecked = firstKeyFrameReceivedChecked;
+	}
+	
+	public Broadcast getBroadcast() {
+		
+		if(broadcast == null) {
+			
+			broadcast = dataStore.get(this.streamId);
+		}
+		return broadcast;
+	}
+
+	// this is for test cases
+	public void setBroadcast(Broadcast broadcast) {
+		this.broadcast = broadcast;
 	}
 
 }
