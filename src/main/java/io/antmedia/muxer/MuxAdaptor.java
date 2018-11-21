@@ -98,6 +98,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final String QUALITY_AVERAGE  = "average";
 	public static final String QUALITY_POOR ="poor";
 	public static final String QUALITY_NA ="NA";
+	public static final int MP4_ENABLED_FOR_STREAM = 1;
+	public static final int MP4_DISABLED_FOR_STREAM = -1;
+	public static final int MP4_NO_SET_FOR_STREAM = 0;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -294,16 +297,28 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		initializeDataStore();
 		enableSettings();
 		initStorageClient();
-	
 
+		broadcast = getBroadcast();
 
-		if ((getBroadcast() == null && mp4MuxingEnabled) || (getBroadcast().getMp4Enabled() == 1 || (mp4MuxingEnabled && getBroadcast().getMp4Enabled() == 0))) {
+		// if stream specific mp4 settings is disabled 
+		if (broadcast != null && broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
+			
+			mp4MuxingEnabled = false;
+		}
+		
+		// if stream specific mp4 settings is enabled 
+		if (broadcast != null && broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
+
+			mp4MuxingEnabled = true;
+		}
+
+		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
 			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			mp4Muxer.setBitstreamFilter(mp4Filtername);
 			addMuxer(mp4Muxer);
 			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
-		}
+		} 
 
 		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
@@ -869,11 +884,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setFirstKeyFrameReceivedChecked(boolean firstKeyFrameReceivedChecked) {
 		this.firstKeyFrameReceivedChecked = firstKeyFrameReceivedChecked;
 	}
-	
+
 	public Broadcast getBroadcast() {
-		
+
 		if(broadcast == null) {
-			
+
 			broadcast = dataStore.get(this.streamId);
 		}
 		return broadcast;
