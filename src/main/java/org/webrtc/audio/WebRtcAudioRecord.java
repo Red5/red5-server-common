@@ -98,9 +98,14 @@ public class WebRtcAudioRecord {
 	 * @param audio => 20ms of encoded audio data
 	 */
 	public void notifyEncodedData(byte[] audio) {
-		encodedByteBuffer.clear();
-		encodedByteBuffer.put(audio);
-		nativeEncodedDataIsReady(nativeAudioRecord, audio.length);
+		if (audio.length <= encodedByteBuffer.capacity()) {
+			encodedByteBuffer.clear();
+			encodedByteBuffer.put(audio);
+			nativeEncodedDataIsReady(nativeAudioRecord, audio.length);
+		}
+		else {
+			logger.warn("Discarding audio packet because audio packet size({}) is bigger than buffer capacity{} and limit {}", audio.length, encodedByteBuffer.capacity(), encodedByteBuffer.limit());
+		}
 	}
 
 
@@ -174,7 +179,7 @@ public class WebRtcAudioRecord {
 		// the native class cache the address to the memory once.
 		nativeCacheDirectBufferAddress(nativeAudioRecord, byteBuffer);
 
-		encodedByteBuffer = ByteBuffer.allocateDirect(byteBuffer.capacity()*3);
+		encodedByteBuffer = ByteBuffer.allocateDirect(byteBuffer.capacity()*10);
 		nativeCacheDirectBufferAddressForEncodedAudio(nativeAudioRecord, encodedByteBuffer);
 
 		return framesPerBuffer;
