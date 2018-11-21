@@ -297,20 +297,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		initializeDataStore();
 		enableSettings();
 		initStorageClient();
-
-		broadcast = getBroadcast();
-
-		
-		if (broadcast != null) {
-			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
-				// if stream specific mp4 setting is disabled 
-				mp4MuxingEnabled = false;
-			}
-			else if ( broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
-				// if stream specific mp4 setting is enabled 
-				mp4MuxingEnabled = true;
-			}
-		}
+		enableMp4Setting();
 
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
@@ -331,6 +318,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			muxer.init(scope, name, 0);
 		}
 		return true;
+	}
+
+
+	protected void enableMp4Setting() {
+		broadcast = getBroadcast();
+		
+		if (broadcast != null) {
+			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is disabled 
+				mp4MuxingEnabled = false;
+			}
+			else if ( broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is enabled 
+				mp4MuxingEnabled = true;
+			}
+		}		
 	}
 
 
