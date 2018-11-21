@@ -300,16 +300,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		broadcast = getBroadcast();
 
-		// if stream specific mp4 settings is disabled 
-		if (broadcast != null && broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
-			
-			mp4MuxingEnabled = false;
-		}
 		
-		// if stream specific mp4 settings is enabled 
-		if (broadcast != null && broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
-
-			mp4MuxingEnabled = true;
+		if (broadcast != null) {
+			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is disabled 
+				mp4MuxingEnabled = false;
+			}
+			else if ( broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is enabled 
+				mp4MuxingEnabled = true;
+			}
 		}
 
 		if (mp4MuxingEnabled) {
