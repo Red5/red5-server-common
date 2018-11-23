@@ -13,6 +13,7 @@ package org.webrtc.audio;
 import org.webrtc.JniCommon;
 
 import io.antmedia.webrtc.api.IAudioRecordListener;
+import io.antmedia.webrtc.api.IAudioTrackListener;
 
 /**
  * AudioDeviceModule implemented using android.media.AudioRecord as input and
@@ -44,6 +45,7 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
     private boolean useStereoInput;
     private boolean useStereoOutput;
 	private IAudioRecordListener audioRecordListener;
+	private IAudioTrackListener audioTrackListener;
 
     private Builder(Object context) {
     		this.sampleRate = DEFAULT_SAMPLE_RATE_HZ;
@@ -167,10 +169,15 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
           new WebRtcAudioRecord(null, null, audioSource, audioRecordErrorCallback,
               samplesReadyCallback, useHardwareAcousticEchoCanceler, useHardwareNoiseSuppressor, audioRecordListener);
       final WebRtcAudioTrack audioOutput =
-          new WebRtcAudioTrack(null, null, audioTrackErrorCallback);
+          new WebRtcAudioTrack(null, null, audioTrackErrorCallback, audioTrackListener);
       return new JavaAudioDeviceModule(null, null, audioInput, audioOutput, sampleRate,
           useStereoInput, useStereoOutput);
     }
+
+	public Builder setAudioTrackListener(IAudioTrackListener iAudioTrackListener) {
+		this.audioTrackListener = iAudioTrackListener;
+		return this;
+	}
   }
 
   /* AudioRecord */

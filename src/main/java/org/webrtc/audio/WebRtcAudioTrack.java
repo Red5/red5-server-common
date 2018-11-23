@@ -10,14 +10,17 @@
 
 package org.webrtc.audio;
 
-import java.lang.Thread;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
+
 import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.webrtc.CalledByNative;
 import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackErrorCallback;
 import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackStartErrorCode;
 
-import org.webrtc.CalledByNative;
+import io.antmedia.webrtc.api.IAudioTrackListener;
 
 public class WebRtcAudioTrack {
 	private static final String TAG = "WebRtcAudioTrackExternal";
@@ -39,6 +42,8 @@ public class WebRtcAudioTrack {
 	// By default, WebRTC creates audio tracks with a usage attribute
 	// corresponding to voice communications, such as telephony or VoIP.
 	//private static final int DEFAULT_USAGE = getDefaultUsageAttribute();
+	
+	private static Logger logger = LoggerFactory.getLogger(WebRtcAudioTrack.class);
 
 
 	private long nativeAudioTrack;
@@ -65,6 +70,8 @@ public class WebRtcAudioTrack {
 	private int channels;
 
 	private int readSizeInBytes;
+
+	private IAudioTrackListener audioTrackListener;
 
 	/**
 	 * Audio thread which keeps calling AudioTrack.write() to stream audio.
@@ -152,16 +159,14 @@ public class WebRtcAudioTrack {
 
 	@CalledByNative
 	WebRtcAudioTrack(Object context, Object audioManager) {
-		this(context, audioManager, null /* errorCallback */);
+		this(context, audioManager, null /* errorCallback */, null);
 	}
 
 	WebRtcAudioTrack(
-			Object context, Object audioManager, @Nullable AudioTrackErrorCallback errorCallback) {
-		//threadChecker.detachThread();
-		//this.context = context;
-		//this.audioManager = audioManager;
+			Object context, Object audioManager, @Nullable AudioTrackErrorCallback errorCallback, IAudioTrackListener audioTrackListener) {
 		this.errorCallback = errorCallback;
-		//this.volumeLogger = new VolumeLogger(audioManager);
+		this.audioTrackListener = audioTrackListener;
+		logger.info("WebRTCAudioTrack constructor: {}", this);
 	}
 
 	@CalledByNative
@@ -171,15 +176,15 @@ public class WebRtcAudioTrack {
 
 	@CalledByNative
 	private boolean initPlayout(int sampleRate, int channels) {
-		//threadChecker.checkIsOnValidThread();
-		System.out.println("initPlayout(sampleRate=" + sampleRate + ", channels=" + channels + ")");
+		logger.info("initPlayout(sampleRate={}, channels={})", sampleRate, channels);
 		this.sampleRate = sampleRate;
 
+		logger.info("WebRTCAudioTrack initPlayout: {}", this);
 		final int bytesPerFrame = channels * (BITS_PER_SAMPLE / 8);
 		this.bytesPerSample = bytesPerFrame;
 		this.channels = channels;
 		byteBuffer = ByteBuffer.allocateDirect(bytesPerFrame * (sampleRate / BUFFERS_PER_SECOND));
-		System.out.println("byteBuffer.capacity: " + byteBuffer.capacity());
+		logger.info("byteBuffer.capacity:{} " , byteBuffer.capacity());
 		emptyBytes = new byte[byteBuffer.capacity()];
 		// Rather than passing the ByteBuffer with every callback (requiring
 		// the potentially expensive GetDirectBufferAddress) we simply have the
@@ -191,10 +196,10 @@ public class WebRtcAudioTrack {
 
 	@CalledByNative
 	private boolean startPlayout() {
-		System.out.println("startPlayout");
-		//audioThread = new AudioTrackThread("AudioTrackJavaThread");
-		//audioThread.setPriority(Thread.MAX_PRIORITY);
-		//audioThread.start();
+		logger.info("start playout {}", this);
+		if (this.audioTrackListener != null) {
+			this.audioTrackListener.playoutStarted();
+		}
 		return true;
 	}
 	
@@ -204,17 +209,9 @@ public class WebRtcAudioTrack {
 
 	@CalledByNative
 	private boolean stopPlayout() {
-		System.out.println("stopPlayout");
-
-		//audioThread.stopThread();
-
-		System.out.println("Stopping the AudioTrackThread...");
-		//audioThread.interrupt();
-
-		System.out.println("AudioTrackThread has now been stopped.");
-		//audioThread = null;
-
-
+		if (this.audioTrackListener != null) {
+			this.audioTrackListener.playoutStopped();
+		}
 		releaseAudioResources();
 		return true;
 	}
