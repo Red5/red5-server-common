@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.2-SNAPSHOT</version>
+		<version>1.6.0-SNAPSHOT</version>
 		<relativePath></relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -239,6 +239,11 @@
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
 			<version>${quartz.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>${jsr305.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>

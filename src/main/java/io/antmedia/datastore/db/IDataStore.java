@@ -6,9 +6,9 @@ import java.util.List;
 import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
-import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.VoD;
 
 
@@ -20,14 +20,6 @@ public interface IDataStore {
  
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
-	
-
-	/**
-	 * This is the bean name that implements IDataStore
-	 */
-	public static final String BEAN_NAME = "db.datastore";
-
-
 	String save(Broadcast broadcast);
 
 	/**
@@ -88,14 +80,12 @@ public interface IDataStore {
 	
 
 	/**
-	 * Creates token for stream
-	 * @param streamId
-	 * @param expireDate
-	 * @param type
-	 * @return  token
+	 * saves token to store
+	 * @param token - created token
+	 * @return  true/false
 	 */
 	
-	Token createToken (String streamId, long expireDate, String type);
+	boolean saveToken (Token token);
 	
 
 	/**
@@ -123,6 +113,14 @@ public interface IDataStore {
 	 */
 	
 	boolean revokeTokens (String streamId);
+	
+	/**
+	 * enables or disables mp4 muxing for the stream
+	 * @param streamId- id of the stream
+	 * @param enabled- 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @return- true if set, false if not
+	 */
+	boolean setMp4Muxing(String streamId, int enabled);
 
 
 	/**
@@ -216,6 +214,9 @@ public interface IDataStore {
 	 * if it is false, decrement viewer count by one
 	 */
 	boolean updateRtmpViewerCount(String streamId, boolean increment);
+	
+	
+	//Do not forget to write function descriptions especially if you are adding new functions
 
 	void addStreamInfoList(List<StreamInfo> streamInfoList);
 

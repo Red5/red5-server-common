@@ -126,7 +126,7 @@ public class Mp4Muxer extends Muxer {
 		this.storageClient = storageClient;
 	}
 
-	public static int[] mp4_supported_codecs = {
+	private static int[] MP4_SUPPORTED_CODECS = {
 			AV_CODEC_ID_MOV_TEXT     ,
 			AV_CODEC_ID_MPEG4        ,
 			AV_CODEC_ID_H264         ,
@@ -170,8 +170,8 @@ public class Mp4Muxer extends Muxer {
 	}
 
 	private boolean isCodecSupported(int codecId) {
-		for (int i=0; i< mp4_supported_codecs.length; i++) {
-			if (codecId == mp4_supported_codecs[i]) {
+		for (int i=0; i< MP4_SUPPORTED_CODECS.length; i++) {
+			if (codecId == MP4_SUPPORTED_CODECS[i]) {
 				return true;
 			}
 		}
@@ -452,6 +452,7 @@ public class Mp4Muxer extends Muxer {
 			return;
 		}
 
+		logger.info("Mp4Muxer writing trailer for stream: {}", streamId);
 		isRunning.set(false);
 
 		av_write_trailer(outputFormatContext);
@@ -470,15 +471,17 @@ public class Mp4Muxer extends Muxer {
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
 				try {
-					logger.error("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
+					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
 					if (isAVCConversionRequired ) {
+						logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
 						remux(fileTmp.getAbsolutePath(),f.getAbsolutePath());
 						Files.delete(fileTmp.toPath());
 					}
 					else {
 						Files.move(fileTmp.toPath(),f.toPath());
 					}
-
+					logger.info("MP4 {} is ready", f.getName());
+					
 					IContext context = Mp4Muxer.this.scope.getContext(); 
 					ApplicationContext appCtx = context.getApplicationContext(); 
 					Object bean = appCtx.getBean("web.handler");
@@ -487,6 +490,7 @@ public class Mp4Muxer extends Muxer {
 					}
 
 					if (storageClient != null) {
+						logger.info("Storage client is available saving {} to storage", f.getName());
 						scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
 
 							@Override
@@ -507,15 +511,15 @@ public class Mp4Muxer extends Muxer {
 	public long getDuration(File f) {
 		AVFormatContext inputFormatContext = avformat.avformat_alloc_context();
 		int ret;
-		if ((ret = avformat_open_input(inputFormatContext, f.getAbsolutePath(), null, (AVDictionary)null)) < 0) {
-			logger.info("cannot open input context for duration");
+		if (avformat_open_input(inputFormatContext, f.getAbsolutePath(), null, (AVDictionary)null) < 0) {
+			logger.info("cannot open input context for duration for stream: {}", streamId);
 			avformat_close_input(inputFormatContext);
 			return -1L;
 		}
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
 		if (ret < 0) {
-			logger.info("Could not find stream information\n");
+			logger.info("Could not find stream informatio for stream: {}", streamId);
 			avformat_close_input(inputFormatContext);
 			return -1L;
 		}

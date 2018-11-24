@@ -56,11 +56,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-
-
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
-
+import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
+import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
@@ -98,6 +98,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final String QUALITY_AVERAGE  = "average";
 	public static final String QUALITY_POOR ="poor";
 	public static final String QUALITY_NA ="NA";
+	public static final int MP4_ENABLED_FOR_STREAM = 1;
+	public static final int MP4_DISABLED_FOR_STREAM = -1;
+	public static final int MP4_NO_SET_FOR_STREAM = 0;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -111,7 +114,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsPlayListType;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
-	
+	protected IDataStore dataStore;
+
 	/**
 	 * By default first video key frame should be checked 
 	 * and below flag should be set to true
@@ -139,6 +143,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private double oldspeed;
 	private long firstPacketTime = -1;
 	private boolean audioOnly= false;
+	private long lastQualityUpdateTime = 0;
+	private Broadcast broadcast;
+
+
 
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
@@ -264,27 +272,32 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		previewCreatePeriod = appSettings.getCreatePreviewPeriod();
 	}
 
+	public void initStorageClient() {
+		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
+			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
+		}
+	}
+
+	protected void initScheduler() {
+		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+
+	}
+
 	@Override
 	public boolean init(IScope scope, String name, boolean isAppend) {
 
 		this.streamId = name;
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-		this.scope=scope;
-
-		enableSettings();
-
-		if (scope.getContext().getApplicationContext().containsBean(StorageClient.BEAN_NAME)) {
-			storageClient = (StorageClient) scope.getContext().getApplicationContext().getBean(StorageClient.BEAN_NAME);
-			setStorageClient(storageClient);
-		}else {
-			setStorageClient(null);	
-		}
-
+		this.scope = scope;
+		initScheduler();
 		if (scheduler == null) {
 			logger.warn("scheduler is not available in beans for {}", name);
 			return false;
 		}
 
+		initializeDataStore();
+		enableSettings();
+		initStorageClient();
+		enableMp4Setting();
 
 		if (mp4MuxingEnabled) {
 			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
@@ -292,7 +305,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			mp4Muxer.setBitstreamFilter(mp4Filtername);
 			addMuxer(mp4Muxer);
 			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
-		}
+		} 
 
 		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
@@ -305,6 +318,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			muxer.init(scope, name, 0);
 		}
 		return true;
+	}
+
+
+	protected void enableMp4Setting() {
+		broadcast = getBroadcast();
+		
+		if (broadcast != null) {
+			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is disabled 
+				mp4MuxingEnabled = false;
+			}
+			else if ( broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) {
+				// if stream specific mp4 setting is enabled 
+				mp4MuxingEnabled = true;
+			}
+		}		
 	}
 
 
@@ -391,9 +420,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 * @param inputQueueSize, input queue size of the packets that is waiting to be processed
 	 */
 	public void changeStreamQualityParameters(String streamId, String quality, double speed, int inputQueueSize) {
+		long now = System.currentTimeMillis();
+		if((now - lastQualityUpdateTime) > 1000 &&
+				((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.05)) {
 
-		if((quality != null && !quality.equals(oldQuality)) || oldspeed == 0 || Math.abs(speed - oldspeed) > 0.01) {
-
+			lastQualityUpdateTime = now;
 			getStreamHandler().setQualityParameters(streamId, quality, speed, inputQueueSize);
 			oldQuality = quality;
 			oldspeed = speed;
@@ -424,6 +455,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		return appSettings;
 
+	}
+
+	public IDataStore initializeDataStore() {
+		if(dataStore == null) {
+
+			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
+			dataStore = dsf.getDataStore();
+		}
+		return dataStore;
 	}
 
 	@Override
@@ -507,7 +547,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				return;
 			}
 		}
-		
+
 		for (Muxer muxer : muxerList) {
 			muxer.writePacket(pkt, stream);
 		}
@@ -836,6 +876,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return firstPacketTime;
 	}
 
+	public StorageClient getStorageClient() {
+		return storageClient;
+	}
 
 	/**
 	 * Setter for {@link #firstKeyFrameReceivedChecked}
@@ -843,6 +886,20 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	 */
 	public void setFirstKeyFrameReceivedChecked(boolean firstKeyFrameReceivedChecked) {
 		this.firstKeyFrameReceivedChecked = firstKeyFrameReceivedChecked;
+	}
+
+	public Broadcast getBroadcast() {
+
+		if(broadcast == null) {
+
+			broadcast = dataStore.get(this.streamId);
+		}
+		return broadcast;
+	}
+
+	// this is for test cases
+	public void setBroadcast(Broadcast broadcast) {
+		this.broadcast = broadcast;
 	}
 
 }
