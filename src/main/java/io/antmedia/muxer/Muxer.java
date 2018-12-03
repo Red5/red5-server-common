@@ -304,5 +304,20 @@ public abstract class Muxer {
 	 */
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int streamIndex) {
 	}
+	
+	/**
+	 * Add video stream to the muxer with direct parameters. Not all muxers support this feature so that
+	 * default implementation does nothing and returns false
+	 * 
+	 * @param width, video width
+	 * @param height, video height
+	 * @param codecId, codec id of the stream
+	 * @param streamIndex, stream index
+	 * @return true if successful, 
+	 * false if failed
+	 */
+	public boolean addVideoStream(int width, int height, int codecId, int streamIndex) {
+		return false;
+	}
 
 }
