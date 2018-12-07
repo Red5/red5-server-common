@@ -104,7 +104,6 @@ public class Mp4Muxer extends Muxer {
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 	private File fileTmp;
-	private int totalSize = 0;
 	private StorageClient storageClient = null;
 	private String streamId;
 	private int videoIndex;
@@ -202,7 +201,8 @@ public class Mp4Muxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized boolean addVideoStream(int width, int height, int codecId, int streamIndex) {
+	public synchronized boolean addVideoStream(int width, int height, AVRational timebase, int codecId, int streamIndex,
+			boolean isAVC, AVCodecParameters codecpar) {
 		boolean result = false;
 		AVFormatContext outputContext = getOutputFormatContext();
 		if (outputContext != null && isCodecSupported(codecId)) 
@@ -240,12 +240,12 @@ public class Mp4Muxer extends Muxer {
 
 		if (isCodecSupported(codecContext.codec_id())) {
 			registeredStreamIndexList.add(streamIndex);
-			AVStream outStream = avformat_new_stream(outputContext, codec);
+			AVStream outStream = avformat_new_stream(outputContext, null);
 
 			outStream.time_base(codecContext.time_base());
 			int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 
-			logger.error("codec par extradata size {}", outStream.codecpar().extradata_size());
+			logger.info("codec par extradata size {} codec id: {}", outStream.codecpar().extradata_size(), codecContext.codec_id());
 			if (ret < 0) {
 				logger.error("codec context cannot be copied for {}", streamId);
 			}
@@ -287,13 +287,17 @@ public class Mp4Muxer extends Muxer {
 				int codecType = inStream.codecpar().codec_type();
 				AVStream outStream = avformat_new_stream(context, null);
 
+				
 				if ( codecType == AVMEDIA_TYPE_VIDEO) {
 					videoIndex = streamIndex;
 					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
+					
 					if (ret < 0) {
-						logger.info("Cannot get codec parameters for {}", streamId);
+						logger.error("Cannot get codec parameters for {}", streamId);
 						return false;
 					}
+					logger.info("video codec par extradata size {} codec id: {}", outStream.codecpar().extradata_size(), outStream.codecpar().codec_id());
+					
 				}
 				else if (codecType == AVMEDIA_TYPE_AUDIO) {
 					audioIndex = streamIndex;
@@ -362,7 +366,7 @@ public class Mp4Muxer extends Muxer {
 	public synchronized boolean prepareIO() {
 
 		AVFormatContext context = getOutputFormatContext();
-		if (context.pb() != null) {
+		if (context == null || context.pb() != null) {
 			//return false if it is already prepared
 			return false;
 		}
@@ -495,7 +499,7 @@ public class Mp4Muxer extends Muxer {
 
 		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
-			logger.warn("OutputFormatContext is not initialized or it is freed for file {}", fileTmp.getName());
+			logger.warn("OutputFormatContext is not initialized or it is freed for file {}", fileTmp != null ? fileTmp.getName() : null);
 			return;
 		}
 
@@ -621,10 +625,10 @@ public class Mp4Muxer extends Muxer {
 			streamIndex = audioIndex;
 		}
 		else {
-			logger.error("Undefined codec type ");
+			logger.error("Undefined codec type for stream: {} ", streamId);
 			return;
 		}
-
+		
 		AVStream outStream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
@@ -668,12 +672,9 @@ public class Mp4Muxer extends Muxer {
 
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() == null) {
-			logger.warn("output context.pb field is null");
+			logger.warn("output context.pb field is null for stream: {}", streamId);
 			return;
 		}
-
-		totalSize += pkt.size();
-
 		long pts = pkt.pts();
 		long dts = pkt.dts();
 		long duration = pkt.duration();
@@ -704,7 +705,7 @@ public class Mp4Muxer extends Muxer {
 					if (ret < 0 && logger.isInfoEnabled()) {
 						byte[] data = new byte[2048];
 						av_strerror(ret, data, data.length);
-						logger.info("cannot write audio frame to muxer av_bsf_receive_packet. Error is {} ", new String(data, 0, data.length));
+						logger.info("cannot write audio frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
 						logger.info("input timebase num/den {}/{}"
 								+ "output timebase num/den {}/{}", inputTimebase.num(), inputTimebase.den(),
 								outputTimebase.num(),  outputTimebase.den());
@@ -721,7 +722,7 @@ public class Mp4Muxer extends Muxer {
 
 					byte[] data = new byte[2048];
 					av_strerror(ret, data, data.length);
-					logger.info("cannot write audio frame to muxer. Error is {} ", new String(data, 0, data.length));
+					logger.info("cannot write audio frame to muxer({}). Error is {} ", file.getName(), new String(data, 0, data.length));
 				}
 			}
 
@@ -746,7 +747,7 @@ public class Mp4Muxer extends Muxer {
 					if (ret < 0 && logger.isWarnEnabled()) {
 						byte[] data = new byte[2048];
 						av_strerror(ret, data, data.length);
-						logger.warn("cannot write video frame to muxer av_bsf_receive_packet. Error is {} ", new String(data, 0, data.length));
+						logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
 					}
 
 				}
@@ -756,7 +757,7 @@ public class Mp4Muxer extends Muxer {
 				if (ret < 0 && logger.isWarnEnabled()) {
 					byte[] data = new byte[2048];
 					av_strerror(ret, data, data.length);
-					logger.warn("cannot write video frame to muxer not audio. Error is {} ", new String(data, 0, data.length));
+					logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
 				}
 			}
 			
@@ -769,7 +770,7 @@ public class Mp4Muxer extends Muxer {
 			if (ret < 0 && logger.isWarnEnabled()) {
 				byte[] data = new byte[2048];
 				av_strerror(ret, data, data.length);
-				logger.warn("cannot write video frame to muxer not audio. Error is {} ", new String(data, 0, data.length));
+				logger.warn("cannot write frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
 			}
 		}
 

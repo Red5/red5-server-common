@@ -28,6 +28,7 @@ import static org.bytedeco.javacpp.avformat.avformat_write_header;
 import static org.bytedeco.javacpp.avformat.avio_closep;
 import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_AUDIO;
 import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
 import static org.bytedeco.javacpp.avutil.av_dict_free;
@@ -53,6 +54,7 @@ import org.bytedeco.javacpp.avcodec.AVBSFContext;
 import org.bytedeco.javacpp.avcodec.AVBitStreamFilter;
 import org.bytedeco.javacpp.avcodec.AVCodec;
 import org.bytedeco.javacpp.avcodec.AVCodecContext;
+import org.bytedeco.javacpp.avcodec.AVCodecParameters;
 import org.bytedeco.javacpp.avcodec.AVPacket;
 import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
@@ -151,7 +153,7 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			String hlsFlagsFull = "delete_segments" + this.hlsFlags;
+			String hlsFlagsFull = "delete_segments+round_durations" + this.hlsFlags;
 
 			options.put("hls_flags", hlsFlagsFull);
 			tmpPacket = avcodec.av_packet_alloc();
@@ -196,7 +198,7 @@ public class HLSMuxer extends Muxer  {
 				registeredStreamIndexList.add(i);
 
 				AVStream outStream = avformat_new_stream(context, null);
-				int codecType = inStream.codec().codec_type();
+				int codecType = inStream.codecpar().codec_type();
 				if (codecType == AVMEDIA_TYPE_VIDEO) 
 				{
 					videoIndex = streamIndex;
@@ -326,8 +328,8 @@ public class HLSMuxer extends Muxer  {
 				return;
 			}
 
-			if (bsfContext != null) {
-
+			if (bsfContext != null) 
+			{
 				ret = av_bsf_send_packet(bsfContext, tmpPacket);
 				if (ret < 0)
 					return;
@@ -469,6 +471,36 @@ public class HLSMuxer extends Muxer  {
 		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
 
 	}
+	
+	
+	@Override
+	public boolean addVideoStream(int width, int height, AVRational videoTimebase, int codecId, int streamIndex,
+			boolean isAVC, AVCodecParameters codecpar) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null && isCodecSupported(codecId)) 
+		{
+			registeredStreamIndexList.add(streamIndex);
+			videoIndex = streamIndex;
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			
+			outStream.codecpar().width(width);
+			outStream.codecpar().height(height);
+			outStream.codecpar().codec_id(codecId);
+			outStream.codecpar().codec_type(AVMEDIA_TYPE_VIDEO);
+			outStream.codecpar().format(AV_PIX_FMT_YUV420P);
+			outStream.codecpar().codec_tag(0);
+			
+			AVRational timeBase = new AVRational();
+			timeBase.num(1).den(1000);
+			codecTimeBaseMap.put(streamIndex, timeBase);
+			videoWidth = width;
+			videoHeight = height;
+			result = true;
+		}
+		return result;
+	
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -512,6 +544,7 @@ public class HLSMuxer extends Muxer  {
 		}
 		return true;
 	}
+	
 
 
 	/**

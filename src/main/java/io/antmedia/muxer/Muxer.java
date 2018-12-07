@@ -11,9 +11,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.bytedeco.javacpp.avcodec.AVCodec;
 import org.bytedeco.javacpp.avcodec.AVCodecContext;
+import org.bytedeco.javacpp.avcodec.AVCodecParameters;
 import org.bytedeco.javacpp.avcodec.AVPacket;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
 import org.bytedeco.javacpp.avformat.AVStream;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IStreamFilenameGenerator;
 import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
@@ -70,7 +72,7 @@ public abstract class Muxer {
 	/**
 	 * Bitstream filter name that will be applied to packets
 	 */
-	protected String bsfName;
+	protected String bsfName = null;
 
 	public Muxer(QuartzSchedulingService scheduler) {
 		this.scheduler = scheduler;
@@ -313,10 +315,11 @@ public abstract class Muxer {
 	 * @param height, video height
 	 * @param codecId, codec id of the stream
 	 * @param streamIndex, stream index
+	 * @param isAVC, true if packets are in AVC format, false if in annexb format
 	 * @return true if successful, 
 	 * false if failed
 	 */
-	public boolean addVideoStream(int width, int height, int codecId, int streamIndex) {
+	public boolean addVideoStream(int width, int height, AVRational videoTimebase, int codecId, int streamIndex, boolean isAVC, AVCodecParameters codecpar) {
 		return false;
 	}
 

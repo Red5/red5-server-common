@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.avcodec;
@@ -206,8 +207,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		{
 			AppSettings appSettings = (AppSettings)applicationContext.getBean(AppSettings.BEAN_NAME);
 			List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
-			if (list != null && !list.isEmpty()) 
+			if ((list != null && !list.isEmpty()) || appSettings.isWebRTCEnabled()) 
 			{
+				/*
+				 * enable encoder adaptor if webrtc enabled because we're supporting forwarding video to end user
+				 * without transcoding. We need encoder adaptor because we need to transcode audio
+				 */
 				tryEncoderAdaptor = true;
 			}
 		}
@@ -354,26 +359,26 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		queueReferences.put(inputFormatContext, inputContext);
 
 		int ret;
-		logger.debug("before avformat_open_input");
+		logger.debug("before avformat_open_input for stream {}", streamId);
 
-		if ((ret = avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
-				(AVDictionary) null)) < 0) {
-			logger.info("cannot open input context");
+		if (avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
+				(AVDictionary) null) < 0) {
+			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
 
-		logger.debug("after avformat_open_input..before avformat_find_stream");
+		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
-			logger.info("Could not find stream information\n");
+			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
 		}
 		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
 
 
-		logger.info("after avformat_find_sream_info");
+		logger.info("after avformat_find_sream_info for stream: {}", streamId);
 
 		return prepareInternal(inputFormatContext);
 	}
@@ -391,7 +396,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
-			Muxer muxer = (Muxer) iterator.next();
+			Muxer muxer = iterator.next();
 			if (!muxer.prepare(inputFormatContext)) {
 				iterator.remove();
 				logger.warn("muxer prepare returns false {}",  muxer.getFormat());
@@ -706,7 +711,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						logger.warn("closed adaptor for {}", streamId);
 					}
 				} catch (Exception e) {
-					logger.error(e.getMessage());
+					logger.error(ExceptionUtils.getStackTrace(e));
 				}
 			}
 		});
