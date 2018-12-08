@@ -252,8 +252,6 @@ public class Mp4Muxer extends Muxer {
 
 			outStream.codecpar().codec_tag(0);
 			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
-			isAVCConversionRequired = true;
-
 		}
 		return true;
 	}
@@ -531,6 +529,7 @@ public class Mp4Muxer extends Muxer {
 					else {
 						Files.move(fileTmp.toPath(),f.toPath());
 					}
+					
 					logger.info("MP4 {} is ready", f.getName());
 
 					IContext context = Mp4Muxer.this.scope.getContext(); 
@@ -669,7 +668,6 @@ public class Mp4Muxer extends Muxer {
 	 */
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
-
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() == null) {
 			logger.warn("output context.pb field is null for stream: {}", streamId);
