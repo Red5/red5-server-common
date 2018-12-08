@@ -97,45 +97,8 @@ public class RtmpMuxer extends Muxer {
 			return false;
 		}
 		registeredStreamIndexList.add(streamIndex);
-		AVStream outStream = avformat_new_stream(outputContext, codec);
-		if (codecContext.codec_type() == AVMEDIA_TYPE_VIDEO) 
-		{
-			AVBitStreamFilter extractDataBsf = av_bsf_get_by_name("extract_extradata");
-			bsfExtractdataContext = new AVBSFContext(null);
-			
-			int ret = av_bsf_alloc(extractDataBsf, bsfExtractdataContext);
-			if (ret < 0) {
-				logger.info("cannot allocate bsf context for {}", file.getName());
-				return false;
-			}
-
-			ret = avcodec_parameters_from_context(bsfExtractdataContext.par_in(), codecContext);
-			if (ret < 0) {
-				logger.info("cannot copy input codec parameters for {}", file.getName());
-				return false;
-			}
-			bsfExtractdataContext.time_base_in(codecContext.time_base());
-			
-			ret = av_bsf_init(bsfExtractdataContext);
-			if (ret < 0) {
-				logger.info("cannot init bit stream filter context for {}", file.getName());
-				return false;
-			}
-			
-			ret = avcodec_parameters_copy(outStream.codecpar(), bsfExtractdataContext.par_out());
-			if (ret < 0) {
-				logger.info("cannot copy codec parameters to output for {}", file.getName());
-				return false;
-			}
-			
-			outStream.time_base(bsfExtractdataContext.time_base_out());
-		}
-		else {
-			
-			outStream.codec().time_base(codecContext.time_base());
-		}
-		
-
+		AVStream outStream = avformat_new_stream(outputContext, codec);		
+		outStream.codec().time_base(codecContext.time_base());
 		
 		int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 

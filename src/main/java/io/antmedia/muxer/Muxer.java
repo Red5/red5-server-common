@@ -134,7 +134,9 @@ public abstract class Muxer {
 
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index
-	 * parameters. After adding streams with funcitons need to call prepareIO()
+	 * parameters. After adding streams, need to call prepareIO()
+	 * 
+	 * This method is generally called when an transcoding is required
 	 * 
 	 * @param codec
 	 * @param codecContext
