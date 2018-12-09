@@ -97,14 +97,15 @@ public class WebRtcAudioRecord {
 	/**
 	 * @param audio => 20ms of encoded audio data
 	 */
-	public void notifyEncodedData(byte[] audio) {
-		if (audio.length <= encodedByteBuffer.capacity()) {
+	public void notifyEncodedData(ByteBuffer audio) {
+		if (audio.limit() <= encodedByteBuffer.capacity()) {
 			encodedByteBuffer.clear();
+			audio.rewind();
 			encodedByteBuffer.put(audio);
-			nativeEncodedDataIsReady(nativeAudioRecord, audio.length);
+			nativeEncodedDataIsReady(nativeAudioRecord, audio.limit());
 		}
 		else {
-			logger.warn("Discarding audio packet because audio packet size({}) is bigger than buffer capacity{} and limit {}", audio.length, encodedByteBuffer.capacity(), encodedByteBuffer.limit());
+			logger.warn("Discarding audio packet because audio packet size({}) is bigger than buffer capacity{} and limit {}", audio.limit(), encodedByteBuffer.capacity(), encodedByteBuffer.limit());
 		}
 	}
 
