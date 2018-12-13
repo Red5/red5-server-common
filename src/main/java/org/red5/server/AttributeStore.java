@@ -132,6 +132,16 @@ public class AttributeStore implements ICastingAttributeStore {
     }
 
     /**
+     * Return the value for a given attribute.
+     *
+     * @param enm the enum for the attribute to get
+     * @return the attribute value or null if the attribute doesn't exist
+     */
+    public Object getAttribute(Enum<?> enm) {
+        return getAttribute(enm.name());
+    }
+
+    /**
      * Return the value for a given attribute and set it if it doesn't exist.
      *
      * @param name
@@ -168,6 +178,16 @@ public class AttributeStore implements ICastingAttributeStore {
             return false;
         }
         return attributes.containsKey(name);
+    }
+
+    /**
+     * Check the object has an attribute.
+     *
+     * @param enm the enum for the attribute to check
+     * @return true if the attribute exists otherwise false
+     */
+    public boolean hasAttribute(Enum<?> enm) {
+        return hasAttribute(enm.name());
     }
 
     /**
@@ -238,6 +258,17 @@ public class AttributeStore implements ICastingAttributeStore {
         return result;
     }
 
+    /**
+     * Set an attribute on this object.
+     *
+     * @param enm the enum of the attribute to change
+     * @param value the new value of the attribute
+     * @return true if the attribute value was added or changed, otherwise false
+     */
+    public boolean setAttribute(final Enum<?> enm, final Object value) {
+    	return setAttribute(enm.name(), value);
+    }
+
     /** {@inheritDoc} */
     public boolean setAttributes(Map<String, Object> values) {
         attributes.putAll(filterNull(values));
@@ -262,6 +293,16 @@ public class AttributeStore implements ICastingAttributeStore {
             return (attributes.remove(name) != null);
         }
         return false;
+    }
+
+    /**
+     * Remove an attribute.
+     *
+     * @param enm the enum of the attribute to remove
+     * @return true if the attribute was found and removed otherwise false
+     */
+    public boolean removeAttribute(Enum<?> enm) {
+    	return removeAttribute(enm.name());
     }
 
     /**
