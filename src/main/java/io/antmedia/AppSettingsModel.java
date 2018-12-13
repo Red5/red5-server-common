@@ -5,6 +5,7 @@ import java.util.List;
 import io.antmedia.EncoderSettings;
 
 public class AppSettingsModel {
+	
 	private boolean mp4MuxingEnabled;
 	private boolean addDateTimeToMp4FileName;
 	private boolean hlsMuxingEnabled;
@@ -12,26 +13,27 @@ public class AppSettingsModel {
 	private int hlsListSize;
 	private int hlsTime;
 	private String hlsPlayListType;
-
 	private String facebookClientId;
 	private String facebookClientSecret;
-
 	private String youtubeClientId;
 	private String youtubeClientSecret;
-
 	private String periscopeClientId;
 	private String periscopeClientSecret;
-	
 	private boolean acceptOnlyStreamsInDataStore;
-	
 	private boolean tokenControlEnabled ;
-
 	private List<EncoderSettings> encoderSettings;
-	
 	private String vodFolder;
-	
 	private boolean previewOverwrite;
+	private boolean webRTCEnabled;
 	
+
+	public boolean isWebRTCEnabled() {
+		return webRTCEnabled;
+	}
+
+	public void setWebRTCEnabled(boolean webRTCEnabled) {
+		this.webRTCEnabled = webRTCEnabled;
+	}
 
 	public boolean isMp4MuxingEnabled() {
 		return mp4MuxingEnabled;
