@@ -29,7 +29,7 @@ deploy:
     on:
       #deploy to maven if it is master branch and tagged
       tags: true
-      branch: master
+      condition: $TRAVIS_TAG =~ ^release
 
 #above configuration prevents deploying a new release(not snapshot) if it is not tagged
 
