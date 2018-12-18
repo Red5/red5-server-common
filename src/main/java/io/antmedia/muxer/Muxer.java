@@ -306,7 +306,7 @@ public abstract class Muxer {
 	 * @param timestamp
 	 * @param streamIndex
 	 */
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int streamIndex) {
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
 	}
 	
 	/**
