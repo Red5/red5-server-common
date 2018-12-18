@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Indexes({ @Index(fields = @Field("vodId")) })
 
-public class Vod implements Serializable {
+public class VoD implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -52,7 +52,11 @@ public class Vod implements Serializable {
 	private String type;
 	
 
-	public Vod(String streamName, String streamId, String filePath, String vodName, long creationDate, long duration,
+	public VoD() {
+		//default constructor is used to return not found vod in rest service 
+	}
+	
+	public VoD(String streamName, String streamId, String filePath, String vodName, long creationDate, long duration,
 			long fileSize, String type, String vodId) {
 
 		this.streamName = streamName;

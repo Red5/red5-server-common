@@ -4,12 +4,16 @@ import java.io.Serializable;
 
 public class StreamInfo implements IStreamInfo, Serializable {
 	
+	private String streamId;
 	private int height;
 	private int width;
 	private int videoBitrate;
 	private int audioBitrate;
 	private int videoRTimebase;
 	private int audioRTimebase;
+	private String host;
+	private int videoPort;
+	private int audioPort;
 
 	public StreamInfo(int height, int width, int videobitrate, int audiobitrate, int videoRTimebase, int audioRTimebase) {
 		this.height = height;
@@ -74,6 +78,38 @@ public class StreamInfo implements IStreamInfo, Serializable {
 	
 	public int getAudioRTimebase() {
 		return audioRTimebase;
+	}
+	
+	public String getStreamId() {
+		return streamId;
+	}
+
+	public void setStreamId(String streamId) {
+		this.streamId = streamId;
+	}
+
+	public int getVideoPort() {
+		return videoPort;
+	}
+
+	public void setVideoPort(int videoPort) {
+		this.videoPort = videoPort;
+	}
+
+	public int getAudioPort() {
+		return audioPort;
+	}
+
+	public void setAudioPort(int audioPort) {
+		this.audioPort = audioPort;
+	}
+
+	public String getHost() {
+		return host;
+	}
+
+	public void setHost(String host) {
+		this.host = host;
 	}
 
 }

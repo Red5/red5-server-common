@@ -676,6 +676,7 @@ public class FFmpegFrameRecorder extends FrameRecorder {
             if (videoQuality >= 0) {
                 av_dict_set(options, "crf", "" + videoQuality, 0);
             }
+            av_dict_set(options, "preset", "veryfast", 0);
             for (Entry<String, String> e : videoOptions.entrySet()) {
                 av_dict_set(options, e.getKey(), e.getValue(), 0);
             }

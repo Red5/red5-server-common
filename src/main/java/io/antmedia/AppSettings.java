@@ -31,11 +31,24 @@ public class AppSettings {
 	private boolean webRTCEnabled = false;
 
 	private boolean deleteHLSFilesOnEnded = true;
+	
+	/**
+	 * The URL for action callback
+	 */
 
 	private String listenerHookURL;
 
-
+	/**
+	 * The control for publishers
+	 */
 	private boolean acceptOnlyStreamsInDataStore;
+	
+	/**
+	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 */
+	
+	private boolean tokenControlEnabled = false ;
+
 
 	/**
 	 * Fully qualified server name
@@ -76,6 +89,10 @@ public class AppSettings {
 	 * Youtube client secret
 	 */
 	private String youtubeClientSecret;
+	
+	/**
+	 * The path for manually saved used VoDs
+	 */
 
 	private String vodFolder;
 
@@ -126,6 +143,11 @@ public class AppSettings {
 
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
+
+	/**
+	 * This is a script file path that is called by Runtime when muxing is finished
+	 */
+	private String muxerFinishScript;
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -206,9 +228,7 @@ public class AppSettings {
 	}
 
 	public static List<EncoderSettings> getEncoderSettingsList(String encoderSettingsString) {
-		if (encoderSettingsString == null) {
-			return null;
-		}
+
 		String[] values = encoderSettingsString.split(",");
 
 		List<EncoderSettings> encoderSettingsList = new ArrayList();
@@ -401,5 +421,22 @@ public class AppSettings {
 
 	public void setMySqlClientPath(String mySqlClientPath) {
 		this.mySqlClientPath = mySqlClientPath;
+	}
+	
+
+	public boolean isTokenControlEnabled() {
+		return tokenControlEnabled;
+	}
+
+	public void setTokenControlEnabled(boolean tokenControlEnabled) {
+		this.tokenControlEnabled = tokenControlEnabled;
+	}
+
+	public String getMuxerFinishScript() {
+		return muxerFinishScript;
+	}
+	
+	public void setMuxerFinishScript(String muxerFinishScript) {
+		this.muxerFinishScript = muxerFinishScript;
 	}
 }

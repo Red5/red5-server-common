@@ -99,13 +99,13 @@ public class Broadcast {
 	 * typically a few seconds later after "liveStreamEnded"
 	 * 
 	 * 
-	 * "vodName" It is send with "vodReady" action. This is the name of the file
+	 * "vodName" It is sent with "vodReady" action. This is the name of the file
 	 * physicall recorded file
 	 * 
-	 * "streamName" optional It is send with above parameters if stream name
+	 * "streamName" optional It is sent with above parameters if stream name
 	 * exists
 	 * 
-	 * "category" optional It is send if category exists
+	 * "category" optional It is sent if category exists
 	 * 
 	 */
 	private String listenerHookURL;
@@ -126,6 +126,18 @@ public class Broadcast {
 	 * It has a value for IPCameras and streams in the cloud
 	 */
 	private String streamUrl;
+
+	/**
+	 * This is the origin address server broadcasting. 
+	 */
+	private String originAdress;
+	
+	/**
+	 * Mp4 muxing is enabled or not for the stream
+	 * 1 means enabled, -1 means disabled, 0 means no settings for the stream
+	 */
+	private int mp4Enabled = 0;
+	
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -164,7 +176,12 @@ public class Broadcast {
 	private int hlsViewerCount = 0;
 
 	private int webRTCViewerCount = 0;
+	
 	private int rtmpViewerCount = 0;
+	
+
+	
+	
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -353,7 +370,6 @@ public class Broadcast {
 	}
 
 
-
 	public int getExpireDurationMS() {
 		return expireDurationMS;
 	}
@@ -430,7 +446,21 @@ public class Broadcast {
 	}
 
 
-	
+	public String getOriginAdress() {
+		return originAdress;
+	}
+
+	public void setOriginAdress(String originAdress) {
+		this.originAdress = originAdress;
+	}	
+	public int getMp4Enabled() {
+		return mp4Enabled;
+	}
+
+	public void setMp4Enabled(int mp4Enabled) {
+		this.mp4Enabled = mp4Enabled;
+	}
+
 	
 
 }

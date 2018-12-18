@@ -3,20 +3,20 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.0-SNAPSHOT</version>
+		<version>1.7.0-SNAPSHOT</version>
 		<relativePath></relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.red5</groupId>
-	<version>${red5-server-common.version}</version>
-	<artifactId>red5-server-common</artifactId>
-	<name>Red5 :: Common server classes</name>
-	<description>Classes common for multiple red5 projects</description>
+	<groupId>io.antmedia</groupId>
+	<version>${project.parent.version}</version>
+	<artifactId>ant-media-server-common</artifactId>
+	<name>Ant Media Server :: Common</name>
+	<description>Classes common for multiple Ant Media projects</description>
 	<packaging>jar</packaging>
-	<url>https://github.com/Red5/red5-server-common</url>
+	<url>https://github.com/ant-media/Ant-Media-Server-Common</url>
 	<organization>
-		<name>Red5</name>
-		<url>https://github.com/Red5</url>
+		<name>Ant Media</name>
+		<url>https://antmedia.io</url>
 	</organization>
 	<licenses>
 		<license>
@@ -37,32 +37,24 @@
 		<url>https://github.com/Red5/red5-server-common/issues</url>
 	</issueManagement>
 	<scm>
-		<url>https://github.com/Red5/red5-server-common.git</url>
-		<connection>scm:git:git@github.com:Red5/red5-server-common.git</connection>
-		<developerConnection>scm:git:git@github.com:Red5/red5-server-common.git</developerConnection>
+		<url>https://github.com/ant-media/Ant-Media-Server-Common.git</url>
+		<connection>git@github.com:ant-media/Ant-Media-Server-Common.git</connection>
+		<developerConnection>git@github.com:ant-media/Ant-Media-Server-Common.git</developerConnection>
 	</scm>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 	<properties>
 		<finalName>${project.artifactId}</finalName>
 		<guava.lib.version>21.0</guava.lib.version>
 	</properties>
-	<developers>
-		<developer>
-			<id>Dominick Accattato</id>
-			<email>dominick@red5.org</email>
-		</developer>
-		<developer>
-			<id>Paul Gregoire</id>
-			<email>mondain@gmail.com</email>
-		</developer>
-		<developer>
-			<id>Dan Rossi</id>
-			<email>electroteque@gmail.com</email>
-		</developer>
-		<developer>
-			<id>Tiago Jacobs</id>
-			<email>tiago.jacobs@gmail.com</email>
-		</developer>
-	</developers>
 	<repositories>
 		<repository>
 			<id>sonatype-snapshots</id>
@@ -121,6 +113,17 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.7</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -236,6 +239,11 @@
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
 			<version>${quartz.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>${jsr305.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>

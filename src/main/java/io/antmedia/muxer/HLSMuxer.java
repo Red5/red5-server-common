@@ -1,75 +1,73 @@
 package io.antmedia.muxer;
 
-import org.red5.server.api.IConnection;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
-import org.red5.server.api.scope.IScope;
-import org.red5.server.api.stream.IBroadcastStream;
-import org.red5.server.api.stream.IStreamPacket;
-import org.red5.server.net.rtmp.event.CachedEvent;
-import org.red5.server.scheduling.QuartzSchedulingService;
-import org.red5.server.util.ScopeUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.concurrent.FailureCallback;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.util.concurrent.SuccessCallback;
-
-import com.google.common.collect.EvictingQueue;
-
-import static org.bytedeco.javacpp.avcodec.*;
+import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
+import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AAC;
+import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_H264;
+import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP3;
+import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
+import static org.bytedeco.javacpp.avcodec.av_bsf_free;
+import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;
+import static org.bytedeco.javacpp.avcodec.av_bsf_init;
+import static org.bytedeco.javacpp.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.javacpp.avcodec.av_bsf_send_packet;
+import static org.bytedeco.javacpp.avcodec.av_init_packet;
+import static org.bytedeco.javacpp.avcodec.av_packet_free;
+import static org.bytedeco.javacpp.avcodec.av_packet_ref;
+import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
 import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
 import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.*;
+import static org.bytedeco.javacpp.avformat.av_write_frame;
 import static org.bytedeco.javacpp.avformat.av_write_trailer;
 import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
 import static org.bytedeco.javacpp.avformat.avformat_free_context;
 import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
 import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
 import static org.bytedeco.javacpp.avformat.avio_closep;
+import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_AUDIO;
+import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
+import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
+import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
+import static org.bytedeco.javacpp.avutil.av_dict_free;
+import static org.bytedeco.javacpp.avutil.av_dict_set;
+import static org.bytedeco.javacpp.avutil.av_rescale_q;
+import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
+import static org.bytedeco.javacpp.avutil.av_strerror;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.nio.IntBuffer;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.IntPointer;
-import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avutil;
-
-import static org.bytedeco.javacpp.avutil.*;
-
 import org.bytedeco.javacpp.avcodec.AVBSFContext;
 import org.bytedeco.javacpp.avcodec.AVBitStreamFilter;
-import org.bytedeco.javacpp.avcodec.AVBitStreamFilterContext;
 import org.bytedeco.javacpp.avcodec.AVCodec;
 import org.bytedeco.javacpp.avcodec.AVCodecContext;
 import org.bytedeco.javacpp.avcodec.AVCodecParameters;
 import org.bytedeco.javacpp.avcodec.AVPacket;
+import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
 import org.bytedeco.javacpp.avformat.AVIOContext;
 import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avutil.AVDictionary;
 import org.bytedeco.javacpp.avutil.AVRational;
+import org.red5.server.api.scheduling.IScheduledJob;
+import org.red5.server.api.scheduling.ISchedulingService;
+import org.red5.server.api.scope.IScope;
+import org.red5.server.scheduling.QuartzSchedulingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class HLSMuxer extends Muxer  {
@@ -102,6 +100,7 @@ public class HLSMuxer extends Muxer  {
 	private String hlsFlags;
 	
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
+	private AVPacket videoPkt;
 
 
 	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
@@ -154,11 +153,16 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			String hlsFlagsFull = "delete_segments" + this.hlsFlags;
+			String hlsFlagsFull = "delete_segments+round_durations" + this.hlsFlags;
 
 			options.put("hls_flags", hlsFlagsFull);
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
+			
+			
+			videoPkt = avcodec.av_packet_alloc();
+			av_init_packet(videoPkt);
+			
 			isInitialized = true;
 		}
 
@@ -194,7 +198,7 @@ public class HLSMuxer extends Muxer  {
 				registeredStreamIndexList.add(i);
 
 				AVStream outStream = avformat_new_stream(context, null);
-				int codecType = inStream.codec().codec_type();
+				int codecType = inStream.codecpar().codec_type();
 				if (codecType == AVMEDIA_TYPE_VIDEO) 
 				{
 					videoIndex = streamIndex;
@@ -258,7 +262,7 @@ public class HLSMuxer extends Muxer  {
 	}
 
 	private boolean isCodecSupported(int codecId) {
-		return (codecId == AV_CODEC_ID_H264 || codecId == AV_CODEC_ID_AAC);
+		return (codecId == AV_CODEC_ID_H264 || codecId == AV_CODEC_ID_AAC || codecId == AV_CODEC_ID_MP3);
 	}
 
 	/**
@@ -324,8 +328,8 @@ public class HLSMuxer extends Muxer  {
 				return;
 			}
 
-			if (bsfContext != null) {
-
+			if (bsfContext != null) 
+			{
 				ret = av_bsf_send_packet(bsfContext, tmpPacket);
 				if (ret < 0)
 					return;
@@ -389,6 +393,11 @@ public class HLSMuxer extends Muxer  {
 		if (tmpPacket != null) {
 			av_packet_free(tmpPacket);
 			tmpPacket = null;
+		}
+		
+		if (videoPkt != null) {
+			av_packet_free(videoPkt);
+			videoPkt = null;
 		}
 
 		av_write_trailer(outputFormatContext);
@@ -462,6 +471,36 @@ public class HLSMuxer extends Muxer  {
 		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
 
 	}
+	
+	
+	@Override
+	public boolean addVideoStream(int width, int height, AVRational videoTimebase, int codecId, int streamIndex,
+			boolean isAVC, AVCodecParameters codecpar) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null && isCodecSupported(codecId)) 
+		{
+			registeredStreamIndexList.add(streamIndex);
+			videoIndex = streamIndex;
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			
+			outStream.codecpar().width(width);
+			outStream.codecpar().height(height);
+			outStream.codecpar().codec_id(codecId);
+			outStream.codecpar().codec_type(AVMEDIA_TYPE_VIDEO);
+			outStream.codecpar().format(AV_PIX_FMT_YUV420P);
+			outStream.codecpar().codec_tag(0);
+			
+			AVRational timeBase = new AVRational();
+			timeBase.num(1).den(1000);
+			codecTimeBaseMap.put(streamIndex, timeBase);
+			videoWidth = width;
+			videoHeight = height;
+			result = true;
+		}
+		return result;
+	
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -505,6 +544,7 @@ public class HLSMuxer extends Muxer  {
 		}
 		return true;
 	}
+	
 
 
 	/**
@@ -579,6 +619,21 @@ public class HLSMuxer extends Muxer  {
 
 	}
 
+	@Override
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int streamIndex) {
+		videoPkt.stream_index(streamIndex);
+		videoPkt.pts(timestamp);
+		videoPkt.dts(timestamp);
+		
+		encodedVideoFrame.rewind();
+		videoPkt.data(new BytePointer(encodedVideoFrame));
+		videoPkt.size(encodedVideoFrame.limit());
+		videoPkt.position(0);
+		writePacket(videoPkt);
+		
+		av_packet_unref(videoPkt);
+	}
+	
 	public int getVideoWidth() {
 		return videoWidth;
 	}
@@ -618,8 +673,4 @@ public class HLSMuxer extends Muxer  {
 	public void setDeleteFileOnExit(boolean deleteFileOnExist) {
 		this.deleteFileOnExit = deleteFileOnExist;
 	}
-
-
-
-
 }

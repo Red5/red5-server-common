@@ -623,6 +623,7 @@ public class StreamService implements IStreamService {
 
     /** {@inheritDoc} */
     public void publish(String name, String mode) {
+    	
         Map<String, String> params = null;
         if (name != null && name.contains("?")) {
             // read and utilize the query string values
@@ -659,7 +660,7 @@ public class StreamService implements IStreamService {
             if (security != null) {
                 Set<IStreamPublishSecurity> handlers = security.getStreamPublishSecurity();
                 for (IStreamPublishSecurity handler : handlers) {
-                    if (!handler.isPublishAllowed(scope, name, mode)) {
+                    if (!handler.isPublishAllowed(scope, name, mode, params)) {
                         sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, "You are not allowed to publish the stream.", name, streamId);
                         log.error("You are not allowed to publish the stream {}", name);
                         return;

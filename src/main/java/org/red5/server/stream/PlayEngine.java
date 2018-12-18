@@ -19,6 +19,8 @@
 package org.red5.server.stream;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +89,7 @@ import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import io.antmedia.cluster.IMediaCluster;
+import io.antmedia.cluster.DBReader;
 import io.antmedia.cluster.StreamNotificationMessage;
 
 /**
@@ -160,12 +162,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	/**
 	 * threshold for number of pending video frames
 	 */
-	private int maxPendingVideoFramesThreshold = 10;
+	private int maxPendingVideoFramesThreshold = 20;
 
 	/**
 	 * if we have more than 1 pending video frames, but less than maxPendingVideoFrames, continue sending until there are this many sequential frames with more than 1 pending
 	 */
-	private int maxSequentialPendingVideoFrames = 10;
+	private int maxSequentialPendingVideoFrames = 20;
 
 	/**
 	 * the number of sequential video frames with > 0 pending frames
@@ -242,9 +244,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	// Keep count of dropped packets so we can log every so often.
 	private long droppedPacketsCount = 0;
 	private long droppedPacketsCountLastLogTimestamp = TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
-	private long droppedPacketsCountLogInterval = 1 * 60 * 1000L; // 5 minutes
-
-	private IMediaCluster cluster;
+	private long droppedPacketsCountLogInterval = 25; // 25ms 
 
 	/**
 	 * Constructs a new PlayEngine.
@@ -254,7 +254,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		schedulingService = builder.schedulingService;
 		consumerService = builder.consumerService;
 		providerService = builder.providerService;
-		cluster = builder.clusterService;
 		// get the stream id
 		streamId = subscriberStream.getStreamId();
 	}
@@ -263,8 +262,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 	 * Builder pattern
 	 */
 	public final static class Builder {
-		public IMediaCluster clusterService;
-
 		//Required for play engine
 		private ISubscriberStream subscriberStream;
 
@@ -277,12 +274,11 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		//Required for play engine
 		private IProviderService providerService;
 
-		public Builder(ISubscriberStream subscriberStream, ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService, IMediaCluster clusterService) {
+		public Builder(ISubscriberStream subscriberStream, ISchedulingService schedulingService, IConsumerService consumerService, IProviderService providerService) {
 			this.subscriberStream = subscriberStream;
 			this.schedulingService = schedulingService;
 			this.consumerService = consumerService;
 			this.providerService = providerService;
-			this.clusterService = clusterService;
 		}
 
 		public PlayEngine build() {
@@ -392,33 +388,28 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
 
-			if (cluster != null) {
-				StreamNotificationMessage notification = cluster.getStreamNotification(itemName, thisScope.getName());
-				if (notification != null) 
-				{
-					RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
-					IConnection conn = Red5.getConnectionLocal();
-					if (conn instanceof IStreamCapableConnection) {
-						
-						cbs.setName(UUID.randomUUID().toString());
-						cbs.setConnection(null);
-						cbs.setScope(thisScope);
-						String hostName = java.net.InetAddress.getByAddress(notification.getAddress().getHost()).getHostName();
-						String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
-						log.info("url of the stream in the cluster: {}" , url);
-						cbs.setRemoteStreamUrl(url);
-						cbs.setScheduler(schedulingService);
-						
-						boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
+			String hostName = DBReader.instance.getHost(itemName, thisScope.getName());
+			if (hostName != null) {
+				RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
+				IConnection conn = Red5.getConnectionLocal();
+				if (conn instanceof IStreamCapableConnection) {
 
-						log.warn("Cluster is not null register result: {}" , result);
-						//cbs.setS
-						cbs.start();
-						
-						sourceType = providerService.lookupProviderInput(thisScope, itemName, type);
-					}
-
+					cbs.setName(UUID.randomUUID().toString());
+					cbs.setConnection(null);
+					cbs.setScope(thisScope);
 					
+					String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
+					log.info("url of the stream in the cluster: {}" , url);
+					cbs.setRemoteStreamUrl(url);
+					cbs.setScheduler(schedulingService);
+
+					boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
+
+					log.warn("Cluster is not null register result: {}" , result);
+					//cbs.setS
+					cbs.start();
+
+					sourceType = providerService.lookupProviderInput(thisScope, itemName, type);					
 				}
 			}
 			else {
