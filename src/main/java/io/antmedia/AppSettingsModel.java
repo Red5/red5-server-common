@@ -25,6 +25,7 @@ public class AppSettingsModel {
 	private String vodFolder;
 	private boolean previewOverwrite;
 	private boolean webRTCEnabled;
+	private int webRTCFrameRate;
 	
 
 	public boolean isWebRTCEnabled() {
@@ -177,5 +178,13 @@ public class AppSettingsModel {
 
 	public void setTokenControlEnabled(boolean tokenControlEnabled) {
 		this.tokenControlEnabled = tokenControlEnabled;
+	}
+
+	public int getWebRTCFrameRate() {
+		return webRTCFrameRate;
+	}
+
+	public void setWebRTCFrameRate(int webRTCFrameRate) {
+		this.webRTCFrameRate = webRTCFrameRate;
 	}
 }

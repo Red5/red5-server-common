@@ -148,6 +148,12 @@ public class AppSettings {
 	 * This is a script file path that is called by Runtime when muxing is finished
 	 */
 	private String muxerFinishScript;
+	
+	/**
+	 * Framerate parameter for WebRTC encoder 
+	 */
+	private int webRTCFrameRate;
+	
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -438,5 +444,13 @@ public class AppSettings {
 	
 	public void setMuxerFinishScript(String muxerFinishScript) {
 		this.muxerFinishScript = muxerFinishScript;
+	}
+
+	public int getWebRTCFrameRate() {
+		return webRTCFrameRate;
+	}
+
+	public void setWebRTCFrameRate(int webRTCFrameRate) {
+		this.webRTCFrameRate = webRTCFrameRate;
 	}
 }
