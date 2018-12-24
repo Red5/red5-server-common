@@ -154,6 +154,11 @@ public class AppSettings {
 	 */
 	private int webRTCFrameRate;
 	
+	/**
+	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
+	 */
+	private boolean collectSocialMediaActivity = false;
+	
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -452,5 +457,13 @@ public class AppSettings {
 
 	public void setWebRTCFrameRate(int webRTCFrameRate) {
 		this.webRTCFrameRate = webRTCFrameRate;
+	}
+
+	public boolean isCollectSocialMediaActivity() {
+		return collectSocialMediaActivity;
+	}
+
+	public void setCollectSocialMediaActivity(boolean collectSocialMediaActivity) {
+		this.collectSocialMediaActivity = collectSocialMediaActivity;
 	}
 }
