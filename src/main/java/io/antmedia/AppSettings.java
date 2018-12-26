@@ -206,7 +206,7 @@ public class AppSettings {
 	/**
 	 * Framerate parameter for WebRTC encoder 
 	 */
-	@Value( "${"+SETTINGS_WEBRTC_FRAME_RATE+"}" )
+	@Value( "${"+SETTINGS_WEBRTC_FRAME_RATE+":20}" )
 	private int webRTCFrameRate;
 	
 	/**
