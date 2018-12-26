@@ -174,7 +174,7 @@ public class AppSettings {
 	private boolean objectDetectionEnabled;
 
 	
-	@Value( "${"+SETTINGS_CREATE_PREVIEW_PERIOD+"}" )
+	@Value( "${"+SETTINGS_CREATE_PREVIEW_PERIOD+":5000}" )
 	private int createPreviewPeriod;
 
 	/**
