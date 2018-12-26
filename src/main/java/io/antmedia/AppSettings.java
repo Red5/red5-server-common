@@ -7,29 +7,66 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
+@Configuration
+@PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
+	
+	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
+	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
+	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
+	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
+	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
+	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
+	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
+	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
+	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
+	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
+	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
+	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
+	public static final String PERISCOPE_CLIENT_ID = "periscope.clientId";
+	public static final String PERISCOPE_CLIENT_SECRET = "periscope.clientSecret";
+	public static final String YOUTUBE_CLIENT_ID = "youtube.clientId";
+	public static final String YOUTUBE_CLIENT_SECRET = "youtube.clientSecret";
+	public static final String SETTINGS_VOD_FOLDER = "settings.vodFolder";
+	public static final String SETTINGS_PREVIEW_OVERWRITE = "settings.previewOverwrite";
+	private static final String SETTINGS_STALKER_DB_SERVER = "settings.stalkerDBServer";
+	private static final String SETTINGS_STALKER_DB_USER_NAME = "settings.stalkerDBUsername";
+	private static final String SETTINGS_STALKER_DB_PASSWORD = "settings.stalkerDBPassword";
+	public static final String SETTINGS_OBJECT_DETECTION_ENABLED = "settings.objectDetectionEnabled";
+	private static final String SETTINGS_CREATE_PREVIEW_PERIOD = "settings.createPreviewPeriod";
+	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
+	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
+	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
 
 	public static final String BEAN_NAME = "app.settings";
+	
+	
 
+	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
+	private boolean mp4MuxingEnabled;
+	@Value( "${"+SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME+":false}" )
+	private boolean addDateTimeToMp4FileName;
+	@Value( "${"+SETTINGS_HLS_MUXING_ENABLED+":true}" )
+	private boolean hlsMuxingEnabled;
+	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
+	private String encoderSettingsString;
 
-	private boolean mp4MuxingEnabled = false;
-
-	private boolean addDateTimeToMp4FileName = false;
-
-	private boolean hlsMuxingEnabled = true;
-
-	private List<EncoderSettings> adaptiveResolutionList = null;
-
-	private String hlsListSize = null;
-
-	private String hlsTime = null;
-
-	private boolean webRTCEnabled = false;
-
+	private List<EncoderSettings> adaptiveResolutionList;
+	@Value( "${"+SETTINGS_HLS_LIST_SIZE+"}" )
+	private String hlsListSize;
+	@Value( "${"+SETTINGS_HLS_TIME+"}" )
+	private String hlsTime;
+	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
+	private boolean webRTCEnabled;
+	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
 	
 	/**
@@ -41,98 +78,116 @@ public class AppSettings {
 	/**
 	 * The control for publishers
 	 */
+	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
 	
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	
-	private boolean tokenControlEnabled = false ;
+	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
+	private boolean tokenControlEnabled ;
 
 
 	/**
 	 * Fully qualified server name
 	 */
+	//@Value( "#{ @'ant.media.server.settings'.serverName }" )
 	private String serverName;
 
 	/**
 	 * event or vod
 	 */
-	private String hlsPlayListType = null;
+	@Value( "${"+SETTINGS_HLS_PLAY_LIST_TYPE+"}" )
+	private String hlsPlayListType;
 
 	/**
 	 * Facebook client id
 	 */
+	@Value( "${"+FACEBOOK_CLIENT_ID+"}" )
 	private String facebookClientId;
 
 	/**
 	 * Facebook client secret
 	 */
+	@Value( "${"+FACEBOOK_CLIENT_SECRET+"}" )
 	private String facebookClientSecret;
 
 	/**
 	 * Periscope app client id
 	 */
+	@Value( "${"+PERISCOPE_CLIENT_ID+"}" )
 	private String  periscopeClientId;
 
 	/**
 	 * Periscope app client secret
 	 */
+	@Value( "${"+PERISCOPE_CLIENT_SECRET+"}" )
 	private String  periscopeClientSecret;
 
 	/**
 	 * Youtube client id
 	 */
+	@Value( "${"+YOUTUBE_CLIENT_ID+"}" )
 	private String youtubeClientId;
 
 	/**
 	 * Youtube client secret
 	 */
+	@Value( "${"+YOUTUBE_CLIENT_SECRET+"}" )
 	private String youtubeClientSecret;
 	
 	/**
 	 * The path for manually saved used VoDs
 	 */
-
+	@Value( "${"+SETTINGS_VOD_FOLDER+"}" )
 	private String vodFolder;
 
 	/**
 	 * Overwrite preview files if exist, default value is false
 	 */
-	private boolean previewOverwrite = false;
+	@Value( "${"+SETTINGS_PREVIEW_OVERWRITE+":false}" )
+	private boolean previewOverwrite;
 
 	/**
 	 * Address of the Stalker Portal DB server 
 	 */
+	
+	@Value( "${"+SETTINGS_STALKER_DB_SERVER+"}" )
 	private String stalkerDBServer;
 
 	/**
 	 * Username of stalker portal DB
 	 */
+	@Value( "${"+SETTINGS_STALKER_DB_USER_NAME+"}" )
 	private String stalkerDBUsername;
 
 	/**
 	 * Password of the stalker portal DB User
 	 */
+	@Value( "${"+SETTINGS_STALKER_DB_PASSWORD+"}" )
 	private String stalkerDBPassword;
 
 	/**
 	 * The directory contains the tensorflow object detection model
 	 */
-	private boolean objectDetectionEnabled =false;
+	@Value( "${"+SETTINGS_OBJECT_DETECTION_ENABLED+":false}" )
+	private boolean objectDetectionEnabled;
 
-
+	
+	@Value( "${"+SETTINGS_CREATE_PREVIEW_PERIOD+"}" )
 	private int createPreviewPeriod;
 
 	/**
 	 * Restart stream fetcher period in seconds
 	 */
-	private int restartStreamFetcherPeriod = 0;
+	@Value( "${"+SETTINGS_STREAM_FETCHER_RESTART_PERIOD+":0}" )
+	private int restartStreamFetcherPeriod;
 
 	/**
 	 * Stream fetcher buffer time in milliseconds. 
 	 * Stream is buffered for this duration and after that it will be started.
 	 */
+	//@Value( "${"+SETTINGS_STREAM_FETCHER_BUFFER_TIME+"}" )
 	private int streamFetcherBufferTime = 0;
 
 
@@ -140,7 +195,6 @@ public class AppSettings {
 	 * HLS Flags for FFmpeg HLS Muxer
 	 */
 	private String hlsflags;
-
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
 
@@ -152,6 +206,7 @@ public class AppSettings {
 	/**
 	 * Framerate parameter for WebRTC encoder 
 	 */
+	@Value( "${"+SETTINGS_WEBRTC_FRAME_RATE+"}" )
 	private int webRTCFrameRate;
 	
 	/**
