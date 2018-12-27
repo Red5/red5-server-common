@@ -60,9 +60,9 @@ public class AppSettings {
 	private String encoderSettingsString;
 
 	private List<EncoderSettings> adaptiveResolutionList;
-	@Value( "${"+SETTINGS_HLS_LIST_SIZE+"}" )
+	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
-	@Value( "${"+SETTINGS_HLS_TIME+"}" )
+	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
 	private boolean webRTCEnabled;
@@ -97,7 +97,7 @@ public class AppSettings {
 	/**
 	 * event or vod
 	 */
-	@Value( "${"+SETTINGS_HLS_PLAY_LIST_TYPE+"}" )
+	@Value( "${"+SETTINGS_HLS_PLAY_LIST_TYPE+":#{null}}" )
 	private String hlsPlayListType;
 
 	/**
