@@ -521,4 +521,23 @@ public class AppSettings {
 	public void setCollectSocialMediaActivity(boolean collectSocialMediaActivity) {
 		this.collectSocialMediaActivity = collectSocialMediaActivity;
 	}
+
+	public void resetDefaults() {
+		mp4MuxingEnabled = false;
+		addDateTimeToMp4FileName = false;
+		hlsMuxingEnabled = true;
+		adaptiveResolutionList = null;
+		hlsListSize = null;
+		hlsTime = null;
+		webRTCEnabled = false;
+		deleteHLSFilesOnEnded = true;
+		acceptOnlyStreamsInDataStore = false;
+		tokenControlEnabled = false;
+		hlsPlayListType = null;
+		previewOverwrite = false;
+		objectDetectionEnabled = false;
+		createPreviewPeriod = 5000;
+		restartStreamFetcherPeriod = 0;
+		webRTCFrameRate = 20;
+	}
 }
