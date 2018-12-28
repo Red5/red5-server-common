@@ -4,6 +4,7 @@ import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AAC;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_H264;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP3;
+import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
 import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
 import static org.bytedeco.javacpp.avcodec.av_bsf_free;
 import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;
@@ -626,9 +627,21 @@ public class HLSMuxer extends Muxer  {
 		videoPkt.dts(timestamp);
 		
 		encodedVideoFrame.rewind();
-		videoPkt.data(new BytePointer(encodedVideoFrame));
+		if (encodedVideoFrame.limit() > 4) // 00 00 00 01 XX , 00 00 01 XX
+		{
+			byte[] starter = new byte[5];
+			encodedVideoFrame.get(starter);
+			if (starter[4] == 103 || starter[3] == 103) {
+				videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
+			}
+			encodedVideoFrame.rewind();
+		}
+		BytePointer bytePointer = new BytePointer(encodedVideoFrame);
+		videoPkt.data(bytePointer);
 		videoPkt.size(encodedVideoFrame.limit());
 		videoPkt.position(0);
+		
+	
 		writePacket(videoPkt);
 		
 		av_packet_unref(videoPkt);
