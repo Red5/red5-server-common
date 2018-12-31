@@ -1,18 +1,11 @@
 package io.antmedia;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.PropertyPlaceholderConfigurer;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.jmx.export.annotation.ManagedResource;
 
 @Configuration
 @PropertySource("/WEB-INF/red5-web.properties")
@@ -25,6 +18,7 @@ public class AppSettings {
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
+	private static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
@@ -44,6 +38,7 @@ public class AppSettings {
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
 
 	public static final String BEAN_NAME = "app.settings";
@@ -72,7 +67,7 @@ public class AppSettings {
 	/**
 	 * The URL for action callback
 	 */
-
+	@Value( "${"+SETTINGS_LISTENER_HOOK_URL+":}" )
 	private String listenerHookURL;
 
 	/**
@@ -201,6 +196,7 @@ public class AppSettings {
 	/**
 	 * This is a script file path that is called by Runtime when muxing is finished
 	 */
+	@Value( "${"+SETTINGS_MUXER_FINISH_SCRIPT+":}" )
 	private String muxerFinishScript;
 	
 	/**
@@ -240,12 +236,19 @@ public class AppSettings {
 	}
 
 	public List<EncoderSettings> getAdaptiveResolutionList() {
+		if(adaptiveResolutionList != null) {
+			return adaptiveResolutionList;
+		}
+		else if( encoderSettingsString != null && !encoderSettingsString.isEmpty()) {
+			adaptiveResolutionList = encodersStr2List(encoderSettingsString);
+		}
 		return adaptiveResolutionList;
 	}
 
 
 	public void setAdaptiveResolutionList(List<EncoderSettings> adaptiveResolutionList) {
 		this.adaptiveResolutionList = adaptiveResolutionList;
+		setEncoderSettingsString(encodersList2Str(adaptiveResolutionList));
 	}
 
 	public String getHlsPlayListType() {
@@ -280,7 +283,7 @@ public class AppSettings {
 		this.webRTCEnabled = webRTCEnabled;
 	}
 
-	public static String getEncoderSettingsString(List<EncoderSettings> encoderSettingsList) 
+	public static String encodersList2Str(List<EncoderSettings> encoderSettingsList) 
 	{
 		String encoderSettingsString = "";
 
@@ -293,7 +296,7 @@ public class AppSettings {
 		return encoderSettingsString;
 	}
 
-	public static List<EncoderSettings> getEncoderSettingsList(String encoderSettingsString) {
+	public static List<EncoderSettings> encodersStr2List(String encoderSettingsString) {
 
 		String[] values = encoderSettingsString.split(",");
 
@@ -312,11 +315,11 @@ public class AppSettings {
 	}
 
 	public String getEncoderSettingsString() {
-		return getEncoderSettingsString(adaptiveResolutionList);
+		return encoderSettingsString;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
-		adaptiveResolutionList = getEncoderSettingsList(encoderSettingsString);
+		this.encoderSettingsString = encoderSettingsString;
 	}
 
 	public boolean isDeleteHLSFilesOnExit() {
