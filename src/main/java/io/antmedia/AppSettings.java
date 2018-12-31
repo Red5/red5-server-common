@@ -38,6 +38,7 @@ public class AppSettings {
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
 
 	public static final String BEAN_NAME = "app.settings";
@@ -195,6 +196,7 @@ public class AppSettings {
 	/**
 	 * This is a script file path that is called by Runtime when muxing is finished
 	 */
+	@Value( "${"+SETTINGS_MUXER_FINISH_SCRIPT+":}" )
 	private String muxerFinishScript;
 	
 	/**
