@@ -475,7 +475,7 @@ public class Mp4Muxer extends Muxer {
 	}
 	
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int streamIndex) {
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
