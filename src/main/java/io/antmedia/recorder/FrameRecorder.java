@@ -1,7 +1,7 @@
 package io.antmedia.recorder;
 
 /*
- * Copyright (C) 2009-2015 Samuel Audet
+ * Copyright (C) 2009-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ package io.antmedia.recorder;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 
 import java.io.Closeable;
 import java.io.File;
@@ -106,7 +107,7 @@ public abstract class FrameRecorder implements Closeable {
 
     protected String format, videoCodecName, audioCodecName;
     protected int imageWidth, imageHeight, audioChannels;
-    protected int pixelFormat, videoCodec, videoBitrate, gopSize = -1;
+    protected int pixelFormat, videoCodec, videoBitrate, imageScalingFlags, gopSize = -1;
     protected double aspectRatio, frameRate, videoQuality = -1;
     protected int sampleFormat, audioCodec, audioBitrate, sampleRate;
     protected double audioQuality = -1;
@@ -184,6 +185,13 @@ public abstract class FrameRecorder implements Closeable {
     }
     public void setVideoBitrate(int videoBitrate) {
         this.videoBitrate = videoBitrate;
+    }
+
+    public int getImageScalingFlags() {
+        return imageScalingFlags;
+    }
+    public void setImageScalingFlags(int imageScalingFlags) {
+        this.imageScalingFlags = imageScalingFlags;
     }
 
     public int getGopSize() {
