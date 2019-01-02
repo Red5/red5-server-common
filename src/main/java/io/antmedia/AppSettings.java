@@ -285,6 +285,9 @@ public class AppSettings {
 
 	public static String encodersList2Str(List<EncoderSettings> encoderSettingsList) 
 	{
+		if(encoderSettingsList == null) {
+			return "";
+		}
 		String encoderSettingsString = "";
 
 		for (EncoderSettings encoderSettings : encoderSettingsList) {
