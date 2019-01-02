@@ -285,6 +285,9 @@ public class AppSettings {
 
 	public static String encodersList2Str(List<EncoderSettings> encoderSettingsList) 
 	{
+		if(encoderSettingsList == null) {
+			return "";
+		}
 		String encoderSettingsString = "";
 
 		for (EncoderSettings encoderSettings : encoderSettingsList) {
@@ -297,7 +300,10 @@ public class AppSettings {
 	}
 
 	public static List<EncoderSettings> encodersStr2List(String encoderSettingsString) {
-
+		if(encoderSettingsString == null) {
+			return null;
+		}
+		
 		String[] values = encoderSettingsString.split(",");
 
 		List<EncoderSettings> encoderSettingsList = new ArrayList();
