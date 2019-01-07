@@ -241,14 +241,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 	static WriteCallback writeCallback;
 	private static boolean exceptionExist = false;
 
-	/**
-	 * 
-	 * @param data
-	 * @param offset
-	 * @param datalimit
-	 * @param rbs
-	 * @return the new position in data
-	 */
+	
 	public static int sendData(byte[] data, int offset, int datalimit, RemoteBroadcastStream rbs) {
 
 		/**
