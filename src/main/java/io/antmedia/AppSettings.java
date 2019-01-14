@@ -40,6 +40,10 @@ public class AppSettings {
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
+	public static final String SETTINGS_HASH_TOKEN_ENABLED = "settings.hashTokenEnabled";
+	public static final String TOKEN_HASH_SECRET = "tokenHashSecret";
+
+
 
 	public static final String BEAN_NAME = "app.settings";
 	
@@ -64,6 +68,22 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
 	
+	/**
+	 * The secret string used for creating hash based tokens
+	 */
+	
+	@Value( "${"+TOKEN_HASH_SECRET +"}" )
+	private String tokenHashSecret;
+	
+
+	/**
+	 * enable creating hash as token using secret
+	 */
+	
+	@Value( "${"+SETTINGS_HASH_TOKEN_ENABLED+":false}" )
+	private boolean hashTokenEnabled;
+	
+
 	/**
 	 * The URL for action callback
 	 */
@@ -529,6 +549,22 @@ public class AppSettings {
 
 	public void setCollectSocialMediaActivity(boolean collectSocialMediaActivity) {
 		this.collectSocialMediaActivity = collectSocialMediaActivity;
+	}
+	
+	public boolean isHashTokenEnabled() {
+		return hashTokenEnabled;
+	}
+
+	public void setHashTokenEnabled(boolean hashTokenEnabled) {
+		this.hashTokenEnabled = hashTokenEnabled;
+	}
+	
+	public String getTokenHashSecret() {
+		return tokenHashSecret;
+	}
+
+	public void setTokenHashSecret(String tokenHashSecret) {
+		this.tokenHashSecret = tokenHashSecret;
 	}
 
 	public void resetDefaults() {
