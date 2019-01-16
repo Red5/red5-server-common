@@ -73,7 +73,7 @@ public class AppSettings {
 	 * The secret string used for creating hash based tokens
 	 */
 
-	@Value( "${"+TOKEN_HASH_SECRET+"}" )
+	@Value( "${"+TOKEN_HASH_SECRET+":#{null}}" )
 	private String tokenHashSecret;
 
 
