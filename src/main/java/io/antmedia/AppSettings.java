@@ -604,5 +604,8 @@ public class AppSettings {
 		createPreviewPeriod = 5000;
 		restartStreamFetcherPeriod = 0;
 		webRTCFrameRate = 20;
+		hashControlPlayEnabled = false;
+		hashControlPublishEnabled = false;
+		tokenHashSecret = "";
 	}
 }
