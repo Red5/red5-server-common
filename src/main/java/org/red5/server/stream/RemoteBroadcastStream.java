@@ -165,11 +165,6 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 
 	}
 
-	/**
-	 * read 3 byte length
-	 * @param in
-	 * @return
-	 */
 	public static int getSize(byte a, byte b, byte c) {
 		int val = 0;
 		val += (a & 0xff) << 16;
@@ -246,14 +241,7 @@ public class RemoteBroadcastStream extends ClientBroadcastStream implements ISch
 	static WriteCallback writeCallback;
 	private static boolean exceptionExist = false;
 
-	/**
-	 * 
-	 * @param data
-	 * @param offset
-	 * @param datalimit
-	 * @param rbs
-	 * @return the new position in data
-	 */
+	
 	public static int sendData(byte[] data, int offset, int datalimit, RemoteBroadcastStream rbs) {
 
 		/**

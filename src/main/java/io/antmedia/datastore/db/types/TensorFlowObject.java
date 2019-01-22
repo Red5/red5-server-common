@@ -9,31 +9,40 @@ import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 @Entity("detection")
 
 @Indexes({ @Index(fields = @Field("dbId")) })
 
+@ApiModel(value="TensorFlowObject", description="The TensorFlow detected object class")
 public class TensorFlowObject {
 	
 	@JsonIgnore
 	@Id
+	@ApiModelProperty(value = "the id of the detected object")
 	private ObjectId dbId;
 	
 	/**
 	 * Name of the object
 	 */
+	@ApiModelProperty(value = "the name of the detected object")
 	public String objectName;
 	
 	/**
 	 * % percent of the recognition probability
 	 */
+	@ApiModelProperty(value = "the probablity of the detected object")
 	public float probability;
 	
 	/**
 	 * Detection time
 	 */
+	@ApiModelProperty(value = "the time of the detected object")
 	public long detectionTime;
 	
+	@ApiModelProperty(value = "the id of the detected image")
 	private String imageId;
 	
 	public TensorFlowObject(String name, float probability, String imageId) {

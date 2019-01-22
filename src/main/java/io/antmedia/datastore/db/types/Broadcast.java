@@ -12,74 +12,90 @@ import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+
+@ApiModel(value="Broadcast", description="The basic broadcast class")
 @Entity("broadcast")
-
 @Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")) })
-
 public class Broadcast {
 
-	/**
-	 * id of the broadcast
-	 */
+
 	@JsonIgnore
 	@Id
 	private ObjectId dbId;
 
+	/**
+	 * id of the broadcast
+	 */
+	@ApiModelProperty(value = "the id of the stream")
 	private String streamId;
 
 	/**
 	 * "finished", "broadcasting", "created"
 	 */
+	
+	@ApiModelProperty(value = "the status of the stream", allowableValues = "finished, broadcasting,created")
 	private String status;
 
 	/**
-	 * "liveStream", "ipCamera", "streamSource", "vod"
+	 * "liveStream", "ipCamera", "streamSource", "VoD"
 	 */
-
+	@ApiModelProperty(value = "the type of the stream", allowableValues = "liveStream, ipCamera,streamSource,VoD")
 	private String type;
 
 	/**
 	 * name of the broadcast
 	 */
+	@ApiModelProperty(value = "the name of the stream")
 	private String name;
 
 	/**
 	 * description of the broadcast
 	 */
+	@ApiModelProperty(value = "the description of the stream")
 	private String description;
 
 	/**
 	 * It is a video filter for the service, this value is controlled by the
 	 * user, default value is true in the db
 	 */
+	@ApiModelProperty(value = "it is a video filter for the service, this value is controlled by the user, default value is true in the db")
 	private boolean publish = true;
 
 	/**
 	 * date when record is created in milliseconds
 	 */
+	@ApiModelProperty(value = "the date when record is created in milliseconds")
 	private Long date;
 
 	/**
 	 * Planned start date
 	 */
+	@ApiModelProperty(value = "the planned start date")
 	private Long plannedStartDate;
 
 	/**
 	 * duration of the stream in milliseconds
 	 */
+	@ApiModelProperty(value = "the duration of the stream in milliseconds")
 	private Long duration;
 
+	@ApiModelProperty(value = "the list of endpoints such as Facebook, Twitter or custom RTMP endpoints  ")
 	@Embedded
 	private List<Endpoint> endPointList;
 
 	/**
 	 * is public
 	 */
+	@ApiModelProperty(value = "the identifier of whether stream is public or not")
 	private boolean publicStream = true;
 
 	/**
 	 * If this stream is a 360 degree video
 	 */
+	@ApiModelProperty(value = "the identifier of whether stream is 360 or not")
 	private boolean is360 = false;
 
 	/**
@@ -108,34 +124,46 @@ public class Broadcast {
 	 * "category" optional It is sent if category exists
 	 * 
 	 */
+	
+	@ApiModelProperty(value = "the url that will be notified when stream is published, ended and muxing finished")
 	private String listenerHookURL;
 
+	@ApiModelProperty(value = "the category of the stream")
 	private String category;
-
+	
+	@ApiModelProperty(value = "the IP Address of the IP Camera")
 	private String ipAddr;
 	
+	@ApiModelProperty(value = "the user name of the IP Camera")
 	private String username;
 	
+	@ApiModelProperty(value = "the password of the IP Camera")
 	private String password;
 
+	@ApiModelProperty(value = "the quality of the incoming stream during publishing")
 	private String quality;
+	
+	@ApiModelProperty(value = "the speed of the incoming stream, for better quality and performance it should be around 1.00")
 	private double speed;
 	
 	/**
 	 * This is the stream url for fetching stream. 
 	 * It has a value for IPCameras and streams in the cloud
 	 */
+	@ApiModelProperty(value = "the stream URL for fetching stream, especially should be defined for IP Cameras or Cloud streams")
 	private String streamUrl;
 
 	/**
 	 * This is the origin address server broadcasting. 
 	 */
+	@ApiModelProperty(value = "the origin address server broadcasting")
 	private String originAdress;
 	
 	/**
 	 * Mp4 muxing is enabled or not for the stream
 	 * 1 means enabled, -1 means disabled, 0 means no settings for the stream
 	 */
+	@ApiModelProperty(value = "MP4 muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
 	private int mp4Enabled = 0;
 	
 
@@ -149,11 +177,15 @@ public class Broadcast {
 	 * 
 	 * If expire duration is 0, then stream will never expire
 	 */
+	
+	
+	@ApiModelProperty(value = "the expire time in milliseconds For instance if this value is 10000 then broadcast should be started in 10 seconds after it is created.If expire duration is 0, then stream will never expire")
 	private int expireDurationMS;
 
 	/**
 	 * RTMP URL where to publish live stream to
 	 */
+	@ApiModelProperty(value = "the RTMP URL where to publish live stream to")
 	private String rtmpURL;
 
 	/**
@@ -161,6 +193,7 @@ public class Broadcast {
 	 * rest service or management console It is false by default
 	 * 
 	 */
+	@ApiModelProperty(value = "is true, if a broadcast that is not added to data store through rest service or management console It is false by default")
 	private boolean zombi = false;
 	
 	/**
@@ -168,15 +201,21 @@ public class Broadcast {
 	 * Number of audio and video packets that is being pending to be encoded 
 	 * in the queue
 	 */
+	
+	@ApiModelProperty(value = "the number of audio and video packets that is being pending to be encoded in the queue ")
 	private int pendingPacketSize = 0;
 
 	/**
 	 * number of hls viewers of the stream
 	 */
+	
+	@ApiModelProperty(value = "the number of HLS viewers of the stream")
 	private int hlsViewerCount = 0;
 
+	@ApiModelProperty(value = "the number of WebRTC viewers of the stream")
 	private int webRTCViewerCount = 0;
 	
+	@ApiModelProperty(value = "the number of RTMP viewers of the stream")
 	private int rtmpViewerCount = 0;
 	
 
