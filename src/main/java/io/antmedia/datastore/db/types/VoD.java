@@ -12,11 +12,14 @@ import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 
 @Entity("vod")
 
 @Indexes({ @Index(fields = @Field("vodId")) })
-
+@ApiModel(value="VoD", description="The recorded video-on-demand object class")
 public class VoD implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -40,15 +43,31 @@ public class VoD implements Serializable {
 	@JsonIgnore
 	@Id
 	private ObjectId dbId;
-
+	@ApiModelProperty(value = "the object id of the VoD")
 	private String streamName;
+	
+	@ApiModelProperty(value = "the name of the VoD")
 	private String vodName;
+	
+	@ApiModelProperty(value = "the stream id of the VoD")
 	private String streamId;
+	
+	@ApiModelProperty(value = "the creation of the VoD")
 	private long creationDate;
+	
+	@ApiModelProperty(value = "the duration of the VoD")
 	private long duration;
+	
+	@ApiModelProperty(value = "the size of the VoD")
 	private long fileSize;
+	
+	@ApiModelProperty(value = "the path of the VoD")
 	private String filePath;
+	
+	@ApiModelProperty(value = "the id of the VoD")
 	private String vodId;
+	
+	@ApiModelProperty(value = "the type of the VoD, such as userVod, streamVod, uploadedVod")
 	private String type;
 	
 
