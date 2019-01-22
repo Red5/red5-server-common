@@ -10,7 +10,7 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
-	
+
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
@@ -40,10 +40,15 @@ public class AppSettings {
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
+	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
+	public static final String SETTINGS_HASH_CONTROL_PLAY_ENABLED = "settings.hashControlPlayEnabled";
+	public static final String TOKEN_HASH_SECRET = "tokenHashSecret";
+
+
 
 	public static final String BEAN_NAME = "app.settings";
-	
-	
+
+
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
@@ -63,7 +68,32 @@ public class AppSettings {
 	private boolean webRTCEnabled;
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
-	
+
+	/**
+	 * The secret string used for creating hash based tokens
+	 */
+
+	@Value( "${"+TOKEN_HASH_SECRET+":''}" )
+	private String tokenHashSecret;
+
+
+	/**
+	 * enable hash control as token for publishing operations using shared secret
+	 */
+
+	@Value( "${"+SETTINGS_HASH_CONTROL_PUBLISH_ENABLED+":false}" )
+	private boolean hashControlPublishEnabled;
+
+
+	/**
+	 * enable hash control as token for playing operations using shared secret
+	 */
+
+	@Value( "${"+SETTINGS_HASH_CONTROL_PLAY_ENABLED+":false}" )
+	private boolean hashControlPlayEnabled;
+
+
+
 	/**
 	 * The URL for action callback
 	 */
@@ -75,7 +105,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
-	
+
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
@@ -130,7 +160,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+YOUTUBE_CLIENT_SECRET+"}" )
 	private String youtubeClientSecret;
-	
+
 	/**
 	 * The path for manually saved used VoDs
 	 */
@@ -146,7 +176,7 @@ public class AppSettings {
 	/**
 	 * Address of the Stalker Portal DB server 
 	 */
-	
+
 	@Value( "${"+SETTINGS_STALKER_DB_SERVER+"}" )
 	private String stalkerDBServer;
 
@@ -168,7 +198,7 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_OBJECT_DETECTION_ENABLED+":false}" )
 	private boolean objectDetectionEnabled;
 
-	
+
 	@Value( "${"+SETTINGS_CREATE_PREVIEW_PERIOD+":5000}" )
 	private int createPreviewPeriod;
 
@@ -198,18 +228,18 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_MUXER_FINISH_SCRIPT+":}" )
 	private String muxerFinishScript;
-	
+
 	/**
 	 * Framerate parameter for WebRTC encoder 
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_FRAME_RATE+":20}" )
 	private int webRTCFrameRate;
-	
+
 	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
 	private boolean collectSocialMediaActivity = false;
-	
+
 
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -303,7 +333,7 @@ public class AppSettings {
 		if(encoderSettingsString == null) {
 			return null;
 		}
-		
+
 		String[] values = encoderSettingsString.split(",");
 
 		List<EncoderSettings> encoderSettingsList = new ArrayList();
@@ -491,13 +521,13 @@ public class AppSettings {
 
 	public String getMySqlClientPath() {
 		return this.mySqlClientPath;
-		
+
 	}
 
 	public void setMySqlClientPath(String mySqlClientPath) {
 		this.mySqlClientPath = mySqlClientPath;
 	}
-	
+
 
 	public boolean isTokenControlEnabled() {
 		return tokenControlEnabled;
@@ -510,7 +540,7 @@ public class AppSettings {
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
-	
+
 	public void setMuxerFinishScript(String muxerFinishScript) {
 		this.muxerFinishScript = muxerFinishScript;
 	}
@@ -531,6 +561,32 @@ public class AppSettings {
 		this.collectSocialMediaActivity = collectSocialMediaActivity;
 	}
 
+
+	public String getTokenHashSecret() {
+		return tokenHashSecret;
+	}
+
+	public void setTokenHashSecret(String tokenHashSecret) {
+		this.tokenHashSecret = tokenHashSecret;
+	}
+
+
+	public boolean isHashControlPlayEnabled() {
+		return hashControlPlayEnabled;
+	}
+
+	public void setHashControlPlayEnabled(boolean hashControlPlayEnabled) {
+		this.hashControlPlayEnabled = hashControlPlayEnabled;
+	}
+
+	public boolean isHashControlPublishEnabled() {
+		return hashControlPublishEnabled;
+	}
+
+	public void setHashControlPublishEnabled(boolean hashControlPublishEnabled) {
+		this.hashControlPublishEnabled = hashControlPublishEnabled;
+	}
+
 	public void resetDefaults() {
 		mp4MuxingEnabled = false;
 		addDateTimeToMp4FileName = false;
@@ -548,5 +604,8 @@ public class AppSettings {
 		createPreviewPeriod = 5000;
 		restartStreamFetcherPeriod = 0;
 		webRTCFrameRate = 20;
+		hashControlPlayEnabled = false;
+		hashControlPublishEnabled = false;
+		tokenHashSecret = "";
 	}
 }
