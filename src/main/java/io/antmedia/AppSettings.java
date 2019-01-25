@@ -241,14 +241,14 @@ public class AppSettings {
 	private int webRTCFrameRate;
 	
 	/**
-	 * Min port number of the port range of WebRTC.
-	 * In order to port range effective, this value should be less than the {@link #webRTCPortRangeMax} 
+	 * Min port number of the port range of WebRTC. It's effective when user publishes stream.
+	 * This value should be less than the {@link #webRTCPortRangeMax} 
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MIN +":0}")
 	private int webRTCPortRangeMin;
 	
 	/**
-	 * Max port number of the port range of WebRTC
+	 * Max port number of the port range of WebRTC. It's effective when user publishes stream
 	 * In order to port range port this value should be higher than {@link #webRTCPortRangeMin} 
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MAX +":0}")
@@ -257,11 +257,11 @@ public class AppSettings {
 	/**
 	 * Stun Server URI
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":'stun:stun.l.google.com:19302'}")
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
 	private String stunServerURI;
 
 	/**
-	 * TCP candidates are enabled/disabled
+	 * TCP candidates are enabled/disabled.It's effective when user publishes stream
 	 * It's enabled by default
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
