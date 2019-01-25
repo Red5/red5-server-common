@@ -146,6 +146,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private boolean audioOnly= false;
 	private long lastQualityUpdateTime = 0;
 	private Broadcast broadcast;
+	private AppSettings appSettings;
 
 
 
@@ -260,21 +261,21 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	protected void enableSettings() {
-		AppSettings appSettings = getAppSettings();
-		hlsMuxingEnabled = appSettings.isHlsMuxingEnabled();
-		mp4MuxingEnabled = appSettings.isMp4MuxingEnabled();
-		objectDetectionEnabled = appSettings.isObjectDetectionEnabled();
+		AppSettings appSettingsLocal = getAppSettings();
+		hlsMuxingEnabled = appSettingsLocal.isHlsMuxingEnabled();
+		mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
+		objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
 
 		addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
 		mp4Filtername = null;
 		webRTCEnabled = getAppSettings().isWebRTCEnabled();
-		deleteHLSFilesOnExit = appSettings.isDeleteHLSFilesOnExit();
-		hlsListSize = appSettings.getHlsListSize();
-		hlsTime = appSettings.getHlsTime();
-		hlsPlayListType = appSettings.getHlsPlayListType();
-		previewOverwrite = appSettings.isPreviewOverwrite();
-		encoderSettingsList = appSettings.getAdaptiveResolutionList();
-		previewCreatePeriod = appSettings.getCreatePreviewPeriod();
+		deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnExit();
+		hlsListSize = appSettingsLocal.getHlsListSize();
+		hlsTime = appSettingsLocal.getHlsTime();
+		hlsPlayListType = appSettingsLocal.getHlsPlayListType();
+		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
+		encoderSettingsList = appSettingsLocal.getAdaptiveResolutionList();
+		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
 	}
 
 	public void initStorageClient() {
@@ -328,7 +329,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected void enableMp4Setting() {
 		broadcast = getBroadcast();
-		
+
 		if (broadcast != null) {
 			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) {
 				// if stream specific mp4 setting is disabled 
@@ -449,13 +450,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public AppSettings getAppSettings() {
 
-		AppSettings appSettings = null;
-		if(scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
-			appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
-		}
 		if (appSettings == null) {
-			logger.warn("No app settings in context, returning default AppSettings for {}", streamId);
-			appSettings = new AppSettings();
+			if(scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
+				appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
+			}
+			if (appSettings == null) {
+				logger.warn("No app settings in context, returning default AppSettings for {}", streamId);
+				appSettings = new AppSettings();
+			}
 		}
 
 		return appSettings;
