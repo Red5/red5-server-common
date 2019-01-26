@@ -43,6 +43,11 @@ public class AppSettings {
 	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
 	public static final String SETTINGS_HASH_CONTROL_PLAY_ENABLED = "settings.hashControlPlayEnabled";
 	public static final String TOKEN_HASH_SECRET = "tokenHashSecret";
+	
+	public static final String SETTINGS_WEBRTC_PORT_RANGE_MIN = "settings.webrtc.portRangeMin";
+	public static final String SETTINGS_WEBRTC_PORT_RANGE_MAX = "settings.webrtc.portRangeMax";
+	public static final String SETTINGS_WEBRTC_STUN_SERVER_URI = "settings.webrtc.stunServerURI";
+	public static final String SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED = "settings.webrtc.tcpCandidateEnabled"; 
 
 
 
@@ -52,47 +57,47 @@ public class AppSettings {
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
+	
 	@Value( "${"+SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME+":false}" )
 	private boolean addDateTimeToMp4FileName;
+	
 	@Value( "${"+SETTINGS_HLS_MUXING_ENABLED+":true}" )
 	private boolean hlsMuxingEnabled;
+	
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
 
 	private List<EncoderSettings> adaptiveResolutionList;
+	
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
+	
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
+	
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
 	private boolean webRTCEnabled;
+	
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
 
 	/**
 	 * The secret string used for creating hash based tokens
 	 */
-
 	@Value( "${"+TOKEN_HASH_SECRET+":''}" )
 	private String tokenHashSecret;
-
 
 	/**
 	 * enable hash control as token for publishing operations using shared secret
 	 */
-
 	@Value( "${"+SETTINGS_HASH_CONTROL_PUBLISH_ENABLED+":false}" )
 	private boolean hashControlPublishEnabled;
-
 
 	/**
 	 * enable hash control as token for playing operations using shared secret
 	 */
-
 	@Value( "${"+SETTINGS_HASH_CONTROL_PLAY_ENABLED+":false}" )
 	private boolean hashControlPlayEnabled;
-
-
 
 	/**
 	 * The URL for action callback
@@ -234,7 +239,34 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_FRAME_RATE+":20}" )
 	private int webRTCFrameRate;
+	
+	/**
+	 * Min port number of the port range of WebRTC. It's effective when user publishes stream.
+	 * This value should be less than the {@link #webRTCPortRangeMax} 
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MIN +":0}")
+	private int webRTCPortRangeMin;
+	
+	/**
+	 * Max port number of the port range of WebRTC. It's effective when user publishes stream
+	 * In order to port range port this value should be higher than {@link #webRTCPortRangeMin} 
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MAX +":0}")
+	private int webRTCPortRangeMax;
 
+	/**
+	 * Stun Server URI
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
+	private String stunServerURI;
+
+	/**
+	 * TCP candidates are enabled/disabled.It's effective when user publishes stream
+	 * It's enabled by default
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
+	private boolean webRTCTcpCandidatesEnabled;
+	
 	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
@@ -607,5 +639,37 @@ public class AppSettings {
 		hashControlPlayEnabled = false;
 		hashControlPublishEnabled = false;
 		tokenHashSecret = "";
+	}
+
+	public int getWebRTCPortRangeMax() {
+		return webRTCPortRangeMax;
+	}
+
+	public void setWebRTCPortRangeMax(int webRTCPortRangeMax) {
+		this.webRTCPortRangeMax = webRTCPortRangeMax;
+	}
+
+	public int getWebRTCPortRangeMin() {
+		return webRTCPortRangeMin;
+	}
+
+	public void setWebRTCPortRangeMin(int webRTCPortRangeMin) {
+		this.webRTCPortRangeMin = webRTCPortRangeMin;
+	}
+
+	public String getStunServerURI() {
+		return stunServerURI;
+	}
+
+	public void setStunServerURI(String stunServerURI) {
+		this.stunServerURI = stunServerURI;
+	}
+
+	public boolean isWebRTCTcpCandidatesEnabled() {
+		return webRTCTcpCandidatesEnabled;
+	}
+
+	public void setWebRTCTcpCandidatesEnabled(boolean webRTCTcpCandidatesEnabled) {
+		this.webRTCTcpCandidatesEnabled = webRTCTcpCandidatesEnabled;
 	}
 }
