@@ -489,7 +489,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                 channel.write(reply);
                 if (disconnectOnReturn) {
                     log.debug("Close connection due to connect handling exception: {}", conn.getSessionId());
-                    conn.close();
+                    conn.getIoSession().closeOnFlush(); //must wait until flush to close as we just wrote asynchronously to the stream
                 }
             }
         } else if (log.isDebugEnabled()) {
