@@ -8,6 +8,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressEventType;
@@ -15,25 +16,30 @@ import com.amazonaws.event.ProgressListener;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
 public class AmazonS3StorageClient extends StorageClient {
 
-	private AmazonS3Client amazonS3;
+	private AmazonS3 amazonS3;
 	
 	protected static Logger logger = LoggerFactory.getLogger(AmazonS3StorageClient.class);
 
 	private AmazonS3 getAmazonS3() {
 		if (amazonS3 == null) {
+			AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+			// Inject credentials if provided in the configuration file
+			if (getAccessKey() != null) {
+				BasicAWSCredentials awsCredentials = new BasicAWSCredentials(getAccessKey(), getSecretKey());
+				builder = builder.withCredentials(new AWSStaticCredentialsProvider(awsCredentials));
+			}
 			
-			BasicAWSCredentials awsCredentials = new BasicAWSCredentials(getAccessKey(), getSecretKey());
-			amazonS3 = new AmazonS3Client(awsCredentials);
-
-			amazonS3.setRegion(Region.getRegion(Regions.fromName(getRegion())));
-			
-			
+			// Inject region if provided in the configuration file
+			if (getRegion() != null) {
+				builder = builder.withRegion(Regions.fromName(getRegion()));
+			}
+			amazonS3 = builder.build();
 		}
 		return amazonS3; 
 	}
