@@ -634,8 +634,9 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      */
     protected void unregister(IEventListener listener) {
         log.debug("unregister - listener: {}", listener);
-        listeners.remove(listener);
-        listenerStats.decrement();
+        if (listeners.remove(listener)) {
+            listenerStats.decrement();
+        }
     }
 
     /**
