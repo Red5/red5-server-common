@@ -11,6 +11,7 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
 
+	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
@@ -43,14 +44,17 @@ public class AppSettings {
 	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
 	public static final String SETTINGS_HASH_CONTROL_PLAY_ENABLED = "settings.hashControlPlayEnabled";
 	public static final String TOKEN_HASH_SECRET = "tokenHashSecret";
-	
 	public static final String SETTINGS_WEBRTC_PORT_RANGE_MIN = "settings.webrtc.portRangeMin";
 	public static final String SETTINGS_WEBRTC_PORT_RANGE_MAX = "settings.webrtc.portRangeMax";
 	public static final String SETTINGS_WEBRTC_STUN_SERVER_URI = "settings.webrtc.stunServerURI";
 	public static final String SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED = "settings.webrtc.tcpCandidateEnabled"; 
-
-
-
+	
+	private static final String SETTINGS_ENCODING_ENCODER_NAME = "settings.encoding.encoderName";
+	private static final String SETTINGS_ENCODING_PRESET = "settings.encoding.preset";
+	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
+	private static final String SETTINGS_ENCODING_LEVEL = "settings.encoding.level";
+	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
+	
 	public static final String BEAN_NAME = "app.settings";
 
 
@@ -272,7 +276,25 @@ public class AppSettings {
 	 */
 	private boolean collectSocialMediaActivity = false;
 
-
+	
+	@Value( "${" + SETTINGS_ENCODING_ENCODER_NAME +":#{null}}")
+	private String encoderName;
+	
+	@Value( "${" + SETTINGS_ENCODING_PRESET +":#{null}}")
+	private String encoderPreset;
+	
+	@Value( "${" + SETTINGS_ENCODING_PROFILE +":#{null}}")
+	private String encoderProfile;
+	
+	@Value( "${" + SETTINGS_ENCODING_LEVEL +":#{null}}")
+	private String encoderLevel;
+	
+	@Value( "${" + SETTINGS_ENCODING_RC +":#{null}}")
+	private String encoderRc;
+	
+	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
+	private String encoderSpecific;
+	
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -671,5 +693,53 @@ public class AppSettings {
 
 	public void setWebRTCTcpCandidatesEnabled(boolean webRTCTcpCandidatesEnabled) {
 		this.webRTCTcpCandidatesEnabled = webRTCTcpCandidatesEnabled;
+	}
+	
+	public String getEncoderName() {
+		return encoderName;
+	}
+
+	public void setEncoderName(String encoderName) {
+		this.encoderName = encoderName;
+	}
+
+	public String getEncoderPreset() {
+		return encoderPreset;
+	}
+
+	public void setEncoderPreset(String encoderPreset) {
+		this.encoderPreset = encoderPreset;
+	}
+
+	public String getEncoderProfile() {
+		return encoderProfile;
+	}
+
+	public void setEncoderProfile(String encoderProfile) {
+		this.encoderProfile = encoderProfile;
+	}
+
+	public String getEncoderLevel() {
+		return encoderLevel;
+	}
+
+	public void setEncoderLevel(String encoderLevel) {
+		this.encoderLevel = encoderLevel;
+	}
+
+	public String getEncoderRc() {
+		return encoderRc;
+	}
+
+	public void setEncoderRc(String encoderRc) {
+		this.encoderRc = encoderRc;
+	}
+
+	public String getEncoderSpecific() {
+		return encoderSpecific;
+	}
+
+	public void setEncoderSpecific(String encoderSpecific) {
+		this.encoderSpecific = encoderSpecific;
 	}
 }
