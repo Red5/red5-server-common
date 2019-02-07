@@ -29,12 +29,12 @@ public class StreamInfo implements IStreamInfo, Serializable {
 	}
 
 	@Override
-	public int getHeight() {
+	public int getVideoHeight() {
 		return height;
 	}
 
 	@Override
-	public int getWidth() {
+	public int getVideoWidth() {
 		return width;
 	}
 
