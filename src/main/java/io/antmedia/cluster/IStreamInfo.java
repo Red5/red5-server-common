@@ -6,13 +6,13 @@ public interface IStreamInfo {
 	 * Returns the height of the video
 	 * @return
 	 */
-	public int getHeight();
+	public int getVideoHeight();
 
 	/**
 	 * Returns the width of the video
 	 * @return
 	 */
-	public int getWidth();
+	public int getVideoWidth();
 
 
 	/**
