@@ -200,7 +200,7 @@ public abstract class BaseEvent implements Constants, IRTMPEvent, Externalizable
     protected abstract void releaseInternal();
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        type = (Type) in.readObject();
+        type = Type.valueOf(in.readUTF());
         sourceType = in.readByte();
         timestamp = in.readInt();
         if (log.isTraceEnabled()) {
@@ -212,7 +212,7 @@ public abstract class BaseEvent implements Constants, IRTMPEvent, Externalizable
         if (log.isTraceEnabled()) {
             log.trace("writeExternal - type: {} sourceType: {} timestamp: {}", type, sourceType, timestamp);
         }
-        out.writeObject(type);
+        out.writeUTF(type.name());
         out.writeByte(sourceType);
         out.writeInt(timestamp);
     }

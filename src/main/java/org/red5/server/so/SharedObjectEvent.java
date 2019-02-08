@@ -23,9 +23,14 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class SharedObjectEvent implements ISharedObjectEvent, Externalizable {
+public class SharedObjectEvent implements ISharedObjectEvent, Externalizable, Comparable<SharedObjectEvent> {
 
     private static final long serialVersionUID = -4129018814289863535L;
+
+    /**
+     * Nano timestamp for ordering.
+     */
+    private long ts = System.nanoTime();
 
     /**
      * Event type
@@ -58,6 +63,10 @@ public class SharedObjectEvent implements ISharedObjectEvent, Externalizable {
         this.type = type;
         this.key = key;
         this.value = value;
+    }
+
+    public long getTimestamp() {
+        return ts;
     }
 
     /** {@inheritDoc} */
@@ -100,6 +109,9 @@ public class SharedObjectEvent implements ISharedObjectEvent, Externalizable {
         if (getClass() != obj.getClass())
             return false;
         SharedObjectEvent other = (SharedObjectEvent) obj;
+        if (ts != other.getTimestamp()) {
+            return false;
+        }
         if (key == null) {
             if (other.key != null)
                 return false;
@@ -122,14 +134,22 @@ public class SharedObjectEvent implements ISharedObjectEvent, Externalizable {
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        type = (Type) in.readObject();
-        key = (String) in.readObject();
+        type = Type.valueOf(in.readUTF());
+        key = (String) in.readUTF();
         value = in.readObject();
+        ts = in.readLong();
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(type);
-        out.writeObject(key);
+        out.writeUTF(type.name());
+        out.writeUTF(key);
         out.writeObject(value);
+        out.writeLong(ts);
     }
+
+    @Override
+    public int compareTo(SharedObjectEvent other) {
+        return Long.compare(this.ts, other.getTimestamp());
+    }
+
 }

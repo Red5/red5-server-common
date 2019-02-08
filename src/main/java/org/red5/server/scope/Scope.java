@@ -622,17 +622,17 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /** {@inheritDoc} */
     @Deprecated
     public int getMaxClients() {
-        return connectionStats.getMax();
+        return connectionStats.getTotal();
     }
 
     /** {@inheritDoc} */
     public int getMaxConnections() {
-        return connectionStats.getMax();
+        return connectionStats.getTotal();
     }
 
     /** {@inheritDoc} */
     public int getMaxSubscopes() {
-        return subscopeStats.getMax();
+        return subscopeStats.getTotal();
     }
 
     /**

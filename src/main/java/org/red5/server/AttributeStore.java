@@ -42,7 +42,7 @@ public class AttributeStore implements ICastingAttributeStore {
     /**
      * Map for attributes
      */
-    protected ConcurrentMap<String, Object> attributes = new ConcurrentAttributesMap<String, Object>(1);
+    protected ConcurrentMap<String, Object> attributes = new ConcurrentAttributesMap<>(1);
 
     /**
      * Creates empty attribute store. Object is not associated with a persistence storage.

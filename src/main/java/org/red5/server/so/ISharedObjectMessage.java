@@ -18,7 +18,7 @@
 
 package org.red5.server.so;
 
-import java.util.Queue;
+import java.util.Set;
 
 import org.red5.server.net.rtmp.event.IRTMPEvent;
 
@@ -53,17 +53,14 @@ public interface ISharedObjectMessage extends IRTMPEvent {
      * 
      * @return set of ISharedObjectEvents
      */
-    public Queue<ISharedObjectEvent> getEvents();
+    public Set<ISharedObjectEvent> getEvents();
 
     /**
      * Addition event handler
      * 
-     * @param type
-     *            Event type
-     * @param key
-     *            Handler key
-     * @param value
-     *            Event value (like arguments)
+     * @param type Event type
+     * @param key Handler key
+     * @param value Event value (like arguments)
      * @return true if event is added and false if it is not added
      */
     public boolean addEvent(ISharedObjectEvent.Type type, String key, Object value);
@@ -71,10 +68,10 @@ public interface ISharedObjectMessage extends IRTMPEvent {
     /**
      * Add event handler
      * 
-     * @param event
-     *            SO event
+     * @param event SO event
+     * @return true if event is added and false if it is not added
      */
-    public void addEvent(ISharedObjectEvent event);
+    public boolean addEvent(ISharedObjectEvent event);
 
     /**
      * Clear shared object
@@ -84,17 +81,7 @@ public interface ISharedObjectMessage extends IRTMPEvent {
     /**
      * Is empty?
      *
-     * @return <pre>
-     * true
-     * </pre>
-     * 
-     *         if shared object is empty,
-     * 
-     *         <pre>
-     * false
-     * </pre>
-     * 
-     *         otherwise
+     * @return true if shared object is empty, false otherwise
      */
     public boolean isEmpty();
 

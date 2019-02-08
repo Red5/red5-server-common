@@ -402,7 +402,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 
     /** {@inheritDoc} */
     public int getMaxSubscribers() {
-        return subscriberStats.getMax();
+        return subscriberStats.getTotal();
     }
 
     /**

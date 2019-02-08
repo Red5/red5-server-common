@@ -23,7 +23,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.red5.server.api.event.IEventListener;
 import org.red5.server.net.rtmp.event.BaseEvent;
@@ -47,7 +48,7 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
     /**
      * SO events chain
      */
-    private ConcurrentLinkedQueue<ISharedObjectEvent> events = new ConcurrentLinkedQueue<ISharedObjectEvent>();
+    private ConcurrentSkipListSet<ISharedObjectEvent> events = new ConcurrentSkipListSet<>();
 
     /**
      * SO version, used for synchronization purposes
@@ -155,30 +156,33 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
     }
 
     /** {@inheritDoc} */
-    public void addEvent(ISharedObjectEvent event) {
-        events.add(event);
+    public boolean addEvent(ISharedObjectEvent.Type type, String key, Object value) {
+        return events.add(new SharedObjectEvent(type, key, value));
     }
 
+    /** {@inheritDoc} */
+    public boolean addEvent(ISharedObjectEvent event) {
+        return events.add(event);
+    }
+
+    /** {@inheritDoc} */
     public void addEvents(List<ISharedObjectEvent> events) {
         this.events.addAll(events);
     }
 
+    /** {@inheritDoc} */
     public void addEvents(Queue<ISharedObjectEvent> events) {
         this.events.addAll(events);
     }
 
     /** {@inheritDoc} */
-    public ConcurrentLinkedQueue<ISharedObjectEvent> getEvents() {
-        return events;
+    public void addEvents(Set<ISharedObjectEvent> events) {
+        this.events.addAll(events);
     }
 
     /** {@inheritDoc} */
-    public boolean addEvent(ISharedObjectEvent.Type type, String key, Object value) {
-        SharedObjectEvent event = new SharedObjectEvent(type, key, value);
-        if (!events.contains(event)) {
-            return events.add(event);
-        }
-        return false;
+    public Set<ISharedObjectEvent> getEvents() {
+        return events;
     }
 
     /** {@inheritDoc} */
@@ -225,14 +229,14 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         super.readExternal(in);
-        name = (String) in.readObject();
+        name = (String) in.readUTF();
         version = in.readInt();
         persistent = in.readBoolean();
         Object o = in.readObject();
         if (o != null) {
             log.trace("events type: {}", o.getClass().getName());
-            if (o instanceof ConcurrentLinkedQueue) {
-                events = (ConcurrentLinkedQueue<ISharedObjectEvent>) o;
+            if (o instanceof ConcurrentSkipListSet) {
+                events = (ConcurrentSkipListSet<ISharedObjectEvent>) o;
             }
         }
         if (log.isTraceEnabled()) {
@@ -246,7 +250,7 @@ public class SharedObjectMessage extends BaseEvent implements ISharedObjectMessa
         if (log.isTraceEnabled()) {
             log.trace("writeExternal: {}", toString());
         }
-        out.writeObject(name);
+        out.writeUTF(name);
         out.writeInt(version);
         out.writeBoolean(persistent);
         out.writeObject(events);
