@@ -147,6 +147,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private long lastQualityUpdateTime = 0;
 	private Broadcast broadcast;
 	private AppSettings appSettings;
+	private int previewHeight;
 
 
 
@@ -276,6 +277,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
 		encoderSettingsList = appSettingsLocal.getAdaptiveResolutionList();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
+		setPreviewHeight(appSettingsLocal.getPreviewHeight());
 	}
 
 	public void initStorageClient() {
@@ -907,6 +909,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	// this is for test cases
 	public void setBroadcast(Broadcast broadcast) {
 		this.broadcast = broadcast;
+	}
+
+	public int getPreviewHeight() {
+		return previewHeight;
+	}
+
+	public void setPreviewHeight(int previewHeight) {
+		this.previewHeight = previewHeight;
 	}
 
 }
