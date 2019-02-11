@@ -54,6 +54,7 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
 	private static final String SETTINGS_ENCODING_LEVEL = "settings.encoding.level";
 	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
+	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
 	
 	public static final String BEAN_NAME = "app.settings";
 
@@ -294,6 +295,9 @@ public class AppSettings {
 	
 	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
 	private String encoderSpecific;
+	
+	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
+	private int previewHeight;
 	
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
@@ -741,5 +745,13 @@ public class AppSettings {
 
 	public void setEncoderSpecific(String encoderSpecific) {
 		this.encoderSpecific = encoderSpecific;
+	}
+
+	public int getPreviewHeight() {
+		return previewHeight;
+	}
+
+	public void setPreviewHeight(int previewHeight) {
+		this.previewHeight = previewHeight;
 	}
 }
