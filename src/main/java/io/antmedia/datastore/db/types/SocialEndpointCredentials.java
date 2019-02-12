@@ -8,72 +8,85 @@ import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 /**
- * POJO to store security credentils for social endpoints.
+ * POJO to store security credentials for social endpoints.
  * @author mekya
  *
  */
 @Entity("SocialEndpointCredentials")
 
 @Indexes({ @Index(fields = @Field("id"))})
-
+@ApiModel(value="SocialEndpointCredentials", description="The SocialEndpoint Credentials  class")
 public class SocialEndpointCredentials {
 	
 	/**
 	 * Access token to make the service calls
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the access token to make the service calls")
 	private String accessToken;
 	
 	/**
 	 * Refresh token to refresh the access token
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the refresh token to refresh the access token")
 	private String refreshToken;
 	
 	/**
 	 * Token type
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the type of the token")
 	private String tokenType;
 	
 	/**
 	 * Expire time in seconds
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the expire time in seconds")
 	private String expireTimeInSeconds;
 	
 	/**
-	 * Authentication time in milli seconds
+	 * Authentication time in milliseconds
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the authentication time in milliseconds")
 	private String authTimeInMilliseconds;
 	
 	/**
 	 * Id of the record that is stored in db
 	 */
 	@Id
+	@ApiModelProperty(value = "the id of the record that is stored in db")
 	private String id;
 	
 	/**
 	 * Account or Page name
 	 */
+	@ApiModelProperty(value = "the account or Page name")
 	private String accountName;
 	
 	/**
 	 * Id of the account if exists
 	 */
 	@JsonIgnore
+	@ApiModelProperty(value = "the id of the account if exists")
 	private String accountId;
 	
 	/**
 	 * Name of the service like facebook, youtube, periscope, twitch
 	 */
+	@ApiModelProperty(value = "the name of the service like Facebook, Youtube, Periscope, Twitch etc.")
 	private String serviceName;
 	
 	/**
 	 * User account, page account, etc.
 	 */
+	@ApiModelProperty(value = "the user account, page account, etc.")
 	private String accountType;
 	
 	public SocialEndpointCredentials(String name, String serviceName, String authTimeInMillisecoonds, String expireTimeInSeconds, String tokenType, String accessToken, String refreshToken) {

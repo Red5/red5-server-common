@@ -10,7 +10,8 @@ import org.springframework.context.annotation.PropertySource;
 @Configuration
 @PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
-	
+
+	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
@@ -40,30 +41,69 @@ public class AppSettings {
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
-
+	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
+	public static final String SETTINGS_HASH_CONTROL_PLAY_ENABLED = "settings.hashControlPlayEnabled";
+	public static final String TOKEN_HASH_SECRET = "tokenHashSecret";
+	public static final String SETTINGS_WEBRTC_PORT_RANGE_MIN = "settings.webrtc.portRangeMin";
+	public static final String SETTINGS_WEBRTC_PORT_RANGE_MAX = "settings.webrtc.portRangeMax";
+	public static final String SETTINGS_WEBRTC_STUN_SERVER_URI = "settings.webrtc.stunServerURI";
+	public static final String SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED = "settings.webrtc.tcpCandidateEnabled"; 
+	
+	private static final String SETTINGS_ENCODING_ENCODER_NAME = "settings.encoding.encoderName";
+	private static final String SETTINGS_ENCODING_PRESET = "settings.encoding.preset";
+	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
+	private static final String SETTINGS_ENCODING_LEVEL = "settings.encoding.level";
+	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
+	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
+	
 	public static final String BEAN_NAME = "app.settings";
-	
-	
+
+
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
+	
 	@Value( "${"+SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME+":false}" )
 	private boolean addDateTimeToMp4FileName;
+	
 	@Value( "${"+SETTINGS_HLS_MUXING_ENABLED+":true}" )
 	private boolean hlsMuxingEnabled;
+	
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
 
 	private List<EncoderSettings> adaptiveResolutionList;
+	
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
+	
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
+	
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
 	private boolean webRTCEnabled;
+	
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
-	
+
+	/**
+	 * The secret string used for creating hash based tokens
+	 */
+	@Value( "${"+TOKEN_HASH_SECRET+":''}" )
+	private String tokenHashSecret;
+
+	/**
+	 * enable hash control as token for publishing operations using shared secret
+	 */
+	@Value( "${"+SETTINGS_HASH_CONTROL_PUBLISH_ENABLED+":false}" )
+	private boolean hashControlPublishEnabled;
+
+	/**
+	 * enable hash control as token for playing operations using shared secret
+	 */
+	@Value( "${"+SETTINGS_HASH_CONTROL_PLAY_ENABLED+":false}" )
+	private boolean hashControlPlayEnabled;
+
 	/**
 	 * The URL for action callback
 	 */
@@ -75,7 +115,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
-	
+
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
@@ -130,7 +170,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+YOUTUBE_CLIENT_SECRET+"}" )
 	private String youtubeClientSecret;
-	
+
 	/**
 	 * The path for manually saved used VoDs
 	 */
@@ -146,7 +186,7 @@ public class AppSettings {
 	/**
 	 * Address of the Stalker Portal DB server 
 	 */
-	
+
 	@Value( "${"+SETTINGS_STALKER_DB_SERVER+"}" )
 	private String stalkerDBServer;
 
@@ -168,7 +208,7 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_OBJECT_DETECTION_ENABLED+":false}" )
 	private boolean objectDetectionEnabled;
 
-	
+
 	@Value( "${"+SETTINGS_CREATE_PREVIEW_PERIOD+":5000}" )
 	private int createPreviewPeriod;
 
@@ -198,7 +238,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_MUXER_FINISH_SCRIPT+":}" )
 	private String muxerFinishScript;
-	
+
 	/**
 	 * Framerate parameter for WebRTC encoder 
 	 */
@@ -206,11 +246,59 @@ public class AppSettings {
 	private int webRTCFrameRate;
 	
 	/**
+	 * Min port number of the port range of WebRTC. It's effective when user publishes stream.
+	 * This value should be less than the {@link #webRTCPortRangeMax} 
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MIN +":0}")
+	private int webRTCPortRangeMin;
+	
+	/**
+	 * Max port number of the port range of WebRTC. It's effective when user publishes stream
+	 * In order to port range port this value should be higher than {@link #webRTCPortRangeMin} 
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_PORT_RANGE_MAX +":0}")
+	private int webRTCPortRangeMax;
+
+	/**
+	 * Stun Server URI
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
+	private String stunServerURI;
+
+	/**
+	 * TCP candidates are enabled/disabled.It's effective when user publishes stream
+	 * It's enabled by default
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
+	private boolean webRTCTcpCandidatesEnabled;
+	
+	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
 	private boolean collectSocialMediaActivity = false;
-	
 
+	
+	@Value( "${" + SETTINGS_ENCODING_ENCODER_NAME +":#{null}}")
+	private String encoderName;
+	
+	@Value( "${" + SETTINGS_ENCODING_PRESET +":#{null}}")
+	private String encoderPreset;
+	
+	@Value( "${" + SETTINGS_ENCODING_PROFILE +":#{null}}")
+	private String encoderProfile;
+	
+	@Value( "${" + SETTINGS_ENCODING_LEVEL +":#{null}}")
+	private String encoderLevel;
+	
+	@Value( "${" + SETTINGS_ENCODING_RC +":#{null}}")
+	private String encoderRc;
+	
+	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
+	private String encoderSpecific;
+	
+	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
+	private int previewHeight;
+	
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
@@ -303,7 +391,7 @@ public class AppSettings {
 		if(encoderSettingsString == null) {
 			return null;
 		}
-		
+
 		String[] values = encoderSettingsString.split(",");
 
 		List<EncoderSettings> encoderSettingsList = new ArrayList();
@@ -491,13 +579,13 @@ public class AppSettings {
 
 	public String getMySqlClientPath() {
 		return this.mySqlClientPath;
-		
+
 	}
 
 	public void setMySqlClientPath(String mySqlClientPath) {
 		this.mySqlClientPath = mySqlClientPath;
 	}
-	
+
 
 	public boolean isTokenControlEnabled() {
 		return tokenControlEnabled;
@@ -510,7 +598,7 @@ public class AppSettings {
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
-	
+
 	public void setMuxerFinishScript(String muxerFinishScript) {
 		this.muxerFinishScript = muxerFinishScript;
 	}
@@ -531,6 +619,32 @@ public class AppSettings {
 		this.collectSocialMediaActivity = collectSocialMediaActivity;
 	}
 
+
+	public String getTokenHashSecret() {
+		return tokenHashSecret;
+	}
+
+	public void setTokenHashSecret(String tokenHashSecret) {
+		this.tokenHashSecret = tokenHashSecret;
+	}
+
+
+	public boolean isHashControlPlayEnabled() {
+		return hashControlPlayEnabled;
+	}
+
+	public void setHashControlPlayEnabled(boolean hashControlPlayEnabled) {
+		this.hashControlPlayEnabled = hashControlPlayEnabled;
+	}
+
+	public boolean isHashControlPublishEnabled() {
+		return hashControlPublishEnabled;
+	}
+
+	public void setHashControlPublishEnabled(boolean hashControlPublishEnabled) {
+		this.hashControlPublishEnabled = hashControlPublishEnabled;
+	}
+
 	public void resetDefaults() {
 		mp4MuxingEnabled = false;
 		addDateTimeToMp4FileName = false;
@@ -548,5 +662,96 @@ public class AppSettings {
 		createPreviewPeriod = 5000;
 		restartStreamFetcherPeriod = 0;
 		webRTCFrameRate = 20;
+		hashControlPlayEnabled = false;
+		hashControlPublishEnabled = false;
+		tokenHashSecret = "";
+	}
+
+	public int getWebRTCPortRangeMax() {
+		return webRTCPortRangeMax;
+	}
+
+	public void setWebRTCPortRangeMax(int webRTCPortRangeMax) {
+		this.webRTCPortRangeMax = webRTCPortRangeMax;
+	}
+
+	public int getWebRTCPortRangeMin() {
+		return webRTCPortRangeMin;
+	}
+
+	public void setWebRTCPortRangeMin(int webRTCPortRangeMin) {
+		this.webRTCPortRangeMin = webRTCPortRangeMin;
+	}
+
+	public String getStunServerURI() {
+		return stunServerURI;
+	}
+
+	public void setStunServerURI(String stunServerURI) {
+		this.stunServerURI = stunServerURI;
+	}
+
+	public boolean isWebRTCTcpCandidatesEnabled() {
+		return webRTCTcpCandidatesEnabled;
+	}
+
+	public void setWebRTCTcpCandidatesEnabled(boolean webRTCTcpCandidatesEnabled) {
+		this.webRTCTcpCandidatesEnabled = webRTCTcpCandidatesEnabled;
+	}
+	
+	public String getEncoderName() {
+		return encoderName;
+	}
+
+	public void setEncoderName(String encoderName) {
+		this.encoderName = encoderName;
+	}
+
+	public String getEncoderPreset() {
+		return encoderPreset;
+	}
+
+	public void setEncoderPreset(String encoderPreset) {
+		this.encoderPreset = encoderPreset;
+	}
+
+	public String getEncoderProfile() {
+		return encoderProfile;
+	}
+
+	public void setEncoderProfile(String encoderProfile) {
+		this.encoderProfile = encoderProfile;
+	}
+
+	public String getEncoderLevel() {
+		return encoderLevel;
+	}
+
+	public void setEncoderLevel(String encoderLevel) {
+		this.encoderLevel = encoderLevel;
+	}
+
+	public String getEncoderRc() {
+		return encoderRc;
+	}
+
+	public void setEncoderRc(String encoderRc) {
+		this.encoderRc = encoderRc;
+	}
+
+	public String getEncoderSpecific() {
+		return encoderSpecific;
+	}
+
+	public void setEncoderSpecific(String encoderSpecific) {
+		this.encoderSpecific = encoderSpecific;
+	}
+
+	public int getPreviewHeight() {
+		return previewHeight;
+	}
+
+	public void setPreviewHeight(int previewHeight) {
+		this.previewHeight = previewHeight;
 	}
 }

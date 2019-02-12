@@ -1,41 +1,53 @@
 package io.antmedia.datastore.db.types;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel(value="Endpoint", description="The endpoint class, such as Facebook, Twitter or custom RTMP endpoints")
 public class Endpoint 
 {
 	/**
 	 * Service name like facebook, periscope, youtube or generic
 	 * it should match the VideoServiceEndpoint names or it can be generic
 	 */
+	@ApiModelProperty(value = "the service name like facebook, periscope, youtube or generic")
 	public String type;
 	
 	/**
 	 * Broadcast id in the end point, Social endpoints has this field 
 	 * but generic endpoint does not have
 	 */
+	@ApiModelProperty(value = "the id in the end point, Social endpoints has this field but generic endpoint does not have ")
 	private  String broadcastId;
+	
 	/**
 	 * Stream id in the endpoint if exists, it may be null
 	 */
+	@ApiModelProperty(value = "the id in the endpoint if exists, it may be null")
 	private  String streamId;
 	
 	/**
 	 * RTMP URL of the endpoint
 	 */
+	@ApiModelProperty(value = "the RTMP URL of the endpoint")
 	private  String rtmpUrl;
 	
 	/**
 	 * Name of the stream
 	 */
+	@ApiModelProperty(value = "the name of the stream")
 	private  String name;
 	
 	/**
 	 * Endpoint service id, this field holds the id of the endpoint
 	 */
+	@ApiModelProperty(value = "the endpoint service id, this field holds the id of the endpoint")
 	private 	String endpointServiceId;
 	
 	/**
 	 * Stream id in the server
 	 */
+	@ApiModelProperty(value = "the id of the stream in the server")
 	private String serverStreamId;
 
 	/**

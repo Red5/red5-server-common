@@ -460,6 +460,10 @@ public class PeerConnection {
     // Actively reset the SRTP parameters whenever the DTLS transports underneath are reset for
     // every offer/answer negotiation.This is only intended to be a workaround for crbug.com/835958
     public boolean activeResetSrtpParams;
+    
+    public int minPort;
+    
+    public int maxPort;
 
     // TODO(deadbeef): Instead of duplicating the defaults here, we should do
     // something to pick up the defaults from C++. The Objective-C equivalent
@@ -500,6 +504,8 @@ public class PeerConnection {
       networkPreference = AdapterType.UNKNOWN;
       sdpSemantics = SdpSemantics.PLAN_B;
       activeResetSrtpParams = false;
+      minPort = 0;
+      maxPort = 0;
     }
 
     @CalledByNative("RTCConfiguration")
@@ -691,6 +697,16 @@ public class PeerConnection {
     @CalledByNative("RTCConfiguration")
     boolean getActiveResetSrtpParams() {
       return activeResetSrtpParams;
+    }
+    
+    @CalledByNative("RTCConfiguration")
+    int getMinPort() {
+    		return minPort;
+    }
+    
+    @CalledByNative("RTCConfiguration")
+    int getMaxPort() {
+    		return maxPort;
     }
   };
 

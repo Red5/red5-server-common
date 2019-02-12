@@ -26,8 +26,37 @@ public class AppSettingsModel {
 	private boolean previewOverwrite;
 	private boolean webRTCEnabled;
 	private int webRTCFrameRate;
+	private String tokenHashSecret;
+	private boolean hashControlPublishEnabled;
+	private boolean hashControlPlayEnabled;
+
 	
 
+	
+	public String getTokenHashSecret() {
+		return tokenHashSecret;
+	}
+
+	public void setTokenHashSecret(String tokenHashSecret) {
+		this.tokenHashSecret = tokenHashSecret;
+	}
+
+	public boolean isHashControlPublishEnabled() {
+		return hashControlPublishEnabled;
+	}
+
+	public void setHashControlPublishEnabled(boolean hashControlPublishEnabled) {
+		this.hashControlPublishEnabled = hashControlPublishEnabled;
+	}
+
+	public boolean isHashControlPlayEnabled() {
+		return hashControlPlayEnabled;
+	}
+
+	public void setHashControlPlayEnabled(boolean hashControlPlayEnabled) {
+		this.hashControlPlayEnabled = hashControlPlayEnabled;
+	}
+	
 	public boolean isWebRTCEnabled() {
 		return webRTCEnabled;
 	}

@@ -26,7 +26,6 @@ import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_TSCC2;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VC1;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VORBIS;
 import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VP9;
-import static org.bytedeco.javacpp.avcodec.CODEC_FLAG_GLOBAL_HEADER;
 import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
 import static org.bytedeco.javacpp.avcodec.av_bsf_free;
 import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;

@@ -9,14 +9,19 @@ import org.mongodb.morphia.annotations.Indexes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
 @Entity("token")
 
 @Indexes({ @Index(fields = @Field("tokenId")) })
+@ApiModel(value="Token", description="The one-time token class")
 public class Token {
 	
 	
 	@JsonIgnore
 	@Id
+	@ApiModelProperty(value = "the db id of the token")
 	private ObjectId dbId;
 	
 	public static final String PUBLISH_TOKEN = "publish";
@@ -25,22 +30,25 @@ public class Token {
 	/**
 	 * random tokenID
 	 */
-	
+	@ApiModelProperty(value = "the token id of the token")
 	private String tokenId;
 	
 	/**
 	 * related streamId with token
 	 */
+	@ApiModelProperty(value = "the stream id of the token")
 	private String streamId;
 	
 	/**
 	 * expiration date of the token
 	 */
+	@ApiModelProperty(value = "the expire date of the token")
 	private long expireDate;
 	
 	/**
 	 * type of the token, such as publish, play etc.
 	 */
+	@ApiModelProperty(value = "the type of the token")
 	private String type;
 	
 	
