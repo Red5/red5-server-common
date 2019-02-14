@@ -34,11 +34,14 @@ public class StatisticsCounter {
     /** Total number */
     private int total;
 
+    /** Highest / max number during collection */
+    private int max;
+
     /**
      * Increment statistics by one.
      */
     public void increment() {
-        current.incrementAndGet();
+        max = Math.max(max, current.incrementAndGet());
         total++;
     }
 
@@ -72,9 +75,8 @@ public class StatisticsCounter {
      * 
      * @return max
      */
-    @Deprecated
     public int getMax() {
-        return total;
+        return max;
     }
 
     /* (non-Javadoc)
@@ -82,7 +84,7 @@ public class StatisticsCounter {
      */
     @Override
     public String toString() {
-        return "StatisticsCounter [current=" + current + ", total=" + total + "]";
+        return "StatisticsCounter [current=" + current + ", max=" + max + ", total=" + total + "]";
     }
 
 }

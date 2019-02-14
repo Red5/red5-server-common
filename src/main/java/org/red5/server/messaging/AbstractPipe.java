@@ -105,6 +105,7 @@ public abstract class AbstractPipe implements IPipe {
      *            Provider that should be removed
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("unlikely-arg-type")
     public boolean unsubscribe(IProvider provider) {
         if (providers.remove(provider)) {
             fireProviderConnectionEvent(provider, PipeConnectionEvent.EventType.PROVIDER_DISCONNECT, null);
@@ -121,6 +122,7 @@ public abstract class AbstractPipe implements IPipe {
      *            Consumer that should be removed
      * @return true on success, false otherwise
      */
+    @SuppressWarnings("unlikely-arg-type")
     public boolean unsubscribe(IConsumer consumer) {
         if (consumers.remove(consumer)) {
             fireConsumerConnectionEvent(consumer, PipeConnectionEvent.EventType.CONSUMER_DISCONNECT, null);
