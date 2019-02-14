@@ -55,10 +55,14 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_LEVEL = "settings.encoding.level";
 	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
+
+    public static final String SETTINGS_IP_FILTER_REGEX = "settings.ipFilterRegex";
 	
 	public static final String BEAN_NAME = "app.settings";
 
 
+	@Value("${"+SETTINGS_IP_FILTER_REGEX+":''}")
+    private String ipFilterRegex;
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
@@ -665,6 +669,7 @@ public class AppSettings {
 		hashControlPlayEnabled = false;
 		hashControlPublishEnabled = false;
 		tokenHashSecret = "";
+		ipFilterRegex = "";
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -754,4 +759,12 @@ public class AppSettings {
 	public void setPreviewHeight(int previewHeight) {
 		this.previewHeight = previewHeight;
 	}
+
+    public String getIpFilterRegex() {
+        return ipFilterRegex;
+    }
+
+    public void setIpFilterRegex(String ipFilterRegex) {
+        this.ipFilterRegex = ipFilterRegex;
+    }
 }
