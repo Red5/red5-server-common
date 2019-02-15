@@ -88,7 +88,7 @@ import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterNotifier.StreamEvent;
-import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
@@ -960,7 +960,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 	private void setUpEndPoints(ApplicationContext appCtx, String publishedName, MuxAdaptor muxAdaptor) {
 		if (appCtx.containsBean(IDataStoreFactory.BEAN_NAME)) 
 		{
-			IDataStore dataStore = ((IDataStoreFactory)appCtx.getBean(IDataStoreFactory.BEAN_NAME)).getDataStore();
+			DataStore dataStore = ((IDataStoreFactory)appCtx.getBean(IDataStoreFactory.BEAN_NAME)).getDataStore();
 			Broadcast broadcast = dataStore.get(publishedName);
 			if (broadcast != null) {
 				List<Endpoint> endPointList = broadcast.getEndPointList();
