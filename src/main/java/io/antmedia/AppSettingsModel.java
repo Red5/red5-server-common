@@ -29,6 +29,7 @@ public class AppSettingsModel {
 	private String tokenHashSecret;
 	private boolean hashControlPublishEnabled;
 	private boolean hashControlPlayEnabled;
+	private String ipFilterRegex;
 
 	
 
@@ -215,5 +216,13 @@ public class AppSettingsModel {
 
 	public void setWebRTCFrameRate(int webRTCFrameRate) {
 		this.webRTCFrameRate = webRTCFrameRate;
+	}
+
+	public String getIpFilterRegex() {
+		return ipFilterRegex;
+	}
+
+	public void setIpFilterRegex(String ipFilterRegex) {
+		this.ipFilterRegex = ipFilterRegex;
 	}
 }
