@@ -65,6 +65,8 @@ import org.red5.server.stream.StreamService;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 
+import io.antmedia.IResourceMonitor;
+
 /**
  * RTMP events handler.
  */
@@ -272,6 +274,16 @@ public class RTMPHandler extends BaseRTMPHandler {
                     case RECEIVE_AUDIO:
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
+                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
+                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
+                        		int cpuUsage = resourceMonitor.getAvgCpuUsage();
+                        		if(cpuUsage > resourceMonitor.getCpuLimit()) {
+                        			Status status = getStatus(NS_FAILED).asStatus();
+                                    status.setDescription(String.format("current cpu usage is so high: %d)", cpuUsage));
+                                    channel.sendStatus(status);
+                        		}
+                        	}
+                        	
                             log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
                             if (invokeCall(conn, call, streamService)) {
                                 log.debug("Stream service invoke {} success", action);
