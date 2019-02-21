@@ -1,8 +1,11 @@
 package io.antmedia;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.catalina.util.NetMask;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -56,13 +59,18 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
 
-    public static final String SETTINGS_IP_FILTER_REGEX = "settings.ipFilterRegex";
+    public static final String SETTINGS_REMOTE_ALLOWED_CIDR = "settings.remoteAllowedCIDR";
 	
 	public static final String BEAN_NAME = "app.settings";
+	
+	private List<NetMask> allowedCIDRList = new ArrayList<>();
 
 
-	@Value("${"+SETTINGS_IP_FILTER_REGEX+":''}")
-    private String ipFilterRegex;
+	/**
+	 * Comma separated CIDR that rest services are allowed to response
+	 */
+	@Value("${"+SETTINGS_REMOTE_ALLOWED_CIDR+":'127.0.0.1'}")
+    private String remoteAllowedCIDR;
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
@@ -669,7 +677,7 @@ public class AppSettings {
 		hashControlPlayEnabled = false;
 		hashControlPublishEnabled = false;
 		tokenHashSecret = "";
-		ipFilterRegex = "";
+		remoteAllowedCIDR = "127.0.0.1";
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -760,11 +768,49 @@ public class AppSettings {
 		this.previewHeight = previewHeight;
 	}
 
-    public String getIpFilterRegex() {
-        return ipFilterRegex;
-    }
 
-    public void setIpFilterRegex(String ipFilterRegex) {
-        this.ipFilterRegex = ipFilterRegex;
-    }
+	public String getRemoteAllowedCIDR() {
+		return remoteAllowedCIDR;
+	}
+	
+	public void setRemoteAllowedCIDR(String remoteAllowedCIDR) {
+		this.remoteAllowedCIDR = remoteAllowedCIDR;
+		fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+	}
+
+	public List<NetMask> getAllowedCIDRList() {
+		if (allowedCIDRList.isEmpty()) {
+			fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+		}
+		return allowedCIDRList;
+	}
+	
+	/**
+	 * Fill a {@link NetMask} list from a string input containing a
+	 * comma-separated list of (hopefully valid) {@link NetMask}s.
+	 *
+	 * @param input The input string
+	 * @param target The list to fill
+	 * @return a string list of processing errors (empty when no errors)
+	 */
+	private List<String> fillFromInput(final String input, final List<NetMask> target) {
+		target.clear();
+		if (input == null || input.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		final List<String> messages = new LinkedList<>();
+		NetMask nm;
+
+		for (final String s : input.split("\\s*,\\s*")) {
+			try {
+				nm = new NetMask(s);
+				target.add(nm);
+			} catch (IllegalArgumentException e) {
+				messages.add(s + ": " + e.getMessage());
+			}
+		}
+
+		return Collections.unmodifiableList(messages);
+	}
 }
