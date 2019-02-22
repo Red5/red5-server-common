@@ -69,7 +69,7 @@ public class AppSettings {
 	/**
 	 * Comma separated CIDR that rest services are allowed to response
 	 */
-	@Value("${"+SETTINGS_REMOTE_ALLOWED_CIDR+":'127.0.0.1'}")
+	@Value("${"+SETTINGS_REMOTE_ALLOWED_CIDR+":127.0.0.1}")
     private String remoteAllowedCIDR;
 
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
@@ -783,6 +783,10 @@ public class AppSettings {
 			fillFromInput(remoteAllowedCIDR, allowedCIDRList);
 		}
 		return allowedCIDRList;
+	}
+	
+	public void setAllowedCIDRList(List<NetMask> allowedCIDRList) {
+		this.allowedCIDRList = allowedCIDRList;
 	}
 	
 	/**
