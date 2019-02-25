@@ -5,14 +5,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.antmedia.cluster.IClusterStore;
 import io.antmedia.cluster.StreamInfo;
-import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.types.Broadcast;
 
 public class DBReader {
 
 	public static final DBReader instance = new DBReader();
 	
-	ConcurrentHashMap<String, IDataStore> dbMap = new ConcurrentHashMap<>();	
+	ConcurrentHashMap<String, DataStore> dbMap = new ConcurrentHashMap<>();	
 	IClusterStore clusterStore;
 	private IClusterNotifier cluster;
 	
@@ -25,7 +25,7 @@ public class DBReader {
 		return host;
 	}
 	
-	public void addDataStore(String appName, IDataStore store) {
+	public void addDataStore(String appName, DataStore store) {
 		dbMap.put(appName, store);
 	}
 

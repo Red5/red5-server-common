@@ -59,7 +59,7 @@ import org.springframework.context.ApplicationContext;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
@@ -115,7 +115,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected String hlsPlayListType;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
-	protected IDataStore dataStore;
+	protected DataStore dataStore;
 
 	/**
 	 * By default first video key frame should be checked 
@@ -466,7 +466,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public IDataStore initializeDataStore() {
+	public DataStore initializeDataStore() {
 		if(dataStore == null) {
 
 			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
