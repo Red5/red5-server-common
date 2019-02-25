@@ -29,7 +29,11 @@ public class AppSettingsModel {
 	private String tokenHashSecret;
 	private boolean hashControlPublishEnabled;
 	private boolean hashControlPlayEnabled;
-	private String ipFilterRegex;
+	
+	/**
+	 * Comma separated allowed CIDR
+	 */
+	private String remoteAllowedCIDR;
 
 	
 
@@ -218,11 +222,11 @@ public class AppSettingsModel {
 		this.webRTCFrameRate = webRTCFrameRate;
 	}
 
-	public String getIpFilterRegex() {
-		return ipFilterRegex;
+	public String getRemoteAllowedCIDR() {
+		return remoteAllowedCIDR;
 	}
 
-	public void setIpFilterRegex(String ipFilterRegex) {
-		this.ipFilterRegex = ipFilterRegex;
+	public void setRemoteAllowedCIDR(String remoteAllowedCIDR) {
+		this.remoteAllowedCIDR = remoteAllowedCIDR;
 	}
 }
