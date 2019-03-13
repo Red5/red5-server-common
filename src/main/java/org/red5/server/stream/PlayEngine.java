@@ -1447,7 +1447,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
     	if(!pullMode){
     		if(!configsDone){ 
-    			log.warn("dump early");
+    			log.debug("dump early");
     			return;
     		}
     	}
