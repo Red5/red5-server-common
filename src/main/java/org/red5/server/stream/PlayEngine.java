@@ -230,6 +230,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     private long droppedPacketsCountLogInterval = 60 * 1000L;
 
+	private boolean configsDone;
+
     /**
      * Constructs a new PlayEngine.
      */
@@ -601,6 +603,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         } else {
             throw new IOException(String.format("A message pipe is null - in: %b out: %b", (msgInReference == null), (msgOutReference == null)));
         }
+        configsDone = true;
     }
 
     /**
@@ -1442,6 +1445,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
+    	if(!pullMode){
+    		if(!configsDone){ 
+    			log.warn("dump early");
+    			return;
+    		}
+    	}
         String sessionId = subscriberStream.getConnection().getSessionId();
         if (message instanceof RTMPMessage) {
             IMessageInput msgIn = msgInReference.get();
