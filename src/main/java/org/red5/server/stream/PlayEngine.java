@@ -230,6 +230,8 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     private long droppedPacketsCountLogInterval = 60 * 1000L;
 
+	private boolean configsDone;
+
     /**
      * Constructs a new PlayEngine.
      */
@@ -541,10 +543,13 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
             // get the stream so that we can grab any metadata and decoder configs
             IBroadcastStream stream = (IBroadcastStream) ((IBroadcastScope) in).getClientBroadcastStream();
             // prevent an NPE when a play list is created and then immediately flushed
+            int ts = 0;
             if (stream != null) {
                 Notify metaData = stream.getMetaData();
+                
                 //check for metadata to send
                 if (metaData != null) {
+                	ts =  metaData.getTimestamp();
                     log.debug("Metadata is available");
                     RTMPMessage metaMsg = RTMPMessage.build(metaData, metaData.getTimestamp());
                     sendMessage(metaMsg);
@@ -565,7 +570,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             log.debug("Decoder configuration is available for {}", videoCodec.getName());
                             VideoData conf = new VideoData(config, true);
                             log.debug("Pushing video decoder configuration");
-                            sendMessage(RTMPMessage.build(conf, conf.getTimestamp()));
+                            sendMessage(RTMPMessage.build(conf,ts));
                         }
                         // check for keyframes to send
                         FrameData[] keyFrames = videoCodec.getKeyframes();
@@ -573,7 +578,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             log.debug("Keyframe is available");
                             VideoData video = new VideoData(keyframe.getFrame(), true);
                             log.debug("Pushing keyframe");
-                            sendMessage(RTMPMessage.build(video, video.getTimestamp()));
+                            sendMessage(RTMPMessage.build(video,ts));
                         }
                     } else {
                         log.debug("No video decoder configuration available");
@@ -588,7 +593,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             log.debug("Decoder configuration is available for {}", audioCodec.getName());
                             AudioData conf = new AudioData(config.asReadOnlyBuffer());
                             log.debug("Pushing audio decoder configuration");
-                            sendMessage(RTMPMessage.build(conf, conf.getTimestamp()));
+                            sendMessage(RTMPMessage.build(conf, ts));
                         }
                     } else {
                         log.debug("No audio decoder configuration available");
@@ -598,6 +603,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
         } else {
             throw new IOException(String.format("A message pipe is null - in: %b out: %b", (msgInReference == null), (msgOutReference == null)));
         }
+        configsDone = true;
     }
 
     /**
@@ -1439,6 +1445,12 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
     /** {@inheritDoc} */
     public void pushMessage(IPipe pipe, IMessage message) throws IOException {
+    	if(!pullMode){
+    		if(!configsDone){ 
+    			log.debug("dump early");
+    			return;
+    		}
+    	}
         String sessionId = subscriberStream.getConnection().getSessionId();
         if (message instanceof RTMPMessage) {
             IMessageInput msgIn = msgInReference.get();
