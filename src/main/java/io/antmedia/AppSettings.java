@@ -64,6 +64,11 @@ public class AppSettings {
 	public static final String BEAN_NAME = "app.settings";
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
+	
+	/**
+	 * This object is used for synchronizaiton of CIDR operations
+	 */
+	private Object cidrLock = new Object();
 
 
 	/**
@@ -770,24 +775,34 @@ public class AppSettings {
 
 
 	public String getRemoteAllowedCIDR() {
-		return remoteAllowedCIDR;
+		synchronized (cidrLock) 
+		{
+			return remoteAllowedCIDR;
+		}	
 	}
 	
+	/**
+	 * the getAllowedCIDRList and setAllowedCIDRList are synchronized
+	 * because ArrayList may throw concurrent modification
+	 * @param remoteAllowedCIDR
+	 */
 	public void setRemoteAllowedCIDR(String remoteAllowedCIDR) {
-		this.remoteAllowedCIDR = remoteAllowedCIDR;
-		fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+		synchronized(cidrLock) {
+			this.remoteAllowedCIDR = remoteAllowedCIDR;
+			allowedCIDRList = new ArrayList<>();
+			fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+		}
 	}
 
 	public List<NetMask> getAllowedCIDRList() {
-		if (allowedCIDRList.isEmpty()) {
-			fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+		synchronized(cidrLock) {
+			if (allowedCIDRList.isEmpty()) {
+				fillFromInput(remoteAllowedCIDR, allowedCIDRList);
+			}
+			return allowedCIDRList;
 		}
-		return allowedCIDRList;
 	}
 	
-	public void setAllowedCIDRList(List<NetMask> allowedCIDRList) {
-		this.allowedCIDRList = allowedCIDRList;
-	}
 	
 	/**
 	 * Fill a {@link NetMask} list from a string input containing a
