@@ -19,6 +19,8 @@ public abstract class DataStore {
 	//Do not forget to write function descriptions especially if you are adding new functions
 
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
+	
+	private boolean writeStatsToDatastore = true;
 
 	public abstract String save(Broadcast broadcast);
 
@@ -40,7 +42,14 @@ public abstract class DataStore {
 
 	public abstract boolean updateStatus(String id, String status);
 
-	public abstract boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue);
+	public boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue) {
+		if(writeStatsToDatastore) {
+			return updateSourceQualityParametersLocal(id, quality, speed, pendingPacketQueue);
+		}
+		return false;
+	}
+
+	protected abstract boolean updateSourceQualityParametersLocal(String id, String quality, double speed,  int pendingPacketQueue);
 
 	public abstract boolean updateDuration(String id, long duration);
 
@@ -188,7 +197,14 @@ public abstract class DataStore {
 	 * @param streamId
 	 * @param diffCount
 	 */
-	public abstract boolean updateHLSViewerCount(String streamId, int diffCount);
+	public boolean updateHLSViewerCount(String streamId, int diffCount) {
+		if (writeStatsToDatastore) {
+			return updateHLSViewerCountLocal(streamId, diffCount);
+		}
+		return false;
+	}
+
+	protected abstract boolean updateHLSViewerCountLocal(String streamId, int diffCount);
 
 
 	/**
@@ -204,7 +220,15 @@ public abstract class DataStore {
 	 * @param increment if it is true, increment viewer count by one
 	 * if it is false, decrement viewer count by one
 	 */
-	public abstract boolean updateWebRTCViewerCount(String streamId, boolean increment);
+	public boolean updateWebRTCViewerCount(String streamId, boolean increment) {
+		if (writeStatsToDatastore) {
+			return updateWebRTCViewerCountLocal(streamId, increment);
+		}
+		return false;
+	}
+
+	protected abstract boolean updateWebRTCViewerCountLocal(String streamId, boolean increment);
+
 
 	/**
 	 * Update the RTMP viewer count
@@ -212,9 +236,16 @@ public abstract class DataStore {
 	 * @param increment if it is true, increment viewer count by one
 	 * if it is false, decrement viewer count by one
 	 */
-	public abstract boolean updateRtmpViewerCount(String streamId, boolean increment);
+	public boolean updateRtmpViewerCount(String streamId, boolean increment) {
+		if (writeStatsToDatastore) {
+			return updateRtmpViewerCountLocal(streamId, increment);
+		}
+		return false;
+	}
 
+	protected abstract boolean updateRtmpViewerCountLocal(String streamId, boolean increment);
 
+	
 	/**
 	 * Saves the stream info to the db
 	 * @param streamInfo
@@ -240,6 +271,13 @@ public abstract class DataStore {
 	 */
 	public abstract  void clearStreamInfoList(String streamId);
 
+	public boolean isWriteStatsToDatastore() {
+		return writeStatsToDatastore;
+	}
+
+	public void setWriteStatsToDatastore(boolean writeStatsToDatastore) {
+		this.writeStatsToDatastore = writeStatsToDatastore;
+	}
 	
 }
 //**************************************
