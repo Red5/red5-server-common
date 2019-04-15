@@ -61,7 +61,10 @@ public class AppSettings {
 
     public static final String SETTINGS_REMOTE_ALLOWED_CIDR = "settings.remoteAllowedCIDR";
 	
-	public static final String BEAN_NAME = "app.settings";
+    public static final String SETTINGS_WRITE_STATS_TO_DATASTORE = "settings.writeStatsToDatastore";
+
+    
+    public static final String BEAN_NAME = "app.settings";
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
@@ -316,6 +319,17 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
 	private int previewHeight;
 	
+	@Value( "${" + SETTINGS_WRITE_STATS_TO_DATASTORE +":true}")
+	private boolean writeStatsToDatastore;
+	
+	public boolean isWriteStatsToDatastore() {
+		return writeStatsToDatastore;
+	}
+
+	public void setWriteStatsToDatastore(boolean writeStatsToDatastore) {
+		this.writeStatsToDatastore = writeStatsToDatastore;
+	}
+
 	public boolean isAddDateTimeToMp4FileName() {
 		return addDateTimeToMp4FileName;
 	}
