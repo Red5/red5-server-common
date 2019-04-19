@@ -117,6 +117,8 @@ public class Mp4Muxer extends Muxer {
 	private AVBSFContext bsfExtractdataContext = null;
 	private boolean isAVCConversionRequired = false;
 	private AVPacket videoPkt;
+	private int rotation;
+	
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
 		super(scheduler);
@@ -406,7 +408,7 @@ public class Mp4Muxer extends Muxer {
 
 	}
 
-	public static void remux(String srcFile, String dstFile) {
+	public static void remux(String srcFile, String dstFile, int rotation) {
 		AVFormatContext inputContext = new AVFormatContext(null);
 		int ret;
 		if ((ret = avformat_open_input(inputContext,srcFile, null, null)) < 0) {
@@ -434,6 +436,13 @@ public class Mp4Muxer extends Muxer {
 				return;
 			}
 			stream.codecpar().codec_tag(0);
+			
+			if (stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
+				AVDictionary metadata = new AVDictionary();
+				av_dict_set(metadata, "rotate", rotation+"", 0);
+				stream.metadata(metadata);
+				av_dict_free(metadata);
+			}
 		}
 
 		AVIOContext pb = new AVIOContext(null);
@@ -475,6 +484,11 @@ public class Mp4Muxer extends Muxer {
 	
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
+		/*
+		* Rotation field is used add metadata to the mp4. 
+		* this method is called in directly creating mp4 from coming encoded WebRTC H264 stream
+		*/
+		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
@@ -522,7 +536,7 @@ public class Mp4Muxer extends Muxer {
 					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
 					if (isAVCConversionRequired ) {
 						logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
-						remux(fileTmp.getAbsolutePath(),f.getAbsolutePath());
+						remux(fileTmp.getAbsolutePath(),f.getAbsolutePath(), rotation);
 						Files.delete(fileTmp.toPath());
 					}
 					else {
