@@ -483,6 +483,10 @@ public class Mp4Muxer extends Muxer {
 	
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
+		/*
+		* Rotation field is used add metadata to the mp4. 
+		* this method is called in directly creating mp4 from coming encoded WebRTC H264 stream
+		*/
 		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
