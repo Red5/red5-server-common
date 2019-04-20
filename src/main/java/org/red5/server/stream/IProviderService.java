@@ -38,7 +38,8 @@ public interface IProviderService extends IScopeService {
     };
 
     /**
-     * Returns the input type for a named provider if a source of input exists. Live is checked first and VOD second.
+     * Returns the input type for a named provider if a source of input exists. Live is checked first and VOD second. If the VOD
+     * file is not located, a LIVE_WAIT is returned if legacy live-wait support is enabled.
      * 
      * @param scope
      *            Scope of provider
@@ -46,7 +47,7 @@ public interface IProviderService extends IScopeService {
      *            Name of provider
      * @param type
      *            Type of video stream
-     * @return LIVE if live, VOD if VOD, and NOT_FOUND otherwise
+     * @return LIVE if live, VOD if VOD, and LIVE_WAIT otherwise
      */
     INPUT_TYPE lookupProviderInput(IScope scope, String name, int type);
 
@@ -141,5 +142,19 @@ public interface IProviderService extends IScopeService {
      * @return <tt>true</tt> if unregister successfully.
      */
     boolean unregisterBroadcastStream(IScope scope, String name, IBroadcastStream stream);
+
+    /**
+     * Whether or not legacy live-wait support is enabled.
+     * 
+     * @return true if enabled and false otherwise
+     */
+    boolean isLiveWaitSupport();
+
+    /**
+     * Sets live-wait support.
+     * 
+     * @param liveWaitSupport
+     */
+    void setLiveWaitSupport(boolean liveWaitSupport);
 
 }
