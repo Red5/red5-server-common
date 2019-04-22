@@ -35,6 +35,16 @@ public interface ISchedulingService extends IScopeService {
     public static String BEAN_NAME = "schedulingService";
 
     /**
+     * Scheduling service constant
+     */
+    public static final String SCHEDULING_SERVICE = "scheduling_service";
+
+    /**
+     * Scheduled job constant
+     */
+    public static final String SCHEDULED_JOB = "scheduled_job";
+
+    /**
      * Schedule a job for periodic execution.
      * 
      * @param interval
@@ -68,7 +78,7 @@ public interface ISchedulingService extends IScopeService {
     public String addScheduledOnceJob(Date date, IScheduledJob job);
 
     /**
-     * Schedule a job for periodic execution which will start after the specifed delay.
+     * Schedule a job for periodic execution which will start after the specified delay.
      * 
      * @param interval
      *            time in milliseconds between two notifications of the job

@@ -478,7 +478,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                         // execute the processes to get VOD playback setup
                         msg = playVOD(withReset, itemLength);
                     } else {
-                        log.error("Input source subscribe failed");
+                        log.warn("Input source subscribe failed");
                         throw new IOException(String.format("Subscribe to %s failed", itemName));
                     }
                 } else {
@@ -780,7 +780,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     in.unsubscribe(this);
                     msgInReference.set(null);
                 }
-                subscriberStream.onChange(StreamState.STOPPED, currentItem);
+                subscriberStream.onChange(StreamState.STOPPED, currentItem.get());
                 clearWaitJobs();
                 cancelDeferredStop();
                 if (subscriberStream instanceof IPlaylistSubscriberStream) {
@@ -994,7 +994,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     }
                 }
             } catch (IOException err) {
-                log.error("Error while pushing message", err);
+                log.warn("Error while pushing message", err);
             }
         } else {
             log.warn("Push message failed due to null output pipe");
@@ -1796,7 +1796,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                             try {
                                 msg = in.pullMessage();
                             } catch (Throwable err) {
-                                log.error("Error while pulling message", err);
+                                log.warn("Error while pulling message", err);
                                 break;
                             }
                             if (msg instanceof RTMPMessage) {
@@ -1861,7 +1861,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                                 sendMessage(rtmpMessage);
                             }
                         } catch (Throwable err) {
-                            log.error("Error while pulling message", err);
+                            log.warn("Error while pulling message", err);
                             break;
                         }
                     } while (!isRTMPTPlayback && (msg != null));
@@ -1955,7 +1955,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
                     }
                 } catch (IOException err) {
                     // we couldn't get more data, stop stream.
-                    log.error("Error while getting message", err);
+                    log.warn("Error while getting message", err);
                     runDeferredStop();
                 } finally {
                     // reset running flag

@@ -19,10 +19,8 @@
 package org.red5.server.stream;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.api.IConnection;
@@ -47,12 +45,6 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     private static final Logger log = Red5LoggerFactory.getLogger(PlaylistSubscriberStream.class);
 
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    private final Lock read = readWriteLock.readLock();
-
-    private final Lock write = readWriteLock.writeLock();
-
     /**
      * Playlist controller
      */
@@ -66,12 +58,12 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     /**
      * Playlist items
      */
-    private final LinkedList<IPlayItem> items;
+    private final CopyOnWriteArrayList<PlayItemEntry> items = new CopyOnWriteArrayList<>();
 
     /**
      * Current item index
      */
-    private int currentItemIndex = 0;
+    private int currentItemIndex = -1;
 
     /**
      * Plays items back
@@ -142,7 +134,6 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     /** Constructs a new PlaylistSubscriberStream. */
     public PlaylistSubscriberStream() {
         defaultController = new SimplePlaylistController();
-        items = new LinkedList<IPlayItem>();
     }
 
     /**
@@ -232,38 +223,36 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public void play() throws IOException {
-        // Check how many is yet to play...
-        int count = items.size();
         // Return if playlist is empty
-        if (count > 0) {
+        if (!items.isEmpty()) {
             // Move to next if current item is set to -1
             if (currentItemIndex == -1) {
                 moveToNext();
             }
             // If there's some more items on list then play current item
-            while (count-- > 0) {
+            do {
                 IPlayItem item = null;
-                read.lock();
                 try {
                     // Get playlist item
-                    item = items.get(currentItemIndex);
-                    engine.play(item);
-                    break;
+                    PlayItemEntry entry = items.get(currentItemIndex);
+                    if (entry != null) {
+                        item = entry.item;
+                        engine.play(item);
+                        entry.played = true;
+                        break;
+                    }
                 } catch (StreamNotFoundException e) {
                     // go for next item
                     moveToNext();
                     if (currentItemIndex == -1) {
-                        // we reaches the end.
+                        // we reached the end
                         break;
                     }
-                    item = items.get(currentItemIndex);
                 } catch (IllegalStateException e) {
                     // an stream is already playing
                     break;
-                } finally {
-                    read.unlock();
                 }
-            }
+            } while (!items.isEmpty());
         }
     }
 
@@ -322,9 +311,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             items.clear();
             // clear jobs
             if (schedulingService != null && !jobs.isEmpty()) {
-                for (String jobName : jobs) {
-                    schedulingService.removeScheduledJob(jobName);
-                }
+                jobs.forEach(jobName -> schedulingService.removeScheduledJob(jobName));
                 jobs.clear();
             }
         }
@@ -337,22 +324,12 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public void addItem(IPlayItem item) {
-        write.lock();
-        try {
-            items.add(item);
-        } finally {
-            write.unlock();
-        }
+        items.add(new PlayItemEntry(item));
     }
 
     /** {@inheritDoc} */
     public void addItem(IPlayItem item, int index) {
-        write.lock();
-        try {
-            items.add(index, item);
-        } finally {
-            write.unlock();
-        }
+        items.add(index, new PlayItemEntry(item));
     }
 
     /** {@inheritDoc} */
@@ -361,12 +338,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             return;
         }
         int originSize = items.size();
-        write.lock();
-        try {
-            items.remove(index);
-        } finally {
-            write.unlock();
-        }
+        items.remove(index);
         if (currentItemIndex == index) {
             // set the next item.
             if (index == originSize - 1) {
@@ -379,12 +351,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     public void removeAllItems() {
         // we try to stop the engine first
         stop();
-        write.lock();
-        try {
-            items.clear();
-        } finally {
-            write.unlock();
-        }
+        items.clear();
     }
 
     /** {@inheritDoc} */
@@ -395,15 +362,17 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             return;
         }
         IPlayItem item = null;
-        int count = items.size();
-        while (count-- > 0) {
-            read.lock();
+        do {
             try {
-                item = items.get(currentItemIndex);
-                engine.play(item);
-                break;
+                PlayItemEntry entry = items.get(currentItemIndex);
+                if (entry != null) {
+                    item = entry.item;
+                    engine.play(item);
+                    entry.played = true;
+                    break;
+                }
             } catch (IOException err) {
-                log.error("Error while starting to play item, moving to previous.", err);
+                log.warn("Error while starting to play item, moving to previous", err);
                 // go for next item
                 moveToPrevious();
                 if (currentItemIndex == -1) {
@@ -420,10 +389,8 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             } catch (IllegalStateException e) {
                 // an stream is already playing
                 break;
-            } finally {
-                read.unlock();
             }
-        }
+        } while (!items.isEmpty());
     }
 
     /** {@inheritDoc} */
@@ -443,15 +410,17 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             return;
         }
         IPlayItem item = null;
-        int count = items.size();
-        while (count-- > 0) {
-            read.lock();
+        do {
             try {
-                item = items.get(currentItemIndex);
-                engine.play(item, false);
-                break;
+                PlayItemEntry entry = items.get(currentItemIndex);
+                if (entry != null) {
+                    item = entry.item;
+                    engine.play(item, false);
+                    entry.played = true;
+                    break;
+                }
             } catch (IOException err) {
-                log.error("Error while starting to play item, moving to next", err);
+                log.warn("Error while starting to play item, moving to next", err);
                 // go for next item
                 moveToNext();
                 if (currentItemIndex == -1) {
@@ -468,10 +437,8 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
             } catch (IllegalStateException e) {
                 // an stream is already playing
                 break;
-            } finally {
-                read.unlock();
             }
-        }
+        } while (!items.isEmpty());
     }
 
     /** {@inheritDoc} */
@@ -481,20 +448,20 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
         }
         stop();
         currentItemIndex = index;
-        read.lock();
         try {
-            IPlayItem item = items.get(currentItemIndex);
-            engine.play(item);
+            PlayItemEntry entry = items.get(currentItemIndex);
+            if (entry != null) {
+                IPlayItem item = entry.item;
+                engine.play(item);
+                entry.played = true;
+            }
         } catch (IOException e) {
-            log.error("setItem caught a IOException", e);
+            log.warn("setItem caught a IOException", e);
         } catch (StreamNotFoundException e) {
-            // let the engine retain the STOPPED state
-            // and wait for control from outside
+            // let the engine retain the STOPPED stateand wait for control from outside
             log.debug("setItem caught a StreamNotFoundException");
         } catch (IllegalStateException e) {
-            log.error("Illegal state exception on playlist item setup", e);
-        } finally {
-            read.unlock();
+            log.warn("Illegal state exception on playlist item setup", e);
         }
     }
 
@@ -597,31 +564,29 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** {@inheritDoc} */
     public IPlayItem getItem(int index) {
-        read.lock();
-        try {
-            return items.get(index);
-        } catch (IndexOutOfBoundsException e) {
-            return null;
-        } finally {
-            read.unlock();
-        }
+        return items.get(index).item;
     }
 
     /** {@inheritDoc} */
     public boolean replace(IPlayItem oldItem, IPlayItem newItem) {
-        boolean result = false;
-        read.lock();
-        try {
-            int index = items.indexOf(oldItem);
-            items.remove(index);
-            items.set(index, newItem);
-            result = true;
-        } catch (Exception e) {
-
-        } finally {
-            read.unlock();
-        }
-        return result;
+        boolean[] result = { false };
+        int[] index = { 0 };
+        items.forEach(itemEntry -> {
+            // locate a match
+            if (oldItem.equals(itemEntry.item)) {
+                // remove the entry
+                items.remove(itemEntry);
+                // do the insertion at index
+                items.add(index[0], new PlayItemEntry(newItem));
+                // update the flag
+                result[0] = true;
+                // exit early
+                return;
+            }
+            index[0]++;
+        });
+        log.debug("Replacement results: {} at {}", result[0], index[0]);
+        return result[0];
     }
 
     /**
@@ -668,7 +633,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamPlayItemSeek(stream, item, position);
                             } catch (Throwable t) {
-                                log.error("error notify streamPlayItemSeek", t);
+                                log.warn("error notify streamPlayItemSeek", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -693,7 +658,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamPlayItemPause(stream, item, position);
                             } catch (Throwable t) {
-                                log.error("error notify streamPlayItemPause", t);
+                                log.warn("error notify streamPlayItemPause", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -718,7 +683,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamPlayItemResume(stream, item, position);
                             } catch (Throwable t) {
-                                log.error("error notify streamPlayItemResume", t);
+                                log.warn("error notify streamPlayItemResume", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -741,7 +706,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamPlayItemPlay(stream, item, isLive);
                             } catch (Throwable t) {
-                                log.error("error notify streamPlayItemPlay", t);
+                                log.warn("error notify streamPlayItemPlay", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -760,7 +725,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamSubscriberClose(stream);
                             } catch (Throwable t) {
-                                log.error("error notify streamSubscriberClose", t);
+                                log.warn("error notify streamSubscriberClose", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -779,7 +744,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamSubscriberStart(stream);
                             } catch (Throwable t) {
-                                log.error("error notify streamSubscriberStart", t);
+                                log.warn("error notify streamSubscriberStart", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -802,7 +767,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
                             try {
                                 handler.streamPlayItemStop(stream, item);
                             } catch (Throwable t) {
-                                log.error("error notify streamPlaylistItemStop", t);
+                                log.warn("error notify streamPlaylistItemStop", t);
                             } finally {
                                 // clear thread local reference
                                 Red5.setConnectionLocal(null);
@@ -925,4 +890,28 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     }
 
+    class PlayItemEntry implements Comparable<PlayItemEntry> {
+
+        final long addTime;
+
+        final IPlayItem item;
+
+        boolean played;
+
+        PlayItemEntry(IPlayItem item) {
+            addTime = System.nanoTime();
+            this.item = item;
+        }
+
+        @Override
+        public int compareTo(PlayItemEntry other) {
+            if (this.addTime > other.addTime) {
+                return 1;
+            } else if (this.addTime < other.addTime) {
+                return -1;
+            }
+            return 0;
+        }
+
+    }
 }

@@ -41,7 +41,6 @@ import org.red5.server.net.rtmp.event.IRTMPEvent;
 import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.message.Constants;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.consumer.FileConsumer;
 import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.util.ScopeUtils;
@@ -61,7 +60,7 @@ public class RecordingListener implements IRecordingListener {
     /**
      * Scheduler
      */
-    private QuartzSchedulingService scheduler;
+    private ISchedulingService scheduler;
 
     /**
      * Event queue worker job name
@@ -212,7 +211,7 @@ public class RecordingListener implements IRecordingListener {
             // set the filename
             setFileName(file.getName());
             // get the scheduler
-            scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
+            scheduler = (ISchedulingService) scope.getParent().getContext().getBean(ISchedulingService.BEAN_NAME);
             // set recording true
             recording.set(true);
         } else {

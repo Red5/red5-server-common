@@ -44,7 +44,6 @@ import org.red5.server.api.so.ISharedObjectSecurity;
 import org.red5.server.api.so.ISharedObjectSecurityService;
 import org.red5.server.api.statistics.ISharedObjectStatistics;
 import org.red5.server.net.rtmp.status.StatusCodes;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.scope.BasicScope;
 import org.red5.server.service.ReflectionUtils;
 import org.red5.server.util.ScopeUtils;
@@ -348,21 +347,20 @@ public class SharedObjectScope extends BasicScope implements ISharedObject, Stat
         // remove the listener
         boolean result = super.removeEventListener(listener);
         // notify other listeners that someone has stopped listening
-        for (ISharedObjectListener soListener : serverListeners) {
+        serverListeners.forEach(soListener -> {
             soListener.onSharedObjectDisconnect(this);
-        }
+        });
         // check that linger job has be set
         if (lingerJobName == null) {
             // start a job to allow the so to linger for just a few ticks
-            QuartzSchedulingService scheduler = (QuartzSchedulingService) getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-            IScheduledJob job = new IScheduledJob() {
+            ISchedulingService scheduler = (ISchedulingService) getParent().getContext().getBean(ISchedulingService.BEAN_NAME);
+            lingerJobName = scheduler.addScheduledOnceJob(lingerPeriod, new IScheduledJob() {
                 public void execute(ISchedulingService service) {
                     if (so != null && !so.isClosed()) {
                         so.checkRelease();
                     }
                 }
-            };
-            lingerJobName = scheduler.addScheduledOnceJob(lingerPeriod, job);
+            });
         }
         // check acquire
         if (so.isClosed()) {

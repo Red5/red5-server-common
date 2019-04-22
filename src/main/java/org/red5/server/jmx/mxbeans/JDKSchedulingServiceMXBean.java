@@ -23,13 +23,13 @@ import java.util.List;
 import javax.management.MXBean;
 
 /**
- * Scheduling service that uses Quartz as backend.
+ * Scheduling service that uses JDK as backend.
  *
  * @author The Red5 Project
  * @author Paul Gregoire (mondain@gmail.com)
  */
 @MXBean
-public interface QuartzSchedulingServiceMXBean {
+public interface JDKSchedulingServiceMXBean {
 
     /**
      * Getter for job name.
