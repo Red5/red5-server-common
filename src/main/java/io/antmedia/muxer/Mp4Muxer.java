@@ -441,7 +441,6 @@ public class Mp4Muxer extends Muxer {
 				AVDictionary metadata = new AVDictionary();
 				av_dict_set(metadata, "rotate", rotation+"", 0);
 				stream.metadata(metadata);
-				av_dict_free(metadata);
 			}
 		}
 
