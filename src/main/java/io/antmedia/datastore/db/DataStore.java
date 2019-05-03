@@ -279,6 +279,9 @@ public abstract class DataStore {
 		this.writeStatsToDatastore = writeStatsToDatastore;
 	}
 	
+	public abstract void clearStreamsOnThisServer();
+
+	
 }
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
