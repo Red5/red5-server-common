@@ -279,6 +279,10 @@ public abstract class DataStore {
 		this.writeStatsToDatastore = writeStatsToDatastore;
 	}
 	
+	/**
+	 * This method is called at startup
+	 * It checks any hanging entry in datastore in case of unexpected restart
+	 */
 	public abstract void clearStreamsOnThisServer();
 
 	
