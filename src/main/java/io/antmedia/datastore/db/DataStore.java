@@ -281,7 +281,7 @@ public abstract class DataStore {
 	
 	/**
 	 * This method is called at startup
-	 * It checks any hanging entry in datastore in case of unexpected restart
+	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
 	 */
 	public abstract void clearStreamsOnThisServer();
 
