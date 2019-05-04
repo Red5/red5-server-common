@@ -285,8 +285,7 @@ public abstract class DataStore {
 	 */
 	public abstract void clearStreamsOnThisServer();
 
-	
-}
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
-//**************************************
+//**************************************	
+}
