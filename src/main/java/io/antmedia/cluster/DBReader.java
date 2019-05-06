@@ -17,10 +17,12 @@ public class DBReader {
 	private IClusterNotifier cluster;
 	
 	public String getHost(String streamName, String appName) {
-		Broadcast broadcast = dbMap.get(appName).get(streamName);
 		String host = null;
-		if(broadcast != null) {
-			host = broadcast.getOriginAdress();
+		if(dbMap.containsKey(appName)) {
+			Broadcast broadcast = dbMap.get(appName).get(streamName);
+			if(broadcast != null) {
+				host = broadcast.getOriginAdress();
+			}
 		}
 		return host;
 	}

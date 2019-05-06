@@ -339,7 +339,7 @@ public class HLSMuxer extends Muxer  {
 				{
 					ret = av_write_frame(outputFormatContext, tmpPacket);
 					if (ret < 0 && logger.isInfoEnabled()) {
-						byte[] data = new byte[2048];
+						byte[] data = new byte[64];
 						av_strerror(ret, data, data.length);
 						logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
 					}
