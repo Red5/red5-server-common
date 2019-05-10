@@ -1,9 +1,21 @@
 package io.antmedia.cluster;
 
-import java.io.Serializable;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
+import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
 
-public class StreamInfo implements IStreamInfo, Serializable {
+@Entity("StreamInfo")
+@Indexes({@Index(fields = @Field("streamId")),
+	@Index(fields = @Field("host")),
+	@Index(fields = @Field("videoPort")),
+	@Index(fields = @Field("audioPort"))})
+public class StreamInfo implements IStreamInfo {
 	
+	@Id
+	private ObjectId dbId;
 	private String streamId;
 	private int height;
 	private int width;
