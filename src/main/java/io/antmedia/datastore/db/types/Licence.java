@@ -1,22 +1,6 @@
 package io.antmedia.datastore.db.types;
 
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-@Entity("licence")
-
-@Indexes({ @Index(fields = @Field("licenceId")) })
 public class Licence {
-	
-	@JsonIgnore
-	@Id
-	private ObjectId dbId;
 	
 	private String licenceId;
 	
@@ -30,17 +14,12 @@ public class Licence {
 	
 	private String owner;
 	
+	private String status;
+	
+
 	public Licence() {
 		
 		this.type = "regular";
-	}
-
-	public ObjectId getDbId() {
-		return dbId;
-	}
-
-	public void setDbId(ObjectId dbId) {
-		this.dbId = dbId;
 	}
 
 	public String getLicenceId() {
@@ -91,6 +70,12 @@ public class Licence {
 		this.owner = owner;
 	}
 	
-	
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
 }
