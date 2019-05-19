@@ -1,46 +1,16 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avformat.av_dump_format;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
-import static org.bytedeco.javacpp.avutil.av_free;
-import static org.bytedeco.javacpp.avutil.av_log_get_level;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
+import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.storage.StorageClient;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
-import org.bytedeco.javacpp.avutil;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
+import org.bytedeco.javacpp.*;
+import org.bytedeco.javacpp.avcodec.*;
+import org.bytedeco.javacpp.avformat.*;
+import org.bytedeco.javacpp.avutil.*;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -57,12 +27,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.DataStore;
-import io.antmedia.datastore.db.IDataStoreFactory;
-import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.storage.StorageClient;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.bytedeco.javacpp.avcodec.*;
+import static org.bytedeco.javacpp.avformat.*;
+import static org.bytedeco.javacpp.avutil.*;
 
 public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
@@ -308,10 +283,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		enableMp4Setting();
 
 		if (mp4MuxingEnabled) {
-			Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
-			mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
-			mp4Muxer.setBitstreamFilter(mp4Filtername);
-			addMuxer(mp4Muxer);
+			addMp4Muxer();
 			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
 		} 
 
@@ -406,10 +378,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			}
 		}
 
-		if (muxerList.isEmpty()) {
-			return false;
-		}
-
 		startTime = System.currentTimeMillis();
 
 		return true;
@@ -486,6 +454,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
+
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
@@ -558,7 +527,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		for (Muxer muxer : muxerList) {
-			muxer.writePacket(pkt, stream);
+            muxer.writePacket(pkt, stream);
 		}
 
 	}
@@ -918,6 +887,41 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setPreviewHeight(int previewHeight) {
 		this.previewHeight = previewHeight;
 	}
+
+
+    private Muxer addMp4Muxer() {
+        Mp4Muxer mp4Muxer = createMp4Muxer();
+        addMuxer(mp4Muxer);
+        return mp4Muxer;
+    }
+
+    private Mp4Muxer createMp4Muxer() {
+        Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
+        mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
+        mp4Muxer.setBitstreamFilter(mp4Filtername);
+        return mp4Muxer;
+    }
+
+    public void startRecording() {
+        Muxer muxer = createMp4Muxer();
+		addMuxer(muxer);
+        muxer.init(scope, streamId, 0);
+        muxer.prepare(inputFormatContext);
+    }
+
+    public void stopRecording() {
+        AppSettings appSettingsLocal = getAppSettings();
+        mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();//restore state to the state before start recording
+
+        Iterator<Muxer> iterator = muxerList.iterator();
+        while (iterator.hasNext()) {
+            Muxer muxer = iterator.next();
+            if (muxer instanceof Mp4Muxer) {
+                muxer.writeTrailer();
+                iterator.remove();
+            }
+        }
+    }
 
 }
 
