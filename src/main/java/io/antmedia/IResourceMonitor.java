@@ -6,4 +6,6 @@ public interface IResourceMonitor {
 	public int getAvgCpuUsage();
 
 	public int getCpuLimit();
+	
+	public String enoughSystemResources();
 }
