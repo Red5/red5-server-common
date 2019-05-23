@@ -7,5 +7,5 @@ public interface IResourceMonitor {
 
 	public int getCpuLimit();
 	
-	public String enoughSystemResources();
+	public boolean checkSystemResources();
 }

@@ -73,6 +73,8 @@ import io.antmedia.IResourceMonitor;
 public class RTMPHandler extends BaseRTMPHandler {
 
     protected static Logger log = Red5LoggerFactory.getLogger(RTMPHandler.class);
+    
+    private static final String HIGH_RESOURCE_USAGE = "current system resources not enough";
 
     /**
      * Status object service.
@@ -276,12 +278,16 @@ public class RTMPHandler extends BaseRTMPHandler {
                         try {
                         	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
                         		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
-                        		int cpuUsage = resourceMonitor.getAvgCpuUsage();
-                        		if(cpuUsage > resourceMonitor.getCpuLimit()) {
+                        		
+                        		boolean systemResult = resourceMonitor.checkSystemResources();
+                        		
+                        		if(!systemResult)
+                        		{
                         			Status status = getStatus(NS_FAILED).asStatus();
-                                    status.setDescription(String.format("current cpu usage is so high: %d)", cpuUsage));
+                        			status.setDescription(HIGH_RESOURCE_USAGE);
                                     channel.sendStatus(status);
                         		}
+                        		
                         	}
                         	
                             log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
