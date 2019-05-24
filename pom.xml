@@ -53,7 +53,7 @@
 	</distributionManagement>
 	<properties>
 		<finalName>${project.artifactId}</finalName>
-		<guava.lib.version>21.0</guava.lib.version>
+		<guava.lib.version>27.1-jre</guava.lib.version>
 	</properties>
 	<repositories>
 		<repository>
