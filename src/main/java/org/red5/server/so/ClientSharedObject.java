@@ -25,13 +25,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.red5.server.api.IAttributeStore;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.event.IEvent;
 import org.red5.server.api.event.IEventDispatcher;
-import org.red5.server.api.event.IEventListener;
 import org.red5.server.api.so.IClientSharedObject;
 import org.red5.server.api.so.ISharedObjectListener;
 import org.red5.server.net.rtmp.Channel;
@@ -54,19 +52,14 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
     private volatile boolean initialSyncReceived;
 
     /**
-     * Synchronization lock
-     */
-    private final transient ReentrantLock lock = new ReentrantLock();
-
-    /**
      * Set of listeners
      */
-    private transient CopyOnWriteArraySet<ISharedObjectListener> listeners = new CopyOnWriteArraySet<ISharedObjectListener>();
+    private transient CopyOnWriteArraySet<ISharedObjectListener> listeners = new CopyOnWriteArraySet<>();
 
     /**
      * Set of event handlers
      */
-    private transient ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<String, Object>(1, 0.9f, 1);
+    private transient ConcurrentMap<String, Object> handlers = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Create new client SO with
@@ -132,15 +125,15 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
     }
 
     /** {@inheritDoc} */
-    public void dispatchEvent(IEvent e) {
+    public synchronized void dispatchEvent(IEvent e) {
         if (e instanceof ISharedObjectMessage || e.getType() == IEvent.Type.SHARED_OBJECT) {
-            ISharedObjectMessage msg = (ISharedObjectMessage) e;
-            if (msg.hasSource()) {
-                beginUpdate(msg.getSource());
-            } else {
-                beginUpdate();
-            }
             try {
+                ISharedObjectMessage msg = (ISharedObjectMessage) e;
+                if (msg.hasSource()) {
+                    beginUpdate(msg.getSource());
+                } else {
+                    beginUpdate();
+                }
                 for (ISharedObjectEvent event : msg.getEvents()) {
                     switch (event.getType()) {
                         case CLIENT_INITIAL_DATA:
@@ -336,42 +329,6 @@ public class ClientSharedObject extends SharedObject implements IClientSharedObj
     @Override
     public void close() {
         super.close();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void beginUpdate() {
-        lock();
-        super.beginUpdate();
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void beginUpdate(IEventListener listener) {
-        lock();
-        super.beginUpdate(listener);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void endUpdate() {
-        super.endUpdate();
-        unlock();
-    }
-
-    /** {@inheritDoc} */
-    public void lock() {
-        lock.lock();
-    }
-
-    /** {@inheritDoc} */
-    public void unlock() {
-        lock.unlock();
-    }
-
-    /** {@inheritDoc} */
-    public boolean isLocked() {
-        return lock.isLocked();
     }
 
     /** {@inheritDoc} */

@@ -20,14 +20,19 @@ package org.red5.server.so;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.red5.io.object.Deserializer;
 import org.red5.io.object.Input;
@@ -50,19 +55,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents shared object on server-side. Shared Objects in Flash are like cookies that are stored on client side. In Red5 and Flash Media
- * Server there's one more special type of SOs : remote Shared Objects. These are shared by multiple clients and synchronized between them
- * automatically on each data change. This is done asynchronously, used as events handling and is widely used in multiplayer Flash online
- * games. Shared object can be persistent or transient. The difference is that first are saved to the disk and can be accessed later on next
- * connection, transient objects are not saved and get lost each time they last client disconnects from it. Shared Objects has name
- * identifiers and path on server's HD (if persistent). On deeper level server-side Shared Object in this implementation actually uses
- * IPersistenceStore to delegate all (de)serialization work. SOs store data as simple map, that is, "name-value" pairs. Each value in turn
- * can be complex object or map. All access to methods that change properties in the SO must be properly synchronized for multithreaded
- * access.
+ * Represents a remote shared object on server-side. RSO's are shared by multiple clients and synchronized on each data change. A shared
+ * object can be persistent or transient; the difference being saved to the disk for later access vs transient objects that are not
+ * persisted to storage. Shared objects have name identifiers and a path. In this implementation we use IPersistenceStore to delegate all
+ * (de)serialization work. SOs store data as a "name-value" store. Each value in can be a complex object or map. All access to methods that
+ * change properties in the SO must be properly synchronized for multithreaded access.
  */
 public class SharedObject extends AttributeStore implements ISharedObjectStatistics, IPersistable, Constants {
 
     protected static Logger log = LoggerFactory.getLogger(SharedObject.class);
+
+    /**
+     * Reentrant lock with fairness enabled; used for writes.
+     */
+    private transient ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+
+    private transient WriteLock writeLock = lock.writeLock();
+
+    /**
+     * Timestamp the scope was created.
+     */
+    private final long creationTime = System.nanoTime();
 
     /**
      * Shared Object name (identifier)
@@ -87,22 +100,17 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     /**
      * Version. Used on synchronization purposes.
      */
-    protected AtomicInteger version = new AtomicInteger(1);
+    protected volatile AtomicInteger version = new AtomicInteger(1);
 
     /**
-     * Number of pending update operations
+     * Number of pending update operations (beginUpdate / endUpdate)
      */
-    protected AtomicInteger updateCounter = new AtomicInteger();
-
-    /**
-     * Has changes? flag
-     */
-    protected AtomicBoolean modified = new AtomicBoolean();
+    protected volatile AtomicInteger updateCounter = new AtomicInteger();
 
     /**
      * Last modified timestamp
      */
-    protected long lastModified = -1;
+    protected volatile long lastModified = -1;
 
     /**
      * Owner event
@@ -127,12 +135,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     /**
      * Number of times the SO has been acquired
      */
-    protected AtomicInteger acquireCount = new AtomicInteger();
-
-    /**
-     * Timestamp the scope was created.
-     */
-    private long creationTime;
+    protected volatile AtomicInteger acquireCount = new AtomicInteger();
 
     /**
      * Manages listener statistics.
@@ -157,14 +160,14 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     /**
      * Whether or not this shared object is closed
      */
-    protected AtomicBoolean closed = new AtomicBoolean(false);
+    protected volatile AtomicBoolean closed = new AtomicBoolean(false);
 
     /** Constructs a new SharedObject. */
     public SharedObject() {
         // This is used by the persistence framework
         super();
+        attributes = new HashMap<>();
         ownerMessage = new SharedObjectMessage(null, null, -1, false);
-        creationTime = System.currentTimeMillis();
     }
 
     /**
@@ -197,8 +200,8 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
         this.name = name;
         this.path = path;
         this.persistent = persistent;
+        attributes = new HashMap<>();
         ownerMessage = new SharedObjectMessage(null, name, 0, persistent);
-        creationTime = System.currentTimeMillis();
     }
 
     /**
@@ -301,7 +304,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     protected synchronized void sendUpdates() {
         log.debug("sendUpdates");
         // get the current version
-        final int currentVersion = getVersion();
+        final int currentVersion = version.get();
         log.debug("Current version: {}", currentVersion);
         // get the name
         final String name = getName();
@@ -320,38 +323,48 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
                     con.sendSharedObjectMessage(name, currentVersion, persistent, events);
                     Red5.setConnectionLocal(null);
                 });
+            } else {
+                log.debug("No source connection, owner events not sent");
             }
-        } else if (log.isTraceEnabled()) {
-            log.trace("No owner events to send");
+        } else {
+            if (log.isTraceEnabled()) {
+                log.trace("No owner events to send");
+            }
         }
         // tell all the listeners
         if (!syncEvents.isEmpty()) {
-            // get all current sync events 
-            final TreeSet<ISharedObjectEvent> events = new TreeSet<>(syncEvents);
-            syncEvents.removeAll(events);
             // get the listeners
             Set<IEventListener> listeners = getListeners();
-            if (log.isDebugEnabled()) {
-                log.debug("Listeners: {}", listeners);
-            }
-            // updates all registered clients of this shared object
-            listeners.stream().filter(listener -> listener != source).forEach(listener -> {
-                final RTMPConnection con = (RTMPConnection) listener;
-                if (con.isConnected()) {
+            // if there are no listeners, clear the events
+            if (listeners.isEmpty()) {
+                log.debug("No listeners for {} sync events, clearing", syncEvents.size());
+                syncEvents.clear();
+            } else {
+                if (log.isTraceEnabled()) {
+                    log.trace("Listeners: {}", listeners);
+                }
+                // get all current sync events 
+                final TreeSet<ISharedObjectEvent> events = new TreeSet<>(syncEvents);
+                syncEvents.removeAll(events);
+                // updates all registered clients of this shared object
+                listeners.stream().filter(listener -> listener != source).forEach(listener -> {
+                    final RTMPConnection con = (RTMPConnection) listener;
                     // create a worker
                     SharedObjectService.submitTask(() -> {
-                        Red5.setConnectionLocal(con);
-                        con.sendSharedObjectMessage(name, currentVersion, persistent, events);
-                        Red5.setConnectionLocal(null);
+                        if (con.isConnected()) {
+                            Red5.setConnectionLocal(con);
+                            con.sendSharedObjectMessage(name, currentVersion, persistent, events);
+                            Red5.setConnectionLocal(null);
+                        } else {
+                            log.trace("Skipping {} connection: {}", RTMP.states[con.getStateCode()], con.getId());
+                            // if the connection is 'disconnected' remove it
+                            if (con.isDisconnected()) {
+                                unregister(con);
+                            }
+                        }
                     });
-                } else {
-                    log.debug("Skipping {} connection: {}", RTMP.states[con.getStateCode()], con.getId());
-                    // if the connection is 'disconnected' remove it
-                    if (con.isDisconnected()) {
-                        unregister(con);
-                    }
-                }
-            });
+                });
+            }
         } else if (log.isTraceEnabled()) {
             log.trace("No sync events to send");
         }
@@ -361,18 +374,16 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      * Send notification about modification of SO
      */
     protected void notifyModified() {
-        log.debug("notifyModified - modified: {} update counter: {}", modified.get(), updateCounter.get());
+        log.debug("notifyModified - updaters: {}", updateCounter.get());
         if (updateCounter.get() == 0) {
-            if (modified.get()) {
-                // client sent at least one update -> increase version of SO
-                updateVersion();
-                lastModified = System.currentTimeMillis();
-                if (storage == null || !storage.save(this)) {
-                    log.warn("Could not store shared object");
-                }
+            // modification made -> increase version of SO
+            version.incrementAndGet();
+            // update last mod time
+            lastModified = System.currentTimeMillis();
+            if (storage == null || !storage.save(this)) {
+                log.warn("Could not store shared object");
             }
             sendUpdates();
-            modified.compareAndSet(true, false);
         }
     }
 
@@ -386,40 +397,49 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
         ownerMessage.addEvent(Type.CLIENT_STATUS, "error", message);
     }
 
-    /**
-     * Return an attribute value to the owner.
-     * 
-     * @param name
-     *            name
-     */
-    protected void returnAttributeValue(String name) {
-        ownerMessage.addEvent(Type.CLIENT_UPDATE_DATA, name, getAttribute(name));
+    /** {@inheritDoc} */
+    @Override
+    public Object getAttribute(String name) {
+        Object result = null;
+        if (hasAttribute(name)) {
+            boolean locked = false;
+            try {
+                if (locked = lock.readLock().tryLock(10L, TimeUnit.MILLISECONDS)) {
+                    result = attributes.get(name);
+                } else {
+                    log.trace("Failed to get read lock");
+                }
+            } catch (Exception e) {
+                log.warn("Exception in setAttribute", e);
+            } finally {
+                if (locked) {
+                    lock.readLock().unlock();
+                }
+            }
+        }
+        return result;
     }
 
-    /**
-     * Return attribute by name and set if it doesn't exist yet.
-     * 
-     * @param name
-     *            Attribute name
-     * @param value
-     *            Value to set if attribute doesn't exist
-     * @return Attribute value
-     */
+    /** {@inheritDoc} */
     @Override
-    public Object getAttribute(String name, Object value) {
-        log.debug("getAttribute - name: {} value: {}", name, value);
+    public Object getAttribute(String name, Object def) {
+        log.debug("getAttribute - name: {} default: {}", name, def);
         Object result = null;
         if (name != null) {
-            result = attributes.putIfAbsent(name, value);
-            if (result == null) {
-                // no previous value
-                modified.set(true);
-                final SharedObjectEvent event = new SharedObjectEvent(Type.CLIENT_UPDATE_DATA, name, value);
-                if (ownerMessage.addEvent(event) && syncEvents.add(event)) {
-                    notifyModified();
-                    changeStats.incrementAndGet();
+            try {
+                Object value = getAttribute(name);
+                if (value == null) {
+                    // if the current value is null do a setAttribute
+                    if (setAttribute(name, def)) {
+                        result = def;
+                    } else {
+                        log.warn("getAttribute: {} with a default value: {} failed", name, def);
+                    }
+                } else {
+                    result = value;
                 }
-                result = value;
+            } catch (Exception e) {
+                log.warn("Exception in getAttribute", e);
             }
         }
         return result;
@@ -429,24 +449,41 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     @Override
     public boolean setAttribute(String name, Object value) {
         log.debug("setAttribute - name: {} value: {}", name, value);
-        boolean result = true;
-        if (ownerMessage.addEvent(Type.CLIENT_UPDATE_ATTRIBUTE, name, null)) {
-            if (value == null && super.removeAttribute(name)) {
-                // Setting a null value removes the attribute
-                modified.set(true);
-                syncEvents.add(new SharedObjectEvent(Type.CLIENT_DELETE_DATA, name, null));
-                deleteStats.incrementAndGet();
-            } else if (value != null) {
-                boolean setAttr = super.setAttribute(name, value);
-                log.debug("Set attribute?: {} modified: {}", setAttr, modified.get());
-                // only sync if the attribute changed
-                modified.set(true);
-                syncEvents.add(new SharedObjectEvent(Type.CLIENT_UPDATE_DATA, name, value));
-                changeStats.incrementAndGet();
+        boolean result = false;
+        boolean locked = false;
+        try {
+            beginUpdate();
+            if (locked = writeLock.tryLock(100L, TimeUnit.MILLISECONDS)) {
+                if (ownerMessage.addEvent(Type.CLIENT_UPDATE_ATTRIBUTE, name, null)) {
+                    // Setting a null value removes the attribute
+                    if (value == null) {
+                        boolean removed = super.removeAttribute(name);
+                        if (removed) {
+                            syncEvents.add(new SharedObjectEvent(Type.CLIENT_DELETE_DATA, name, null));
+                            deleteStats.incrementAndGet();
+                            result = true;
+                        }
+                    } else {
+                        boolean set = super.setAttribute(name, value);
+                        log.debug("Set attribute?: {}", set);
+                        if (set) {
+                            // only sync if the attribute changed
+                            syncEvents.add(new SharedObjectEvent(Type.CLIENT_UPDATE_DATA, name, value));
+                            changeStats.incrementAndGet();
+                            result = true;
+                        }
+                    }
+                }
             } else {
-                result = false;
+                log.trace("Failed to get write lock");
             }
-            notifyModified();
+        } catch (Exception e) {
+            log.warn("Exception in setAttribute", e);
+        } finally {
+            if (locked) {
+                writeLock.unlock();
+            }
+            endUpdate();
         }
         return result;
     }
@@ -454,21 +491,26 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     /** {@inheritDoc} */
     @Override
     public boolean setAttributes(Map<String, Object> values) {
-        int successes = 0;
         if (values != null) {
             beginUpdate();
+            int valuesCount = values.size();
             try {
+                writeLock.lockInterruptibly();
                 for (Map.Entry<String, Object> entry : values.entrySet()) {
-                    if (setAttribute(entry.getKey(), entry.getValue())) {
-                        successes++;
+                    if (super.setAttribute(entry.getKey(), entry.getValue())) {
+                        --valuesCount;
                     }
                 }
+                return (valuesCount == 0);
+            } catch (Exception e) {
+                log.warn("Exception in setAttributes", e);
             } finally {
+                writeLock.unlock();
                 endUpdate();
             }
         }
         // expect every value to have been added
-        return (successes == values.size());
+        return false;
     }
 
     /** {@inheritDoc} */
@@ -480,29 +522,40 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
         return false;
     }
 
-    /**
-     * Removes attribute with given name
-     * 
-     * @param name
-     *            Attribute
-     * @return true if there's such an attribute and it was removed, false otherwise
-     */
+    /** {@inheritDoc} */
     @Override
     public boolean removeAttribute(String name) {
-        boolean result = true;
-        // Send confirmation to client
-        final SharedObjectEvent event = new SharedObjectEvent(Type.CLIENT_DELETE_DATA, name, null);
-        if (ownerMessage.addEvent(event)) {
-            if (super.removeAttribute(name)) {
-                modified.set(true);
-                syncEvents.add(event);
-                deleteStats.incrementAndGet();
-            } else {
-                result = false;
+        boolean result = false;
+        try {
+            writeLock.lockInterruptibly();
+            // Send confirmation to client
+            final SharedObjectEvent event = new SharedObjectEvent(Type.CLIENT_DELETE_DATA, name, null);
+            if (ownerMessage.addEvent(event)) {
+                if (super.removeAttribute(name)) {
+                    syncEvents.add(event);
+                    deleteStats.incrementAndGet();
+                    result = true;
+                }
+                notifyModified();
             }
-            notifyModified();
+        } catch (Exception e) {
+            log.warn("Exception in removeAttribute", e);
+        } finally {
+            writeLock.unlock();
         }
         return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void removeAttributes() {
+        try {
+            beginUpdate();
+            final Set<String> keys = new HashSet<>(attributes.keySet());
+            keys.forEach(name -> removeAttribute(name));
+        } finally {
+            endUpdate();
+        }
     }
 
     /**
@@ -540,34 +593,6 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      */
     public int getVersion() {
         return version.get();
-    }
-
-    /**
-     * Increases version by one
-     */
-    private void updateVersion() {
-        version.incrementAndGet();
-    }
-
-    /**
-     * Remove all attributes (clear Shared Object)
-     */
-    @Override
-    public void removeAttributes() {
-        // TODO: there must be a direct way to clear the SO on the client side
-        Set<String> names = getAttributeNames();
-        for (String key : names) {
-            SharedObjectEvent event = new SharedObjectEvent(Type.CLIENT_DELETE_DATA, key, null);
-            ownerMessage.addEvent(event);
-            syncEvents.add(event);
-        }
-        deleteStats.addAndGet(names.size());
-        // clear data
-        super.removeAttributes();
-        // mark as modified
-        modified.set(true);
-        // broadcast 'modified' event
-        notifyModified();
     }
 
     /**
@@ -636,7 +661,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
     /**
      * Begin update of this Shared Object. Increases number of pending update operations
      */
-    protected void beginUpdate() {
+    public void beginUpdate() {
         log.debug("beginUpdate");
         beginUpdate(source);
     }
@@ -647,7 +672,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      * @param listener
      *            Update with listener
      */
-    protected void beginUpdate(IEventListener listener) {
+    public void beginUpdate(IEventListener listener) {
         log.debug("beginUpdate - listener: {}", listener);
         source = listener;
         // increase number of pending updates
@@ -658,7 +683,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      * End update of this Shared Object. Decreases number of pending update operations and broadcasts modified event if it is equal to zero
      * (i.e. no more pending update operations).
      */
-    protected void endUpdate() {
+    public void endUpdate() {
         log.debug("endUpdate");
         // decrease number of pending updates
         if (updateCounter.decrementAndGet() == 0) {
@@ -712,7 +737,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
      */
     protected boolean clear() {
         log.debug("clear");
-        super.removeAttributes();
+        removeAttributes();
         // send confirmation to client
         ownerMessage.addEvent(Type.CLIENT_CLEAR_DATA, name, null);
         notifyModified();
@@ -728,7 +753,7 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
         log.debug("close");
         closed.compareAndSet(false, true);
         // clear collections
-        super.removeAttributes();
+        removeAttributes();
         listeners.clear();
         syncEvents.clear();
         ownerMessage.getEvents().clear();
@@ -806,15 +831,28 @@ public class SharedObject extends AttributeStore implements ISharedObjectStatist
         return sendStats.intValue();
     }
 
-    /**
-     * Sets a modified or dirty property on this object to indicate whether or not a modification has been made.
-     * 
-     * @param dirty
-     *            true if modified and false otherwise
-     */
+    /** {@inheritDoc} */
     public void setDirty(boolean dirty) {
         log.trace("setDirty: {}", dirty);
-        modified.set(dirty);
+        notifyModified();
+    }
+
+    /** {@inheritDoc} */
+    public void setDirty(String name) {
+        log.trace("setDirty: {}", name);
+        // get uses read lock, no need to do locking here
+        Object value = getAttribute(name);
+        if (ownerMessage.addEvent(Type.CLIENT_UPDATE_ATTRIBUTE, name, null)) {
+            // a null value means a removal the attribute
+            if (value == null) {
+                syncEvents.add(new SharedObjectEvent(Type.CLIENT_DELETE_DATA, name, null));
+                deleteStats.incrementAndGet();
+            } else {
+                syncEvents.add(new SharedObjectEvent(Type.CLIENT_UPDATE_DATA, name, value));
+                changeStats.incrementAndGet();
+            }
+            notifyModified();
+        }
     }
 
 }

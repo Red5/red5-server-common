@@ -44,7 +44,7 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
     /**
      * Wrapped scope
      */
-    protected IScope scope;
+    protected volatile IScope scope;
 
     /**
      * List of plug-in descriptors
@@ -92,6 +92,11 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
     }
 
     /** {@inheritDoc} */
+    public Object getAttribute(Enum<?> enm) {
+        return getAttribute(enm.name());
+    }
+
+    /** {@inheritDoc} */
     public Object getAttribute(String name, Object defaultValue) {
         Object value = scope.getAttribute(name);
         if (value == null) {
@@ -120,8 +125,18 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
     }
 
     /** {@inheritDoc} */
+    public boolean hasAttribute(Enum<?> enm) {
+        return hasAttribute(enm.name());
+    }
+
+    /** {@inheritDoc} */
     public boolean removeAttribute(String name) {
         return scope.removeAttribute(name);
+    }
+
+    /** {@inheritDoc} */
+    public boolean removeAttribute(Enum<?> enm) {
+        return removeAttribute(enm.name());
     }
 
     /** {@inheritDoc} */
@@ -140,6 +155,11 @@ public class StatefulScopeWrappingAdapter extends AbstractScopeAdapter implement
     /** {@inheritDoc} */
     public boolean setAttribute(String name, Object value) {
         return scope.setAttribute(name, value);
+    }
+
+    /** {@inheritDoc} */
+    public boolean setAttribute(Enum<?> enm, Object value) {
+        return setAttribute(enm.name(), value);
     }
 
     /** {@inheritDoc} */

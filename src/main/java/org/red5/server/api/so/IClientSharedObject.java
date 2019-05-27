@@ -26,7 +26,6 @@ import org.red5.server.api.IConnection;
  * @author The Red5 Project
  * @author Joachim Bauch (jojo@struktur.de)
  */
-
 public interface IClientSharedObject extends ISharedObjectBase {
 
     /**

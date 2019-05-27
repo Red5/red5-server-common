@@ -55,11 +55,6 @@ public class SharedObjectService implements ISharedObjectService {
     private static ThreadPoolTaskScheduler scheduler;
 
     /**
-     * Maximum messages to send at once
-     */
-    public static int MAXIMUM_EVENTS_PER_UPDATE = 16;
-
-    /**
      * Persistence class name
      */
     private String persistenceClassName = "org.red5.server.persistence.RamPersistence";
@@ -78,8 +73,8 @@ public class SharedObjectService implements ISharedObjectService {
      * @param maximumEventsPerUpdate
      *            the maximumEventsPerUpdate to set
      */
+    @Deprecated
     public void setMaximumEventsPerUpdate(int maximumEventsPerUpdate) {
-        MAXIMUM_EVENTS_PER_UPDATE = maximumEventsPerUpdate;
     }
 
     /**

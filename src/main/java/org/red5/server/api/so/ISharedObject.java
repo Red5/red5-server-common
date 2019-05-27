@@ -78,9 +78,16 @@ public interface ISharedObject extends IBasicScope, ISharedObjectBase, ISharedOb
     /**
      * Sets a "dirty" flag to indicate that the attributes have been modified.
      * 
-     * @param dirty
-     *            if dirty / modified
+     * @param dirty if dirty / modified
      */
+    @Deprecated
     public void setDirty(boolean dirty);
+
+    /**
+     * Sets a "dirty" flag to indicate that the named attribute has been modified.
+     * 
+     * @param name attribute key which is now dirty
+     */
+    void setDirty(String name);
 
 }

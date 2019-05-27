@@ -57,6 +57,17 @@ public interface IAttributeStore extends AttributeStoreMXBean {
     public boolean setAttribute(String name, Object value);
 
     /**
+     * Set an attribute on this object.
+     *
+     * @param enm
+     *            the enum of the attribute to change
+     * @param value
+     *            the new value of the attribute
+     * @return true if the attribute value was added or changed, otherwise false
+     */
+    boolean setAttribute(final Enum<?> enm, final Object value);
+
+    /**
      * Set multiple attributes on this object.
      * 
      * @param values
@@ -82,6 +93,15 @@ public interface IAttributeStore extends AttributeStoreMXBean {
      * @return the attribute value or null if the attribute doesn't exist
      */
     public Object getAttribute(String name);
+
+    /**
+     * Return the value for a given attribute.
+     *
+     * @param enm
+     *            the enum for the attribute to get
+     * @return the attribute value or null if the attribute doesn't exist
+     */
+    Object getAttribute(Enum<?> enm);
 
     /**
      * Return the value for a given attribute and set it if it doesn't exist.
@@ -112,6 +132,15 @@ public interface IAttributeStore extends AttributeStoreMXBean {
     public boolean hasAttribute(String name);
 
     /**
+     * Check the object has an attribute.
+     *
+     * @param enm
+     *            the enum for the attribute to check
+     * @return true if the attribute exists otherwise false
+     */
+    boolean hasAttribute(Enum<?> enm);
+
+    /**
      * Remove an attribute.
      * 
      * @param name
@@ -119,6 +148,15 @@ public interface IAttributeStore extends AttributeStoreMXBean {
      * @return true if the attribute was found and removed otherwise false
      */
     public boolean removeAttribute(String name);
+
+    /**
+     * Remove an attribute.
+     *
+     * @param enm
+     *            the enum of the attribute to remove
+     * @return true if the attribute was found and removed otherwise false
+     */
+    boolean removeAttribute(Enum<?> enm);
 
     /**
      * Remove all attributes.

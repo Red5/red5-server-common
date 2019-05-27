@@ -119,5 +119,4 @@ public interface ICastingAttributeStore extends IAttributeStore {
      * @return Attribute
      */
     public String getStringAttribute(String name);
-
 }

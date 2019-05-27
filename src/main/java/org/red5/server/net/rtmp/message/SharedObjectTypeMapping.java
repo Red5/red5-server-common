@@ -90,7 +90,7 @@ public class SharedObjectTypeMapping {
             case CLIENT_INITIAL_DATA:
                 return 0x0B;
             default:
-                log.error("Unknown type " + type);
+                log.error("Unknown type {}", type);
                 return 0x00;
         }
     }

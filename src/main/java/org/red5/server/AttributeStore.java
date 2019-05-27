@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import javax.management.openmbean.CompositeData;
 
+import org.red5.io.utils.ConversionUtils;
 import org.red5.server.api.IAttributeStore;
 import org.red5.server.api.ICastingAttributeStore;
 import org.slf4j.Logger;
@@ -40,9 +40,9 @@ public class AttributeStore implements ICastingAttributeStore {
     protected static Logger log = LoggerFactory.getLogger(AttributeStore.class);
 
     /**
-     * Map for attributes
+     * Map for attributes with initialCapacity = 1, loadFactor = .9, concurrencyLevel = (# of processors)
      */
-    protected ConcurrentMap<String, Object> attributes = new ConcurrentAttributesMap<>(1);
+    protected Map<String, Object> attributes = new ConcurrentHashMap<>(1, 0.5f, Runtime.getRuntime().availableProcessors());
 
     /**
      * Creates empty attribute store. Object is not associated with a persistence storage.
@@ -84,46 +84,39 @@ public class AttributeStore implements ICastingAttributeStore {
      * @return filtered map
      */
     protected Map<String, Object> filterNull(Map<String, Object> values) {
-        Map<String, Object> result = new HashMap<String, Object>();
-        for (Map.Entry<String, Object> entry : values.entrySet()) {
-            String key = entry.getKey();
-            if (key == null) {
-                continue;
+        Map<String, Object> result = new HashMap<>();
+        values.forEach((key, value) -> {
+            if (key != null && value != null) {
+                result.put(key, value);
             }
-            Object value = entry.getValue();
-            if (value == null) {
-                continue;
-            }
-            result.put(key, value);
-        }
+        });
         return result;
     }
 
-    /**
-     * Get the attribute names. The resulting set will be read-only.
-     *
-     * @return set containing all attribute names
-     */
+    /** {@inheritDoc} */
+    public boolean hasAttribute(String name) {
+        if (name == null) {
+            return false;
+        }
+        return attributes.containsKey(name);
+    }
+
+    /** {@inheritDoc} */
+    public boolean hasAttribute(Enum<?> enm) {
+        return hasAttribute(enm.name());
+    }
+
+    /** {@inheritDoc} */
     public Set<String> getAttributeNames() {
         return Collections.unmodifiableSet(attributes.keySet());
     }
 
-    /**
-     * Get the attributes. The resulting map will be read-only.
-     *
-     * @return map containing all attributes
-     */
+    /** {@inheritDoc} */
     public Map<String, Object> getAttributes() {
         return Collections.unmodifiableMap(attributes);
     }
 
-    /**
-     * Return the value for a given attribute.
-     *
-     * @param name
-     *            the name of the attribute to get
-     * @return the attribute value or null if the attribute doesn't exist
-     */
+    /** {@inheritDoc} */
     public Object getAttribute(String name) {
         if (name == null) {
             return null;
@@ -131,25 +124,12 @@ public class AttributeStore implements ICastingAttributeStore {
         return attributes.get(name);
     }
 
-    /**
-     * Return the value for a given attribute.
-     *
-     * @param enm the enum for the attribute to get
-     * @return the attribute value or null if the attribute doesn't exist
-     */
+    /** {@inheritDoc} */
     public Object getAttribute(Enum<?> enm) {
         return getAttribute(enm.name());
     }
 
-    /**
-     * Return the value for a given attribute and set it if it doesn't exist.
-     *
-     * @param name
-     *            the name of the attribute to get
-     * @param defaultValue
-     *            the value of the attribute to set if the attribute doesn't exist
-     * @return the attribute value
-     */
+    /** {@inheritDoc} */
     public Object getAttribute(String name, Object defaultValue) {
         if (name == null) {
             return null;
@@ -167,30 +147,6 @@ public class AttributeStore implements ICastingAttributeStore {
     }
 
     /**
-     * Check the object has an attribute.
-     *
-     * @param name
-     *            the name of the attribute to check
-     * @return true if the attribute exists otherwise false
-     */
-    public boolean hasAttribute(String name) {
-        if (name == null) {
-            return false;
-        }
-        return attributes.containsKey(name);
-    }
-
-    /**
-     * Check the object has an attribute.
-     *
-     * @param enm the enum for the attribute to check
-     * @return true if the attribute exists otherwise false
-     */
-    public boolean hasAttribute(Enum<?> enm) {
-        return hasAttribute(enm.name());
-    }
-
-    /**
      * Set an attribute on this object.
      *
      * @param name
@@ -200,15 +156,11 @@ public class AttributeStore implements ICastingAttributeStore {
      * @return true if the attribute value was added or changed, otherwise false
      */
     public boolean setAttribute(final String name, final Object value) {
+        log.trace("setAttribute({}, {})", name, value);
         boolean result = false;
         if (name != null && value != null) {
             // get previous value
-            final Object previous = attributes.get(name);
-            if (log.isTraceEnabled()) {
-                log.trace("setAttribute\nprevious: {}\nnew: {}", previous, value);
-            }
-            // update with new value
-            attributes.put(name, value);
+            final Object previous = attributes.putIfAbsent(name, value);
             // previous will be null if the attribute didn't exist and if it does it will equal the previous value
             if (previous != null) {
                 // if the value is a collection, check the elements for modification
@@ -245,28 +197,34 @@ public class AttributeStore implements ICastingAttributeStore {
                         }
                     }
                 } else {
-                    // whether or not the new incoming value is "equal" to the previous value
+                    // whether or not the new incoming value is "equal" to the previous value; not equal equates to "modified"
                     result = !value.equals(previous);
                     if (log.isTraceEnabled()) {
-                        log.trace("Equality check - modified: {} -> {} = {}", result, value, previous);
+                        log.trace("Equality check - modified: {} previous: {} new: {}", result, previous, value);
+                        log.trace("Class: {} {}", previous.getClass(), value.getClass());
+                    }
+                    // if the new value is not equal to the current / previous value and its a base-type or array, replace it
+                    if (result && ConversionUtils.isBaseTypeOrArray(previous)) {
+                        if (attributes.replace(name, previous, value)) {
+                            log.trace("Value replaced");
+                        } else {
+                            log.trace("Value replacement failed");
+                        }
                     }
                 }
             } else {
                 result = true;
             }
+            if (log.isTraceEnabled()) {
+                log.trace("{}", attributes);
+            }
         }
         return result;
     }
 
-    /**
-     * Set an attribute on this object.
-     *
-     * @param enm the enum of the attribute to change
-     * @param value the new value of the attribute
-     * @return true if the attribute value was added or changed, otherwise false
-     */
+    /** {@inheritDoc} */
     public boolean setAttribute(final Enum<?> enm, final Object value) {
-    	return setAttribute(enm.name(), value);
+        return setAttribute(enm.name(), value);
     }
 
     /** {@inheritDoc} */
@@ -281,13 +239,7 @@ public class AttributeStore implements ICastingAttributeStore {
         return setAttributes(values.getAttributes());
     }
 
-    /**
-     * Remove an attribute.
-     *
-     * @param name
-     *            the name of the attribute to remove
-     * @return true if the attribute was found and removed otherwise false
-     */
+    /** {@inheritDoc} */
     public boolean removeAttribute(String name) {
         if (name != null) {
             return (attributes.remove(name) != null);
@@ -295,14 +247,9 @@ public class AttributeStore implements ICastingAttributeStore {
         return false;
     }
 
-    /**
-     * Remove an attribute.
-     *
-     * @param enm the enum of the attribute to remove
-     * @return true if the attribute was found and removed otherwise false
-     */
+    /** {@inheritDoc} */
     public boolean removeAttribute(Enum<?> enm) {
-    	return removeAttribute(enm.name());
+        return removeAttribute(enm.name());
     }
 
     /**
@@ -454,13 +401,14 @@ public class AttributeStore implements ICastingAttributeStore {
         return instance;
     }
 
+    /*
     @SuppressWarnings("serial")
     private final class ConcurrentAttributesMap<K, V> extends ConcurrentHashMap<K, V> {
-
+    
         ConcurrentAttributesMap(int size) {
             super(size, 0.75f, 1);
         }
-
+    
         @Override
         public V get(Object key) {
             if (log.isTraceEnabled()) {
@@ -468,7 +416,7 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             return super.get(key);
         }
-
+    
         @Override
         public V put(K key, V value) {
             if (log.isTraceEnabled()) {
@@ -476,7 +424,7 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             return super.put(key, value);
         }
-
+    
         @Override
         public V putIfAbsent(K key, V value) {
             if (log.isTraceEnabled()) {
@@ -484,7 +432,7 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             return super.putIfAbsent(key, value);
         }
-
+    
         @Override
         public void putAll(Map<? extends K, ? extends V> m) {
             if (log.isTraceEnabled()) {
@@ -492,7 +440,7 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             super.putAll(m);
         }
-
+    
         @Override
         public boolean replace(K key, V oldValue, V newValue) {
             if (log.isTraceEnabled()) {
@@ -500,7 +448,7 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             return super.replace(key, oldValue, newValue);
         }
-
+    
         @Override
         public V replace(K key, V value) {
             if (log.isTraceEnabled()) {
@@ -508,7 +456,8 @@ public class AttributeStore implements ICastingAttributeStore {
             }
             return super.replace(key, value);
         }
-
+    
     }
+    */
 
 }
