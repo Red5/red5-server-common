@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -284,6 +285,37 @@ public abstract class DataStore {
 	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
 	 */
 	public abstract void clearStreamsOnThisServer();
+
+	/**
+	 * Creates a conference room with the parameters. 
+	 * The room name is key so if this is called with the same room name 
+	 * then new room is overwritten to old one.
+	 * @param room - conference room 
+	 * @return true if successfully created, false if not
+	 */
+	public abstract boolean createConferenceRoom(ConferenceRoom room);
+	
+	/**
+	 * Edits previously saved conference room
+	 * @param room - conference room 
+	 * @return true if successfully edited, false if not
+	 */
+	public abstract boolean editConferenceRoom(ConferenceRoom room);
+
+	/**
+	 * Deletes previously saved conference room
+	 * @param roomName- name of the conference room
+	 * @return true if successfully deleted, false if not 
+	 */
+	public abstract boolean deleteConferenceRoom(String roomName);
+	
+	/**
+	 * Retrieves previously saved conference room
+	 * @param roomName- name of the conference room
+	 * @return room - conference room  
+	 */
+	public abstract ConferenceRoom getConferenceRoom(String roomName);
+
 
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
