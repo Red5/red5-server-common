@@ -142,6 +142,17 @@ public class SharedObjectScope extends BasicScope implements ISharedObject, Stat
         so.get().release();
     }
 
+    /**
+     * This is no longer supported and is only here to prevent issues at runtime for those
+     * implementing the call.
+     * 
+     * @return false
+     */
+    @Deprecated
+    public boolean isLocked() {
+        return false;
+    }
+
     /** {@inheritDoc} */
     @Deprecated
     @Override
