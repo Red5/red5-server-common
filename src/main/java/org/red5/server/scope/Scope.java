@@ -26,10 +26,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -63,7 +66,9 @@ import org.springframework.jmx.export.annotation.ManagedResource;
 
 /**
  * The scope object. <br>
- * A stateful object shared between a group of clients connected to the same context path. Scopes are arranged in a hierarchical way, so a scope always has a parent unless its a "global" scope. If a client is connected to a scope then they are also connected to its parent scope. The scope object is used to access resources, shared object, streams, etc. <br>
+ * A stateful object shared between a group of clients connected to the same context path. Scopes are arranged in a hierarchical way, so a
+ * scope always has a parent unless its a "global" scope. If a client is connected to a scope then they are also connected to its parent
+ * scope. The scope object is used to access resources, shared object, streams, etc. <br>
  * Scope layout:
  * 
  * <pre>
@@ -173,14 +178,15 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Creates scope using a Builder
+     * Creates scope via parameters.
      * 
-     * @param builder
-     *            Builder
+     * @param parent
+     * @param type
+     * @param name
+     * @param persistent
      */
-    @ConstructorProperties({ "builder" })
-    public Scope(Builder builder) {
-        super(builder.parent, builder.type, builder.name, builder.persistent);
+    public Scope(IScope parent, ScopeType type, String name, boolean persistent) {
+        super(parent, type, name, persistent);
         children = new ConcurrentScopeSet();
         clients = new CopyOnWriteArraySet<IClient>();
     }
@@ -188,7 +194,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Add child scope to this scope
      * 
-     * @param scope Child scope
+     * @param scope
+     *            Child scope
      * @return true on success (if scope has handler and it accepts child scope addition), false otherwise
      */
     public boolean addChildScope(IBasicScope scope) {
@@ -196,7 +203,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
         boolean added = false;
         if (scope.isValid()) {
             try {
-                if (!children.containsKey(scope)) {
+                if (!children.contains(scope)) {
                     log.debug("Adding child scope: {} to {}", scope, this);
                     added = children.add(scope);
                 } else {
@@ -224,7 +231,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Connect to scope
      * 
-     * @param conn Connection object
+     * @param conn
+     *            Connection object
      * @return true on success, false otherwise
      */
     public boolean connect(IConnection conn) {
@@ -232,10 +240,13 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Connect to scope with parameters. To successfully connect to scope it must have handler that will accept this connection with given set of parameters. Client associated with connection is added to scope clients set, connection is registered as scope event listener.
+     * Connect to scope with parameters. To successfully connect to scope it must have handler that will accept this connection with given
+     * set of parameters. Client associated with connection is added to scope clients set, connection is registered as scope event listener.
      * 
-     * @param conn Connection object
-     * @param params Parameters passed with connection
+     * @param conn
+     *            Connection object
+     * @param params
+     *            Parameters passed with connection
      * @return true on success, false otherwise
      */
     public boolean connect(IConnection conn, Object[] params) {
@@ -289,7 +300,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Create child scope of room type, with the given name.
      * 
-     * @param name child scope name
+     * @param name
+     *            child scope name
      * @return true on success, false otherwise
      */
     public boolean createChildScope(String name) {
@@ -298,7 +310,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
         if (children.hasName(name)) {
             log.debug("Scope: {} already exists, children: {}", name, children.getNames());
         } else {
-            return addChildScope(new Builder(this, ScopeType.ROOM, name, false).build());
+            return addChildScope(new Scope(this, ScopeType.ROOM, name, false));
         }
         return false;
     }
@@ -306,7 +318,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Destroys scope
      * 
-     * @throws Exception on error
+     * @throws Exception
+     *             on error
      */
     public void destroy() throws Exception {
         log.debug("Destroy scope");
@@ -318,18 +331,19 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
             getHandler().stop(this);
         }
         // kill all child scopes
-        for (IBasicScope child : children.keySet()) {
+        children.forEach(child -> {
             removeChildScope(child);
             if (child instanceof Scope) {
                 ((Scope) child).uninit();
             }
-        }
+        });
     }
 
     /**
      * Disconnect connection from scope
      * 
-     * @param conn Connection object
+     * @param conn
+     *            Connection object
      */
     public void disconnect(IConnection conn) {
         log.debug("Disconnect: {}", conn);
@@ -435,7 +449,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Return the broadcast scope for a given name
+     * Return the broadcast scope for a given name.
      * 
      * @param name
      *            name
@@ -446,10 +460,23 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Return base scope of given type with given name
+     * Return base scope with given name.
      * 
-     * @param type Scope type
-     * @param name Scope name
+     * @param name
+     *            Scope name
+     * @return Basic scope object
+     */
+    public IBasicScope getBasicScope(String name) {
+        return children.getBasicScope(ScopeType.UNDEFINED, name);
+    }
+
+    /**
+     * Return base scope of given type with given name.
+     * 
+     * @param type
+     *            Scope type
+     * @param name
+     *            Scope name
      * @return Basic scope object
      */
     public IBasicScope getBasicScope(ScopeType type, String name) {
@@ -457,35 +484,30 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     }
 
     /**
-     * Return basic scope names matching given type
+     * Return basic scope names matching given type.
      * 
-     * @param type Scope type
+     * @param type
+     *            Scope type
      * @return set of scope names
      */
     public Set<String> getBasicScopeNames(ScopeType type) {
         if (type != null) {
-            Set<String> names = new HashSet<String>();
-            for (IBasicScope child : children.keySet()) {
-                if (child.getType().equals(type)) {
-                    names.add(child.getName());
-                }
-            }
-            return names;
+            return children.stream().filter(child -> child.getType().equals(type)).map(IBasicScope::getName).collect(Collectors.toSet());
         }
         return getScopeNames();
     }
 
     /**
-     * Return current thread context classloader
+     * Return current thread context classloader.
      * 
-     * @return Current thread context classloader
+     * @return Classloader for thread context
      */
     public ClassLoader getClassLoader() {
         return getContext().getClassLoader();
     }
 
     /**
-     * Return set of clients
+     * Return set of clients.
      * 
      * @return Set of clients bound to scope
      */
@@ -661,7 +683,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return resource located at given path
      * 
-     * @param path Resource path
+     * @param path
+     *            Resource path
      * @return Resource
      */
     public Resource getResource(String path) {
@@ -674,9 +697,11 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return array of resources from path string, usually used with pattern path
      * 
-     * @param path Resources path
+     * @param path
+     *            Resources path
      * @return Resources
-     * @throws IOException I/O exception
+     * @throws IOException
+     *             I/O exception
      */
     public Resource[] getResources(String path) throws IOException {
         if (hasContext()) {
@@ -688,7 +713,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return child scope by name
      * 
-     * @param name Scope name
+     * @param name
+     *            Scope name
      * @return Child scope with given name
      */
     public IScope getScope(String name) {
@@ -716,7 +742,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return service handler by name
      * 
-     * @param name Handler name
+     * @param name
+     *            Handler name
      * @return Service handler with given name
      */
     public Object getServiceHandler(String name) {
@@ -753,7 +780,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Return map of service handlers and optionally created it if it doesn't exist.
      * 
-     * @param allowCreate Should the map be created if it doesn't exist?
+     * @param allowCreate
+     *            Should the map be created if it doesn't exist?
      * @return Map of service handlers
      */
     protected Map<String, Object> getServiceHandlers(boolean allowCreate) {
@@ -789,7 +817,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Handles event. To be implemented in subclasses.
      * 
-     * @param event Event to handle
+     * @param event
+     *            Event to handle
      * @return true on success, false otherwise
      */
     @Override
@@ -800,7 +829,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check whether scope has child scope with given name
      * 
-     * @param name Child scope name
+     * @param name
+     *            Child scope name
      * @return true if scope has child node with given name, false otherwise
      */
     public boolean hasChildScope(String name) {
@@ -811,8 +841,10 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Check whether scope has child scope with given name and type
      * 
-     * @param type Child scope type
-     * @param name Child scope name
+     * @param type
+     *            Child scope type
+     * @param name
+     *            Child scope name
      * @return true if scope has child node with given name and type, false otherwise
      */
     public boolean hasChildScope(ScopeType type, String name) {
@@ -878,11 +910,11 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
      */
     public void uninit() {
         log.debug("Un-init scope");
-        for (IBasicScope child : children.keySet()) {
+        children.forEach(child -> {
             if (child instanceof Scope) {
                 ((Scope) child).uninit();
             }
-        }
+        });
         stop();
         setEnabled(false);
         if (hasParent()) {
@@ -927,8 +959,10 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Register service handler by name
      * 
-     * @param name Service handler name
-     * @param handler Service handler
+     * @param name
+     *            Service handler name
+     * @param handler
+     *            Service handler
      */
     public void registerServiceHandler(String name, Object handler) {
         Map<String, Object> serviceHandlers = getServiceHandlers();
@@ -938,13 +972,13 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Removes child scope
      * 
-     * @param scope Child scope to remove
+     * @param scope
+     *            Child scope to remove
      */
     public void removeChildScope(IBasicScope scope) {
         log.debug("removeChildScope: {}", scope);
-        if (children.containsKey(scope)) {
-            // remove from parent
-            children.remove(scope);
+        // remove from parent
+        if (children.remove(scope)) {
             if (scope instanceof Scope) {
                 unregisterJMX();
             }
@@ -956,15 +990,14 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
      */
     public void removeChildren() {
         log.trace("removeChildren of {}", name);
-        for (IBasicScope child : children.keySet()) {
-            removeChildScope(child);
-        }
+        children.forEach(child -> removeChildScope(child));
     }
 
     /**
      * Setter for autostart flag
      * 
-     * @param autoStart Autostart flag value
+     * @param autoStart
+     *            Autostart flag value
      */
     public void setAutoStart(boolean autoStart) {
         this.autoStart = autoStart;
@@ -973,7 +1006,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Setter for child load path. Should be implemented in subclasses?
      * 
-     * @param pattern Load path pattern
+     * @param pattern
+     *            Load path pattern
      */
     public void setChildLoadPath(String pattern) {
 
@@ -982,7 +1016,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Setter for context
      * 
-     * @param context Context object
+     * @param context
+     *            Context object
      */
     public void setContext(IContext context) {
         log.debug("Set context: {}", context);
@@ -992,7 +1027,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Set scope depth
      * 
-     * @param depth Scope depth
+     * @param depth
+     *            Scope depth
      */
     public void setDepth(int depth) {
         this.depth = depth;
@@ -1001,7 +1037,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Enable or disable scope by setting enable flag
      * 
-     * @param enabled Enable flag value
+     * @param enabled
+     *            Enable flag value
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
@@ -1181,9 +1218,9 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
             }
             log.trace("Handler: {}", handler);
             log.trace("Child count: {}", children.size());
-            for (IBasicScope child : children.keySet()) {
+            children.forEach(child -> {
                 log.trace("Child: {}", child);
-            }
+            });
         }
     }
 
@@ -1220,7 +1257,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
     /**
      * Allows for reconstruction via CompositeData.
      * 
-     * @param cd composite data
+     * @param cd
+     *            composite data
      * @return Scope class instance
      */
     public static Scope from(CompositeData cd) {
@@ -1240,7 +1278,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
         if (cd.containsKey("persistent")) {
             persistent = (Boolean) cd.get("persistent");
         }
-        return new Scope(new Builder(parent, type, name, persistent));
+        return new Scope(parent, type, name, persistent);
     }
 
     @Override
@@ -1270,19 +1308,15 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
         return true;
     }
 
-    private final class ConcurrentScopeSet extends ConcurrentHashMap<org.red5.server.api.scope.IBasicScope, Boolean> {
+    private final class ConcurrentScopeSet extends ConcurrentSkipListSet<org.red5.server.api.scope.IBasicScope> {
 
-        private static final long serialVersionUID = -6702012956307490749L;
+        private static final long serialVersionUID = 283917025588555L;
 
-        ConcurrentScopeSet() {
-            super(3, 0.9f);
-        }
-
+        @Override
         public boolean add(IBasicScope scope) {
-            //log.trace("add - Hold counts - read: {} write: {} queued: {}", internalLock.getReadHoldCount(), internalLock.getWriteHoldCount(), internalLock.hasQueuedThreads());			
             boolean added = false;
             // check #1
-            if (!containsKey(scope)) {
+            if (!contains(scope)) {
                 log.debug("Adding child scope: {} to {}", (((IBasicScope) scope).getName()), this);
                 if (hasHandler()) {
                     // get the handler for the scope to which we are adding this new scope 
@@ -1297,10 +1331,9 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
                 }
                 try {
                     // check #2 for entry
-                    if (!containsKey(scope)) {
+                    if (!contains(scope)) {
                         // add the entry
-                        // expected return from put is null; indicating this scope didn't already exist
-                        added = (super.put(scope, Boolean.TRUE) == null);
+                        added = super.add(scope);
                         if (added) {
                             subscopeStats.increment();
                         } else {
@@ -1327,9 +1360,8 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
         }
 
         @Override
-        public Boolean remove(Object scope) {
+        public boolean remove(Object scope) {
             log.debug("Remove child scope: {}", scope);
-            //log.trace("remove - Hold counts - read: {} write: {} queued: {}", internalLock.getReadHoldCount(), internalLock.getWriteHoldCount(), internalLock.hasQueuedThreads());			
             if (hasHandler()) {
                 IScopeHandler hdlr = getHandler();
                 log.debug("Removing child scope: {}", (((IBasicScope) scope).getName()));
@@ -1343,33 +1375,14 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
             } else {
                 log.debug("No handler found for {}", this);
             }
-            boolean removed = false;
-            try {
-                if (containsKey(scope)) {
-                    // remove the entry, ensure removed value is equal to the given object
-                    removed = super.remove(scope).equals(Boolean.TRUE);
-                    if (removed) {
-                        subscopeStats.decrement();
-                    } else {
-                        log.debug("Subscope was not removed");
-                    }
-                } else {
-                    log.debug("Subscope was not removed, it was not found");
-                }
-            } catch (Exception e) {
-                log.warn("Exception on remove", e);
+            // remove the entry, ensure removed value is equal to the given object
+            if (super.remove(scope)) {
+                subscopeStats.decrement();
+                return true;
+            } else {
+                log.debug("Subscope was not removed or was not found");
             }
-            return removed;
-        }
-
-        /**
-         * Returns whether or not a scope is in the collection; we're only concerned with keys.
-         * 
-         * @param scope
-         * @return true if it exists and false otherwise
-         */
-        public boolean contains(Object scope) {
-            return keySet().contains(scope);
+            return false;
         }
 
         /**
@@ -1379,9 +1392,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
          */
         public Set<String> getNames() {
             Set<String> names = new HashSet<String>();
-            for (IBasicScope child : keySet()) {
-                names.add(child.getName());
-            }
+            stream().forEach(child -> names.add(child.getName()));
             return names;
         }
 
@@ -1395,11 +1406,7 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
                 log.debug("hasName: {}", name);
             }
             if (name != null) {
-                for (IBasicScope child : keySet()) {
-                    if (name.equals(child.getName())) {
-                        return true;
-                    }
-                }
+                return stream().filter(child -> name.equals(child.getName())).findFirst().isPresent();
             } else {
                 log.info("Invalid scope name, null is not allowed");
             }
@@ -1416,49 +1423,17 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
          * @return scope
          */
         public IBasicScope getBasicScope(ScopeType type, String name) {
-            boolean skipTypeCheck = ScopeType.UNDEFINED.equals(type);
-            if (skipTypeCheck) {
-                for (IBasicScope child : keySet()) {
-                    if (name.equals(child.getName())) {
-                        log.debug("Returning basic scope: {}", child);
-                        return child;
-                    }
-                }
+            Optional<IBasicScope> scope = null;
+            // skip type check?
+            if (ScopeType.UNDEFINED.equals(type)) {
+                scope = stream().filter(child -> name.equals(child.getName())).findFirst();
             } else {
-                for (IBasicScope child : keySet()) {
-                    if (child.getType().equals(type) && name.equals(child.getName())) {
-                        log.debug("Returning basic scope: {}", child);
-                        return child;
-                    }
-                }
+                scope = stream().filter(child -> child.getType().equals(type) && name.equals(child.getName())).findFirst();
+            }
+            if (scope.isPresent()) {
+                return scope.get();
             }
             return null;
-        }
-
-    }
-
-    /**
-     * Builder pattern
-     */
-    public final static class Builder {
-
-        private IScope parent;
-
-        private ScopeType type;
-
-        private String name;
-
-        private boolean persistent;
-
-        public Builder(IScope parent, ScopeType type, String name, boolean persistent) {
-            this.parent = parent;
-            this.type = type;
-            this.name = name;
-            this.persistent = persistent;
-        }
-
-        public Scope build() {
-            return new Scope(this);
         }
 
     }

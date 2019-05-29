@@ -188,7 +188,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
      */
     @Override
     public String getPath() {
-        return parent.getPath() + '/' + parent.getName();
+        return String.format("%s/%s", parent.getPath(), parent.getName());
     }
 
     /**
@@ -402,10 +402,20 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
     }
 
     public int compareTo(BasicScope that) {
-        if (this.equals(that)) {
+        if (equals(that)) {
             return 0;
         }
-        return name.compareTo(that.getName());
+        // check name first
+        int c = name.compareTo(that.getName());
+        if (c == 0) {
+            // check type if names were equal
+            c = type.compareTo(that.getType());
+            if (c == 0) {
+                // check path if we've gotten this far
+                c = getPath().compareTo(that.getPath());
+            }
+        }
+        return c;
     }
 
     /**
@@ -413,7 +423,7 @@ public abstract class BasicScope implements IBasicScope, Comparable<BasicScope> 
      */
     private class KeepAliveJob implements IScheduledJob {
 
-        private IBasicScope scope = null;
+        private final IBasicScope scope;
 
         KeepAliveJob(IBasicScope scope) {
             this.scope = scope;

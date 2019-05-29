@@ -112,6 +112,14 @@ public interface IScope extends IBasicScope, ResourcePatternResolver, IServiceHa
     public IBroadcastScope getBroadcastScope(String name);
 
     /**
+     * Get a child scope by name.
+     * 
+     * @param name Name of the child scope
+     * @return the child scope, or null if no scope is found
+     */
+    public IBasicScope getBasicScope(String name);
+
+    /**
      * Get a child scope by type and name.
      * 
      * @param type Child scope type
