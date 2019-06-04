@@ -7,8 +7,10 @@ import java.util.List;
 
 import org.apache.catalina.util.NetMask;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 @Configuration
 @PropertySource("/WEB-INF/red5-web.properties")
@@ -845,5 +847,10 @@ public class AppSettings {
 		}
 
 		return Collections.unmodifiableList(messages);
+	}
+	
+	@Bean
+	public static PropertySourcesPlaceholderConfigurer placeHolderConfigurer() {
+	  return new PropertySourcesPlaceholderConfigurer();
 	}
 }
