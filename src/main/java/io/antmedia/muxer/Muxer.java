@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -254,7 +255,16 @@ public abstract class Muxer {
 			// add date time parameter to resource name if it is set
 			if (addDateTimeToResourceName) {
 				SimpleDateFormat dtFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm");
-				Date dt = new Date();
+				
+				LocalDateTime dt =  LocalDateTime.now();
+				if (dt.getSecond() > 50) {
+					/*
+					 * There are some cases where synch of date time values differ in minute resolution
+					 * so that we convert to ceiling if second is more than 50seconds
+					 */
+					dt = dt.plusMinutes(1);
+				}
+				
 				resourceName = name + "-" + dtFormat.format(dt);
 			}
 
