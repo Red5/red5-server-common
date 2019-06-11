@@ -34,18 +34,4 @@ public interface IAntMediaStreamHandler {
 	 * Number of packets pending to be processed
 	 */
 	public void setQualityParameters(String id, String quality, double speed, int pendingPacketSize);
-
-	/***
-	 * Adds a MuxAdaptor when a muxAdaptor is created
-	 *
-	 * @param muxAdaptor
-	 */
-	public void muxAdaptorAdded(MuxAdaptor muxAdaptor);
-
-    /***
-     * Removes a MuxAdaptor when a muxAdaptor is closingResources
-     *
-     * @param muxAdaptor
-     */
-    public void muxAdaptorRemoved(MuxAdaptor muxAdaptor);
 }
