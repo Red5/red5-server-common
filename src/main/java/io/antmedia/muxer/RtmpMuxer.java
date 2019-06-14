@@ -98,7 +98,7 @@ public class RtmpMuxer extends Muxer {
 		}
 		registeredStreamIndexList.add(streamIndex);
 		AVStream outStream = avformat_new_stream(outputContext, codec);		
-		outStream.codec().time_base(codecContext.time_base());
+		outStream.time_base(codecContext.time_base());
 		
 		int ret = avcodec_parameters_from_context(outStream.codecpar(), codecContext);
 
@@ -107,8 +107,6 @@ public class RtmpMuxer extends Muxer {
 		}
 		outStream.codecpar().codec_tag(0);
 		codecTimeBaseMap.put(streamIndex, codecContext.time_base());
-		if ((outputContext.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-			outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 		return true;
 		
 	}
@@ -172,7 +170,7 @@ public class RtmpMuxer extends Muxer {
 
 		AVIOContext pb = new AVIOContext(null);
 
-		logger.info("rtmp muxer opening: {}" , url);
+		logger.info("rtmp muxer opening: {} time:{}" , url, System.currentTimeMillis());
 		int ret = avformat.avio_open(pb,  url, AVIO_FLAG_WRITE);
 		if (ret < 0) {
 			logger.warn("Could not open output file for rtmp url {}", url);
@@ -191,7 +189,7 @@ public class RtmpMuxer extends Muxer {
 			}
 		}
 
-		logger.warn("before writing rtmp muxer header to {}", url);
+		logger.info("before writing rtmp muxer header to {}", url);
 		ret = avformat_write_header(context, optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header to rtmp url {}", url);
@@ -358,18 +356,17 @@ public class RtmpMuxer extends Muxer {
 				{
 					ret = av_write_frame(context, tmpPacket);
 					if (ret < 0 && logger.isInfoEnabled()) {
-						byte[] data = new byte[2048];
+						byte[] data = new byte[128];
 						av_strerror(ret, data, data.length);
 						logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
-					}
-					
+					}	
 				}
 			}
 			else 
 			{
 				ret = av_write_frame(context, tmpPacket);
 				if (ret < 0 && logger.isInfoEnabled()) {
-					byte[] data = new byte[2048];
+					byte[] data = new byte[128];
 					av_strerror(ret, data, data.length);
 					logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
 				}
@@ -380,15 +377,11 @@ public class RtmpMuxer extends Muxer {
 		else {
 			ret = av_write_frame(context, pkt);
 			if (ret < 0 && logger.isInfoEnabled()) {
-				byte[] data = new byte[2048];
+				byte[] data = new byte[128];
 				av_strerror(ret, data, data.length);
 				logger.info("cannot write frame(not video) to muxer. Error is {} ", new String(data, 0, data.length));
 			}
 		}
-
-		
-
-	
 
 		pkt.pts(pts);
 		pkt.dts(dts);
