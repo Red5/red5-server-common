@@ -262,10 +262,14 @@ public abstract class Muxer {
 					 * There are some cases where synch of date time values differ in minute resolution
 					 * so that we convert to ceiling if second is more than 50seconds
 					 */
+					logger.info("Adding 1 minute for having the same minute value. Current second value: {}", ldt.getSecond());
 					ldt = ldt.plusMinutes(1);
 				}
 				
 				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm"));
+				if (logger.isInfoEnabled()) {
+					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
+				}
 			}
 
 			// add resolution height parameter if it is different than 0
