@@ -295,8 +295,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         for (Muxer muxer : muxerList) {
             muxer.init(scope, name, 0);
         }
-        getStreamHandler().muxAdaptorAdded(this);
-
         return true;
     }
 
@@ -567,7 +565,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         isRecording = false;
 
         changeStreamQualityParameters(this.streamId, QUALITY_NA, 0, getInputQueueSize());
-        getStreamHandler().muxAdaptorRemoved(this);
+
     }
 
 
