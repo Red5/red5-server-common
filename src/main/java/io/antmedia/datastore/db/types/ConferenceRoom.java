@@ -28,10 +28,10 @@ public class ConferenceRoom {
 	private String roomName; 
 	
 	@ApiModelProperty(value = "the start date of the Conference Room")
-	private String startDate;
+	private long startDate;
 	
 	@ApiModelProperty(value = "the end date of the Conference Room")
-	private String endDate;
+	private long endDate;
 
 	
 	
@@ -43,19 +43,19 @@ public class ConferenceRoom {
 		this.roomName = roomName;
 	}
 
-	public String getStartDate() {
+	public long getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(String startDate) {
+	public void setStartDate(long startDate) {
 		this.startDate = startDate;
 	}
 
-	public String getEndDate() {
+	public long getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(String endDate) {
+	public void setEndDate(long endDate) {
 		this.endDate = endDate;
 	}
 
