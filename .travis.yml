@@ -1,10 +1,22 @@
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 before_install:
 - openssl aes-256-cbc -k "$GPG_PASSPHRASE" -in codesigning.asc.enc -out codesigning.asc -d
 - gpg --fast-import codesigning.asc
+# get parent project
+- (if [ $(git ls-remote https://github.com/ant-media/ant-media-server-parent.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
+    then 
+      echo " $TRAVIS_BRANCH branch found";  
+      git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/ant-media-server-parent.git;  
+    else
+      echo "branch not found"; 
+      git clone --depth=1 https://github.com/ant-media/ant-media-server-parent.git;  
+  fi)
+- cd ant-media-server-parent
+- mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
+- cd ..
 
 install:
   - mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true

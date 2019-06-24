@@ -1,91 +1,13 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AAC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AC3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DIRAC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DTS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DVD_SUBTITLE;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_EAC3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_H264;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_HEVC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_JPEG2000;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MJPEG;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MOV_TEXT;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP2;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP4ALS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG1VIDEO;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG2VIDEO;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG4;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG4SYSTEMS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_NONE;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_PNG;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_QCELP;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_TSCC2;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VC1;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VORBIS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VP9;
-import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
-import static org.bytedeco.javacpp.avcodec.av_bsf_free;
-import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;
-import static org.bytedeco.javacpp.avcodec.av_bsf_init;
-import static org.bytedeco.javacpp.avcodec.av_bsf_receive_packet;
-import static org.bytedeco.javacpp.avcodec.av_bsf_send_packet;
-import static org.bytedeco.javacpp.avcodec.av_init_packet;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_ref;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_copy;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
-import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
-import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
-import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.javacpp.avformat.*;
-import static org.bytedeco.javacpp.avformat.av_write_trailer;
-import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_free_context;
-import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.av_find_input_format;
-import static org.bytedeco.javacpp.avformat.avio_closep;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_AUDIO;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_NOPTS_VALUE;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
-import static org.bytedeco.javacpp.avutil.av_dict_free;
-import static org.bytedeco.javacpp.avutil.av_dict_set;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
-import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
-import static org.bytedeco.javacpp.avutil.av_strerror;
-import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
-import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import io.antmedia.storage.StorageClient;
+import io.antmedia.storage.StorageClient.FileType;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVBSFContext;
-import org.bytedeco.javacpp.avcodec.AVBitStreamFilter;
-import org.bytedeco.javacpp.avcodec.AVCodec;
-import org.bytedeco.javacpp.avcodec.AVCodecContext;
-import org.bytedeco.javacpp.avcodec.AVCodecParameters;
-import org.bytedeco.javacpp.avcodec.AVPacket;
+import org.bytedeco.javacpp.avcodec.*;
 import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
+import org.bytedeco.javacpp.avformat.*;
+import org.bytedeco.javacpp.avutil.*;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
@@ -95,8 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import io.antmedia.storage.StorageClient;
-import io.antmedia.storage.StorageClient.FileType;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.util.*;
+
+import static org.bytedeco.javacpp.avcodec.*;
+import static org.bytedeco.javacpp.avformat.*;
+import static org.bytedeco.javacpp.avutil.*;
 
 public class Mp4Muxer extends Muxer {
 
@@ -118,6 +46,14 @@ public class Mp4Muxer extends Muxer {
 	private boolean isAVCConversionRequired = false;
 	private AVPacket videoPkt;
 	private int rotation;
+	private long startTime;
+	/**
+	 * By default first video key frame should be checked
+	 * and below flag should be set to true
+	 * If first video key frame should not be checked,
+	 * then below should be flag in advance
+	 */
+	private boolean firstKeyFrameReceivedChecked = false;
 	
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
@@ -276,6 +212,7 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
+		startTime = System.currentTimeMillis();
 		AVFormatContext context = getOutputFormatContext();
 
 		int streamIndex = 0;
@@ -624,6 +561,18 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt, AVStream stream) {
 
+		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
+			if (keyFrame == 1) {
+				firstKeyFrameReceivedChecked = true;
+			} else {
+				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
+				// return if firstKeyFrameReceived is not received
+				// below return is important otherwise it does not work with like some encoders(vidiu)
+				return;
+			}
+		}
+
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			logger.trace("not registered stream index for stream: {}", streamId);
 			return;
@@ -680,6 +629,13 @@ public class Mp4Muxer extends Muxer {
 	 */
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
+		AVRational timeBase = new AVRational();
+		timeBase.num(1).den(1000);
+		long packetTime = av_rescale_q(pkt.pts(), inputTimebase, timeBase);
+		if(this.startTime > startTime+packetTime){
+			return;
+		}
+
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() == null) {
 			logger.warn("output context.pb field is null for stream: {}", streamId);
@@ -791,5 +747,4 @@ public class Mp4Muxer extends Muxer {
 		pkt.pos(pos);
 
 	}
-
 }

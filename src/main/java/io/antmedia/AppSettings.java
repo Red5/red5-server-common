@@ -7,8 +7,10 @@ import java.util.List;
 
 import org.apache.catalina.util.NetMask;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
 @Configuration
 @PropertySource("/WEB-INF/red5-web.properties")
@@ -21,6 +23,7 @@ public class AppSettings {
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
+	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
 	private static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
@@ -103,6 +106,10 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
 	private boolean webRTCEnabled;
 	
+	@Value( "${"+SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED+":true}" )
+	private boolean useOriginalWebRTCEnabled;
+	
+
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
 
@@ -786,7 +793,14 @@ public class AppSettings {
 	public void setPreviewHeight(int previewHeight) {
 		this.previewHeight = previewHeight;
 	}
+	
+	public boolean isUseOriginalWebRTCEnabled() {
+		return useOriginalWebRTCEnabled;
+	}
 
+	public void setUseOriginalWebRTCEnabled(boolean useOriginalWebRTCEnabled) {
+		this.useOriginalWebRTCEnabled = useOriginalWebRTCEnabled;
+	}
 
 	public String getRemoteAllowedCIDR() {
 		synchronized (cidrLock) 
@@ -845,5 +859,10 @@ public class AppSettings {
 		}
 
 		return Collections.unmodifiableList(messages);
+	}
+	
+	@Bean
+	public static PropertySourcesPlaceholderConfigurer placeHolderConfigurer() {
+	  return new PropertySourcesPlaceholderConfigurer();
 	}
 }

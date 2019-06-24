@@ -200,6 +200,7 @@ public class WebRtcAudioRecord {
 		System.out.println("stopRecording");
 		if (audioRecordListener != null) {
 			audioRecordListener.audioRecordStoppped();
+			audioRecordListener = null;
 		}
 		releaseAudioResources();
 		return true;
