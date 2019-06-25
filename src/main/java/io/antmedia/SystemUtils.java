@@ -488,6 +488,29 @@ public final class SystemUtils {
 	public static String convertByteSizeToDisk(Long bytes, String size, boolean txtByte) {
 		return convertByteSize( bytes,  size,  txtByte,  true);
 	}
+	
+	
+	public static long convertByteSize(long bytes, String size) {
+		Long num = 1024L;
+		long convertB;
+		size = size.toUpperCase();
+		
+		if (size.equals("PB")) {
+			convertB = bytes / (num * num * num * num * num);
+		} else if (size.equals("TB")) {
+			convertB = bytes / (num * num * num * num);
+		} else if (size.equals("GB")) {
+			convertB = bytes / (num * num * num);
+		} else if (size.equals("MB")) {
+			convertB = bytes / (num * num);
+		} else if (size.equals("KB")) {
+			convertB = bytes / num ;
+		} else {
+			convertB = bytes;
+		}
+		
+		return convertB;
+	}
 	/**
 	 * Permit to convert bytes to ALMOST any upper bytes with/without extension
 	 * (Currently at existing TeraByte but one step ahead, PetaByte)
