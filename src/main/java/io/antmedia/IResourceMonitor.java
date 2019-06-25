@@ -7,7 +7,7 @@ public interface IResourceMonitor {
 	 * It calculates the average CPU usage for a specified time.
 	 * @return the current CPU usage
 	 */
-	public int getCpuUsage();
+	public int getCpuLoad();
 
 	/** 
 	 * It's configurable and it's based on percentage. 
@@ -21,7 +21,7 @@ public interface IResourceMonitor {
 	 * In MB
 	 * @return the free RAM size that server should have all the time
 	 */
-	public int getRamLimit();
+	public int getMinFreeRamSize();
 	
 	/**
 	 * In MB
