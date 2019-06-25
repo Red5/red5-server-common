@@ -276,19 +276,20 @@ public class RTMPHandler extends BaseRTMPHandler {
                     case RECEIVE_AUDIO:
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
-                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
-                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
-                        		
-                        		boolean systemResult = resourceMonitor.checkSystemResources();
-                        		
-                        		if(!systemResult)
-                        		{
-                        			Status status = getStatus(NS_FAILED).asStatus();
-                        			status.setDescription(HIGH_RESOURCE_USAGE);
-                                    channel.sendStatus(status);
-                        		}
-                        		
-                        	}
+	                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
+	                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
+	                        		
+	                        		boolean systemResult = resourceMonitor.enoughResource();
+	                        		
+	                        		if(!systemResult)
+	                        		{
+	                        			Status status = getStatus(NS_FAILED).asStatus();
+	                        			status.setDescription(HIGH_RESOURCE_USAGE);
+	                                 channel.sendStatus(status);
+	                                 return;
+	                        		}
+	                        		
+	                        	}
                         	
                             log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
                             if (invokeCall(conn, call, streamService)) {
