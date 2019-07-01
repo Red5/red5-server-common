@@ -39,8 +39,6 @@ public abstract class DataStore {
 	 */
 	public abstract VoD getVoD(String id);
 
-	public abstract boolean updateName(String id, String name, String description);
-
 	public abstract boolean updateStatus(String id, String status);
 
 	public boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue) {
@@ -126,7 +124,7 @@ public abstract class DataStore {
 	/**
 	 * enables or disables mp4 muxing for the stream
 	 * @param streamId- id of the stream
-	 * @param enabled- 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @param enabled 1 means enabled, -1 means disabled, 0 means no setting for the stream
 	 * @return- true if set, false if not
 	 */
 	public abstract boolean setMp4Muxing(String streamId, int enabled);
@@ -187,11 +185,14 @@ public abstract class DataStore {
 	public abstract long getActiveBroadcastCount();
 
 	/**
-	 * Updates the stream source
+	 * Updates the Broadcast objects fields if it's not null.
+	 * The updated fields are as follows
+	 * name, description, userName, password, IP address, streamUrl
+	
 	 * @param broadcast
 	 * @return
 	 */
-	public abstract boolean editStreamSourceInfo(Broadcast broadcast);
+	public abstract boolean updateBroadcastFields(String streamId, Broadcast broadcast);
 
 	/**
 	 * Add or subtract the HLS viewer count from current value
@@ -300,21 +301,58 @@ public abstract class DataStore {
 	 * @param room - conference room 
 	 * @return true if successfully edited, false if not
 	 */
-	public abstract boolean editConferenceRoom(ConferenceRoom room);
+	public abstract boolean editConferenceRoom(String roomId, ConferenceRoom room);
 
 	/**
 	 * Deletes previously saved conference room
 	 * @param roomName- name of the conference room
 	 * @return true if successfully deleted, false if not 
 	 */
-	public abstract boolean deleteConferenceRoom(String roomName);
+	public abstract boolean deleteConferenceRoom(String roomId);
 	
 	/**
 	 * Retrieves previously saved conference room
 	 * @param roomName- name of the conference room
 	 * @return room - conference room  
 	 */
-	public abstract ConferenceRoom getConferenceRoom(String roomName);
+	public abstract ConferenceRoom getConferenceRoom(String roomId);
+	
+	/**
+	 * Updates the stream fields if it's not null
+	 * @param broadcast
+	 * @param name
+	 * @param description
+	 * @param userName
+	 * @param password
+	 * @param ipAddr
+	 * @param streamUrl
+	 */
+	protected void updateStreamInfo(Broadcast broadcast, String name, String description, String userName, String password, String ipAddr, String streamUrl )
+	{
+		if (name != null) {
+			broadcast.setName(name);
+		}
+		
+		if (description != null) {
+			broadcast.setDescription(description);
+		}
+		
+		if (userName!= null) {
+			broadcast.setUsername(userName);
+		}
+		
+		if (password != null) {
+			broadcast.setPassword(password);
+		}
+		
+		if (ipAddr != null) {
+			broadcast.setIpAddr(ipAddr);
+		}
+		
+		if (streamUrl != null) {
+			broadcast.setStreamUrl(streamUrl);
+		}
+	}
 
 
 //**************************************
