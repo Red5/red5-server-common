@@ -24,8 +24,8 @@ public class ConferenceRoom {
 	@ApiModelProperty(value = "the db id of the Conference Room")
 	private ObjectId dbId;
 	
-	@ApiModelProperty(value = "the name of the Conference Room")
-	private String roomName; 
+	@ApiModelProperty(value = "the id of the Conference Room")
+	private String roomId; 
 	
 	@ApiModelProperty(value = "the start date of the Conference Room")
 	private long startDate;
@@ -35,12 +35,12 @@ public class ConferenceRoom {
 
 	
 	
-	public String getRoomName() {
-		return roomName;
+	public String getRoomId() {
+		return roomId;
 	}
 
-	public void setRoomName(String roomName) {
-		this.roomName = roomName;
+	public void setRoomId(String roomId) {
+		this.roomId = roomId;
 	}
 
 	public long getStartDate() {
