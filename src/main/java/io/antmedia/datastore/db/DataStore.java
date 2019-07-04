@@ -116,10 +116,23 @@ public abstract class DataStore {
 	/**
 	 * Delete all tokens of the stream
 	 * @param streamId
-	 *
 	 */
 
 	public abstract boolean revokeTokens (String streamId);
+	
+	/**
+	 * Delete specific token
+	 * @param tokenId id of the token
+	 */
+
+	public abstract boolean deleteToken (String tokenId);
+	
+	/**
+	 * retrieve specific token
+	 * @param tokenId id of the token
+	 */
+
+	public abstract Token getToken (String tokenId);
 
 	/**
 	 * enables or disables mp4 muxing for the stream
