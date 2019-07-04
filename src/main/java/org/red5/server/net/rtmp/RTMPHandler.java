@@ -66,6 +66,7 @@ import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 
 import io.antmedia.IResourceMonitor;
+import io.antmedia.StreamNameValidator;
 
 /**
  * RTMP events handler.
@@ -75,6 +76,8 @@ public class RTMPHandler extends BaseRTMPHandler {
     protected static Logger log = Red5LoggerFactory.getLogger(RTMPHandler.class);
     
     private static final String HIGH_RESOURCE_USAGE = "current system resources not enough";
+    private static final String INVALID_STREAM_NAME = "stream name is invalid. Don't use special characters.";
+
 
     /**
      * Status object service.
@@ -276,20 +279,28 @@ public class RTMPHandler extends BaseRTMPHandler {
                     case RECEIVE_AUDIO:
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
-	                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
-	                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
-	                        		
-	                        		boolean systemResult = resourceMonitor.enoughResource();
-	                        		
-	                        		if(!systemResult)
-	                        		{
-	                        			Status status = getStatus(NS_FAILED).asStatus();
-	                        			status.setDescription(HIGH_RESOURCE_USAGE);
-	                                 channel.sendStatus(status);
-	                                 return;
-	                        		}
-	                        		
-	                        	}
+                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
+                        		String streamName = (String) call.getArguments()[0];
+
+                        		if(!StreamNameValidator.isStreamNameValid(streamName))
+                        		{
+                        			Status status = getStatus(NS_FAILED).asStatus();
+                        			status.setDescription(INVALID_STREAM_NAME+" setream name:"+streamName);
+                        			channel.sendStatus(status);
+                        			return;
+                        		}
+
+                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
+                        		boolean systemResult = resourceMonitor.enoughResource();
+
+                        		if(!systemResult)
+                        		{
+                        			Status status = getStatus(NS_FAILED).asStatus();
+                        			status.setDescription(HIGH_RESOURCE_USAGE);
+                        			channel.sendStatus(status);
+                        			return;
+                        		}
+                        	}
                         	
                             log.debug("Invoking {} from {} with service: {}", new Object[] { call, conn.getSessionId(), streamService });
                             if (invokeCall(conn, call, streamService)) {
