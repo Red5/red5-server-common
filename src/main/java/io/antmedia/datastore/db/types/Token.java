@@ -52,18 +52,18 @@ public class Token {
 	private String type;
 	
 	/**
-	 * token is related with playing streams in a Conference Room
+	 * the id of the conference room which requested streams belongs to.
 	 */
-	@ApiModelProperty(value = "token is related with playing streams in a Conference Room")
-	private String roomName;
+	@ApiModelProperty(value = "the id of the conference room which requested streams belongs to")
+	private String roomId;
 	
 	
-	public String getRoomName() {
-		return roomName;
+	public String getRoomId() {
+		return roomId;
 	}
 
-	public void setRoomName(String roomName) {
-		this.roomName = roomName;
+	public void setRoomId(String roomName) {
+		this.roomId = roomName;
 	}
 
 	public String getType() {
