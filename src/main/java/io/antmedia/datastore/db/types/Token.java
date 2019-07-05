@@ -51,7 +51,21 @@ public class Token {
 	@ApiModelProperty(value = "the type of the token")
 	private String type;
 	
+	/**
+	 * the id of the conference room which requested streams belongs to.
+	 */
+	@ApiModelProperty(value = "the id of the conference room which requested streams belongs to")
+	private String roomId;
 	
+	
+	public String getRoomId() {
+		return roomId;
+	}
+
+	public void setRoomId(String roomName) {
+		this.roomId = roomName;
+	}
+
 	public String getType() {
 		return type;
 	}
