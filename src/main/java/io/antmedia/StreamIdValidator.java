@@ -10,7 +10,10 @@ public class StreamIdValidator {
 		
 	}
 	public static boolean isStreamIdValid(String name) {
-		Matcher m = namePattern.matcher(name);
-		return !m.find();
+		if (name != null) {
+			Matcher m = namePattern.matcher(name);
+			return !m.find();
+		}
+		return false;
 	}
 }
