@@ -66,7 +66,7 @@ import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 
 import io.antmedia.IResourceMonitor;
-import io.antmedia.StreamNameValidator;
+import io.antmedia.StreamIdValidator;
 
 /**
  * RTMP events handler.
@@ -282,7 +282,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                         	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
                         		String streamName = (String) call.getArguments()[0];
 
-                        		if(!StreamNameValidator.isStreamNameValid(streamName))
+                        		if(!StreamIdValidator.isStreamIdValid(streamName))
                         		{
                         			Status status = getStatus(NS_FAILED).asStatus();
                         			status.setDescription(INVALID_STREAM_NAME+" setream name:"+streamName);
