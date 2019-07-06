@@ -9,11 +9,12 @@ public class StreamIdValidator {
 	private StreamIdValidator() {
 		
 	}
-	public static boolean isStreamIdValid(String name) {
-		if (name != null) {
-			Matcher m = namePattern.matcher(name);
+	public static boolean isStreamIdValid(String id) {
+		if (id != null) {
+			Matcher m = namePattern.matcher(id);
 			return !m.find();
 		}
-		return false;
+		//return true if name is null, it means that stream id will be generated
+		return true;
 	}
 }
