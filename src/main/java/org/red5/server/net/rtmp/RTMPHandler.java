@@ -282,6 +282,11 @@ public class RTMPHandler extends BaseRTMPHandler {
                         	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
                         		String streamName = (String) call.getArguments()[0];
 
+                        		if(streamName.contains("?") && streamName.contains("=")) {
+                        			//this means query parameters (token, hash etc.) are added to URL, so split it
+                        			streamName = streamName.split("\\?")[0];
+                        		}
+                        		
                         		if(!StreamIdValidator.isStreamIdValid(streamName))
                         		{
                         			Status status = getStatus(NS_FAILED).asStatus();
