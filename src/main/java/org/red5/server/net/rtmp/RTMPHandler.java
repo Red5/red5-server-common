@@ -280,17 +280,17 @@ public class RTMPHandler extends BaseRTMPHandler {
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
                         	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
-                        		String streamName = (String) call.getArguments()[0];
+                        		String streamId = (String) call.getArguments()[0];
 
-                        		if(streamName.contains("?") && streamName.contains("=")) {
+                        		if(streamId.contains("?") && streamId.contains("=")) {
                         			//this means query parameters (token, hash etc.) are added to URL, so split it
-                        			streamName = streamName.split("\\?")[0];
+                        			streamId = streamId.split("\\?")[0];
                         		}
                         		
-                        		if(!StreamIdValidator.isStreamIdValid(streamName))
+                        		if(!StreamIdValidator.isStreamIdValid(streamId))
                         		{
                         			Status status = getStatus(NS_FAILED).asStatus();
-                        			status.setDescription(INVALID_STREAM_NAME+" setream name:"+streamName);
+                        			status.setDescription(INVALID_STREAM_NAME+" setream name:"+streamId);
                         			channel.sendStatus(status);
                         			return;
                         		}
