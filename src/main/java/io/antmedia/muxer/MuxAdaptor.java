@@ -81,7 +81,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
     public static final int MP4_NO_SET_FOR_STREAM = 0;
     protected boolean isRecording = false;
     protected ClientBroadcastStream broadcastStream;
-    protected boolean mp4MuxingEnabled;
+	protected boolean mp4MuxingEnabled;
     protected boolean addDateTimeToMp4FileName;
     protected boolean hlsMuxingEnabled;
     protected boolean objectDetectionEnabled;
@@ -912,6 +912,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
             }
         }
     }
+
+    public ClientBroadcastStream getBroadcastStream() {
+		return broadcastStream;
+	}
 
 }
 

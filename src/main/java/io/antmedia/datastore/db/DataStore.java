@@ -367,6 +367,10 @@ public abstract class DataStore {
 		}
 	}
 
+	public long getLocalLiveBroadcastCount() {
+		return getBroadcastCount();
+	}
+
 
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
