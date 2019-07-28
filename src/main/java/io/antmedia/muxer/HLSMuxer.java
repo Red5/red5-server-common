@@ -619,6 +619,11 @@ public class HLSMuxer extends Muxer  {
 		avpacket.stream_index(index);
 
 	}
+	@Override
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp) {
+		writeVideoBuffer(encodedVideoFrame,timestamp,frameRotation,streamIndex);
+	}
 
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {

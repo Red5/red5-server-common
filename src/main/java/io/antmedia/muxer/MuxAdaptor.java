@@ -404,7 +404,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         }
     }
 
-    private IAntMediaStreamHandler getStreamHandler() {
+    public IAntMediaStreamHandler getStreamHandler() {
         if (appAdapter == null) {
 
             IContext context = MuxAdaptor.this.scope.getContext();
