@@ -65,6 +65,9 @@ public class AppSettings {
     public static final String SETTINGS_REMOTE_ALLOWED_CIDR = "settings.remoteAllowedCIDR";
 	
     public static final String SETTINGS_WRITE_STATS_TO_DATASTORE = "settings.writeStatsToDatastore";
+    
+    
+    public static final String SETTINGS_ENCODER_SELECTION_PREFERENCE = "settings.encoderSelectionPreference";
 
     
     public static final String BEAN_NAME = "app.settings";
@@ -328,6 +331,19 @@ public class AppSettings {
 	
 	@Value( "${" + SETTINGS_WRITE_STATS_TO_DATASTORE +":true}")
 	private boolean writeStatsToDatastore;
+	
+	/**
+	 * Can be "gpu_and_cpu" or "only_gpu"
+	 * 
+	 * "only_gpu" only tries to open the GPU for encoding. 
+	 * If it cannot open the gpu codec it returns false
+	 * 
+	 * "gpu_and_cpu" first tries to open the GPU for encoding
+	 * if it does not open, it tries to open the CPU for encoding
+	 * 
+	 */
+	@Value( "${" + SETTINGS_ENCODER_SELECTION_PREFERENCE+":'gpu_and_cpu'}")
+	private String encoderSelectionPreference;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -864,5 +880,24 @@ public class AppSettings {
 	@Bean
 	public static PropertySourcesPlaceholderConfigurer placeHolderConfigurer() {
 	  return new PropertySourcesPlaceholderConfigurer();
+	}
+
+	public String getEncoderSelectionPreference() {
+		return encoderSelectionPreference;
+	}
+	
+	/**
+	 * Can be "gpu_and_cpu" or "only_gpu"
+	 * 
+	 * "only_gpu" only tries to open the GPU for encoding. 
+	 * If it cannot open the gpu codec it returns false
+	 * 
+	 * "gpu_and_cpu" first tries to open the GPU for encoding
+	 * if it does not open, it tries to open the CPU for encoding
+	 * 
+	 * @param encoderSelectionPreference
+	 */
+	public void setEncoderSelectionPreference(String encoderSelectionPreference) {
+		this.encoderSelectionPreference = encoderSelectionPreference;
 	}
 }

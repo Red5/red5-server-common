@@ -265,13 +265,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
     }
 
     @Override
-    public boolean init(IScope scope, String name, boolean isAppend) {
+    public boolean init(IScope scope, String streamId, boolean isAppend) {
 
-        this.streamId = name;
+        this.streamId = streamId;
         this.scope = scope;
         initScheduler();
         if (scheduler == null) {
-            logger.warn("scheduler is not available in beans for {}", name);
+            logger.warn("scheduler is not available in beans for {}", streamId);
             return false;
         }
 
@@ -289,11 +289,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
             HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
             hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
             addMuxer(hlsMuxer);
-            logger.info("adding HLS Muxer for {}", name);
+            logger.info("adding HLS Muxer for {}", streamId);
         }
 
         for (Muxer muxer : muxerList) {
-            muxer.init(scope, name, 0);
+            muxer.init(scope, streamId, 0);
         }
         getStreamHandler().muxAdaptorAdded(this);
         return true;
