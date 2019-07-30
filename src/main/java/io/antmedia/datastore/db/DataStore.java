@@ -367,9 +367,16 @@ public abstract class DataStore {
 		}
 	}
 
+	/**
+	 * This method returns the local active broadcast count. 
+	 * Actually mongodb implementation is different because of cluster. 
+	 * Other implementations just return active broadcasts in db
+	 * @return
+	 */
 	public long getLocalLiveBroadcastCount() {
-		return getBroadcastCount();
+		return getActiveBroadcastCount();
 	}
+	
 
 
 //**************************************
