@@ -6,7 +6,7 @@ import io.antmedia.statistic.type.WebRTCVideoReceiveStats;
 import io.antmedia.statistic.type.WebRTCVideoSendStats;
 
 public interface IStatsCollector {
-	public static final String BEAN_NAME = "resourceMonitor";
+	public static final String BEAN_NAME = "statsCollector";
 
 	/**
 	 * It calculates the average CPU usage for a specified time.
