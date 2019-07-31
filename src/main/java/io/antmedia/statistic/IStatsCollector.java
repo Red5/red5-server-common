@@ -1,0 +1,58 @@
+package io.antmedia.statistic;
+
+import io.antmedia.statistic.type.WebRTCAudioReceiveStats;
+import io.antmedia.statistic.type.WebRTCAudioSendStats;
+import io.antmedia.statistic.type.WebRTCVideoReceiveStats;
+import io.antmedia.statistic.type.WebRTCVideoSendStats;
+
+public interface IStatsCollector {
+	public static final String BEAN_NAME = "resourceMonitor";
+
+	/**
+	 * It calculates the average CPU usage for a specified time.
+	 * @return the current CPU usage
+	 */
+	public int getCpuLoad();
+
+	/** 
+	 * It's configurable and it's based on percentage. 
+	 * Max value is 100.
+	 * @return the CPU limit that server does not exceed.
+	 */
+	public int getCpuLimit();
+	
+	/**
+	 * It's configurable
+	 * In MB
+	 * @return the free RAM size that server should have all the time
+	 */
+	public int getMinFreeRamSize();
+	
+	/**
+	 * In MB
+	 * @return the free RAM that server can use
+	 */
+	public int getFreeRam();
+	
+	/**
+	 * Check if cpu usage and ram usage does not exceed the limit
+	 * @return true if not exceeding the limit, false if exceeding limit
+	 */
+	public boolean enoughResource();
+
+	/**
+	 * Add new stats to sum for whole publisher
+	 * @param publisherHash
+	 * @param audioStats
+	 * @param videoStats
+	 */
+	public void addWebRTCPublisherStats(int publisherHash, WebRTCAudioReceiveStats audioStats, WebRTCVideoReceiveStats videoStats);
+
+	/**
+	 * Add new stats to sum for whole players
+	 * @param playerHash
+	 * @param audioStats
+	 * @param videoStats
+	 */
+	public void addWebRTCPlayerStats(int playerHash, WebRTCAudioSendStats audioStats, WebRTCVideoSendStats videoStats);
+}
