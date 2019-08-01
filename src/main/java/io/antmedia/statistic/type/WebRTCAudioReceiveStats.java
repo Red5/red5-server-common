@@ -8,6 +8,8 @@ public class WebRTCAudioReceiveStats {
 	int audioPacketsLost; 
 	double audioJitter;
 	double audioFractionLost;
+	private long audioPacketsReceivedPerSecond;
+	private BigInteger audioBytesReceivedPerSecond;
 	
 	public long getAudioPacketsReceived() {
 		return audioPacketsReceived;
@@ -48,8 +50,19 @@ public class WebRTCAudioReceiveStats {
 		this.audioFractionLost += audioStats.getAudioFractionLost();
 	}
 	
+	public void setAudioPacketsReceivedPerSecond(long l) {
+		this.audioPacketsReceivedPerSecond = l;
+	}
 	
+	public long getAudioPacketsReceivedPerSecond() {
+		return audioPacketsReceivedPerSecond;
+	}
+	public void setAudioBytesReceivedPerSecond(BigInteger bytesPerSecond) {
+		this.audioBytesReceivedPerSecond = bytesPerSecond;
+	}
 	
-	
+	public BigInteger getAudioBytesReceivedPerSecond() {
+		return audioBytesReceivedPerSecond;
+	}
 	
 }

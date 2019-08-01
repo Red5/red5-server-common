@@ -39,20 +39,5 @@ public interface IStatsCollector {
 	 * @return true if not exceeding the limit, false if exceeding limit
 	 */
 	public boolean enoughResource();
-
-	/**
-	 * Add new stats to sum for whole publisher
-	 * @param publisherHash
-	 * @param audioStats
-	 * @param videoStats
-	 */
-	public void addWebRTCPublisherStats(int publisherHash, WebRTCAudioReceiveStats audioStats, WebRTCVideoReceiveStats videoStats);
-
-	/**
-	 * Add new stats to sum for whole players
-	 * @param playerHash
-	 * @param audioStats
-	 * @param videoStats
-	 */
-	public void addWebRTCPlayerStats(int playerHash, WebRTCAudioSendStats audioStats, WebRTCVideoSendStats videoStats);
+	
 }

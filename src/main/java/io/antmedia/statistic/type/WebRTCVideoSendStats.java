@@ -10,6 +10,10 @@ public class WebRTCVideoSendStats
 	long videoPacketsSent;
 	private long videoFramesEncoded;
 	BigInteger videoBytesSent = BigInteger.ZERO;
+	private double videoPacketsSentPerSecond;
+	private BigInteger videoBytesSentPerSecond;
+	private double videoFramesEncodedPerSecond;
+	private long timeMs;
 	
 	public long getVideoFirCount() {
 		return videoFirCount;
@@ -68,5 +72,37 @@ public class WebRTCVideoSendStats
 		this.videoPacketsSent += videoStats.getVideoPacketsSent();
 		this.videoBytesSent = this.videoBytesSent.add(videoStats.getVideoBytesSent());
 		this.videoFramesEncoded += videoStats.getVideoFramesEncoded();
+	}
+
+	public void setVideoPacketsSentPerSecond(double d) {
+		this.videoPacketsSentPerSecond = d;
+	}
+	
+	public double getVideoPacketsSentPerSecond() {
+		return videoPacketsSentPerSecond;
+	}
+
+	public void setVideoBytesSentPerSecond(BigInteger bytesPerSecond) {
+		this.videoBytesSentPerSecond = bytesPerSecond;
+	}
+	
+	public BigInteger getVideoBytesSentPerSecond() {
+		return videoBytesSentPerSecond;
+	}
+
+	public void setVideoFramesEncodedPerSecond(double d) {
+		this.videoFramesEncodedPerSecond = d;
+	}
+	
+	public double getVideoFramesEncodedPerSecond() {
+		return videoFramesEncodedPerSecond;
+	}
+
+	public void setTimeMs(long timeMs) {
+		this.timeMs = timeMs;
+	}
+	
+	public long getTimeMs() {
+		return timeMs;
 	}
 }

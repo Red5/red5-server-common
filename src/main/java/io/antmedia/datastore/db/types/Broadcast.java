@@ -17,7 +17,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 
 @ApiModel(value="Broadcast", description="The basic broadcast class")
-@Entity("broadcast")
+@Entity(value = "broadcast", noClassnameStored = true)
 @Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")) })
 public class Broadcast {
 
