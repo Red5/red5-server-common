@@ -6,7 +6,7 @@ public class WebRTCAudioSendStats
 {
 	private long audioPacketsSent;
 	private BigInteger audioBytesSent = BigInteger.ZERO;
-	private double audioPacketsPerSecond;
+	private long audioPacketsPerSecond;
 	private BigInteger audioBytesSentPerSecond;
 	/**
 	 * The moment in these stats is captured in milliSeconds
@@ -32,15 +32,28 @@ public class WebRTCAudioSendStats
 	
 	public void addAudioStats(WebRTCAudioSendStats audioStats) 
 	{
-		this.audioPacketsSent += audioStats.getAudioPacketsSent();
-		this.audioBytesSent = this.audioBytesSent.add(audioStats.getAudioBytesSent());
+		if (audioStats != null) {
+			this.audioPacketsSent += audioStats.getAudioPacketsSent();
+			this.audioBytesSent = this.audioBytesSent.add(audioStats.getAudioBytesSent());
+			this.audioPacketsPerSecond += audioStats.getAudioPacketsPerSecond();
+			this.audioBytesSentPerSecond = this.audioBytesSentPerSecond.add(audioStats.getAudioBytesSentPerSecond());
+		}
 	}
+	
+	public void calculateAverageValues(long count) {
+		if (count > 0) 
+		{
+			this.audioPacketsPerSecond /= count;
+			this.audioBytesSentPerSecond = this.audioBytesSentPerSecond.divide(BigInteger.valueOf(count));
+		}
+	}
+	
 
-	public void setAudioPacketsSentPerSecond(double d) {
+	public void setAudioPacketsSentPerSecond(long d) {
 		this.audioPacketsPerSecond = d;
 	}
 	
-	public double getAudioPacketsPerSecond() {
+	public long getAudioPacketsPerSecond() {
 		return audioPacketsPerSecond;
 	}
 

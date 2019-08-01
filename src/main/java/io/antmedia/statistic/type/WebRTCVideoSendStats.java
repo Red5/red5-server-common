@@ -10,9 +10,9 @@ public class WebRTCVideoSendStats
 	long videoPacketsSent;
 	private long videoFramesEncoded;
 	BigInteger videoBytesSent = BigInteger.ZERO;
-	private double videoPacketsSentPerSecond;
+	private long videoPacketsSentPerSecond;
 	private BigInteger videoBytesSentPerSecond;
-	private double videoFramesEncodedPerSecond;
+	private long videoFramesEncodedPerSecond;
 	private long timeMs;
 	
 	public long getVideoFirCount() {
@@ -66,19 +66,34 @@ public class WebRTCVideoSendStats
 	
 	public void addVideoStats(WebRTCVideoSendStats videoStats) 
 	{
-		this.videoFirCount += videoStats.getVideoFirCount();
-		this.videoPliCount = videoStats.getVideoPliCount();
-		this.videoNackCount += videoStats.getVideoNackCount();
-		this.videoPacketsSent += videoStats.getVideoPacketsSent();
-		this.videoBytesSent = this.videoBytesSent.add(videoStats.getVideoBytesSent());
-		this.videoFramesEncoded += videoStats.getVideoFramesEncoded();
+		if (videoStats != null) {
+			this.videoFirCount += videoStats.getVideoFirCount();
+			this.videoPliCount += videoStats.getVideoPliCount();
+			this.videoNackCount += videoStats.getVideoNackCount();
+			this.videoPacketsSent += videoStats.getVideoPacketsSent();
+			this.videoBytesSent = this.videoBytesSent.add(videoStats.getVideoBytesSent());
+			this.videoFramesEncoded += videoStats.getVideoFramesEncoded();
+			
+			this.videoPacketsSentPerSecond += videoStats.getVideoPacketsSentPerSecond();
+			this.videoBytesSentPerSecond = this.videoBytesSentPerSecond.add(videoStats.getVideoBytesSentPerSecond());
+			this.videoFramesEncodedPerSecond += videoStats.getVideoFramesEncodedPerSecond();
+		}
+	}
+	
+	public void calculateAverageValues(long count) {
+		if (count > 0) 
+		{
+			this.videoPacketsSentPerSecond /= count;
+			this.videoBytesSentPerSecond = this.videoBytesSentPerSecond.divide(BigInteger.valueOf(count));
+			this.videoFramesEncodedPerSecond /= count;
+		}
 	}
 
-	public void setVideoPacketsSentPerSecond(double d) {
+	public void setVideoPacketsSentPerSecond(long d) {
 		this.videoPacketsSentPerSecond = d;
 	}
 	
-	public double getVideoPacketsSentPerSecond() {
+	public long getVideoPacketsSentPerSecond() {
 		return videoPacketsSentPerSecond;
 	}
 
@@ -90,11 +105,11 @@ public class WebRTCVideoSendStats
 		return videoBytesSentPerSecond;
 	}
 
-	public void setVideoFramesEncodedPerSecond(double d) {
+	public void setVideoFramesEncodedPerSecond(long d) {
 		this.videoFramesEncodedPerSecond = d;
 	}
 	
-	public double getVideoFramesEncodedPerSecond() {
+	public long getVideoFramesEncodedPerSecond() {
 		return videoFramesEncodedPerSecond;
 	}
 
