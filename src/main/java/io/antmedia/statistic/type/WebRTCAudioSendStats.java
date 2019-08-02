@@ -40,15 +40,6 @@ public class WebRTCAudioSendStats
 		}
 	}
 	
-	public void calculateAverageValues(long count) {
-		if (count > 0) 
-		{
-			this.audioPacketsPerSecond /= count;
-			this.audioBytesSentPerSecond = this.audioBytesSentPerSecond.divide(BigInteger.valueOf(count));
-		}
-	}
-	
-
 	public void setAudioPacketsSentPerSecond(long d) {
 		this.audioPacketsPerSecond = d;
 	}

@@ -80,15 +80,6 @@ public class WebRTCVideoSendStats
 		}
 	}
 	
-	public void calculateAverageValues(long count) {
-		if (count > 0) 
-		{
-			this.videoPacketsSentPerSecond /= count;
-			this.videoBytesSentPerSecond = this.videoBytesSentPerSecond.divide(BigInteger.valueOf(count));
-			this.videoFramesEncodedPerSecond /= count;
-		}
-	}
-
 	public void setVideoPacketsSentPerSecond(long d) {
 		this.videoPacketsSentPerSecond = d;
 	}

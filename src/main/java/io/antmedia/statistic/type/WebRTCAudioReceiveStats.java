@@ -43,11 +43,16 @@ public class WebRTCAudioReceiveStats {
 	}
 	public void addAudioStats(WebRTCAudioReceiveStats audioStats) 
 	{
-		this.audioPacketsReceived += audioStats.getAudioPacketsReceived();
-		this.audioBytesReceived = this.audioBytesReceived.add(audioStats.getAudioBytesReceived());
-		this.audioPacketsLost += audioStats.getAudioPacketsLost();
-		this.audioJitter += audioStats.getAudioJitter();
-		this.audioFractionLost += audioStats.getAudioFractionLost();
+		if (audioStats != null) 
+		{
+			this.audioPacketsReceived += audioStats.getAudioPacketsReceived();
+			this.audioBytesReceived = this.audioBytesReceived.add(audioStats.getAudioBytesReceived());
+			this.audioPacketsLost += audioStats.getAudioPacketsLost();
+			this.audioJitter += audioStats.getAudioJitter();
+			this.audioFractionLost += audioStats.getAudioFractionLost();
+			this.audioPacketsReceivedPerSecond += audioStats.getAudioPacketsReceivedPerSecond();
+			this.audioBytesReceivedPerSecond = this.audioBytesReceivedPerSecond.add(audioStats.getAudioBytesReceivedPerSecond());
+		}
 	}
 	
 	public void setAudioPacketsReceivedPerSecond(long l) {

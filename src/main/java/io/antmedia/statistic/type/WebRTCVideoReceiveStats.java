@@ -103,4 +103,21 @@ public class WebRTCVideoReceiveStats
 	public long getVideoFrameReceivedPerSecond() {
 		return videoFrameReceivedPerSecond;
 	}
+	
+	public void addVideoStats(WebRTCVideoReceiveStats videoReceiveStats) {
+		if (videoReceiveStats != null) 
+		{
+			this.videoFirCount += videoReceiveStats.getVideoFirCount();
+			this.videoPliCount += videoReceiveStats.getVideoPliCount();
+			this.videoNackCount += videoReceiveStats.getVideoNackCount();
+			this.videoPacketsReceived  += videoReceiveStats.getVideoPacketsReceived();
+			this.videoPacketsLost += videoReceiveStats.getVideoPacketsLost();
+			this.videoFractionLost += videoReceiveStats.getVideoFractionLost();
+			this.videoFrameReceived += videoReceiveStats.getVideoFrameReceived();
+			this.videoBytesReceived = this.videoBytesReceived.add(videoReceiveStats.getVideoBytesReceived());
+			this.videoPacketsReceivedPerSecond += videoReceiveStats.getVideoPacketsReceivedPerSecond();
+			this.videoBytesReceivedPerSecond = this.videoBytesReceivedPerSecond.add(videoReceiveStats.getVideoBytesReceivedPerSecond());
+			this.videoFrameReceivedPerSecond += videoReceiveStats.getVideoFrameReceivedPerSecond();
+		}
+	}
 }
