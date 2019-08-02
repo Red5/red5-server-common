@@ -7,7 +7,7 @@ public class WebRTCAudioSendStats
 	private long audioPacketsSent;
 	private BigInteger audioBytesSent = BigInteger.ZERO;
 	private long audioPacketsPerSecond;
-	private BigInteger audioBytesSentPerSecond;
+	private BigInteger audioBytesSentPerSecond = BigInteger.ZERO;
 	/**
 	 * The moment in these stats is captured in milliSeconds
 	 */

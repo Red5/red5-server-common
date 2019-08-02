@@ -11,7 +11,7 @@ public class WebRTCVideoSendStats
 	private long videoFramesEncoded;
 	BigInteger videoBytesSent = BigInteger.ZERO;
 	private long videoPacketsSentPerSecond;
-	private BigInteger videoBytesSentPerSecond;
+	private BigInteger videoBytesSentPerSecond = BigInteger.ZERO;
 	private long videoFramesEncodedPerSecond;
 	private long timeMs;
 	

@@ -9,7 +9,7 @@ public class WebRTCAudioReceiveStats {
 	double audioJitter;
 	double audioFractionLost;
 	private long audioPacketsReceivedPerSecond;
-	private BigInteger audioBytesReceivedPerSecond;
+	private BigInteger audioBytesReceivedPerSecond = BigInteger.ZERO;
 	
 	public long getAudioPacketsReceived() {
 		return audioPacketsReceived;

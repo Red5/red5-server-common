@@ -13,7 +13,7 @@ public class WebRTCVideoReceiveStats
 	long videoFrameReceived;
 	BigInteger videoBytesReceived = BigInteger.ZERO;
 	private long videoPacketsReceivedPerSecond;
-	private BigInteger videoBytesReceivedPerSecond;
+	private BigInteger videoBytesReceivedPerSecond = BigInteger.ZERO;
 	private long videoFrameReceivedPerSecond;
 	
 	public long getVideoFirCount() {
