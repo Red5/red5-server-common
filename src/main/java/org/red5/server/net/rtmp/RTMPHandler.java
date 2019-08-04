@@ -65,8 +65,8 @@ import org.red5.server.stream.StreamService;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 
-import io.antmedia.IResourceMonitor;
 import io.antmedia.StreamIdValidator;
+import io.antmedia.statistic.IStatsCollector;
 
 /**
  * RTMP events handler.
@@ -279,7 +279,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                     case RECEIVE_AUDIO:
                         IStreamService streamService = (IStreamService) ScopeUtils.getScopeService(conn.getScope(), IStreamService.class, StreamService.class);
                         try {
-                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IResourceMonitor.BEAN_NAME)) {
+                        	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IStatsCollector.BEAN_NAME)) {
                         		String streamId = (String) call.getArguments()[0];
 
                         		if(streamId.contains("?") && streamId.contains("=")) {
@@ -295,7 +295,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                         			return;
                         		}
 
-                        		IResourceMonitor resourceMonitor = (IResourceMonitor) conn.getScope().getContext().getBean(IResourceMonitor.BEAN_NAME);
+                        		IStatsCollector resourceMonitor = (IStatsCollector) conn.getScope().getContext().getBean(IStatsCollector.BEAN_NAME);
                         		boolean systemResult = resourceMonitor.enoughResource();
 
                         		if(!systemResult)
