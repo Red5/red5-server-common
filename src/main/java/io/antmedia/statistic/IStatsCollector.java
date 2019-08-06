@@ -1,7 +1,12 @@
-package io.antmedia;
+package io.antmedia.statistic;
 
-public interface IResourceMonitor {
-	public static final String BEAN_NAME = "resourceMonitor";
+import io.antmedia.statistic.type.WebRTCAudioReceiveStats;
+import io.antmedia.statistic.type.WebRTCAudioSendStats;
+import io.antmedia.statistic.type.WebRTCVideoReceiveStats;
+import io.antmedia.statistic.type.WebRTCVideoSendStats;
+
+public interface IStatsCollector {
+	public static final String BEAN_NAME = "statsCollector";
 
 	/**
 	 * It calculates the average CPU usage for a specified time.
@@ -34,4 +39,5 @@ public interface IResourceMonitor {
 	 * @return true if not exceeding the limit, false if exceeding limit
 	 */
 	public boolean enoughResource();
+	
 }
