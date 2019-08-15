@@ -9,6 +9,20 @@ import org.apache.catalina.util.NetMask;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 
+/**
+ * Application Settings for each application running in Ant Media Server.
+ * Each setting should have a default value with @Value annotation. Otherwise it breaks compatibility 
+ * 
+ * For naming please use the following convention
+ * start with "settings" put dot(.) and related parameter.
+ * like settings.hlsTime
+ * 
+ * If default values are not as expected, this is the signal that server is not started correctly for any 
+ * reason. Don't patch it with null-check or similar things. Take a look at why server is not started correctly
+ * 
+ * @author mekya
+ *
+ */
 @PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
 
@@ -105,10 +119,21 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
 	private boolean webRTCEnabled;
 	
-	@Value( "${"+SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED+":true}" )
+	/**
+	 * The flag that sets using the original webrtc stream in streaming.
+	 * This setting is effective if there is any adaptive bitrate setting. 
+	 * For instance assume that there is adaptive bitrate with 480p and incoming stream is 720p
+	 * Then if this setting is true, there are two bitrates for playing 720p and 480p. 
+	 * In this case if this setting is false, there is one bitrate for playing that is 480p
+	 */
+	@Value( "${"+SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED+":false}" )
 	private boolean useOriginalWebRTCEnabled;
 	
 
+	/**
+	 * If this value is true, hls files(m3u8 and ts files) are deleted after the broadcasting
+	 * has finished.
+	 */
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
 
