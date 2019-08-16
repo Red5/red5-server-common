@@ -79,7 +79,7 @@ public class PipeConnectionEvent extends EventObject {
     private final LinkedList<Runnable> taskList = new LinkedList<>();
 
     /**
-     * Construct an object with the specific pipe as the <tt>source</tt>
+     * Construct an object with the specific pipe as the source
      * 
      * @param source pipe that triggers this event
      * @param type event type
@@ -95,7 +95,7 @@ public class PipeConnectionEvent extends EventObject {
     }
 
     /**
-     * Construct an object with the specific pipe as the <tt>source</tt>
+     * Construct an object with the specific pipe as the source
      * 
      * @param source pipe that triggers this event
      * @param type event type

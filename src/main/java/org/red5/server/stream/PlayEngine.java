@@ -137,7 +137,7 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
     private int bufferCheckInterval = 0;
 
     /**
-     * Number of pending messages at which a <tt>NetStream.Play.InsufficientBW</tt> message is generated for VOD streams.
+     * Number of pending messages at which a NetStream.Play.InsufficientBW message is generated for VOD streams.
      */
     private int underrunTrigger = 10;
 
