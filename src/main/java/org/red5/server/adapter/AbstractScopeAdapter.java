@@ -299,4 +299,6 @@ public abstract class AbstractScopeAdapter implements IScopeHandler {
         return null;
     }
 
+    public abstract IScope getScope();
+
 }

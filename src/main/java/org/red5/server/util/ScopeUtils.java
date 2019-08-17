@@ -136,15 +136,17 @@ public class ScopeUtils {
      *            Scope
      * @param ancestor
      *            Scope to check
-     * @return <pre>
-     * true
-     * </pre>
+     * @return
+     * 
+     *         <pre>
+     *         true
+     *         </pre>
      * 
      *         if ancestor scope is really an ancestor of scope passed as from parameter,
      * 
      *         <pre>
-     * false
-     * </pre>
+     *         false
+     *         </pre>
      * 
      *         otherwise.
      */
@@ -164,15 +166,17 @@ public class ScopeUtils {
      *
      * @param scope
      *            Scope to check
-     * @return <pre>
-     * true
-     * </pre>
+     * @return
+     * 
+     *         <pre>
+     *         true
+     *         </pre>
      * 
      *         if scope is root scope (top level scope),
      * 
      *         <pre>
-     * false
-     * </pre>
+     *         false
+     *         </pre>
      * 
      *         otherwise.
      */
@@ -183,19 +187,22 @@ public class ScopeUtils {
     /**
      * Check whether scope is the global scope (level 0 leaf in scope tree) or not
      *
-     * When user connects the following URL: rtmp://localhost/myapp/foo/bar then / is the global level scope, myapp is app level, foo is room level and bar is room level as well (but with higher depth level)
+     * When user connects the following URL: rtmp://localhost/myapp/foo/bar then / is the global level scope, myapp is app level, foo is
+     * room level and bar is room level as well (but with higher depth level)
      *
      * @param scope
      *            Scope to check
-     * @return <pre>
-     * true
-     * </pre>
+     * @return
+     * 
+     *         <pre>
+     *         true
+     *         </pre>
      * 
      *         if scope is the global scope,
      * 
      *         <pre>
-     * false
-     * </pre>
+     *         false
+     *         </pre>
      * 
      *         otherwise.
      */
@@ -208,15 +215,17 @@ public class ScopeUtils {
      *
      * @param scope
      *            Scope to check
-     * @return <pre>
-     * true
-     * </pre>
+     * @return
+     * 
+     *         <pre>
+     *         true
+     *         </pre>
      * 
      *         if scope is an application scope,
      * 
      *         <pre>
-     * false
-     * </pre>
+     *         false
+     *         </pre>
      * 
      *         otherwise.
      */
@@ -229,15 +238,17 @@ public class ScopeUtils {
      *
      * @param scope
      *            Scope to check
-     * @return <pre>
-     * true
-     * </pre>
+     * @return
+     * 
+     *         <pre>
+     *         true
+     *         </pre>
      * 
      *         if scope is a room scope,
      * 
      *         <pre>
-     * false
-     * </pre>
+     *         false
+     *         </pre>
      * 
      *         otherwise.
      */
@@ -279,7 +290,7 @@ public class ScopeUtils {
                     return null;
                 }
                 try {
-                    result = defaultClass.newInstance();
+                    result = defaultClass.getDeclaredConstructor().newInstance();
                 } catch (Exception e) {
                     log.error("{}", e);
                     return null;
@@ -371,7 +382,7 @@ public class ScopeUtils {
         }
         if (handler == null && defaultClass != null) {
             try {
-                handler = defaultClass.newInstance();
+                handler = defaultClass.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 log.error("", e);
             }

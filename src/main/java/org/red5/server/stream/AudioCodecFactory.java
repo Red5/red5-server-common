@@ -72,15 +72,15 @@ public class AudioCodecFactory {
             int codecId = (data.get() & 0xf0) >> 4;
             switch (codecId) {
                 case 10: //aac 
-                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.AACAudio").newInstance();
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.AACAudio").getDeclaredConstructor().newInstance();
                     break;
-				case 11:
-                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.SpeexAudio").newInstance();
-					break;
-				case 2:
-				case 14:
-                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.MP3Audio").newInstance();
-					break;
+                case 11:
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.SpeexAudio").getDeclaredConstructor().newInstance();
+                    break;
+                case 2:
+                case 14:
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.MP3Audio").getDeclaredConstructor().newInstance();
+                    break;
             }
             data.rewind();
         } catch (Exception ex) {
@@ -93,7 +93,7 @@ public class AudioCodecFactory {
                 // XXX: this is a bit of a hack to create new instances of the
                 // configured audio codec for each stream
                 try {
-                    codec = storedCodec.getClass().newInstance();
+                    codec = storedCodec.getClass().getDeclaredConstructor().newInstance();
                 } catch (Exception e) {
                     log.error("Could not create audio codec instance", e);
                     continue;

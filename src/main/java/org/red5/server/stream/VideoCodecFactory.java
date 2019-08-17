@@ -72,16 +72,16 @@ public class VideoCodecFactory {
         try {
             switch (codecId) {
                 case 2: //sorenson 
-                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.SorensonVideo").newInstance();
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.SorensonVideo").getDeclaredConstructor().newInstance();
                     break;
                 case 3: //screen video
-                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo").newInstance();
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo").getDeclaredConstructor().newInstance();
                     break;
                 case 6: //screen video 2
-                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo2").newInstance();
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo2").getDeclaredConstructor().newInstance();
                     break;
                 case 7: //avc/h.264 video
-                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.AVCVideo").newInstance();
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.AVCVideo").getDeclaredConstructor().newInstance();
                     break;
             }
         } catch (Exception ex) {
@@ -95,7 +95,7 @@ public class VideoCodecFactory {
                 // XXX: this is a bit of a hack to create new instances of the
                 // configured video codec for each stream
                 try {
-                    codec = storedCodec.getClass().newInstance();
+                    codec = storedCodec.getClass().getDeclaredConstructor().newInstance();
                 } catch (Exception e) {
                     log.error("Could not create video codec instance", e);
                     continue;
