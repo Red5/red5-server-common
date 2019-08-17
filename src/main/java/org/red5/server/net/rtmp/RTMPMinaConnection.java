@@ -87,7 +87,6 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
         super(IConnection.Type.PERSISTENT.name().toLowerCase());
     }
 
-    @SuppressWarnings("cast")
     @Override
     public boolean connect(IScope newScope, Object[] params) {
         log.debug("Connect scope: {}", newScope);
