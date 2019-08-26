@@ -367,7 +367,7 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_ENCODER_SELECTION_PREFERENCE+":'gpu_and_cpu'}")
 	private String encoderSelectionPreference;
 	
-	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":'127.0.0.1/0'}")
+	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":0.0.0.0/0}")
 	private String allowedPublisherIps;
 	
 	public boolean isWriteStatsToDatastore() {
