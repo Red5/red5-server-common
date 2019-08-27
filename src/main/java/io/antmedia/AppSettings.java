@@ -79,6 +79,7 @@ public class AppSettings {
     
     public static final String SETTINGS_ENCODER_SELECTION_PREFERENCE = "settings.encoderSelectionPreference";
 
+    public static final String SETTINGS_ALLOWED_PUBLISHER_IPS = "settings.allowedPublisherIps";
     
     public static final String BEAN_NAME = "app.settings";
 	
@@ -365,6 +366,9 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_ENCODER_SELECTION_PREFERENCE+":'gpu_and_cpu'}")
 	private String encoderSelectionPreference;
+	
+	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":#{null}}")
+	private String allowedPublisherIps;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -904,5 +908,13 @@ public class AppSettings {
 	
 	public void setEncoderSelectionPreference(String encoderSelectionPreference) {
 		this.encoderSelectionPreference = encoderSelectionPreference;
+	}
+
+	public String getAllowedPublisherIps() {
+		return allowedPublisherIps;
+	}
+
+	public void setAllowedPublisherIps(String allowedPublisherIps) {
+		this.allowedPublisherIps = allowedPublisherIps;
 	}
 }
