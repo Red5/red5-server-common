@@ -1,19 +1,8 @@
 /*
- * RED5 Open Source Media Server - https://github.com/Red5/
- * 
- * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * RED5 Open Source Media Server - https://github.com/Red5/ Copyright 2006-2016 by respective authors (see below). All rights reserved. Licensed under the Apache License, Version
+ * 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless
+ * required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.red5.logging;
@@ -71,68 +60,20 @@ public class Red5LoggerFactory {
             }
             logger = Red5LoggerFactory.getLogger(clazz, contextName);
             /*
-            // get a reference to our caller
-            Class caller = Thread.currentThread().getStackTrace()[2].getClassName();
-            if (DEBUG) {
-                System.out.printf("Caller class: %s classloader: %s%n", caller, caller.getClassLoader());
-            }
-            // if the incoming class extends StatefulScopeWrappingAdapter we lookup the context by scope name
-            boolean scopeAware = StatefulScopeWrappingAdapter.class.isAssignableFrom(caller);
-            if (DEBUG) {
-                System.out.printf("scopeAware: %s%n", scopeAware);
-            }
-            if (scopeAware) {
-                try {
-                    Class wrapper = null;
-                    if ((wrapper = caller.asSubclass(StatefulScopeWrappingAdapter.class)) != null) {
-                        Method getScope = wrapper.getMethod("getScope", new Class[0]);
-                        // NPE will occur here if the scope is not yet set on the application adapter
-                        IScope scope = (IScope) getScope.invoke(null, new Object[0]);
-                        if (DEBUG) {
-                            System.out.printf("scope: %s%n", scope);
-                        }
-                        contextName = scope.getName();
-                    }
-                } catch (Exception cce) {
-                    //cclog.warn("Exception {}", e);
-                }
-            } else {
-                // if the incoming class is a servlet we lookup the context name
-                boolean servletScopeAware = Servlet.class.isAssignableFrom(caller);
-                if (DEBUG) {
-                    System.out.printf("servletScopeAware: %s%n", servletScopeAware);
-                }
-                if (servletScopeAware) {
-                    try {
-                        Class wrapper = null;
-                        if ((wrapper = caller.asSubclass(Servlet.class)) != null) {
-                            //ServletConfig getServletConfig
-                            Method getServletConfig = wrapper.getMethod("getServletConfig", new Class[0]);
-                            // NPE will occur here if the scope is not yet set on the application adapter
-                            ServletConfig config = (ServletConfig) getServletConfig.invoke(null, new Object[0]);
-                            if (DEBUG) {
-                                System.out.printf("config: %s%n", config);
-                            }
-                            contextName = config.getServletContext().getContextPath().replaceAll("/", "");
-                            if ("".equals(contextName)) {
-                                contextName = "root";
-                            }
-                        }
-                    } catch (Exception cce) {
-                        //cclog.warn("Exception {}", e);
-                    }
-                } else {
-                    // route the Launcher entries to the correct context
-                    String[] parts = Thread.currentThread().getName().split("Loader:/");
-                    if (parts.length > 1) {
-                        contextName = parts[1];
-                    } else {
-                        contextName = CoreConstants.DEFAULT_CONTEXT_NAME;
-                    }
-                }
-            }
-            logger = Red5LoggerFactory.getLogger(clazz, contextName);
-            */
+             * // get a reference to our caller Class caller = Thread.currentThread().getStackTrace()[2].getClassName(); if (DEBUG) { System.out.printf("Caller class: %s classloader: %s%n",
+             * caller, caller.getClassLoader()); } // if the incoming class extends StatefulScopeWrappingAdapter we lookup the context by scope name boolean scopeAware =
+             * StatefulScopeWrappingAdapter.class.isAssignableFrom(caller); if (DEBUG) { System.out.printf("scopeAware: %s%n", scopeAware); } if (scopeAware) { try { Class wrapper = null; if
+             * ((wrapper = caller.asSubclass(StatefulScopeWrappingAdapter.class)) != null) { Method getScope = wrapper.getMethod("getScope", new Class[0]); // NPE will occur here if the scope
+             * is not yet set on the application adapter IScope scope = (IScope) getScope.invoke(null, new Object[0]); if (DEBUG) { System.out.printf("scope: %s%n", scope); } contextName =
+             * scope.getName(); } } catch (Exception cce) { //cclog.warn("Exception {}", e); } } else { // if the incoming class is a servlet we lookup the context name boolean
+             * servletScopeAware = Servlet.class.isAssignableFrom(caller); if (DEBUG) { System.out.printf("servletScopeAware: %s%n", servletScopeAware); } if (servletScopeAware) { try { Class
+             * wrapper = null; if ((wrapper = caller.asSubclass(Servlet.class)) != null) { //ServletConfig getServletConfig Method getServletConfig = wrapper.getMethod("getServletConfig", new
+             * Class[0]); // NPE will occur here if the scope is not yet set on the application adapter ServletConfig config = (ServletConfig) getServletConfig.invoke(null, new Object[0]); if
+             * (DEBUG) { System.out.printf("config: %s%n", config); } contextName = config.getServletContext().getContextPath().replaceAll("/", ""); if ("".equals(contextName)) { contextName =
+             * "root"; } } } catch (Exception cce) { //cclog.warn("Exception {}", e); } } else { // route the Launcher entries to the correct context String[] parts =
+             * Thread.currentThread().getName().split("Loader:/"); if (parts.length > 1) { contextName = parts[1]; } else { contextName = CoreConstants.DEFAULT_CONTEXT_NAME; } } } logger =
+             * Red5LoggerFactory.getLogger(clazz, contextName);
+             */
         }
         if (logger == null) {
             logger = LoggerFactory.getLogger(clazz);

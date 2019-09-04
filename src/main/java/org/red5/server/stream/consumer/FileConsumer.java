@@ -258,7 +258,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                                         // ensure that our first video frame written is a key frame
                                         if (queued.isVideo()) {
                                             if (log.isTraceEnabled()) {
-                                               log.trace("pushMessage video - waitForKeyframe: {} gotKeyframe: {} timestamp: {}", waitForVideoKeyframe, gotKeyFrame, queued.getTimestamp());
+                                                log.trace("pushMessage video - waitForKeyframe: {} gotKeyframe: {} timestamp: {}", waitForVideoKeyframe, gotKeyFrame, queued.getTimestamp());
                                             }
                                             if (queued.codecId == VideoCodec.AVC.getId()) {
                                                 if (queued.isConfig()) {
@@ -266,7 +266,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
                                                     gotKeyFrame = true;
                                                 }
                                                 if (videoConfigurationTag == null && waitForVideoKeyframe) {
-                                                 continue;
+                                                    continue;
                                                 }
                                             } else {
                                                 if (queued.frameType == VideoData.FrameType.KEYFRAME) {
@@ -284,7 +284,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
 
                                         if (queued.isVideo()) {
                                             if (log.isTraceEnabled()) {
-                                                log.trace("Writing packet. frameType={} timestamp={}", queued.frameType, queued.getTimestamp() );
+                                                log.trace("Writing packet. frameType={} timestamp={}", queued.frameType, queued.getTimestamp());
                                             }
                                         }
 
@@ -550,7 +550,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Whether or not to wait for the first keyframe before processing video frames.
      *
-     * @param waitForVideoKeyframe
+     * @param waitForVideoKeyframe wait for key frame or not
      */
     public void setWaitForVideoKeyframe(boolean waitForVideoKeyframe) {
         log.debug("setWaitForVideoKeyframe: {}", waitForVideoKeyframe);
@@ -560,7 +560,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Whether or not to use a PriorityBlockingQueue or LinkedBlockingQueue for data queue.
      *
-     * @param usePriority
+     * @param usePriority priority queue or blocking queue
      */
     public void setUsePriority(boolean usePriority) {
         this.usePriority = usePriority;
@@ -569,7 +569,7 @@ public class FileConsumer implements Constants, IPushableConsumer, IPipeConnecti
     /**
      * Amount of time in milliseconds to wait for an offer to be accepted.
      *
-     * @param offerTimeout
+     * @param offerTimeout how long to wait for offer acceptance
      */
     public void setOfferTimeout(long offerTimeout) {
         this.offerTimeout = offerTimeout;

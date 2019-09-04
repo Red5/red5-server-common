@@ -59,7 +59,8 @@ public class ClientInvokeEvent extends BaseEvent {
         return callback;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override

@@ -16,7 +16,9 @@ public class TestConnectionConsumer {
     private final Logger log = LoggerFactory.getLogger(TestConnectionConsumer.class);
 
     private RTMPMinaConnection connection;
+
     private Channel channel;
+
     private ConnectionConsumer underTest;
 
     @Before

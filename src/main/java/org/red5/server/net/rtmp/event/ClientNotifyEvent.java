@@ -47,7 +47,8 @@ public class ClientNotifyEvent extends BaseEvent {
         return params;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override

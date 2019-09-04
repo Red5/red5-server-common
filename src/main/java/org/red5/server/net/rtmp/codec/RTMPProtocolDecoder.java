@@ -1,19 +1,8 @@
 /*
- * RED5 Open Source Media Server - https://github.com/Red5/
- * 
- * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * RED5 Open Source Media Server - https://github.com/Red5/ Copyright 2006-2016 by respective authors (see below). All rights reserved. Licensed under the Apache License, Version
+ * 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless
+ * required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.red5.server.net.rtmp.codec;
@@ -102,7 +91,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public List<Object> decodeBuffer(RTMPConnection conn, IoBuffer buffer) {
         final int position = buffer.position();
         //if (log.isTraceEnabled()) {
-            //log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
+        //log.trace("decodeBuffer: {}", Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
         //}
         // decoded results
         List<Object> result = null;
@@ -114,7 +103,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 // get the local decode state
                 RTMPDecodeState state = conn.getDecoderState();
                 //if (log.isTraceEnabled()) {
-                    //log.trace("RTMP decode state {}", state);
+                //log.trace("RTMP decode state {}", state);
                 //}
                 if (!conn.getSessionId().equals(state.getSessionId())) {
                     log.warn("Session decode overlap: {} != {}", conn.getSessionId(), state.getSessionId());
@@ -152,7 +141,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 conn.close();
             } finally {
                 //if (log.isTraceEnabled()) {
-                    //log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
+                //log.trace("decodeBuffer - post decode input buffer position: {} remaining: {}", buffer.position(), buffer.remaining());
                 //}
                 buffer.compact();
             }
@@ -183,7 +172,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Object decode(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) throws ProtocolException {
         //if (log.isTraceEnabled()) {
-            //log.trace("Decoding for {}", conn.getSessionId());
+        //log.trace("Decoding for {}", conn.getSessionId());
         //}
         try {
             final byte connectionState = conn.getStateCode();
@@ -206,7 +195,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
             throw new ProtocolException("Error during decoding", e);
         } finally {
             //if (log.isTraceEnabled()) {
-                //log.trace("Decoding finished for {}", conn.getSessionId());
+            //log.trace("Decoding finished for {}", conn.getSessionId());
             //}
         }
     }
@@ -225,13 +214,13 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
     public Packet decodePacket(RTMPConnection conn, RTMPDecodeState state, IoBuffer in) {
         final int position = in.position();
         //if (log.isTraceEnabled()) {
-            //log.trace("decodePacket - state: {} buffer: {}", state, in);
-            //log.trace("decodePacket: position {}, limit {}, {}", position, in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
-            //log.trace("decodePacket: position {}, limit {}", position, in.limit());
-            //int lastTs = lastTimestamp.get() != null ? lastTimestamp.get() : 0;
-            //if (lastTs == 0 || lastTs >= (MEDIUM_INT_MAX - 100)) {
-                //log.trace("decodePacket:{}\n{}", lastTs, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
-            //}
+        //log.trace("decodePacket - state: {} buffer: {}", state, in);
+        //log.trace("decodePacket: position {}, limit {}, {}", position, in.limit(), Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
+        //log.trace("decodePacket: position {}, limit {}", position, in.limit());
+        //int lastTs = lastTimestamp.get() != null ? lastTimestamp.get() : 0;
+        //if (lastTs == 0 || lastTs >= (MEDIUM_INT_MAX - 100)) {
+        //log.trace("decodePacket:{}\n{}", lastTs, Hex.encodeHexString(Arrays.copyOfRange(in.array(), position, in.limit())));
+        //}
         //}
         // get RTMP state holder
         RTMP rtmp = conn.getState();
@@ -285,7 +274,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // get the packet data
         IoBuffer buf = packet.getData();
         //if (log.isTraceEnabled()) {
-            //log.trace("Source buffer position: {}, limit: {}, packet-buf.position {}, packet size: {}", new Object[] { in.position(), in.limit(), buf.position(), header.getSize() });
+        //log.trace("Source buffer position: {}, limit: {}, packet-buf.position {}, packet size: {}", new Object[] { in.position(), in.limit(), buf.position(), header.getSize() });
         //}
         // read chunk
         int length = Math.min(buf.remaining(), readChunkSize);
@@ -300,7 +289,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         // get the chunk from our input
         byte[] chunk = Arrays.copyOfRange(in.array(), in.position(), in.position() + length);
         //if (log.isTraceEnabled()) {
-            //log.trace("Read chunkSize: {}, length: {}, chunk: {}", readChunkSize, length, Hex.encodeHexString(chunk));
+        //log.trace("Read chunkSize: {}, length: {}, chunk: {}", readChunkSize, length, Hex.encodeHexString(chunk));
         //}
         // move the position
         in.skip(length);
@@ -308,7 +297,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         buf.put(chunk);
         if (buf.hasRemaining()) {
             //if (log.isTraceEnabled()) {
-                //log.trace("Packet is incomplete ({},{})", buf.remaining(), buf.limit());
+            //log.trace("Packet is incomplete ({},{})", buf.remaining(), buf.limit());
             //}
             return null;
         }
@@ -366,8 +355,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
      */
     public Header decodeHeader(ChunkHeader chh, RTMPDecodeState state, IoBuffer in, RTMP rtmp) {
         //if (log.isTraceEnabled()) {
-            //log.trace("decodeHeader - chh: {} input: {}", chh, Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
-            //log.trace("decodeHeader - chh: {}", chh);
+        //log.trace("decodeHeader - chh: {} input: {}", chh, Hex.encodeHexString(Arrays.copyOfRange(in.array(), in.position(), in.limit())));
+        //log.trace("decodeHeader - chh: {}", chh);
         //}
         final int channelId = chh.getChannelId();
         // identifies the header type of the four types
@@ -392,9 +381,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         }
         int headerLength = RTMPUtils.getHeaderLength(headerSize);
         headerLength += chh.getSize() - 1;
-//        if (log.isTraceEnabled()) {
-//            log.trace("headerLength: {}", headerLength);
-//        }
+        //        if (log.isTraceEnabled()) {
+        //            log.trace("headerLength: {}", headerLength);
+        //        }
         if (in.remaining() < headerLength) {
             //log.trace("Header too small (hlen: {}), buffering. remaining: {}", headerLength, remaining);
             state.bufferDecoding(headerLength);
@@ -974,20 +963,9 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 }
                 // need to debug this further
                 /*
-                IoBuffer buf = IoBuffer.allocate(64);
-                buf.setAutoExpand(true);
-                Output out = null;
-                if (encoding == Encoding.AMF3) {
-                    out = new org.red5.io.amf3.Output(buf);
-                } else {
-                    out = new Output(buf);
-                }
-                out.writeString(action);
-                out.writeMap(params);
-                buf.flip();
-                // instance a notify with action
-                ret = new Notify(buf, action);
-                */
+                 * IoBuffer buf = IoBuffer.allocate(64); buf.setAutoExpand(true); Output out = null; if (encoding == Encoding.AMF3) { out = new org.red5.io.amf3.Output(buf); } else { out = new
+                 * Output(buf); } out.writeString(action); out.writeMap(params); buf.flip(); // instance a notify with action ret = new Notify(buf, action);
+                 */
                 // go back to the beginning
                 in.reset();
                 // instance a notify with action

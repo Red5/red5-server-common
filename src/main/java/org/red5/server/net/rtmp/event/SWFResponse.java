@@ -58,7 +58,8 @@ public class SWFResponse extends Ping {
         out.write(bytes);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override

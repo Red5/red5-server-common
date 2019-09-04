@@ -74,7 +74,8 @@ public class SetBuffer extends Ping {
         out.writeInt(bufferLength);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     @Override

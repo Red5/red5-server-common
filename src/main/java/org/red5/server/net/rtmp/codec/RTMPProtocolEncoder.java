@@ -1,19 +1,8 @@
 /*
- * RED5 Open Source Media Server - https://github.com/Red5/
- * 
- * Copyright 2006-2016 by respective authors (see below). All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * RED5 Open Source Media Server - https://github.com/Red5/ Copyright 2006-2016 by respective authors (see below). All rights reserved. Licensed under the Apache License, Version
+ * 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless
+ * required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.red5.server.net.rtmp.codec;
@@ -158,7 +147,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
                 int dataLen = data.limit();
                 header.setSize(dataLen);
                 //if (log.isTraceEnabled()) {
-                    //log.trace("Message: {}", data);
+                //log.trace("Message: {}", data);
                 //}
                 // chunk size for writing
                 int chunkSize = rtmp.getWriteChunkSize();
@@ -366,7 +355,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
             return HEADER_TIMER_CHANGE;
         }
         // continue encoding
-        return  HEADER_CONTINUE;
+        return HEADER_CONTINUE;
     }
 
     /**
@@ -419,15 +408,13 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
             log.trace("{} lastHeader: {}", Header.HeaderType.values()[headerType], lastHeader);
         }
         /*
-         Timestamps in RTMP are given as an integer number of milliseconds relative to an unspecified epoch. Typically, each stream will start
-         with a timestamp of 0, but this is not required, as long as the two endpoints agree on the epoch. Note that this means that any
-         synchronization across multiple streams (especially from separate hosts) requires some additional mechanism outside of RTMP.
-         Because timestamps are 32 bits long, they roll over every 49 days, 17 hours, 2 minutes and 47.296 seconds. Because streams are allowed to
-         run continuously, potentially for years on end, an RTMP application SHOULD use serial number arithmetic [RFC1982] when processing
-         timestamps, and SHOULD be capable of handling wraparound. For example, an application assumes that all adjacent timestamps are
-         within 2^31 - 1 milliseconds of each other, so 10000 comes after 4000000000, and 3000000000 comes before 4000000000.
-         Timestamp deltas are also specified as an unsigned integer number of milliseconds, relative to the previous timestamp. Timestamp deltas
-         may be either 24 or 32 bits long.
+         * Timestamps in RTMP are given as an integer number of milliseconds relative to an unspecified epoch. Typically, each stream will start with a timestamp of 0, but this is not
+         * required, as long as the two endpoints agree on the epoch. Note that this means that any synchronization across multiple streams (especially from separate hosts) requires some
+         * additional mechanism outside of RTMP. Because timestamps are 32 bits long, they roll over every 49 days, 17 hours, 2 minutes and 47.296 seconds. Because streams are allowed to
+         * run continuously, potentially for years on end, an RTMP application SHOULD use serial number arithmetic [RFC1982] when processing timestamps, and SHOULD be capable of handling
+         * wraparound. For example, an application assumes that all adjacent timestamps are within 2^31 - 1 milliseconds of each other, so 10000 comes after 4000000000, and 3000000000
+         * comes before 4000000000. Timestamp deltas are also specified as an unsigned integer number of milliseconds, relative to the previous timestamp. Timestamp deltas may be either 24
+         * or 32 bits long.
          */
         int timeBase = 0, timeDelta = 0;
         int headerSize = header.getSize();
