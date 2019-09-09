@@ -82,6 +82,10 @@ public class AppSettings {
     public static final String SETTINGS_ALLOWED_PUBLISHER_IPS = "settings.allowedPublisherIps";
     
     public static final String BEAN_NAME = "app.settings";
+    
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD = "settings.excessiveBandwidthThreshold";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD = "settings.excessiveBandwidthCallThreshold";
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
@@ -369,6 +373,26 @@ public class AppSettings {
 	
 	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":#{null}}")
 	private String allowedPublisherIps;
+	
+	/**
+	 * 
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD + ":300000}")
+	private int excessiveBandwidthValue = 100000;
+
+	/**
+	 * 
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD + ":3}")
+	private int excessiveBandwidthCallThreshold = 5;
+
+	/**
+	 * Excessive bandwidth algorithm is about switching to higher bitrate.
+	 * if bandwidth value  - video+audio bitrate is higher than {@link #excessiveBandwidthValue} and bandwidth value is not enought to switch higher quality video
+	 * for about consecutive {@link #excessiveBandwidthCallThreshold} times then
+	 * WebRTCAdaptor gives a chance to switch to higher bitrate
+	 */
+
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -917,4 +941,22 @@ public class AppSettings {
 	public void setAllowedPublisherIps(String allowedPublisherIps) {
 		this.allowedPublisherIps = allowedPublisherIps;
 	}
+
+	public int getExcessiveBandwidthCallThreshold() {
+		return excessiveBandwidthCallThreshold;
+	}
+
+	public void setExcessiveBandwidthCallThreshold(int excessiveBandwidthCallThreshold) {
+		this.excessiveBandwidthCallThreshold = excessiveBandwidthCallThreshold;
+	}
+
+	public int getExcessiveBandwidthValue() {
+		return excessiveBandwidthValue;
+	}
+
+	public void setExcessiveBandwidthValue(int excessiveBandwidthValue) {
+		this.excessiveBandwidthValue = excessiveBandwidthValue;
+	}
+	
+	
 }
