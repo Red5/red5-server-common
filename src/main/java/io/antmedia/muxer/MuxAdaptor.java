@@ -240,9 +240,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
         objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
 
-        addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
+        addDateTimeToMp4FileName = appSettingsLocal.isAddDateTimeToMp4FileName();
         mp4Filtername = null;
-        webRTCEnabled = getAppSettings().isWebRTCEnabled();
+        webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
         deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnExit();
         hlsListSize = appSettingsLocal.getHlsListSize();
         hlsTime = appSettingsLocal.getHlsTime();
@@ -421,14 +421,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
             if (scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
                 appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
             }
-            if (appSettings == null) {
-                logger.warn("No app settings in context, returning default AppSettings for {}", streamId);
-                appSettings = new AppSettings();
-            }
         }
-
         return appSettings;
-
     }
 
     public DataStore initializeDataStore() {

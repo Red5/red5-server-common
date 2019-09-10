@@ -466,13 +466,11 @@ public class PeerConnection {
     public int maxPort;
     
     
-    public static int CANDIDATE_FILTER_NONE = 0x0;
-    public static int CANDIDATE_FILTER_HOST = 0x1;
-    public static int CANDIDATE_FILTER_REFLEXIVE = 0x2;
-    public static int CANDIDATE_FILTER_RELAY = 0x4;
-    public static int CANDIDATE_FILTER_ALL = 0x7;
-    		  
-    public int candidateFilter;
+    public static int PORTALLOCATOR_DISABLE_UDP = 0x01;
+    public static int PORTALLOCATOR_DISABLE_STUN = 0x02;
+    public static int PORTALLOCATOR_DISABLE_RELAY = 0x04;
+        		  
+    public int portAllocatorFlags;
 
     // TODO(deadbeef): Instead of duplicating the defaults here, we should do
     // something to pick up the defaults from C++. The Objective-C equivalent
@@ -515,7 +513,7 @@ public class PeerConnection {
       activeResetSrtpParams = false;
       minPort = 0;
       maxPort = 0;
-      candidateFilter = CANDIDATE_FILTER_ALL;
+      portAllocatorFlags = 0;
     }
 
     @CalledByNative("RTCConfiguration")
@@ -720,8 +718,8 @@ public class PeerConnection {
     }
     
     @CalledByNative("RTCConfiguration")
-    int getCandidateFilter() {
-    		return candidateFilter;
+    int getPortAllocatorFlags() {
+    		return portAllocatorFlags;
     }
   };
 

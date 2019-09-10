@@ -87,7 +87,7 @@ public class AppSettings {
 	
 	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD = "settings.excessiveBandwidth.call.threshold";
 	
-	private static final String SETTINGS_WEBRTC_CANDIDATE_FILTER = "settings.candidateFilter";
+	private static final String SETTINGS_PORT_ALLOCATOR_FLAGS = "settings.portAllocator.flags";
 	
 	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_TRY_COUNT_BEFORE_SWITCH_BACK = "settings.excessiveBandwith.tryCount.beforeSwitchback";
 	
@@ -96,6 +96,8 @@ public class AppSettings {
 	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_PACKET_LOSS_DIFF_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.packetLossDiffThreshold.forSwitchback";
 	
 	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.rttMeasurementDiffThreshold.forSwitchback";
+	
+	private static final String SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR = "settings.replaceCandidateAddrWithServerAddr";
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
@@ -187,13 +189,6 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
 	private boolean tokenControlEnabled ;
-
-
-	/**
-	 * Fully qualified server name
-	 */
-	//@Value( "#{ @'ant.media.server.settings'.serverName }" )
-	private String serverName;
 
 	/**
 	 * event or vod
@@ -339,16 +334,13 @@ public class AppSettings {
 	private boolean webRTCTcpCandidatesEnabled;
 	
 	/**
-	 * Candidate filter for WebRTC
-	 * 
-	 * CANDIDATE_FILTER_NONE = 0x0;
-    	 * CANDIDATE_FILTER_HOST = 0x1;
-     * CANDIDATE_FILTER_REFLEXIVE = 0x2;
-     * CANDIDATE_FILTER_RELAY = 0x4;
-     * CANDIDATE_FILTER_ALL = 0x7;
+	 * Port Allocator Flags for WebRTC
+	 * PORTALLOCATOR_DISABLE_UDP = 0x01,
+  	 * PORTALLOCATOR_DISABLE_STUN = 0x02,
+  	 * PORTALLOCATOR_DISABLE_RELAY = 0x04,
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_CANDIDATE_FILTER +":0x7}")
-	private int candidateFilter;
+	@Value( "${" + SETTINGS_PORT_ALLOCATOR_FLAGS +":0}")
+	private int portAllocatorFlags;
 	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
@@ -456,6 +448,13 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK+ ":20}")
 	private int rttMeasurementDiffThresholdForSwitchback;
+	
+	/**
+	 * Replace candidate addr with server addr. 
+	 * In order to use it you should set serverName in conf/red5.properties
+	 */
+	@Value("${" + SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR+ ":false}")
+	private boolean replaceCandidateAddrWithServerAddr;
 
 
 	public boolean isWriteStatsToDatastore() {
@@ -597,14 +596,6 @@ public class AppSettings {
 
 	public void setListenerHookURL(String listenerHookURL) {
 		this.listenerHookURL = listenerHookURL;
-	}
-
-	public String getServerName() {
-		return serverName;
-	}
-
-	public void setServerName(String serverName) {
-		this.serverName = serverName;
 	}
 
 	public boolean isAcceptOnlyStreamsInDataStore() {
@@ -1022,12 +1013,12 @@ public class AppSettings {
 		this.excessiveBandwidthValue = excessiveBandwidthValue;
 	}
 
-	public int getCandidateFilter() {
-		return candidateFilter;
+	public int getPortAllocatorFlags() {
+		return portAllocatorFlags;
 	}
 	
-	public void setCandidateFilter(int candidateFilter) {
-		this.candidateFilter = candidateFilter;
+	public void setPortAllocatorFlags(int flags) {
+		this.portAllocatorFlags = flags;
 	}
 
 	public int getExcessiveBandwithTryCountBeforeSwitchback() {
@@ -1060,6 +1051,14 @@ public class AppSettings {
 
 	public void setRttMeasurementDiffThresholdForSwitchback(int rttMeasurementDiffThresholdForSwitchback) {
 		this.rttMeasurementDiffThresholdForSwitchback = rttMeasurementDiffThresholdForSwitchback;
+	}
+
+	public boolean isReplaceCandidateAddrWithServerAddr() {
+		return this.replaceCandidateAddrWithServerAddr;
+	}
+	
+	public void setReplaceCandidateAddrWithServerAddr(boolean replaceCandidateAddrWithServerAddr) {
+		this.replaceCandidateAddrWithServerAddr = replaceCandidateAddrWithServerAddr;
 	}
 	
 	
