@@ -425,7 +425,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         return appSettings;
     }
 
-    public DataStore initializeDataStore() {
+    private DataStore initializeDataStore() {
         if (dataStore == null) {
 
             IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
