@@ -83,9 +83,19 @@ public class AppSettings {
     
     public static final String BEAN_NAME = "app.settings";
     
-	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD = "settings.excessiveBandwidthThreshold";
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD = "settings.excessiveBandwidth.threshold";
 	
-	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD = "settings.excessiveBandwidthCallThreshold";
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD = "settings.excessiveBandwidth.call.threshold";
+	
+	private static final String SETTINGS_WEBRTC_CANDIDATE_FILTER = "settings.candidateFilter";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_TRY_COUNT_BEFORE_SWITCH_BACK = "settings.excessiveBandwith.tryCount.beforeSwitchback";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_ENABLED = "settings.excessiveBandwidth_enabled";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_PACKET_LOSS_DIFF_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.packetLossDiffThreshold.forSwitchback";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.rttMeasurementDiffThreshold.forSwitchback";
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
@@ -329,6 +339,17 @@ public class AppSettings {
 	private boolean webRTCTcpCandidatesEnabled;
 	
 	/**
+	 * Candidate filter for WebRTC
+	 * 
+	 * CANDIDATE_FILTER_NONE = 0x0;
+    	 * CANDIDATE_FILTER_HOST = 0x1;
+     * CANDIDATE_FILTER_REFLEXIVE = 0x2;
+     * CANDIDATE_FILTER_RELAY = 0x4;
+     * CANDIDATE_FILTER_ALL = 0x7;
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_CANDIDATE_FILTER +":0x7}")
+	private int candidateFilter;
+	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
 	private boolean collectSocialMediaActivity = false;
@@ -375,25 +396,68 @@ public class AppSettings {
 	private String allowedPublisherIps;
 	
 	/**
+	 * *******************************************************
+	 * What is Excessive Bandwidth Algorithm?
+	 * Excessive Bandwidth Algorithm tries to switch to higher bitrate even if bandwidth seems not enough
 	 * 
+	 * Why is it implemented?
+	 * WebRTC stack sometimes does not calculate the bandwidth correctly. For instance,
+	 * when network quality drop for a few seconds, it does not calculates the bitrate correctly
+	 * 
+	 * How it works?
+	 * If measured bandwidth - the current video bitrate is more than {@link #excessiveBandwidthValue}
+	 * for consecutive {@link #excessiveBandwidthCallThreshold} times it switches to higher bitrate
+	 * 
+	 * If bandwidth measured is still than the required bandwidth it tries {@link #excessiveBandwithTryCountBeforeSwitchback}
+	 * times to stay in the high bitrate. It also switches back to lower quality 
+	 * if packetLoss different is bigger than {@link #packetLossDiffThresholdForSwitchback} or 
+	 * rtt time difference is bigger than {@link #rttMeasurementDiffThresholdForSwitchback} before 
+	 * {@link #tryCountBeforeSwitchback} reaches to zero
+	 * 
+	 * 
+	 * Side effect
+	 * If network fluctuates too much or not consistent, quality of the video changes also fluctuates too much for the viewers
+	 * *********************************************************
+	 */
+	
+	/**
+	 *  The excessive bandwidth threshold value
 	 */
 	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD + ":300000}")
-	private int excessiveBandwidthValue = 100000;
+	private int excessiveBandwidthValue;
 
 	/**
-	 * 
+	 * The excessive bandwidth call threshold value
 	 */
 	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD + ":3}")
-	private int excessiveBandwidthCallThreshold = 5;
+	private int excessiveBandwidthCallThreshold;
+	
+	
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_TRY_COUNT_BEFORE_SWITCH_BACK + ":4}")
+	private int excessiveBandwithTryCountBeforeSwitchback;
+	
+	/**
+	 * Enable or disable excessive bandwidth algorithm
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_ENABLED+ ":false}")
+	private boolean excessiveBandwidthAlgorithmEnabled;
+	
+	/**
+	 * packet loss threshold if packetLoss is bigger than this value in ExcessiveBandwidth
+	 * algorithm, it switches back to lower quality without try every attempts {@link #excessiveBandwithTryCountBeforeSwitchback}
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_PACKET_LOSS_DIFF_THRESHOLD_FOR_SWITCH_BACK+ ":10}")
+	private int packetLossDiffThresholdForSwitchback;
 
 	/**
-	 * Excessive bandwidth algorithm is about switching to higher bitrate.
-	 * if bandwidth value  - video+audio bitrate is higher than {@link #excessiveBandwidthValue} and bandwidth value is not enought to switch higher quality video
-	 * for about consecutive {@link #excessiveBandwidthCallThreshold} times then
-	 * WebRTCAdaptor gives a chance to switch to higher bitrate
+	 * rtt measurement threshold diff if rttMeasurement is bigger than this value in ExcessiveBandwidth
+	 * algorithm, it switches back to lower quality without try every attempts {@link #setTryCountBeforeSwitchback(int)}
+	 * @param rttMeasurementDiffThresholdForSwitchback
 	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK+ ":20}")
+	private int rttMeasurementDiffThresholdForSwitchback;
 
-	
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -956,6 +1020,46 @@ public class AppSettings {
 
 	public void setExcessiveBandwidthValue(int excessiveBandwidthValue) {
 		this.excessiveBandwidthValue = excessiveBandwidthValue;
+	}
+
+	public int getCandidateFilter() {
+		return candidateFilter;
+	}
+	
+	public void setCandidateFilter(int candidateFilter) {
+		this.candidateFilter = candidateFilter;
+	}
+
+	public int getExcessiveBandwithTryCountBeforeSwitchback() {
+		return excessiveBandwithTryCountBeforeSwitchback;
+	}
+
+	public boolean isExcessiveBandwidthAlgorithmEnabled() {
+		return excessiveBandwidthAlgorithmEnabled;
+	}
+
+	public int getPacketLossDiffThresholdForSwitchback() {
+		return packetLossDiffThresholdForSwitchback;
+	}
+
+	public int getRttMeasurementDiffThresholdForSwitchback() {
+		return rttMeasurementDiffThresholdForSwitchback;
+	}
+
+	public void setExcessiveBandwithTryCountBeforeSwitchback(int excessiveBandwithTryCountBeforeSwitchback) {
+		this.excessiveBandwithTryCountBeforeSwitchback = excessiveBandwithTryCountBeforeSwitchback;
+	}
+
+	public void setExcessiveBandwidthAlgorithmEnabled(boolean excessiveBandwidthAlgorithmEnabled) {
+		this.excessiveBandwidthAlgorithmEnabled = excessiveBandwidthAlgorithmEnabled;
+	}
+
+	public void setPacketLossDiffThresholdForSwitchback(int packetLossDiffThresholdForSwitchback) {
+		this.packetLossDiffThresholdForSwitchback = packetLossDiffThresholdForSwitchback;
+	}
+
+	public void setRttMeasurementDiffThresholdForSwitchback(int rttMeasurementDiffThresholdForSwitchback) {
+		this.rttMeasurementDiffThresholdForSwitchback = rttMeasurementDiffThresholdForSwitchback;
 	}
 	
 	
