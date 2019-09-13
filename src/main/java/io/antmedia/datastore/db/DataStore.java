@@ -5,11 +5,11 @@ import java.util.List;
 
 import io.antmedia.AppSettings;
 import io.antmedia.AppSettingsModel;
-import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
+import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;

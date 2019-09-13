@@ -1,10 +1,7 @@
 package io.antmedia.cluster;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.antmedia.cluster.IClusterStore;
-import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.types.Broadcast;
 
@@ -30,23 +27,9 @@ public class DBReader {
 		return host;
 	}
 	
-	public void addDataStore(String appName, DataStore store) {
-		dbMap.put(appName, store);
-	}
 
-	public void setClusterStore(IClusterStore store) {
-		this.clusterStore = store;
-	}
 	
-	public IClusterStore getClusterStore() {
-		return clusterStore;
-	}
 
-	//TODO move this method to datastore
-	public List<StreamInfo> getWebRTCStreamInfo(String streamId, String appName) {
-		return dbMap.get(appName).getStreamInfoList(streamId);
-	}
-	
 
 
 	
