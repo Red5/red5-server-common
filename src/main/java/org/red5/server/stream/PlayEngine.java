@@ -84,7 +84,9 @@ import org.red5.server.stream.message.ResetMessage;
 import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 
-import io.antmedia.cluster.DBReader;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
+import io.antmedia.datastore.db.types.Broadcast;
 
 /**
  * A play engine for playing a IPlayItem.
@@ -382,7 +384,14 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
 
-			String hostName = DBReader.instance.getHost(itemName, thisScope.getName());
+			DataStore dataStore = ((IDataStoreFactory)thisScope.getContext().getBean(IDataStoreFactory.BEAN_NAME)).getDataStore();
+			Broadcast broadcast = dataStore.get(itemName);
+			
+			String hostName = null;
+			if (broadcast != null) {
+				hostName = broadcast.getOriginAdress();
+			}
+			
 			if (hostName != null) {
 				RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
 				IConnection conn = Red5.getConnectionLocal();

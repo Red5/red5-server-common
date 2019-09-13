@@ -2,8 +2,6 @@ package io.antmedia;
 
 import java.util.List;
 
-import io.antmedia.EncoderSettings;
-
 public class AppSettingsModel {
 	
 	private boolean mp4MuxingEnabled;
