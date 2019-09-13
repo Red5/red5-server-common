@@ -3,6 +3,8 @@ package io.antmedia.datastore.db;
 import java.io.File;
 import java.util.List;
 
+import io.antmedia.AppSettings;
+import io.antmedia.AppSettingsModel;
 import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
@@ -11,6 +13,7 @@ import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;
+import io.antmedia.datastore.preference.PreferenceStore;
 
 
 
@@ -22,7 +25,10 @@ public abstract class DataStore {
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
 	private boolean writeStatsToDatastore = true;
-
+	
+	public static final String DEFAULT_LOCALHOST = "127.0.0.1";
+	
+	
 	public abstract String save(Broadcast broadcast);
 
 	/**
@@ -369,13 +375,172 @@ public abstract class DataStore {
 
 	/**
 	 * This method returns the local active broadcast count. 
-	 * Actually mongodb implementation is different because of cluster. 
+	 * Mongodb implementation is different because of cluster. 
 	 * Other implementations just return active broadcasts in db
 	 * @return
 	 */
 	public long getLocalLiveBroadcastCount() {
 		return getActiveBroadcastCount();
 	}
+	
+	
+	/**
+	 * Updates application settings 
+	 * MongoDB overrides this method especially for having a common settings in all nodes
+	 * @param appName
+	 * @param appsettings
+	 * @return
+	 */
+	public boolean updateAppSettings(String appName, AppSettingsModel appsettings) {
+		PreferenceStore store = new PreferenceStore("webapps/"+appName+"/WEB-INF/red5-web.properties");
+
+		store.put(AppSettings.SETTINGS_MP4_MUXING_ENABLED, String.valueOf(appsettings.isMp4MuxingEnabled()));
+		store.put(AppSettings.SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME, String.valueOf(appsettings.isAddDateTimeToMp4FileName()));
+		store.put(AppSettings.SETTINGS_HLS_MUXING_ENABLED, String.valueOf(appsettings.isHlsMuxingEnabled()));
+		store.put(AppSettings.SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
+		store.put(AppSettings.SETTINGS_OBJECT_DETECTION_ENABLED, String.valueOf(appsettings.isObjectDetectionEnabled()));
+		store.put(AppSettings.SETTINGS_TOKEN_CONTROL_ENABLED, String.valueOf(appsettings.isTokenControlEnabled()));
+		store.put(AppSettings.SETTINGS_WEBRTC_ENABLED, String.valueOf(appsettings.isWebRTCEnabled()));
+		store.put(AppSettings.SETTINGS_WEBRTC_FRAME_RATE, String.valueOf(appsettings.getWebRTCFrameRate()));
+		store.put(AppSettings.SETTINGS_HASH_CONTROL_PUBLISH_ENABLED, String.valueOf(appsettings.isHashControlPublishEnabled()));
+		store.put(AppSettings.SETTINGS_HASH_CONTROL_PLAY_ENABLED, String.valueOf(appsettings.isHashControlPlayEnabled()));
+		
+		store.put(AppSettings.SETTINGS_REMOTE_ALLOWED_CIDR, appsettings.getRemoteAllowedCIDR() != null 
+																? appsettings.getRemoteAllowedCIDR() 
+																: DEFAULT_LOCALHOST);
+		
+		if (appsettings.getVodFolder() == null) {
+			store.put(AppSettings.SETTINGS_VOD_FOLDER, "");
+		}else {
+			store.put(AppSettings.SETTINGS_VOD_FOLDER, appsettings.getVodFolder());
+		}
+
+		if (appsettings.getHlsListSize() < 5) {
+			store.put(AppSettings.SETTINGS_HLS_LIST_SIZE, "5");
+		}
+		else {
+			store.put(AppSettings.SETTINGS_HLS_LIST_SIZE, String.valueOf(appsettings.getHlsListSize()));
+		}
+
+		if (appsettings.getHlsTime() < 2) {
+			store.put(AppSettings.SETTINGS_HLS_TIME, "2");
+		}
+		else {
+			store.put(AppSettings.SETTINGS_HLS_TIME, String.valueOf(appsettings.getHlsTime()));
+		}
+
+		if (appsettings.getHlsPlayListType() == null) {
+			store.put(AppSettings.SETTINGS_HLS_PLAY_LIST_TYPE, "");
+		}
+		else {
+			store.put(AppSettings.SETTINGS_HLS_PLAY_LIST_TYPE, appsettings.getHlsPlayListType());
+		}
+
+		if (appsettings.getFacebookClientId() == null){
+			store.put(AppSettings.FACEBOOK_CLIENT_ID, "");
+		}
+		else {
+			store.put(AppSettings.FACEBOOK_CLIENT_ID, appsettings.getFacebookClientId());
+		}
+
+		if (appsettings.getEncoderSettings() == null) {
+			store.put(AppSettings.SETTINGS_ENCODER_SETTINGS_STRING, "");
+		}
+		else {
+			store.put(AppSettings.SETTINGS_ENCODER_SETTINGS_STRING, AppSettings.encodersList2Str(appsettings.getEncoderSettings()));
+		}
+		
+		if (appsettings.getTokenHashSecret() == null) {
+			store.put(AppSettings.TOKEN_HASH_SECRET, "");
+		}
+		else {
+			store.put(AppSettings.TOKEN_HASH_SECRET, appsettings.getTokenHashSecret());
+		}
+
+		store.put(AppSettings.SETTINGS_PREVIEW_OVERWRITE, String.valueOf(appsettings.isPreviewOverwrite()));
+
+		return store.save();
+	}
+	
+	
+	public static AppSettingsModel getAppSettings(String appname) {
+		PreferenceStore store = new PreferenceStore("webapps/"+appname+"/WEB-INF/red5-web.properties");
+		AppSettingsModel appSettings = new AppSettingsModel();
+		
+		
+		if (store.get(AppSettings.SETTINGS_HASH_CONTROL_PLAY_ENABLED) != null) {
+			appSettings.setHashControlPlayEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_HASH_CONTROL_PLAY_ENABLED)));
+		}
+		
+		if (store.get(AppSettings.SETTINGS_HASH_CONTROL_PUBLISH_ENABLED) != null) {
+			appSettings.setHashControlPublishEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_HASH_CONTROL_PUBLISH_ENABLED)));
+		}
+		
+		if (store.get(AppSettings.TOKEN_HASH_SECRET) != null) {
+			appSettings.setTokenHashSecret(store.get(AppSettings.TOKEN_HASH_SECRET));
+		}
+		
+
+		if (store.get(AppSettings.SETTINGS_MP4_MUXING_ENABLED) != null) {
+			appSettings.setMp4MuxingEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_MP4_MUXING_ENABLED)));
+		}
+
+		if (store.get(AppSettings.SETTINGS_WEBRTC_ENABLED) != null) {
+			appSettings.setWebRTCEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_WEBRTC_ENABLED)));
+		}
+
+		if (store.get(AppSettings.SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME) != null) {
+			appSettings.setAddDateTimeToMp4FileName(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME)));
+		}
+		if (store.get(AppSettings.SETTINGS_HLS_MUXING_ENABLED) != null) {
+			appSettings.setHlsMuxingEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_HLS_MUXING_ENABLED)));
+		}
+		if (store.get(AppSettings.SETTINGS_OBJECT_DETECTION_ENABLED) != null) {
+			appSettings.setObjectDetectionEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_OBJECT_DETECTION_ENABLED)));
+		}
+
+		if (store.get(AppSettings.SETTINGS_HLS_LIST_SIZE) != null) {
+			appSettings.setHlsListSize(Integer.valueOf(store.get(AppSettings.SETTINGS_HLS_LIST_SIZE)));
+		}
+
+		if (store.get(AppSettings.SETTINGS_HLS_TIME) != null) {
+			appSettings.setHlsTime(Integer.valueOf(store.get(AppSettings.SETTINGS_HLS_TIME)));
+		}
+
+		if (store.get(AppSettings.SETTINGS_WEBRTC_FRAME_RATE) != null) {
+			appSettings.setWebRTCFrameRate(Integer.valueOf(store.get(AppSettings.SETTINGS_WEBRTC_FRAME_RATE)));
+		}
+
+		appSettings.setHlsPlayListType(store.get(AppSettings.SETTINGS_HLS_PLAY_LIST_TYPE));
+		appSettings.setFacebookClientId(store.get(AppSettings.FACEBOOK_CLIENT_ID));
+		appSettings.setFacebookClientSecret(store.get(AppSettings.FACEBOOK_CLIENT_SECRET));
+		appSettings.setYoutubeClientId(store.get(AppSettings.YOUTUBE_CLIENT_ID));
+		appSettings.setYoutubeClientSecret(store.get(AppSettings.YOUTUBE_CLIENT_SECRET));
+		appSettings.setPeriscopeClientId(store.get(AppSettings.PERISCOPE_CLIENT_ID));
+		appSettings.setPeriscopeClientSecret(store.get(AppSettings.PERISCOPE_CLIENT_SECRET));
+		appSettings.setAcceptOnlyStreamsInDataStore(Boolean.valueOf(store.get(AppSettings.SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE)));
+		appSettings.setVodFolder(store.get(AppSettings.SETTINGS_VOD_FOLDER));
+		appSettings.setTokenControlEnabled(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_TOKEN_CONTROL_ENABLED)));
+
+		appSettings.setEncoderSettings(AppSettings.encodersStr2List(store.get(AppSettings.SETTINGS_ENCODER_SETTINGS_STRING)));
+
+		if (store.get(AppSettings.SETTINGS_PREVIEW_OVERWRITE) != null) {
+			appSettings.setPreviewOverwrite(Boolean.parseBoolean(store.get(AppSettings.SETTINGS_PREVIEW_OVERWRITE)));
+		}
+		
+		String remoteAllowedCIDR = store.get(AppSettings.SETTINGS_REMOTE_ALLOWED_CIDR);
+		if (remoteAllowedCIDR != null && !remoteAllowedCIDR.isEmpty())
+		{
+			appSettings.setRemoteAllowedCIDR(store.get(AppSettings.SETTINGS_REMOTE_ALLOWED_CIDR));
+		}
+		else {
+			//default value
+			appSettings.setRemoteAllowedCIDR(DataStore.DEFAULT_LOCALHOST);
+		}
+		
+		return appSettings;
+	}
+	
 	
 
 
