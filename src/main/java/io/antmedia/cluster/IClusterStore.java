@@ -8,5 +8,5 @@ public interface IClusterStore {
 	public boolean addNode(ClusterNode node);
 	public boolean updateNode(String nodeId, ClusterNode node);
 	public boolean deleteNode(String nodeId);
-	public boolean registerAsNode();
+	public boolean registerAsNode(ClusterNode node);
 }

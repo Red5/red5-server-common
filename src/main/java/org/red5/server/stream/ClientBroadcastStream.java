@@ -22,9 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -76,7 +73,6 @@ import org.red5.server.net.rtmp.event.Notify;
 import org.red5.server.net.rtmp.event.VideoData;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.message.RTMPMessage;
 import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
@@ -84,20 +80,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier;
-import io.antmedia.cluster.IClusterNotifier.StreamEvent;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Endpoint;
-import io.antmedia.muxer.HLSMuxer;
-import io.antmedia.muxer.Mp4Muxer;
 import io.antmedia.muxer.MuxAdaptor;
 import io.antmedia.muxer.RtmpMuxer;
-import io.antmedia.storage.AmazonS3StorageClient;
-import io.antmedia.storage.StorageClient;
 
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
@@ -277,12 +266,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 		if (muxAdaptor != null) {
 			muxAdaptor.clear();
 			muxAdaptor = null;
-		}
-
-		IClusterNotifier clusterNotifierTmp = getClusterNotifier();
-		if (clusterNotifierTmp != null) {
-			IScope scope = Red5.getConnectionLocal().getScope();
-			clusterNotifierTmp.sendStreamNotification(publishedName, scope.getName(), StreamEvent.STREAM_UNPUBLISHED);
 		}
 
 		// clear listeners
@@ -974,29 +957,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			}
 		}
 
-	}
-
-	public IClusterNotifier getClusterNotifier() {
-		if (clusterNotifier == null) {
-			IConnection connectionLocal = Red5.getConnectionLocal();
-			if (connectionLocal != null) 
-			{
-				IScope scope = connectionLocal.getScope();
-				if (scope != null) {
-					IContext context = scope.getContext();
-					if (context != null && context.hasBean("tomcat.cluster")) {
-						clusterNotifier = (IClusterNotifier) context.getBean("tomcat.cluster");
-					}
-				}
-			}
-			else {
-				log.warn("There is no local connection for this BroadcastStream. It is an instance of RemoteBroadcastStream {}", this instanceof RemoteBroadcastStream);
-			}
-		}
-		if (clusterNotifier == null) {
-			log.warn("cluster notifier null for {}", publishedName);
-		}
-		return clusterNotifier;
 	}
 
 

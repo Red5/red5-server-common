@@ -14,8 +14,11 @@ public class DBReader {
 	
 	ConcurrentHashMap<String, DataStore> dbMap = new ConcurrentHashMap<>();	
 	IClusterStore clusterStore;
-	private IClusterNotifier cluster;
 	
+	private DBReader() {
+		//make private constructor so that nobody initialize it
+	}
+	//TODO move this method to datastore
 	public String getHost(String streamName, String appName) {
 		String host = null;
 		if(dbMap.containsKey(appName)) {
@@ -39,19 +42,12 @@ public class DBReader {
 		return clusterStore;
 	}
 
+	//TODO move this method to datastore
 	public List<StreamInfo> getWebRTCStreamInfo(String streamId, String appName) {
 		return dbMap.get(appName).getStreamInfoList(streamId);
 	}
 	
-	public boolean isNodeInTheCluster(ClusterNode node) {
-		return getCluster().isNodeInTheCluster(node);
-	}
 
-	public IClusterNotifier getCluster() {
-		return cluster;
-	}
 
-	public void setCluster(IClusterNotifier cluster) {
-		this.cluster = cluster;
-	}
+	
 }
