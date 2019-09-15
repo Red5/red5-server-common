@@ -28,6 +28,7 @@ public class AppSettingsModel {
 	private boolean hashControlPublishEnabled;
 	private boolean hashControlPlayEnabled;
 	
+	
 	/**
 	 * Comma separated allowed CIDR
 	 */

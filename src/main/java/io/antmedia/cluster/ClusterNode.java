@@ -8,7 +8,6 @@ import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.NotSaved;
 
 @Entity("clusternode")
-
 @Indexes({ @Index(fields = @Field("id"))})
 public class ClusterNode {
 	
@@ -29,10 +28,10 @@ public class ClusterNode {
 	public ClusterNode() {
 	}
 	
-	public ClusterNode(String ip) {
+	public ClusterNode(String ip, String id) {
 		super();
 		this.ip = ip;
-		this.id = ip.replace(".", "_");
+		this.id = id;
 		this.lastUpdateTime= System.currentTimeMillis();
 	}
 

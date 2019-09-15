@@ -6,8 +6,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.catalina.util.NetMask;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
+import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Application Settings for each application running in Ant Media Server.
@@ -23,8 +31,14 @@ import org.springframework.context.annotation.PropertySource;
  * @author mekya
  *
  */
+@Entity("AppSettings")
+@Indexes({ @Index(fields = @Field("appName"))})
 @PropertySource("/WEB-INF/red5-web.properties")
 public class AppSettings {
+	
+	@JsonIgnore
+	@Id
+	private ObjectId dbId;
 
 	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
@@ -98,6 +112,9 @@ public class AppSettings {
 	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.rttMeasurementDiffThreshold.forSwitchback";
 	
 	private static final String SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR = "settings.replaceCandidateAddrWithServerAddr";
+	
+	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
+	
 	
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
@@ -456,7 +473,16 @@ public class AppSettings {
 	@Value("${" + SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR+ ":false}")
 	private boolean replaceCandidateAddrWithServerAddr;
 
+	
+	/**
+	 * Applicaiton name for the data store which should exist so that no default value
+	 */
+	@Value("${" + SETTINGS_DB_APP_NAME +"}")
+	private String appName;
 
+	
+	private long updateTime;
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -576,6 +602,10 @@ public class AppSettings {
 
 	public String getEncoderSettingsString() {
 		return encoderSettingsString;
+	}
+	
+	public List<EncoderSettings> getEncoderSettings() {
+		return encodersStr2List(encoderSettingsString);
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
@@ -1059,6 +1089,22 @@ public class AppSettings {
 	
 	public void setReplaceCandidateAddrWithServerAddr(boolean replaceCandidateAddrWithServerAddr) {
 		this.replaceCandidateAddrWithServerAddr = replaceCandidateAddrWithServerAddr;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+	
+	public void setAppName(String appName) {
+		this.appName = appName;
+	}
+	
+	public String getAppName() {
+		return appName;
 	}
 	
 	
