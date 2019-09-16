@@ -16,7 +16,7 @@ public interface IClusterStore
 	
 	public boolean addOrUpdate(ClusterNode node);
 	
-	public void saveSettings(AppSettings settingsModel);
+	public boolean saveSettings(AppSettings settings);
 
 	public AppSettings getSettings(String appName);
 }

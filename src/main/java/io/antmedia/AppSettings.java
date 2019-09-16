@@ -5,7 +5,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.catalina.util.NetMask;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Field;
@@ -16,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Application Settings for each application running in Ant Media Server.
@@ -34,11 +38,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity("AppSettings")
 @Indexes({ @Index(fields = @Field("appName"))})
 @PropertySource("/WEB-INF/red5-web.properties")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AppSettings {
 	
 	@JsonIgnore
 	@Id
 	private ObjectId dbId;
+	
+	public static final String PROPERTIES_FILE_PATH = "/WEB-INF/red5-web.properties";
 
 	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
@@ -115,7 +122,7 @@ public class AppSettings {
 	
 	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
 	
-	
+	@JsonIgnore
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
 	/**
@@ -141,8 +148,6 @@ public class AppSettings {
 	
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
-
-	private List<EncoderSettings> adaptiveResolutionList;
 	
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
@@ -483,6 +488,26 @@ public class AppSettings {
 	
 	private long updateTime;
 	
+	@PostConstruct
+	private void init() {
+		/*
+		ConfigurationPropertiesFactoryBean
+        System.out.println("Loading the properties file: " + PROPERTIES_FILE_PATH);
+        PropertiesConfiguration configuration;
+		try {
+			configuration = new PropertiesConfiguration(PROPERTIES_FILE_PATH);
+			//Create new FileChangedReloadingStrategy to reload the properties file based on the given time interval 
+	        FileChangedReloadingStrategy fileChangedReloadingStrategy = new FileChangedReloadingStrategy();
+	        configuration.setReloadingStrategy(fileChangedReloadingStrategy);
+	        
+		} catch (ConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+        
+	}
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -513,22 +538,6 @@ public class AppSettings {
 
 	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
-	}
-
-	public List<EncoderSettings> getAdaptiveResolutionList() {
-		if(adaptiveResolutionList != null) {
-			return adaptiveResolutionList;
-		}
-		else if( encoderSettingsString != null && !encoderSettingsString.isEmpty()) {
-			adaptiveResolutionList = encodersStr2List(encoderSettingsString);
-		}
-		return adaptiveResolutionList;
-	}
-
-
-	public void setAdaptiveResolutionList(List<EncoderSettings> adaptiveResolutionList) {
-		this.adaptiveResolutionList = adaptiveResolutionList;
-		setEncoderSettingsString(encodersList2Str(adaptiveResolutionList));
 	}
 
 	public String getHlsPlayListType() {
@@ -606,6 +615,10 @@ public class AppSettings {
 	
 	public List<EncoderSettings> getEncoderSettings() {
 		return encodersStr2List(encoderSettingsString);
+	}
+	
+	public void setEncoderSettings(List<EncoderSettings> settings) {
+		encoderSettingsString = encodersList2Str(settings);
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
@@ -837,7 +850,6 @@ public class AppSettings {
 		mp4MuxingEnabled = false;
 		addDateTimeToMp4FileName = false;
 		hlsMuxingEnabled = true;
-		adaptiveResolutionList = null;
 		hlsListSize = null;
 		hlsTime = null;
 		webRTCEnabled = false;
@@ -853,6 +865,7 @@ public class AppSettings {
 		hashControlPlayEnabled = false;
 		hashControlPublishEnabled = false;
 		tokenHashSecret = "";
+		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
 	}
 

@@ -3,11 +3,6 @@ package io.antmedia.datastore.db;
 import java.io.File;
 import java.util.List;
 
-import org.apache.commons.lang3.NotImplementedException;
-
-import io.antmedia.AppSettings;
-import io.antmedia.AppSettingsModel;
-import io.antmedia.IAppSettingsUpdateListener;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
@@ -16,10 +11,6 @@ import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;
-import io.antmedia.datastore.preference.PreferenceStore;
-import io.vertx.core.Vertx;
-
-
 
 public abstract class DataStore {
 

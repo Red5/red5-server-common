@@ -182,7 +182,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         boolean tryEncoderAdaptor = false;
         if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
             AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-            List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
+            List<EncoderSettings> list = appSettings.getEncoderSettings();
             if ((list != null && !list.isEmpty()) || appSettings.isWebRTCEnabled()) {
                 /*
                  * enable encoder adaptor if webrtc enabled because we're supporting forwarding video to end user
@@ -248,7 +248,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         hlsTime = appSettingsLocal.getHlsTime();
         hlsPlayListType = appSettingsLocal.getHlsPlayListType();
         previewOverwrite = appSettingsLocal.isPreviewOverwrite();
-        encoderSettingsList = appSettingsLocal.getAdaptiveResolutionList();
+        encoderSettingsList = appSettingsLocal.getEncoderSettings();
         previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
         setPreviewHeight(appSettingsLocal.getPreviewHeight());
     }
