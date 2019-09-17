@@ -8,7 +8,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 
 import org.apache.catalina.util.NetMask;
-import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Field;
@@ -487,26 +486,10 @@ public class AppSettings {
 
 	
 	private long updateTime;
+
+	private List<EncoderSettings> encoderSettings;
 	
-	@PostConstruct
-	private void init() {
-		/*
-		ConfigurationPropertiesFactoryBean
-        System.out.println("Loading the properties file: " + PROPERTIES_FILE_PATH);
-        PropertiesConfiguration configuration;
-		try {
-			configuration = new PropertiesConfiguration(PROPERTIES_FILE_PATH);
-			//Create new FileChangedReloadingStrategy to reload the properties file based on the given time interval 
-	        FileChangedReloadingStrategy fileChangedReloadingStrategy = new FileChangedReloadingStrategy();
-	        configuration.setReloadingStrategy(fileChangedReloadingStrategy);
-	        
-		} catch (ConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
-        
-	}
+
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -595,7 +578,7 @@ public class AppSettings {
 
 		String[] values = encoderSettingsString.split(",");
 
-		List<EncoderSettings> encoderSettingsList = new ArrayList();
+		List<EncoderSettings> encoderSettingsList = new ArrayList<>();
 		if (values.length >= 3){
 			for (int i = 0; i < values.length; i++) {
 				int height = Integer.parseInt(values[i]);
@@ -619,6 +602,7 @@ public class AppSettings {
 	
 	public void setEncoderSettings(List<EncoderSettings> settings) {
 		encoderSettingsString = encodersList2Str(settings);
+		this.encoderSettings = settings;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {

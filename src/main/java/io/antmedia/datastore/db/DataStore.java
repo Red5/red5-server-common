@@ -297,7 +297,9 @@ public abstract class DataStore {
 	 * This method is called at startup
 	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
 	 */
-	public abstract void clearStreamsOnThisServer();
+	public void clearStreamsOnThisServer(String hostAddress) {
+		//no default implementation
+	}
 
 	/**
 	 * Creates a conference room with the parameters. 
@@ -372,7 +374,7 @@ public abstract class DataStore {
 	 * Other implementations just return active broadcasts in db
 	 * @return
 	 */
-	public long getLocalLiveBroadcastCount() {
+	public long getLocalLiveBroadcastCount(String hostAddress) {
 		return getActiveBroadcastCount();
 	}
 

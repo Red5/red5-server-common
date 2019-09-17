@@ -424,6 +424,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         }
         return appSettings;
     }
+    
 
     private DataStore initializeDataStore() {
         if (dataStore == null) {
