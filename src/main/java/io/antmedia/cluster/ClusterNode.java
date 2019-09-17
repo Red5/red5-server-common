@@ -8,9 +8,7 @@ import org.mongodb.morphia.annotations.Indexes;
 import org.mongodb.morphia.annotations.NotSaved;
 
 @Entity("clusternode")
-
 @Indexes({ @Index(fields = @Field("id"))})
-
 public class ClusterNode {
 	
 	public static final String ALIVE = "alive";
@@ -25,17 +23,15 @@ public class ClusterNode {
 	private String cpu;
 	
 	@NotSaved
-	private boolean inTheCluster;
-	@NotSaved
 	private String status;
 	
 	public ClusterNode() {
 	}
 	
-	public ClusterNode(String ip) {
+	public ClusterNode(String ip, String id) {
 		super();
 		this.ip = ip;
-		this.id = ip.replace(".", "_");
+		this.id = id;
 		this.lastUpdateTime= System.currentTimeMillis();
 	}
 
@@ -56,10 +52,6 @@ public class ClusterNode {
 	}
 
 	public String getStatus() {
-		return status;
-	}
-	
-	public String updateStatus() {
 		if(System.currentTimeMillis() - lastUpdateTime > NODE_UPDATE_PERIOD*2) {
 			status = ClusterNode.DEAD;
 		}
@@ -68,6 +60,7 @@ public class ClusterNode {
 		}
 		return status;
 	}
+	
 
 	public long getLastUpdateTime() {
 		return lastUpdateTime;
@@ -75,14 +68,6 @@ public class ClusterNode {
 
 	public void setLastUpdateTime(long lastUpdateTime) {
 		this.lastUpdateTime = lastUpdateTime;
-	}
-
-	public boolean isInTheCluster() {
-		return inTheCluster;
-	}
-
-	public void setInTheCluster(boolean inTheCluster) {
-		this.inTheCluster = inTheCluster;
 	}
 
 	public String getMemory() {

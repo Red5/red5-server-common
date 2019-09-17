@@ -464,6 +464,13 @@ public class PeerConnection {
     public int minPort;
     
     public int maxPort;
+    
+    
+    public static int PORTALLOCATOR_DISABLE_UDP = 0x01;
+    public static int PORTALLOCATOR_DISABLE_STUN = 0x02;
+    public static int PORTALLOCATOR_DISABLE_RELAY = 0x04;
+        		  
+    public int portAllocatorFlags;
 
     // TODO(deadbeef): Instead of duplicating the defaults here, we should do
     // something to pick up the defaults from C++. The Objective-C equivalent
@@ -506,6 +513,7 @@ public class PeerConnection {
       activeResetSrtpParams = false;
       minPort = 0;
       maxPort = 0;
+      portAllocatorFlags = 0;
     }
 
     @CalledByNative("RTCConfiguration")
@@ -707,6 +715,11 @@ public class PeerConnection {
     @CalledByNative("RTCConfiguration")
     int getMaxPort() {
     		return maxPort;
+    }
+    
+    @CalledByNative("RTCConfiguration")
+    int getPortAllocatorFlags() {
+    		return portAllocatorFlags;
     }
   };
 

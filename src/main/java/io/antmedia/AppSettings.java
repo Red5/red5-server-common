@@ -5,9 +5,20 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.catalina.util.NetMask;
+import org.bson.types.ObjectId;
+import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Field;
+import org.mongodb.morphia.annotations.Id;
+import org.mongodb.morphia.annotations.Index;
+import org.mongodb.morphia.annotations.Indexes;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Application Settings for each application running in Ant Media Server.
@@ -23,8 +34,17 @@ import org.springframework.context.annotation.PropertySource;
  * @author mekya
  *
  */
+@Entity("AppSettings")
+@Indexes({ @Index(fields = @Field("appName"))})
 @PropertySource("/WEB-INF/red5-web.properties")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AppSettings {
+	
+	@JsonIgnore
+	@Id
+	private ObjectId dbId;
+	
+	public static final String PROPERTIES_FILE_PATH = "/WEB-INF/red5-web.properties";
 
 	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
@@ -82,7 +102,26 @@ public class AppSettings {
     public static final String SETTINGS_ALLOWED_PUBLISHER_IPS = "settings.allowedPublisherIps";
     
     public static final String BEAN_NAME = "app.settings";
+    
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD = "settings.excessiveBandwidth.threshold";
 	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD = "settings.excessiveBandwidth.call.threshold";
+	
+	private static final String SETTINGS_PORT_ALLOCATOR_FLAGS = "settings.portAllocator.flags";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_TRY_COUNT_BEFORE_SWITCH_BACK = "settings.excessiveBandwith.tryCount.beforeSwitchback";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_ENABLED = "settings.excessiveBandwidth_enabled";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_PACKET_LOSS_DIFF_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.packetLossDiffThreshold.forSwitchback";
+	
+	private static final String SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK = "settings.excessiveBandwidth.rttMeasurementDiffThreshold.forSwitchback";
+	
+	private static final String SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR = "settings.replaceCandidateAddrWithServerAddr";
+	
+	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
+	
+	@JsonIgnore
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
 	/**
@@ -108,8 +147,6 @@ public class AppSettings {
 	
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
-
-	private List<EncoderSettings> adaptiveResolutionList;
 	
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
@@ -173,13 +210,6 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
 	private boolean tokenControlEnabled ;
-
-
-	/**
-	 * Fully qualified server name
-	 */
-	//@Value( "#{ @'ant.media.server.settings'.serverName }" )
-	private String serverName;
 
 	/**
 	 * event or vod
@@ -325,6 +355,14 @@ public class AppSettings {
 	private boolean webRTCTcpCandidatesEnabled;
 	
 	/**
+	 * Port Allocator Flags for WebRTC
+	 * PORTALLOCATOR_DISABLE_UDP = 0x01,
+  	 * PORTALLOCATOR_DISABLE_STUN = 0x02,
+  	 * PORTALLOCATOR_DISABLE_RELAY = 0x04,
+	 */
+	@Value( "${" + SETTINGS_PORT_ALLOCATOR_FLAGS +":0}")
+	private int portAllocatorFlags;
+	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
 	private boolean collectSocialMediaActivity = false;
@@ -370,6 +408,89 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":#{null}}")
 	private String allowedPublisherIps;
 	
+	/**
+	 * *******************************************************
+	 * What is Excessive Bandwidth Algorithm?
+	 * Excessive Bandwidth Algorithm tries to switch to higher bitrate even if bandwidth seems not enough
+	 * 
+	 * Why is it implemented?
+	 * WebRTC stack sometimes does not calculate the bandwidth correctly. For instance,
+	 * when network quality drop for a few seconds, it does not calculates the bitrate correctly
+	 * 
+	 * How it works?
+	 * If measured bandwidth - the current video bitrate is more than {@link #excessiveBandwidthValue}
+	 * for consecutive {@link #excessiveBandwidthCallThreshold} times it switches to higher bitrate
+	 * 
+	 * If bandwidth measured is still than the required bandwidth it tries {@link #excessiveBandwithTryCountBeforeSwitchback}
+	 * times to stay in the high bitrate. It also switches back to lower quality 
+	 * if packetLoss different is bigger than {@link #packetLossDiffThresholdForSwitchback} or 
+	 * rtt time difference is bigger than {@link #rttMeasurementDiffThresholdForSwitchback} before 
+	 * {@link #tryCountBeforeSwitchback} reaches to zero
+	 * 
+	 * 
+	 * Side effect
+	 * If network fluctuates too much or not consistent, quality of the video changes also fluctuates too much for the viewers
+	 * *********************************************************
+	 */
+	
+	/**
+	 *  The excessive bandwidth threshold value
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_THRESHOLD + ":300000}")
+	private int excessiveBandwidthValue;
+
+	/**
+	 * The excessive bandwidth call threshold value
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_CALL_THRESHOLD + ":3}")
+	private int excessiveBandwidthCallThreshold;
+	
+	
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_TRY_COUNT_BEFORE_SWITCH_BACK + ":4}")
+	private int excessiveBandwithTryCountBeforeSwitchback;
+	
+	/**
+	 * Enable or disable excessive bandwidth algorithm
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_ENABLED+ ":false}")
+	private boolean excessiveBandwidthAlgorithmEnabled;
+	
+	/**
+	 * packet loss threshold if packetLoss is bigger than this value in ExcessiveBandwidth
+	 * algorithm, it switches back to lower quality without try every attempts {@link #excessiveBandwithTryCountBeforeSwitchback}
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_PACKET_LOSS_DIFF_THRESHOLD_FOR_SWITCH_BACK+ ":10}")
+	private int packetLossDiffThresholdForSwitchback;
+
+	/**
+	 * rtt measurement threshold diff if rttMeasurement is bigger than this value in ExcessiveBandwidth
+	 * algorithm, it switches back to lower quality without try every attempts {@link #setTryCountBeforeSwitchback(int)}
+	 * @param rttMeasurementDiffThresholdForSwitchback
+	 */
+	@Value("${" + SETTINGS_EXCESSIVE_BANDWIDTH_RTT_MEASUREMENT_THRESHOLD_FOR_SWITCH_BACK+ ":20}")
+	private int rttMeasurementDiffThresholdForSwitchback;
+	
+	/**
+	 * Replace candidate addr with server addr. 
+	 * In order to use it you should set serverName in conf/red5.properties
+	 */
+	@Value("${" + SETTINGS_REPLACE_CANDIDATE_ADDR_WITH_SERVER_ADDR+ ":false}")
+	private boolean replaceCandidateAddrWithServerAddr;
+
+	
+	/**
+	 * Applicaiton name for the data store which should exist so that no default value
+	 */
+	@Value("${" + SETTINGS_DB_APP_NAME +"}")
+	private String appName;
+
+	
+	private long updateTime;
+
+	private List<EncoderSettings> encoderSettings;
+	
+
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -400,22 +521,6 @@ public class AppSettings {
 
 	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
-	}
-
-	public List<EncoderSettings> getAdaptiveResolutionList() {
-		if(adaptiveResolutionList != null) {
-			return adaptiveResolutionList;
-		}
-		else if( encoderSettingsString != null && !encoderSettingsString.isEmpty()) {
-			adaptiveResolutionList = encodersStr2List(encoderSettingsString);
-		}
-		return adaptiveResolutionList;
-	}
-
-
-	public void setAdaptiveResolutionList(List<EncoderSettings> adaptiveResolutionList) {
-		this.adaptiveResolutionList = adaptiveResolutionList;
-		setEncoderSettingsString(encodersList2Str(adaptiveResolutionList));
 	}
 
 	public String getHlsPlayListType() {
@@ -473,7 +578,7 @@ public class AppSettings {
 
 		String[] values = encoderSettingsString.split(",");
 
-		List<EncoderSettings> encoderSettingsList = new ArrayList();
+		List<EncoderSettings> encoderSettingsList = new ArrayList<>();
 		if (values.length >= 3){
 			for (int i = 0; i < values.length; i++) {
 				int height = Integer.parseInt(values[i]);
@@ -489,6 +594,15 @@ public class AppSettings {
 
 	public String getEncoderSettingsString() {
 		return encoderSettingsString;
+	}
+	
+	public List<EncoderSettings> getEncoderSettings() {
+		return encodersStr2List(encoderSettingsString);
+	}
+	
+	public void setEncoderSettings(List<EncoderSettings> settings) {
+		encoderSettingsString = encodersList2Str(settings);
+		this.encoderSettings = settings;
 	}
 
 	public void setEncoderSettingsString(String encoderSettingsString) {
@@ -509,14 +623,6 @@ public class AppSettings {
 
 	public void setListenerHookURL(String listenerHookURL) {
 		this.listenerHookURL = listenerHookURL;
-	}
-
-	public String getServerName() {
-		return serverName;
-	}
-
-	public void setServerName(String serverName) {
-		this.serverName = serverName;
 	}
 
 	public boolean isAcceptOnlyStreamsInDataStore() {
@@ -728,7 +834,6 @@ public class AppSettings {
 		mp4MuxingEnabled = false;
 		addDateTimeToMp4FileName = false;
 		hlsMuxingEnabled = true;
-		adaptiveResolutionList = null;
 		hlsListSize = null;
 		hlsTime = null;
 		webRTCEnabled = false;
@@ -744,6 +849,7 @@ public class AppSettings {
 		hashControlPlayEnabled = false;
 		hashControlPublishEnabled = false;
 		tokenHashSecret = "";
+		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
 	}
 
@@ -917,4 +1023,86 @@ public class AppSettings {
 	public void setAllowedPublisherIps(String allowedPublisherIps) {
 		this.allowedPublisherIps = allowedPublisherIps;
 	}
+
+	public int getExcessiveBandwidthCallThreshold() {
+		return excessiveBandwidthCallThreshold;
+	}
+
+	public void setExcessiveBandwidthCallThreshold(int excessiveBandwidthCallThreshold) {
+		this.excessiveBandwidthCallThreshold = excessiveBandwidthCallThreshold;
+	}
+
+	public int getExcessiveBandwidthValue() {
+		return excessiveBandwidthValue;
+	}
+
+	public void setExcessiveBandwidthValue(int excessiveBandwidthValue) {
+		this.excessiveBandwidthValue = excessiveBandwidthValue;
+	}
+
+	public int getPortAllocatorFlags() {
+		return portAllocatorFlags;
+	}
+	
+	public void setPortAllocatorFlags(int flags) {
+		this.portAllocatorFlags = flags;
+	}
+
+	public int getExcessiveBandwithTryCountBeforeSwitchback() {
+		return excessiveBandwithTryCountBeforeSwitchback;
+	}
+
+	public boolean isExcessiveBandwidthAlgorithmEnabled() {
+		return excessiveBandwidthAlgorithmEnabled;
+	}
+
+	public int getPacketLossDiffThresholdForSwitchback() {
+		return packetLossDiffThresholdForSwitchback;
+	}
+
+	public int getRttMeasurementDiffThresholdForSwitchback() {
+		return rttMeasurementDiffThresholdForSwitchback;
+	}
+
+	public void setExcessiveBandwithTryCountBeforeSwitchback(int excessiveBandwithTryCountBeforeSwitchback) {
+		this.excessiveBandwithTryCountBeforeSwitchback = excessiveBandwithTryCountBeforeSwitchback;
+	}
+
+	public void setExcessiveBandwidthAlgorithmEnabled(boolean excessiveBandwidthAlgorithmEnabled) {
+		this.excessiveBandwidthAlgorithmEnabled = excessiveBandwidthAlgorithmEnabled;
+	}
+
+	public void setPacketLossDiffThresholdForSwitchback(int packetLossDiffThresholdForSwitchback) {
+		this.packetLossDiffThresholdForSwitchback = packetLossDiffThresholdForSwitchback;
+	}
+
+	public void setRttMeasurementDiffThresholdForSwitchback(int rttMeasurementDiffThresholdForSwitchback) {
+		this.rttMeasurementDiffThresholdForSwitchback = rttMeasurementDiffThresholdForSwitchback;
+	}
+
+	public boolean isReplaceCandidateAddrWithServerAddr() {
+		return this.replaceCandidateAddrWithServerAddr;
+	}
+	
+	public void setReplaceCandidateAddrWithServerAddr(boolean replaceCandidateAddrWithServerAddr) {
+		this.replaceCandidateAddrWithServerAddr = replaceCandidateAddrWithServerAddr;
+	}
+
+	public long getUpdateTime() {
+		return updateTime;
+	}
+
+	public void setUpdateTime(long updateTime) {
+		this.updateTime = updateTime;
+	}
+	
+	public void setAppName(String appName) {
+		this.appName = appName;
+	}
+	
+	public String getAppName() {
+		return appName;
+	}
+	
+	
 }

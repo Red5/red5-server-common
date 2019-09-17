@@ -13,7 +13,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @Entity("ConferenceRoom")
-
 @Indexes({ @Index(fields = @Field("roomId")) })
 @ApiModel(value="ConferenceRoom", description="The Conference Room class")
 public class ConferenceRoom {
