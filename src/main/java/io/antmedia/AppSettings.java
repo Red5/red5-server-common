@@ -14,6 +14,7 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
+import org.mongodb.morphia.annotations.NotSaved;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 
@@ -122,6 +123,7 @@ public class AppSettings {
 	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
 	
 	@JsonIgnore
+	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
 	
 	/**
