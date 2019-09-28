@@ -122,6 +122,11 @@ public class AppSettings {
 	
 	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
 	
+	public static final String SETTINGS_ENCODING_TIMEOUT = "settings.encoding.timeout";
+
+	public static final String SETTINGS_USE_DEFAULT_ENCODERS = "settings.useDefaultEncoders";
+
+	
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -485,8 +490,20 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_DB_APP_NAME +"}")
 	private String appName;
-
 	
+	/**
+	 * Timeout for encoding
+	 */
+	@Value("${" + SETTINGS_ENCODING_TIMEOUT +":5000}")
+	private int encodingTimeout;
+	
+	/**
+	 * Set true to use default encoders if available such as VP8. 
+	 * Set false to use only h264
+	 */
+	@Value("${" + SETTINGS_USE_DEFAULT_ENCODERS+ ":false}")
+	private boolean useDefaultEncoders;
+
 	private long updateTime;
 
 	private List<EncoderSettings> encoderSettings;
@@ -1106,5 +1123,20 @@ public class AppSettings {
 		return appName;
 	}
 	
+	public int getEncodingTimeout() {
+		return encodingTimeout;
+	}
+
+	public void setEncodingTimeout(int encodingTimeout) {
+		this.encodingTimeout = encodingTimeout;
+	}
+
+	public boolean isUseDefaultEncoders() {
+		return useDefaultEncoders;
+	}
+
+	public void setUseDefaultEncoders(boolean useDefaultEncoders) {
+		this.useDefaultEncoders = useDefaultEncoders;
+	}
 	
 }
