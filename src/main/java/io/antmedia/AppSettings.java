@@ -124,7 +124,7 @@ public class AppSettings {
 	
 	public static final String SETTINGS_ENCODING_TIMEOUT = "settings.encoding.timeout";
 
-	public static final String SETTINGS_USE_DEFAULT_ENCODERS = "settings.useDefaultEncoders";
+	public static final String SETTINGS_DEFAULT_DECODERS_ENABLED = "settings.defaultDecodersEnabled";
 
 	
 	@JsonIgnore
@@ -493,16 +493,17 @@ public class AppSettings {
 	
 	/**
 	 * Timeout for encoding
+	 * If encoder cannot encode a frame in this timeout, streaming is finished by server. 
 	 */
 	@Value("${" + SETTINGS_ENCODING_TIMEOUT +":5000}")
 	private int encodingTimeout;
 	
 	/**
-	 * Set true to use default encoders if available such as VP8. 
-	 * Set false to use only h264
+	 * Set true to enable WebRTC default decoders(such as VP8, VP9) 
+	 * Set false to only enable h264 decoder
 	 */
-	@Value("${" + SETTINGS_USE_DEFAULT_ENCODERS+ ":false}")
-	private boolean useDefaultEncoders;
+	@Value("${" + SETTINGS_DEFAULT_DECODERS_ENABLED+ ":false}")
+	private boolean defaultDecodersEnabled;
 
 	private long updateTime;
 
@@ -1131,12 +1132,11 @@ public class AppSettings {
 		this.encodingTimeout = encodingTimeout;
 	}
 
-	public boolean isUseDefaultEncoders() {
-		return useDefaultEncoders;
+	public boolean isDefaultDecodersEnabled() {
+		return defaultDecodersEnabled;
 	}
 
-	public void setUseDefaultEncoders(boolean useDefaultEncoders) {
-		this.useDefaultEncoders = useDefaultEncoders;
+	public void setDefaultDecodersEnabled(boolean defaultDecodersEnabled) {
+		this.defaultDecodersEnabled = defaultDecodersEnabled;
 	}
-	
 }
