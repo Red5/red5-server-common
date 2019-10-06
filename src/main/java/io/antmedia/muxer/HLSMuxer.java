@@ -154,7 +154,7 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			String hlsFlagsFull = "delete_segments+round_durations" + this.hlsFlags;
+			String hlsFlagsFull = "delete_segments" + this.hlsFlags;
 
 			options.put("hls_flags", hlsFlagsFull);
 			tmpPacket = avcodec.av_packet_alloc();

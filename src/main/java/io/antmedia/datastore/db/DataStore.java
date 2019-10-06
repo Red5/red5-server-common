@@ -3,16 +3,14 @@ package io.antmedia.datastore.db;
 import java.io.File;
 import java.util.List;
 
-import io.antmedia.cluster.StreamInfo;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
+import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;
-
-
 
 public abstract class DataStore {
 
@@ -22,7 +20,8 @@ public abstract class DataStore {
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
 	
 	private boolean writeStatsToDatastore = true;
-
+	
+	
 	public abstract String save(Broadcast broadcast);
 
 	/**
@@ -298,7 +297,9 @@ public abstract class DataStore {
 	 * This method is called at startup
 	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
 	 */
-	public abstract void clearStreamsOnThisServer();
+	public void clearStreamsOnThisServer(String hostAddress) {
+		//no default implementation
+	}
 
 	/**
 	 * Creates a conference room with the parameters. 
@@ -369,14 +370,13 @@ public abstract class DataStore {
 
 	/**
 	 * This method returns the local active broadcast count. 
-	 * Actually mongodb implementation is different because of cluster. 
+	 * Mongodb implementation is different because of cluster. 
 	 * Other implementations just return active broadcasts in db
 	 * @return
 	 */
-	public long getLocalLiveBroadcastCount() {
+	public long getLocalLiveBroadcastCount(String hostAddress) {
 		return getActiveBroadcastCount();
 	}
-	
 
 
 //**************************************

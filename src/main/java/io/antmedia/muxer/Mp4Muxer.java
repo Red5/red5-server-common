@@ -103,7 +103,7 @@ public class Mp4Muxer extends Muxer {
 	};
 
 
-	private boolean isCodecSupported(AVCodecParameters avCodecParameters) {
+	public boolean isCodecSupported(AVCodecParameters avCodecParameters) {
 		return isCodecSupported(avCodecParameters.codec_id());
 	}
 
@@ -193,7 +193,7 @@ public class Mp4Muxer extends Muxer {
 		return true;
 	}
 
-	private AVFormatContext getOutputFormatContext() {
+	public AVFormatContext getOutputFormatContext() {
 		if (outputFormatContext == null) {
 			outputFormatContext= new AVFormatContext(null);
 			fileTmp = new File(file.getAbsolutePath() + TEMP_EXTENSION);
@@ -206,6 +206,9 @@ public class Mp4Muxer extends Muxer {
 		return outputFormatContext;
 	}
 
+	public AVStream avNewStream(AVFormatContext context) {
+		return avformat_new_stream(context, null);
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -218,13 +221,14 @@ public class Mp4Muxer extends Muxer {
 		int streamIndex = 0;
 		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
 			AVStream inStream = inputFormatContext.streams(i);
-			if (isCodecSupported(inStream.codecpar())) {
-
+			
+			if (isCodecSupported(inStream.codecpar())) 
+			{
 				int codecType = inStream.codecpar().codec_type();
-				AVStream outStream = avformat_new_stream(context, null);
-
-
-				if ( codecType == AVMEDIA_TYPE_VIDEO) {
+				
+				if ( codecType == AVMEDIA_TYPE_VIDEO) 
+				{
+					AVStream outStream = avNewStream(context);
 					videoIndex = streamIndex;
 					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 
@@ -233,11 +237,15 @@ public class Mp4Muxer extends Muxer {
 						return false;
 					}
 					logger.info("video codec par extradata size {} codec id: {}", outStream.codecpar().extradata_size(), outStream.codecpar().codec_id());
+					streamIndex++;
+					registeredStreamIndexList.add(i);
 
+					outStream.codecpar().codec_tag(0);
 				}
-				else if (codecType == AVMEDIA_TYPE_AUDIO) {
+				else if (codecType == AVMEDIA_TYPE_AUDIO) 
+				{
+					AVStream outStream = avNewStream(context);
 					audioIndex = streamIndex;
-
 
 					if (bsfName != null) {
 						AVBitStreamFilter adtsToAscBsf = av_bsf_get_by_name(this.bsfName);
@@ -277,16 +285,15 @@ public class Mp4Muxer extends Muxer {
 							return false;
 						}
 					}
+					
+					streamIndex++;
+					registeredStreamIndexList.add(i);
+					outStream.codecpar().codec_tag(0);
+					
 				}
 				else {
 					logger.error("undefined codec type: {}" , codecType);
-					continue;
 				}
-
-				streamIndex++;
-				registeredStreamIndexList.add(i);
-
-				outStream.codecpar().codec_tag(0);
 
 			}
 		}
@@ -765,5 +772,9 @@ public class Mp4Muxer extends Muxer {
 		pkt.duration(duration);
 		pkt.pos(pos);
 
+	}
+	
+	public List<Integer> getRegisteredStreamIndexList() {
+		return registeredStreamIndexList;
 	}
 }

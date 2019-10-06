@@ -182,7 +182,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         boolean tryEncoderAdaptor = false;
         if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
             AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-            List<EncoderSettings> list = appSettings.getAdaptiveResolutionList();
+            List<EncoderSettings> list = appSettings.getEncoderSettings();
             if ((list != null && !list.isEmpty()) || appSettings.isWebRTCEnabled()) {
                 /*
                  * enable encoder adaptor if webrtc enabled because we're supporting forwarding video to end user
@@ -240,15 +240,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
         objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
 
-        addDateTimeToMp4FileName = getAppSettings().isAddDateTimeToMp4FileName();
+        addDateTimeToMp4FileName = appSettingsLocal.isAddDateTimeToMp4FileName();
         mp4Filtername = null;
-        webRTCEnabled = getAppSettings().isWebRTCEnabled();
+        webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
         deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnExit();
         hlsListSize = appSettingsLocal.getHlsListSize();
         hlsTime = appSettingsLocal.getHlsTime();
         hlsPlayListType = appSettingsLocal.getHlsPlayListType();
         previewOverwrite = appSettingsLocal.isPreviewOverwrite();
-        encoderSettingsList = appSettingsLocal.getAdaptiveResolutionList();
+        encoderSettingsList = appSettingsLocal.getEncoderSettings();
         previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
         setPreviewHeight(appSettingsLocal.getPreviewHeight());
     }
@@ -421,17 +421,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
             if (scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
                 appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
             }
-            if (appSettings == null) {
-                logger.warn("No app settings in context, returning default AppSettings for {}", streamId);
-                appSettings = new AppSettings();
-            }
         }
-
         return appSettings;
-
     }
+    
 
-    public DataStore initializeDataStore() {
+    private DataStore initializeDataStore() {
         if (dataStore == null) {
 
             IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
