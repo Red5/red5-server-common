@@ -896,7 +896,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
     }
 
     public void stopRecording() {
-        AppSettings appSettingsLocal = getAppSettings();
 
         Iterator<Muxer> iterator = muxerList.iterator();
         while (iterator.hasNext()) {
