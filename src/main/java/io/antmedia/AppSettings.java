@@ -629,7 +629,7 @@ public class AppSettings {
 		this.encoderSettingsString = encoderSettingsString;
 	}
 
-	public boolean isDeleteHLSFilesOnExit() {
+	public boolean isDeleteHLSFilesOnEnded() {
 		return deleteHLSFilesOnEnded;
 	}
 

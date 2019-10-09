@@ -586,7 +586,7 @@ public class Mp4Muxer extends Muxer {
 		}
 
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.trace("not registered stream index for stream: {}", streamId);
+			logger.warn("not registered stream index for stream: {}", streamId);
 			return;
 		}
 		int streamIndex;
@@ -616,7 +616,7 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.trace("not registered stream index for {}", streamId);
+			logger.warn("not registered stream index for {}", streamId);
 			return;
 		}
 

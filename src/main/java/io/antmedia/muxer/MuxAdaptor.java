@@ -243,7 +243,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         addDateTimeToMp4FileName = appSettingsLocal.isAddDateTimeToMp4FileName();
         mp4Filtername = null;
         webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
-        deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnExit();
+        deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnEnded();
         hlsListSize = appSettingsLocal.getHlsListSize();
         hlsTime = appSettingsLocal.getHlsTime();
         hlsPlayListType = appSettingsLocal.getHlsPlayListType();
