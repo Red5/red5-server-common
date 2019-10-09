@@ -411,13 +411,17 @@ public class HLSMuxer extends Muxer  {
 
 		outputFormatContext = null;
 
+		logger.info("Delete File onexit:{} scheduler:{}", deleteFileOnExit, scheduler);
 		if (scheduler != null && deleteFileOnExit ) {
 
+			logger.info("Scheduling the task to delete. HLS time: {}, hlsListSize:{}", hlsTime, hlsListSize);
 			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
 					new IScheduledJob() {
 
 				@Override
 				public void execute(ISchedulingService service) throws CloneNotSupportedException {
+					
+					logger.info("Delete HLS files on exit");
 
 					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 
