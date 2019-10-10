@@ -658,7 +658,10 @@ public class Mp4Muxer extends Muxer {
 		AVRational timeBase = new AVRational();
 		timeBase.num(1).den(1000);
 		long packetTime = av_rescale_q(pkt.pts(), inputTimebase, timeBase);
-		if(this.startTime > startTime+packetTime){
+		
+		if(this.startTime > startTime + packetTime) {
+			//why are we having this
+			logger.warn("Mp4 Muxer is not writing because packet time is negative");
 			return;
 		}
 
