@@ -632,17 +632,10 @@ public class HLSMuxer extends Muxer  {
 		videoPkt.dts(timestamp);
 		
 		encodedVideoFrame.rewind();
-		/* TODO: If test passes, remove this block
-		if (encodedVideoFrame.limit() > 4) // 00 00 00 01 XX , 00 00 01 XX
-		{
-			byte[] starter = new byte[5];
-			encodedVideoFrame.get(starter);
-			if (starter[4] == 103 || starter[3] == 103) {
-				videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
-			}
-			encodedVideoFrame.rewind();
+		if (isKeyFrame) {
+			videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
 		}
-		*/
+		
 		BytePointer bytePointer = new BytePointer(encodedVideoFrame);
 		videoPkt.data(bytePointer);
 		videoPkt.size(encodedVideoFrame.limit());
