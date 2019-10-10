@@ -313,16 +313,6 @@ public abstract class Muxer {
 		this.addDateTimeToResourceName = addDateTimeToSourceName;
 	}
 
-	/**
-	 * Write encoded video buffer to muxer
-	 *
-	 * @param buffer
-	 * @param timestamp
-	 * @param streamIndex
-	 */
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
-	}
-
     /**
      * Write encoded video buffer to muxer
      *

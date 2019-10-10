@@ -623,19 +623,16 @@ public class HLSMuxer extends Muxer  {
 		avpacket.stream_index(index);
 
 	}
+	
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
 								 boolean isKeyFrame,long firstFrameTimeStamp) {
-		writeVideoBuffer(encodedVideoFrame,timestamp,frameRotation,streamIndex);
-	}
-
-	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
 		
 		encodedVideoFrame.rewind();
+		/* TODO: If test passes, remove this block
 		if (encodedVideoFrame.limit() > 4) // 00 00 00 01 XX , 00 00 01 XX
 		{
 			byte[] starter = new byte[5];
@@ -645,6 +642,7 @@ public class HLSMuxer extends Muxer  {
 			}
 			encodedVideoFrame.rewind();
 		}
+		*/
 		BytePointer bytePointer = new BytePointer(encodedVideoFrame);
 		videoPkt.data(bytePointer);
 		videoPkt.size(encodedVideoFrame.limit());
@@ -655,6 +653,8 @@ public class HLSMuxer extends Muxer  {
 		
 		av_packet_unref(videoPkt);
 	}
+
+
 	
 	public int getVideoWidth() {
 		return videoWidth;
