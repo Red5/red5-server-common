@@ -243,7 +243,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         addDateTimeToMp4FileName = appSettingsLocal.isAddDateTimeToMp4FileName();
         mp4Filtername = null;
         webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
-        deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnExit();
+        deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnEnded();
         hlsListSize = appSettingsLocal.getHlsListSize();
         hlsTime = appSettingsLocal.getHlsTime();
         hlsPlayListType = appSettingsLocal.getHlsPlayListType();
@@ -404,7 +404,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
         }
     }
 
-    private IAntMediaStreamHandler getStreamHandler() {
+    public IAntMediaStreamHandler getStreamHandler() {
         if (appAdapter == null) {
 
             IContext context = MuxAdaptor.this.scope.getContext();
@@ -896,7 +896,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
     }
 
     public void stopRecording() {
-        AppSettings appSettingsLocal = getAppSettings();
 
         Iterator<Muxer> iterator = muxerList.iterator();
         while (iterator.hasNext()) {

@@ -150,11 +150,11 @@ public abstract class Muxer {
 	/**
 	 * This function may be called by multiple encoders. Make sure that it is
 	 * called once.
-	 * 
+	 *
 	 * See the sample implementations how it is being protected
-	 * 
+	 *
 	 * Implement this function with synchronized keyword as the subclass
-	 * 
+	 *
 	 * @return
 	 */
 	public abstract boolean prepareIO();
@@ -162,11 +162,11 @@ public abstract class Muxer {
 	/**
 	 * This function may be called by multiple encoders. Make sure that it is
 	 * called once.
-	 * 
+	 *
 	 * See the sample implementations how it is being protected
-	 * 
+	 *
 	 * Implement this function with synchronized keyword as the subclass
-	 * 
+	 *
 	 * @return
 	 */
 	public abstract void writeTrailer();
@@ -174,11 +174,11 @@ public abstract class Muxer {
 	/**
 	 * Write packets to the output. This function is used in by MuxerAdaptor
 	 * which is in community edition
-	 * 
+	 *
 	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
-	 * 
+	 *
 	 * Implement this function with synchronized keyword as the subclass
-	 * 
+	 *
 	 * @param pkt
 	 *            The content of the data as a AVPacket object
 	 */
@@ -187,17 +187,17 @@ public abstract class Muxer {
 	/**
 	 * Write packets to the output. This function is used by EncoderAdaptor in
 	 * enterprise edition
-	 * 
+	 *
 	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
-	 * 
+	 *
 	 * Implement this function with synchronized keyword as the subclass
-	 * 
+	 *
 	 * @param pkt
 	 *            The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket pkt);
-	
-	
+
+
 	public void setBitstreamFilter(String bsfName) {
 		this.bsfName = bsfName;
 	}
@@ -227,14 +227,14 @@ public abstract class Muxer {
 
 	/**
 	 * Init file name
-	 * 
+	 *
 	 * file format is NAME[-{DATETIME}][_{RESOLUTION_HEIGHT}p].{EXTENSION}
-	 * 
+	 *
 	 * Datetime format is yyyy-MM-dd_HH:mm
-	 * 
+	 *
 	 * sample naming -> stream1-yyyy-MM-dd_HH:mm_480p.mp4 if datetime is added
 	 * stream1_480p.mp4 if no datetime
-	 * 
+	 *
 	 * @param scope
 	 * @param name,
 	 *            name of the stream
@@ -255,7 +255,7 @@ public abstract class Muxer {
 
 			// add date time parameter to resource name if it is set
 			if (addDateTimeToResourceName) {
-				
+
 				LocalDateTime ldt =  LocalDateTime.now();
 				if (ldt.getSecond() > 50) {
 					/*
@@ -265,7 +265,7 @@ public abstract class Muxer {
 					logger.info("Adding 1 minute for having the same minute value. Current second value: {}", ldt.getSecond());
 					ldt = ldt.plusMinutes(1);
 				}
-				
+
 				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm"));
 				if (logger.isInfoEnabled()) {
 					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
@@ -313,15 +313,17 @@ public abstract class Muxer {
 		this.addDateTimeToResourceName = addDateTimeToSourceName;
 	}
 
-	/**
-	 * Write encoded video buffer to muxer
-	 * 
-	 * @param buffer
-	 * @param timestamp
-	 * @param streamIndex
-	 */
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
-	}
+    /**
+     * Write encoded video buffer to muxer
+     *
+     * @param buffer
+     * @param timestamp
+     * @param streamIndex
+     * @param isKeyFrame
+     */
+    public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp) {
+    }
 	
 	/**
 	 * Add video stream to the muxer with direct parameters. Not all muxers support this feature so that

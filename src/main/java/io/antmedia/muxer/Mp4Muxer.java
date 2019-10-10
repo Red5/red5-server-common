@@ -46,7 +46,7 @@ public class Mp4Muxer extends Muxer {
 	private boolean isAVCConversionRequired = false;
 	private AVPacket videoPkt;
 	private int rotation;
-	private long startTime;
+	public long startTime;
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
@@ -54,13 +54,13 @@ public class Mp4Muxer extends Muxer {
 	 * then below should be flag in advance
 	 */
 	private boolean firstKeyFrameReceivedChecked = false;
-	
+
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
 		super(scheduler);
 		extension = ".mp4";
 		format = "mp4";
-		options.put("movflags", "faststart");  
+		options.put("movflags", "faststart");
 		this.storageClient = storageClient;
 	}
 
@@ -99,7 +99,7 @@ public class Mp4Muxer extends Muxer {
 			AV_CODEC_ID_QCELP        ,
 			AV_CODEC_ID_MPEG4SYSTEMS ,
 			AV_CODEC_ID_MPEG4SYSTEMS ,
-			AV_CODEC_ID_NONE        
+			AV_CODEC_ID_NONE
 	};
 
 
@@ -129,7 +129,7 @@ public class Mp4Muxer extends Muxer {
 
 		tmpPacket = avcodec.av_packet_alloc();
 		av_init_packet(tmpPacket);
-		
+
 		videoPkt = avcodec.av_packet_alloc();
 		av_init_packet(videoPkt);
 	}
@@ -142,7 +142,7 @@ public class Mp4Muxer extends Muxer {
 			boolean isAVC, AVCodecParameters codecpar) {
 		boolean result = false;
 		AVFormatContext outputContext = getOutputFormatContext();
-		if (outputContext != null && isCodecSupported(codecId)) 
+		if (outputContext != null && isCodecSupported(codecId))
 		{
 			registeredStreamIndexList.add(streamIndex);
 			AVStream outStream = avformat_new_stream(outputContext, null);
@@ -226,19 +226,17 @@ public class Mp4Muxer extends Muxer {
 			{
 				int codecType = inStream.codecpar().codec_type();
 				
-				
 				if ( codecType == AVMEDIA_TYPE_VIDEO) 
 				{
 					AVStream outStream = avNewStream(context);
 					videoIndex = streamIndex;
 					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
-					
+
 					if (ret < 0) {
 						logger.error("Cannot get codec parameters for {}", streamId);
 						return false;
 					}
 					logger.info("video codec par extradata size {} codec id: {}", outStream.codecpar().extradata_size(), outStream.codecpar().codec_id());
-					
 					streamIndex++;
 					registeredStreamIndexList.add(i);
 
@@ -309,6 +307,7 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized boolean prepareIO() {
+		startTime = System.currentTimeMillis();
 
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() != null) {
@@ -320,7 +319,7 @@ public class Mp4Muxer extends Muxer {
 
 		int ret = avformat.avio_open(pb, fileTmp.getAbsolutePath(), AVIO_FLAG_WRITE);
 		if (ret < 0) {
-			logger.warn("Could not open output file: {}" +  
+			logger.warn("Could not open output file: {}" +
 					" parent file exists:{}" , fileTmp.getAbsolutePath() , fileTmp.getParentFile().exists());
 			return false;
 		}
@@ -337,7 +336,7 @@ public class Mp4Muxer extends Muxer {
 			}
 		}
 
-		ret = avformat_write_header(context, optionsDictionary);		
+		ret = avformat_write_header(context, optionsDictionary);
 		if (ret < 0) {
 			logger.warn("could not write header for {}", fileTmp.getName());
 
@@ -382,7 +381,7 @@ public class Mp4Muxer extends Muxer {
 				return;
 			}
 			stream.codecpar().codec_tag(0);
-			
+
 			if (stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
 				AVDictionary metadata = new AVDictionary();
 				av_dict_set(metadata, "rotate", rotation+"", 0);
@@ -426,24 +425,28 @@ public class Mp4Muxer extends Muxer {
 		avio_closep(outputContext.pb());
 		avformat_free_context(outputContext);
 	}
-	
+
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
 		/*
-		* Rotation field is used add metadata to the mp4. 
+		* Rotation field is used add metadata to the mp4.
 		* this method is called in directly creating mp4 from coming encoded WebRTC H264 stream
 		*/
+		long actualTimeStamp = timestamp - (startTime - firstFrameTimeStamp);
 		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
-		videoPkt.pts(timestamp);
-		videoPkt.dts(timestamp);
-		
+		videoPkt.pts(actualTimeStamp);
+		videoPkt.dts(actualTimeStamp);
+        if(isKeyFrame) {
+            videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
+        }
+
 		encodedVideoFrame.rewind();
 		videoPkt.data(new BytePointer(encodedVideoFrame));
 		videoPkt.size(encodedVideoFrame.limit());
 		videoPkt.position(0);
 		writePacket(videoPkt);
-		
+
 		av_packet_unref(videoPkt);
 	}
 
@@ -487,11 +490,11 @@ public class Mp4Muxer extends Muxer {
 					else {
 						Files.move(fileTmp.toPath(),f.toPath());
 					}
-					
+
 					logger.info("MP4 {} is ready", f.getName());
 
-					IContext context = Mp4Muxer.this.scope.getContext(); 
-					ApplicationContext appCtx = context.getApplicationContext(); 
+					IContext context = Mp4Muxer.this.scope.getContext();
+					ApplicationContext appCtx = context.getApplicationContext();
 					Object bean = appCtx.getBean("web.handler");
 					if (bean instanceof IAntMediaStreamHandler) {
 						((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
@@ -532,7 +535,7 @@ public class Mp4Muxer extends Muxer {
 			return -1L;
 		}
 		long durationInMS = -1;
-		if (inputFormatContext.duration() != AV_NOPTS_VALUE) 
+		if (inputFormatContext.duration() != AV_NOPTS_VALUE)
 		{
 			durationInMS = inputFormatContext.duration() / 1000;
 		}
@@ -550,7 +553,7 @@ public class Mp4Muxer extends Muxer {
 			av_packet_free(tmpPacket);
 			tmpPacket = null;
 		}
-		
+
 		if (videoPkt != null) {
 			av_packet_free(videoPkt);
 			videoPkt = null;
@@ -583,7 +586,7 @@ public class Mp4Muxer extends Muxer {
 		}
 
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.trace("not registered stream index for stream: {}", streamId);
+			logger.warn("not registered stream index for stream: {}", streamId);
 			return;
 		}
 		int streamIndex;
@@ -597,12 +600,12 @@ public class Mp4Muxer extends Muxer {
 			logger.error("Undefined codec type for stream: {} ", streamId);
 			return;
 		}
-		
+
 		AVStream outStream = outputFormatContext.streams(streamIndex);
 		int index = pkt.stream_index();
 		pkt.stream_index(streamIndex);
 
-		writePacket(pkt, stream.time_base(),  outStream.time_base(), outStream.codecpar().codec_type()); 
+		writePacket(pkt, stream.time_base(),  outStream.time_base(), outStream.codecpar().codec_type());
 
 		pkt.stream_index(index);
 	}
@@ -613,13 +616,27 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.trace("not registered stream index for {}", streamId);
+			logger.warn("not registered stream index for {}", streamId);
 			return;
 		}
 
 		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
 		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
-		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
+		int codecType = outStream.codecpar().codec_type();
+
+		if (!firstKeyFrameReceivedChecked && codecType == AVMEDIA_TYPE_VIDEO) {
+			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
+			if (keyFrame == 1) {
+				firstKeyFrameReceivedChecked = true;
+				logger.warn("First key frame received");
+			} else {
+				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
+				// return if firstKeyFrameReceived is not received
+				// below return is important otherwise it does not work with like some encoders(vidiu)
+				return;
+			}
+		}
+		writePacket(pkt, codecTimebase,  outStream.time_base(), codecType);
 
 	}
 
@@ -641,7 +658,10 @@ public class Mp4Muxer extends Muxer {
 		AVRational timeBase = new AVRational();
 		timeBase.num(1).den(1000);
 		long packetTime = av_rescale_q(pkt.pts(), inputTimebase, timeBase);
-		if(this.startTime > startTime+packetTime){
+		
+		if(this.startTime > startTime + packetTime) {
+			//why are we having this
+			logger.warn("Mp4 Muxer is not writing because packet time is negative");
 			return;
 		}
 

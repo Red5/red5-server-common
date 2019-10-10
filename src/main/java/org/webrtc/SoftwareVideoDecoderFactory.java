@@ -31,6 +31,7 @@ public class SoftwareVideoDecoderFactory implements VideoDecoderFactory {
 
   @Override
   public VideoCodecInfo[] getSupportedCodecs() {
+	  System.out.println("******************************* getSupportedCodecs ************");
     return supportedCodecs();
   }
 
