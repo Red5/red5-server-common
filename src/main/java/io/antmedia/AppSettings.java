@@ -126,6 +126,8 @@ public class AppSettings {
 
 	public static final String SETTINGS_DEFAULT_DECODERS_ENABLED = "settings.defaultDecodersEnabled";
 
+	public static final String SETTINGS_COLLECT_SOCIAL_MEDIA_ACTIVITY_ENABLED = "settings.collectSocialMediaActivityEnabled";
+
 	
 	@JsonIgnore
 	@NotSaved
@@ -372,7 +374,8 @@ public class AppSettings {
 	/**
 	 * If it's enabled, interactivity(like, comment,) is collected from social media channel
 	 */
-	private boolean collectSocialMediaActivity = false;
+    @Value( "${" + SETTINGS_COLLECT_SOCIAL_MEDIA_ACTIVITY_ENABLED +":false}")
+	private boolean collectSocialMediaActivity;
 
 	
 	@Value( "${" + SETTINGS_ENCODING_ENCODER_NAME +":#{null}}")
