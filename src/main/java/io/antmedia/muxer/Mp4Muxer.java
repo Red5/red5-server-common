@@ -54,6 +54,12 @@ public class Mp4Muxer extends Muxer {
 	 * then below should be flag in advance
 	 */
 	private boolean firstKeyFrameReceivedChecked = false;
+	
+	/**
+	 * Dynamic means that this mp4 muxer is added on the fly. 
+	 * It means it's started after broadcasting is started and it can be stopped before brodcasting has finished
+	 */
+	private boolean dynamic = false;
 
 
 	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
@@ -779,5 +785,13 @@ public class Mp4Muxer extends Muxer {
 	
 	public List<Integer> getRegisteredStreamIndexList() {
 		return registeredStreamIndexList;
+	}
+
+	public void setDynamic(boolean dynamic) {
+		this.dynamic = dynamic;
+	}
+	
+	public boolean isDynamic() {
+		return dynamic;
 	}
 }
