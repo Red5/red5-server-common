@@ -411,13 +411,17 @@ public class HLSMuxer extends Muxer  {
 
 		outputFormatContext = null;
 
+		logger.info("Delete File onexit:{} scheduler:{}", deleteFileOnExit, scheduler);
 		if (scheduler != null && deleteFileOnExit ) {
 
+			logger.info("Scheduling the task to delete. HLS time: {}, hlsListSize:{}", hlsTime, hlsListSize);
 			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
 					new IScheduledJob() {
 
 				@Override
 				public void execute(ISchedulingService service) throws CloneNotSupportedException {
+					
+					logger.info("Delete HLS files on exit");
 
 					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 
@@ -619,23 +623,19 @@ public class HLSMuxer extends Muxer  {
 		avpacket.stream_index(index);
 
 	}
-
+	
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp) {
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
 		
 		encodedVideoFrame.rewind();
-		if (encodedVideoFrame.limit() > 4) // 00 00 00 01 XX , 00 00 01 XX
-		{
-			byte[] starter = new byte[5];
-			encodedVideoFrame.get(starter);
-			if (starter[4] == 103 || starter[3] == 103) {
-				videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
-			}
-			encodedVideoFrame.rewind();
+		if (isKeyFrame) {
+			videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
 		}
+		
 		BytePointer bytePointer = new BytePointer(encodedVideoFrame);
 		videoPkt.data(bytePointer);
 		videoPkt.size(encodedVideoFrame.limit());
@@ -646,6 +646,8 @@ public class HLSMuxer extends Muxer  {
 		
 		av_packet_unref(videoPkt);
 	}
+
+
 	
 	public int getVideoWidth() {
 		return videoWidth;

@@ -388,10 +388,11 @@ public class RtmpMuxer extends Muxer {
 		pkt.duration(duration);
 		pkt.pos(pos);
 	}
-	
+
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex) {
-		
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp) 
+	{
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
@@ -404,5 +405,9 @@ public class RtmpMuxer extends Muxer {
 		
 		av_packet_unref(videoPkt);
 	}
+
+
+	
+	
 
 }
