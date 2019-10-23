@@ -80,6 +80,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final int MP4_ENABLED_FOR_STREAM = 1;
 	public static final int MP4_DISABLED_FOR_STREAM = -1;
 	public static final int MP4_NO_SET_FOR_STREAM = 0;
+	private static final long MAX_ANALYZE_DURATION = 3000;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -334,6 +335,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				inputFormatContext, getReadCallback(), null, null);
 
 		inputFormatContext.pb(avio_alloc_context);
+        inputFormatContext.max_analyze_duration(MAX_ANALYZE_DURATION);
 
 		queueReferences.put(inputFormatContext, inputContext);
 
