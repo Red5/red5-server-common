@@ -358,20 +358,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
 
-		int nbStreams = inputFormatContext.nb_streams();
-		for (int i = 0; i < nbStreams; i++) 
-		{
-			AVStream stream = inputFormatContext.streams(i);
-			AVCodecContext codecContext = stream.codec();
-			AVCodecParameters codecpar = stream.codecpar();
-			
-			if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) 
-			{
-				System.out.println("height:"+codecpar.height());
-				System.out.println("tb:"+stream.time_base().num()+"/"+stream.time_base().den());
-			}
-		}	
-
 		logger.info("after avformat_find_sream_info for stream: {}", streamId);
 
 		return prepareInternal(inputFormatContext);
