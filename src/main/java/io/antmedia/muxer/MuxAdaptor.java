@@ -80,7 +80,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final int MP4_ENABLED_FOR_STREAM = 1;
 	public static final int MP4_DISABLED_FOR_STREAM = -1;
 	public static final int MP4_NO_SET_FOR_STREAM = 0;
-	private static final long MAX_ANALYZE_DURATION = 3000;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -334,8 +333,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
+		
 		inputFormatContext.pb(avio_alloc_context);
-        inputFormatContext.max_analyze_duration(MAX_ANALYZE_DURATION);
+		inputFormatContext.max_analyze_duration(5 * AV_TIME_BASE);
 
 		queueReferences.put(inputFormatContext, inputContext);
 
@@ -347,7 +347,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
-
+		
 		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
@@ -357,7 +357,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
-
 
 		logger.info("after avformat_find_sream_info for stream: {}", streamId);
 
