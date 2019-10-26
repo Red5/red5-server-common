@@ -333,6 +333,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
+		
 		inputFormatContext.pb(avio_alloc_context);
 
 		queueReferences.put(inputFormatContext, inputContext);
@@ -345,7 +346,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
-
+		
 		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
@@ -355,7 +356,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			return false;
 		}
 		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
-
 
 		logger.info("after avformat_find_sream_info for stream: {}", streamId);
 
