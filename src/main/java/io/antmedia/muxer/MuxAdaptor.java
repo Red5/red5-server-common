@@ -335,7 +335,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		
 		inputFormatContext.pb(avio_alloc_context);
-		inputFormatContext.max_analyze_duration(5 * AV_TIME_BASE);
 
 		queueReferences.put(inputFormatContext, inputContext);
 
