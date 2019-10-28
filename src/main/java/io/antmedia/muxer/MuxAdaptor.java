@@ -63,7 +63,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean enableVideo = true;
 	protected boolean enableAudio = true;
 
-	public static class InputContext {
+	public class InputContext {
 		public Queue<byte[]> queue;
 		volatile boolean isHeaderWritten = false;
 		volatile boolean stopRequestExist = false;
@@ -74,7 +74,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 	}
 
-	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
+	protected Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 	protected static final int BUFFER_SIZE = 4096;
 	public static final String QUALITY_GOOD = "good";
 	public static final String QUALITY_AVERAGE = "average";
@@ -326,6 +326,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public boolean prepare() throws Exception {
 
+		Thread.sleep(1000);
+		
 		inputFormatContext = avformat.avformat_alloc_context();
 		if (inputFormatContext == null) 
 		{
@@ -338,7 +340,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		
 		inputFormatContext.pb(avio_alloc_context);
-
+		
 		queueReferences.put(inputFormatContext, inputContext);
 
 		int ret;
@@ -353,6 +355,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
+		logger.info("before avformat_find_sream_info for stream: {}", streamId);
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
@@ -648,7 +651,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		
 		org.red5.io.flv.FLVHeader flvHeader = new org.red5.io.flv.FLVHeader();
 		flvHeader.setFlagVideo(isEnableVideo());
-		flvHeader.setFlagAudio(isEnableVideo());
+		flvHeader.setFlagAudio(isEnableAudio());
 		// create a buffer
 		ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH + 4); // FLVHeader
 		// (9 bytes)
