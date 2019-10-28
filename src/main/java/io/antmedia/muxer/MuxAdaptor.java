@@ -222,11 +222,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		this.broadcastStream = clientBroadcastStream;
 		
-		if(broadcastStream != null) {
-			enableVideo = broadcastStream.getCodecInfo().hasVideo();
-			enableAudio = broadcastStream.getCodecInfo().hasAudio();
-		}
-		
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
@@ -645,6 +640,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	public byte[] getFLVHeader() {
+		if(broadcastStream != null) {
+			enableVideo = broadcastStream.getCodecInfo().hasVideo();
+			enableAudio = broadcastStream.getCodecInfo().hasAudio();
+		}
+		logger.info("creating header for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+		
 		org.red5.io.flv.FLVHeader flvHeader = new org.red5.io.flv.FLVHeader();
 		flvHeader.setFlagVideo(isEnableVideo());
 		flvHeader.setFlagAudio(isEnableVideo());
@@ -666,7 +667,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+				logger.info("before prepare for {}", streamId);
 				try {
 					if (prepare()) {
 						logger.info("after prepare for {}", streamId);
