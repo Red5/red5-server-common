@@ -63,7 +63,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean enableVideo = true;
 	protected boolean enableAudio = true;
 
-	public class InputContext {
+	public static class InputContext {
 		public Queue<byte[]> queue;
 		volatile boolean isHeaderWritten = false;
 		volatile boolean stopRequestExist = false;
@@ -74,7 +74,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 	}
 
-	protected Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
+	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 	protected static final int BUFFER_SIZE = 4096;
 	public static final String QUALITY_GOOD = "good";
 	public static final String QUALITY_AVERAGE = "average";
@@ -326,8 +326,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public boolean prepare() throws Exception {
 
-		Thread.sleep(1000);
-		
 		inputFormatContext = avformat.avformat_alloc_context();
 		if (inputFormatContext == null) 
 		{
@@ -338,9 +336,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
-		
 		inputFormatContext.pb(avio_alloc_context);
-		
+
 		queueReferences.put(inputFormatContext, inputContext);
 
 		int ret;
@@ -351,7 +348,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
-		
+
 		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
