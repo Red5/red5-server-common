@@ -59,15 +59,24 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	protected int receivedPacketCount;
 	protected boolean previewOverwrite = false;
+	
+	protected boolean enableVideo = true;
+	protected boolean enableAudio = true;
 
 	public static class InputContext {
 		public Queue<byte[]> queue;
 		volatile boolean isHeaderWritten = false;
 		volatile boolean stopRequestExist = false;
 		public AtomicInteger queueSize = new AtomicInteger(0);
+		public MuxAdaptor muxAdaptor;
 
-		public InputContext(ConcurrentLinkedQueue<byte[]> queue) {
-			this.queue = queue;
+		/*
+		 * primitive enableVideo, enableAudio must be set in static getFLVHeader
+		 * so we need to pass the muxAdaptor which contains these primitive fields
+		 */
+		public InputContext(MuxAdaptor muxAdaptor) {
+			this.queue = muxAdaptor.inputQueue;
+			this.muxAdaptor = muxAdaptor;
 		}
 	}
 
@@ -128,6 +137,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int previewHeight;
 
 
+	/*
+	 * This callback has to be static. 
+	 * Because it is set as a callback in native side.
+	 * Unless it is static, the last one is called every time.
+	 */
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
 		@Override
@@ -162,7 +176,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				} else {
 					inputContext.isHeaderWritten = true;
 					logger.info("writing header");
-					byte[] flvHeader = getFLVHeader();
+					byte[] flvHeader = getFLVHeader(inputContext.muxAdaptor);
 					length = flvHeader.length;
 
 					buf.put(flvHeader, 0, length);
@@ -218,11 +232,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
 		this.broadcastStream = clientBroadcastStream;
-
+		
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
-		inputContext = new InputContext(inputQueue);
+		inputContext = new InputContext(this);
 	}
 
 	public void addMuxer(Muxer muxer) 
@@ -333,7 +347,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
-		
 		inputFormatContext.pb(avio_alloc_context);
 
 		queueReferences.put(inputFormatContext, inputContext);
@@ -346,10 +359,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
-		
+
 		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
+		logger.info("before avformat_find_sream_info for stream: {}", streamId);
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
@@ -636,10 +650,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public static byte[] getFLVHeader() {
+	public static byte[] getFLVHeader(MuxAdaptor muxAdaptor) {
+		muxAdaptor.checkStreams();
 		org.red5.io.flv.FLVHeader flvHeader = new org.red5.io.flv.FLVHeader();
-		flvHeader.setFlagVideo(true);
-		flvHeader.setFlagAudio(true);
+		flvHeader.setFlagVideo(muxAdaptor.isEnableVideo());
+		flvHeader.setFlagAudio(muxAdaptor.isEnableAudio());
 		// create a buffer
 		ByteBuffer header = ByteBuffer.allocate(HEADER_LENGTH + 4); // FLVHeader
 		// (9 bytes)
@@ -649,6 +664,15 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		flvHeader.write(header);
 		return header.array();
 	}
+
+	private void checkStreams() {
+		if(broadcastStream != null) {
+			enableVideo = broadcastStream.getCodecInfo().hasVideo();
+			enableAudio = broadcastStream.getCodecInfo().hasAudio();
+		}
+		logger.info("Streams for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+	}
+
 
 	@Override
 	public void start() {
@@ -993,6 +1017,24 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return result;
 	}
 
+	public boolean isEnableVideo() {
+		return enableVideo;
+	}
+
+
+	public void setEnableVideo(boolean enableVideo) {
+		this.enableVideo = enableVideo;
+	}
+
+
+	public boolean isEnableAudio() {
+		return enableAudio;
+	}
+
+
+	public void setEnableAudio(boolean enableAudio) {
+		this.enableAudio = enableAudio;
+	}
 }
 
 
