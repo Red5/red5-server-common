@@ -70,6 +70,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		public AtomicInteger queueSize = new AtomicInteger(0);
 		public MuxAdaptor muxAdaptor;
 
+		/*
+		 * primitive enableVideo, enableAudio must be set in static getFLVHeader
+		 * so we need to pass the muxAdaptor which contains these primitive fields
+		 */
 		public InputContext(MuxAdaptor muxAdaptor) {
 			this.queue = muxAdaptor.inputQueue;
 			this.muxAdaptor = muxAdaptor;
@@ -133,6 +137,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int previewHeight;
 
 
+	/*
+	 * This callback has to be static. 
+	 * Because it is set as a callback in native side.
+	 * Unless it is static, the last one is called every time.
+	 */
 	private static Read_packet_Pointer_BytePointer_int readCallback = new Read_packet_Pointer_BytePointer_int() {
 
 		@Override
