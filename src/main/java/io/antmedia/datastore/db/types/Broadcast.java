@@ -218,7 +218,8 @@ public class Broadcast {
 	@ApiModelProperty(value = "the number of RTMP viewers of the stream")
 	private int rtmpViewerCount = 0;
 	
-
+	@ApiModelProperty(value = "the publishing start time of the stream")
+	private long startTime = 0;
 	
 	
 
@@ -500,6 +501,12 @@ public class Broadcast {
 		this.mp4Enabled = mp4Enabled;
 	}
 
-	
+	public long getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
 
 }
