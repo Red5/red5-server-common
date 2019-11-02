@@ -337,46 +337,45 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public boolean prepare() throws Exception {
 
-		inputFormatContext = avformat.avformat_alloc_context();
-		if (inputFormatContext == null) 
+		AVFormatContext inputFormatContextLocal = avformat.avformat_alloc_context();
+		if (inputFormatContextLocal == null) 
 		{
 			logger.info("cannot allocate input context");
 			return false;
 		}
 
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
-				inputFormatContext, getReadCallback(), null, null);
+				inputFormatContextLocal, getReadCallback(), null, null);
 
-		inputFormatContext.pb(avio_alloc_context);
+		inputFormatContextLocal.pb(avio_alloc_context);
 
-		queueReferences.put(inputFormatContext, inputContext);
+		queueReferences.put(inputFormatContextLocal, inputContext);
 
 		int ret;
 		logger.debug("before avformat_open_input for stream {}", streamId);
 
-		if (avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
+		if (avformat_open_input(inputFormatContextLocal, (String) null, avformat.av_find_input_format("flv"),
 				(AVDictionary) null) < 0) {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
 		}
 
-		logger.debug("after avformat_open_input for stream {}", streamId);
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
 		logger.info("before avformat_find_sream_info for stream: {}", streamId);
-		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
+		ret = avformat_find_stream_info(inputFormatContextLocal, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
 		}
-		logger.info("avformat_find_stream_info takes {}ms", System.currentTimeMillis() - startFindStreamInfoTime);
+		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
-		logger.info("after avformat_find_sream_info for stream: {}", streamId);
 
-		return prepareInternal(inputFormatContext);
+		return prepareInternal(inputFormatContextLocal);
 	}
 
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
+		this.inputFormatContext = inputFormatContext;
 		return prepareMuxers(inputFormatContext);
 	}
 
@@ -543,7 +542,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	}
 
-	public void writeTrailer(AVFormatContext inputFormatContext) {
+	public void writeTrailer() {
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
 		}
@@ -565,7 +564,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			scheduler.removeScheduledJob(packetFeederJobName);
 		}
 
-		writeTrailer(inputFormatContext);
+		writeTrailer();
 
 		queueReferences.remove(inputFormatContext);
 
@@ -1034,6 +1033,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public void setEnableAudio(boolean enableAudio) {
 		this.enableAudio = enableAudio;
+	}
+	
+	public AVFormatContext getInputFormatContext() {
+		return inputFormatContext;
 	}
 }
 
