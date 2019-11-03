@@ -128,6 +128,10 @@ public class AppSettings {
 
 	public static final String SETTINGS_COLLECT_SOCIAL_MEDIA_ACTIVITY_ENABLED = "settings.collectSocialMediaActivityEnabled";
 
+	private static final String SETTINGS_HTTP_FORWARDING_EXTENSION = "settings.httpforwarding.extension";
+
+	private static final String SETTINGS_HTTP_FORWARDING_BASE_URL = "settings.httpforwarding.baseURL";
+
 	
 	@JsonIgnore
 	@NotSaved
@@ -511,8 +515,20 @@ public class AppSettings {
 	private long updateTime;
 
 	private List<EncoderSettings> encoderSettings;
-	
 
+	/**
+	 * Forwards the http requests with this extension to {@link #httpForwardingBaseURL}
+	 * It supports comma separated extensions. Like mp4,m3u8
+	 * Don't add any leading, trailing white spaces
+	 */
+	@Value("${" + SETTINGS_HTTP_FORWARDING_EXTENSION+ ":''}")
+	private String httpForwardingExtension;
+	
+	/**
+	 * Forward the incoming http request to this base url
+	 */
+	@Value("${" + SETTINGS_HTTP_FORWARDING_BASE_URL+ ":''}")
+	private String httpForwardingBaseURL;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1142,4 +1158,22 @@ public class AppSettings {
 	public void setDefaultDecodersEnabled(boolean defaultDecodersEnabled) {
 		this.defaultDecodersEnabled = defaultDecodersEnabled;
 	}
+
+	public String getHttpForwardingExtension() {
+		return httpForwardingExtension;
+	}
+
+	public void setHttpForwardingExtension(String httpForwardingExtension) {
+		this.httpForwardingExtension = httpForwardingExtension;
+	}
+
+	public String getHttpForwardingBaseURL() {
+		return httpForwardingBaseURL;
+	}
+
+	public void setHttpForwardingBaseURL(String httpForwardingBaseURL) {
+		this.httpForwardingBaseURL = httpForwardingBaseURL;
+	}
+
+
 }
