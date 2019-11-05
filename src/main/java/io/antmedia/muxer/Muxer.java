@@ -230,9 +230,11 @@ public abstract class Muxer {
 	 *
 	 * file format is NAME[-{DATETIME}][_{RESOLUTION_HEIGHT}p].{EXTENSION}
 	 *
-	 * Datetime format is yyyy-MM-dd_HH:mm
+	 * Datetime format is yyyy-MM-dd_HH-mm
+	 * 
+	 * We use "-" instead of ":" in HH:mm -> Stream filename must not contain ":" character.
 	 *
-	 * sample naming -> stream1-yyyy-MM-dd_HH:mm_480p.mp4 if datetime is added
+	 * sample naming -> stream1-yyyy-MM-dd_HH-mm_480p.mp4 if datetime is added
 	 * stream1_480p.mp4 if no datetime
 	 *
 	 * @param scope
@@ -266,9 +268,9 @@ public abstract class Muxer {
 					ldt = ldt.plusMinutes(1);
 				}
 
-				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm"));
+				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
 				if (logger.isInfoEnabled()) {
-					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
+					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
 				}
 			}
 
