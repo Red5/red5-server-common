@@ -89,6 +89,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final int MP4_ENABLED_FOR_STREAM = 1;
 	public static final int MP4_DISABLED_FOR_STREAM = -1;
 	public static final int MP4_NO_SET_FOR_STREAM = 0;
+	private static final long MIN_BYTES_REQUIRED = 10000;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -666,10 +667,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private void checkStreams() {
 		if(broadcastStream != null) {
+			int trial = 0;
+			long data = broadcastStream.getBytesReceived();
+			while(data < MIN_BYTES_REQUIRED && trial++ < 1000) {
+				data = broadcastStream.getBytesReceived();
+				try {
+					Thread.sleep(1);
+				} catch (InterruptedException e) {
+				}
+			}
 			enableVideo = broadcastStream.getCodecInfo().hasVideo();
 			enableAudio = broadcastStream.getCodecInfo().hasAudio();
+			logger.info("Streams for {} enableVideo:{} enableAudio:{} trial: {} data:{}", streamId, enableVideo, enableAudio, trial, data);
 		}
-		logger.info("Streams for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+		else {
+			logger.warn("broadcastStream is null while checking streams for {}", streamId);
+		}
 	}
 
 
