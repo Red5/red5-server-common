@@ -132,8 +132,6 @@ public class AppSettings {
 
 	private static final String SETTINGS_HTTP_FORWARDING_BASE_URL = "settings.httpforwarding.baseURL";
 
-	private static final String SETTINGS_FFMPEG_PROBE_SIZE = "settings.ffmpeg.probeSize";
-
 	
 	@JsonIgnore
 	@NotSaved
@@ -531,15 +529,6 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_HTTP_FORWARDING_BASE_URL+ ":''}")
 	private String httpForwardingBaseURL;
-
-	/**
-	 * This is the ffmpeg probe size while ingesting RTMP streams.
-	 * This is expecially critical for single stream(audio only, video only)
-	 * 
-	 * It may also need to be increased in high quality streams for better performance
-	 */
-	@Value("${" + SETTINGS_FFMPEG_PROBE_SIZE + ":250000}")
-	private long probeSize;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1184,14 +1173,6 @@ public class AppSettings {
 
 	public void setHttpForwardingBaseURL(String httpForwardingBaseURL) {
 		this.httpForwardingBaseURL = httpForwardingBaseURL;
-	}
-
-	public long getProbeSize() {
-		return probeSize;
-	}
-	
-	public void setProbeSize(long probeSize) {
-		this.probeSize = probeSize;
 	}
 
 
