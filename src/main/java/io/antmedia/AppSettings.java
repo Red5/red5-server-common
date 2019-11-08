@@ -538,7 +538,7 @@ public class AppSettings {
 	 * 
 	 * It may also need to be increased in high quality streams for better performance
 	 */
-	@Value("${" + SETTINGS_FFMPEG_PROBE_SIZE + ":100000}")
+	@Value("${" + SETTINGS_FFMPEG_PROBE_SIZE + ":250000}")
 	private long probeSize;
 	
 	public boolean isWriteStatsToDatastore() {
