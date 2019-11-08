@@ -667,7 +667,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if(broadcastStream != null) 
 		{
 			while(lastFrameTimestamp < maxAnalyzeDurationMS) {
-				logger.info("last frame time stamp: {} maxAnalyzeDurationMS: {}", lastFrameTimestamp, maxAnalyzeDurationMS);
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
 				enableAudio = broadcastStream.getCodecInfo().hasAudio();
 				if (enableVideo && enableAudio) {
