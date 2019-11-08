@@ -19,6 +19,8 @@ public class StreamInfo implements IStreamInfo {
 	@Id
 	private ObjectId dbId;
 	private String streamId;
+	private boolean videoEnabled = false;
+	private boolean audioEnabled = false;
 	private int height;
 	private int width;
 	private int videoBitrate;
@@ -125,5 +127,20 @@ public class StreamInfo implements IStreamInfo {
 	public void setHost(String host) {
 		this.host = host;
 	}
-
+	
+	public void setVideoEnabled(boolean videoEnabled) {
+		this.videoEnabled = videoEnabled;
+	}
+	
+	public void setAudioEnabled(boolean audioEnabled) {
+		this.audioEnabled = audioEnabled;
+	}
+	
+	public boolean isVideoEnabled() {
+		return videoEnabled;
+	}
+	
+	public boolean isAudioEnabled() {
+		return audioEnabled;
+	}
 }
