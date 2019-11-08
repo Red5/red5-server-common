@@ -19,7 +19,7 @@ before_install:
 - cd ..
 
 install:
-  - mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
+  - mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true --quiet
 
 cache:
   directories:
