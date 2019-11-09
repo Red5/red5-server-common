@@ -132,6 +132,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_HTTP_FORWARDING_BASE_URL = "settings.httpforwarding.baseURL";
 
+	private static final String SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS = "settings.rtmp.maxAnalyzeDurationMS";
+
 	
 	@JsonIgnore
 	@NotSaved
@@ -529,6 +531,12 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_HTTP_FORWARDING_BASE_URL+ ":''}")
 	private String httpForwardingBaseURL;
+
+	/**
+	 * Max analyze duration in for determining video and audio existence in RTMP streams
+	 */
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
+	private int maxAnalyzeDurationMS;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1173,6 +1181,10 @@ public class AppSettings {
 
 	public void setHttpForwardingBaseURL(String httpForwardingBaseURL) {
 		this.httpForwardingBaseURL = httpForwardingBaseURL;
+	}
+
+	public int getMaxAnalyzeDurationMS() {
+		return maxAnalyzeDurationMS;
 	}
 
 
