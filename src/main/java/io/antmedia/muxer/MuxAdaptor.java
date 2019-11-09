@@ -57,11 +57,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected List<Muxer> muxerList =  Collections.synchronizedList(new ArrayList<Muxer>());
 	protected boolean deleteHLSFilesOnExit = true;
 
-	protected int receivedPacketCount;
 	protected boolean previewOverwrite = false;
 	
-	protected boolean enableVideo = true;
-	protected boolean enableAudio = true;
+	protected boolean enableVideo = false;
+	protected boolean enableAudio = false;
 
 	public static class InputContext {
 		public Queue<byte[]> queue;
@@ -135,6 +134,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private Broadcast broadcast;
 	private AppSettings appSettings;
 	private int previewHeight;
+	private int lastFrameTimestamp;
+	private int maxAnalyzeDurationMS = 1000;
+	private long streamInfoFindTime;
 
 
 	/*
@@ -175,7 +177,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 				} else {
 					inputContext.isHeaderWritten = true;
-					logger.info("writing header");
+					inputContext.muxAdaptor.checkStreams();
+					logger.debug("writing header for stream: {}", inputContext.muxAdaptor.streamId);
 					byte[] flvHeader = getFLVHeader(inputContext.muxAdaptor);
 					length = flvHeader.length;
 
@@ -266,6 +269,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
 		encoderSettingsList = appSettingsLocal.getEncoderSettings();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
+		maxAnalyzeDurationMS = appSettingsLocal.getMaxAnalyzeDurationMS();
 		setPreviewHeight(appSettingsLocal.getPreviewHeight());
 	}
 
@@ -368,6 +372,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
 		}
+		
 		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
 
@@ -436,10 +441,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public AppSettings getAppSettings() {
 
-		if (appSettings == null) {
-			if (scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
-				appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
-			}
+		if (appSettings == null && scope.getContext().getApplicationContext().containsBean(AppSettings.BEAN_NAME)) {
+			appSettings = (AppSettings) scope.getContext().getApplicationContext().getBean(AppSettings.BEAN_NAME);
 		}
 		return appSettings;
 	}
@@ -513,12 +516,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			quality = QUALITY_AVERAGE;
 		}
 
-		receivedPacketCount++;
 		int inputQueueSize = getInputQueueSize();
-		if (receivedPacketCount % 500 == 0) {
-			//	logger.info("Number of items in the queue {}", inputQueueSize);
-		}
-
+	
 		changeStreamQualityParameters(this.streamId, quality, speed, inputQueueSize);
 
 		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
@@ -650,7 +649,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	}
 
 	public static byte[] getFLVHeader(MuxAdaptor muxAdaptor) {
-		muxAdaptor.checkStreams();
 		org.red5.io.flv.FLVHeader flvHeader = new org.red5.io.flv.FLVHeader();
 		flvHeader.setFlagVideo(muxAdaptor.isEnableVideo());
 		flvHeader.setFlagAudio(muxAdaptor.isEnableAudio());
@@ -664,12 +662,25 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return header.array();
 	}
 
-	private void checkStreams() {
-		if(broadcastStream != null) {
-			enableVideo = broadcastStream.getCodecInfo().hasVideo();
-			enableAudio = broadcastStream.getCodecInfo().hasAudio();
+	public void checkStreams() throws InterruptedException 
+	{
+		if(broadcastStream != null) 
+		{
+			while(lastFrameTimestamp < maxAnalyzeDurationMS) {
+				enableVideo = broadcastStream.getCodecInfo().hasVideo();
+				enableAudio = broadcastStream.getCodecInfo().hasAudio();
+				if (enableVideo && enableAudio) {
+					break;
+				}
+				//sleeping is not something we like. But it seems the best option for this case
+				Thread.sleep(5);
+			}
+			
+			logger.info("Streams for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
 		}
-		logger.info("Streams for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+		else {
+			logger.warn("broadcastStream is null while checking streams for {}", streamId);
+		}
 	}
 
 
@@ -728,6 +739,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		try {
 			flvFrame = getFLVFrame(packet);
 
+			lastFrameTimestamp = packet.getTimestamp();
 			if (flvFrame.length <= BUFFER_SIZE) {
 				inputQueue.add(flvFrame);
 				inputContext.queueSize.incrementAndGet();
@@ -1037,6 +1049,21 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	
 	public AVFormatContext getInputFormatContext() {
 		return inputFormatContext;
+	}
+
+
+	public int getLastFrameTimestamp() {
+		return lastFrameTimestamp;
+	}
+
+
+	public void setLastFrameTimestamp(int lastFrameTimestamp) {
+		this.lastFrameTimestamp = lastFrameTimestamp;
+	}
+
+
+	public long getStreamInfoFindTime() {
+		return streamInfoFindTime;
 	}
 }
 

@@ -28,14 +28,18 @@ public class StreamInfo implements IStreamInfo {
 	private String host;
 	private int videoPort;
 	private int audioPort;
+	private boolean videoEnabled;
+	private boolean audioEnabled;
 
-	public StreamInfo(int height, int width, int videobitrate, int audiobitrate, int videoRTimebase, int audioRTimebase) {
+	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase) {
 		this.height = height;
 		this.width = width;
 		this.videoBitrate = videobitrate;
 		this.audioBitrate = audiobitrate;
 		this.videoRTimebase = videoRTimebase;
 		this.audioRTimebase = audioRTimebase;
+		this.videoEnabled = true;
+		this.audioEnabled = true;
 	}
 	
 	public StreamInfo() {
@@ -124,6 +128,22 @@ public class StreamInfo implements IStreamInfo {
 
 	public void setHost(String host) {
 		this.host = host;
+	}
+
+	public void setVideoEnabled(boolean b) {
+		this.videoEnabled = b;
+	}
+
+	public void setAudioEnabled(boolean b) {
+		this.audioEnabled = b;
+	}
+
+	public boolean isVideoEnabled() {
+		return this.videoEnabled;
+	}
+
+	public boolean isAudioEnabled() {
+		return this.audioEnabled;
 	}
 
 }
