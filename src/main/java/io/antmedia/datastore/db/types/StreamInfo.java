@@ -31,13 +31,15 @@ public class StreamInfo implements IStreamInfo {
 	private boolean videoEnabled;
 	private boolean audioEnabled;
 
-	public StreamInfo(int height, int width, int videobitrate, int audiobitrate, int videoRTimebase, int audioRTimebase) {
+	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase) {
 		this.height = height;
 		this.width = width;
 		this.videoBitrate = videobitrate;
 		this.audioBitrate = audiobitrate;
 		this.videoRTimebase = videoRTimebase;
 		this.audioRTimebase = audioRTimebase;
+		this.videoEnabled = true;
+		this.audioEnabled = true;
 	}
 	
 	public StreamInfo() {
