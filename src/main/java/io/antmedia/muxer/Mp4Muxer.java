@@ -46,7 +46,8 @@ public class Mp4Muxer extends Muxer {
 	private boolean isAVCConversionRequired = false;
 	private AVPacket videoPkt;
 	private int rotation;
-	public long startTime;
+	private long startTimeInVideoTimebase = 0;
+	private long startTimeInAudioTimebase = 0;
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
@@ -221,7 +222,6 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
-		startTime = System.currentTimeMillis();
 		AVFormatContext context = getOutputFormatContext();
 
 		int streamIndex = 0;
@@ -313,7 +313,7 @@ public class Mp4Muxer extends Muxer {
 	 */
 	@Override
 	public synchronized boolean prepareIO() {
-		startTime = System.currentTimeMillis();
+	
 
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() != null) {
@@ -352,11 +352,9 @@ public class Mp4Muxer extends Muxer {
 		if (optionsDictionary != null) {
 			av_dict_free(optionsDictionary);
 		}
-
+		
 		isRunning.set(true);
-
 		return true;
-
 	}
 
 	public static void remux(String srcFile, String dstFile, int rotation) {
@@ -438,11 +436,10 @@ public class Mp4Muxer extends Muxer {
 		* Rotation field is used add metadata to the mp4.
 		* this method is called in directly creating mp4 from coming encoded WebRTC H264 stream
 		*/
-		long actualTimeStamp = timestamp - (startTime - firstFrameTimeStamp);
 		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
-		videoPkt.pts(actualTimeStamp);
-		videoPkt.dts(actualTimeStamp);
+		videoPkt.pts(timestamp);
+		videoPkt.dts(timestamp);
         if(isKeyFrame) {
             videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
         }
@@ -580,6 +577,9 @@ public class Mp4Muxer extends Muxer {
 	public synchronized void writePacket(AVPacket pkt, AVStream stream) {
 
 		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+			//we set start time here because we start recording with key frame and drop the other
+			//setting here improves synch between audio and video
+			setVideoStartTime(pkt.pts());
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
@@ -616,6 +616,12 @@ public class Mp4Muxer extends Muxer {
 		pkt.stream_index(index);
 	}
 
+	private void setVideoStartTime(long time) {
+		if (startTimeInVideoTimebase == 0) {
+			startTimeInVideoTimebase = time;
+		}
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -632,11 +638,14 @@ public class Mp4Muxer extends Muxer {
 
 		if (!firstKeyFrameReceivedChecked && codecType == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
+			//we set start time here because we start recording with key frame and drop the other
+			//setting here improves synch between audio and video
+			setVideoStartTime(pkt.pts());
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
 				logger.warn("First key frame received");
 			} else {
-				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
+				logger.info("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
 				// below return is important otherwise it does not work with like some encoders(vidiu)
 				return;
@@ -661,34 +670,30 @@ public class Mp4Muxer extends Muxer {
 	 */
 	private void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
-		AVRational timeBase = new AVRational();
-		timeBase.num(1).den(1000);
-		long packetTime = av_rescale_q(pkt.pts(), inputTimebase, timeBase);
 		
-		if(this.startTime > startTime + packetTime) {
-			//why are we having this
-			logger.warn("Mp4 Muxer is not writing because packet time is negative");
-			return;
-		}
-
 		AVFormatContext context = getOutputFormatContext();
 		if (context == null || context.pb() == null) {
 			logger.warn("output context.pb field is null for stream: {}", streamId);
 			return;
 		}
+		
 		long pts = pkt.pts();
 		long dts = pkt.dts();
 		long duration = pkt.duration();
 		long pos = pkt.pos();
 
-
-		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) 
 		{
+			if (startTimeInAudioTimebase == 0) {
+				startTimeInAudioTimebase = pkt.pts();
+			}
+			pkt.pts(av_rescale_q_rnd(pkt.pts() - startTimeInAudioTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts() - startTimeInAudioTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			
+			
 			int ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy audio packet for {}", streamId);
@@ -731,6 +736,12 @@ public class Mp4Muxer extends Muxer {
 		}
 		else if (codecType == AVMEDIA_TYPE_VIDEO) 
 		{
+			// we don't set startTimeInVideoTimebase here because we only start with key frame and we drop all frames 
+			// until the first key frame
+			pkt.pts(av_rescale_q_rnd(pkt.pts() - startTimeInVideoTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts() - startTimeInVideoTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			
+			
 			int ret = av_packet_ref(tmpPacket , pkt);
 			if (ret < 0) {
 				logger.error("Cannot copy video packet for {}", streamId);
