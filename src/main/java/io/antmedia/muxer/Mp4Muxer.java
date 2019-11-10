@@ -583,6 +583,7 @@ public class Mp4Muxer extends Muxer {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
+				logger.warn("First key frame received for stream: {}", streamId);
 			} else {
 				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
@@ -592,7 +593,7 @@ public class Mp4Muxer extends Muxer {
 		}
 
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.warn("not registered stream index for stream: {}", streamId);
+			logger.warn("Not writing packet1 for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
 			return;
 		}
 		int streamIndex;
@@ -628,7 +629,7 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.warn("not registered stream index for {}", streamId);
+			logger.warn("Not writing packet for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
 			return;
 		}
 
@@ -643,7 +644,7 @@ public class Mp4Muxer extends Muxer {
 			setVideoStartTime(pkt.pts());
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
-				logger.warn("First key frame received");
+				logger.warn("First key frame received for stream: {}", streamId);
 			} else {
 				logger.info("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
