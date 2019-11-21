@@ -131,7 +131,7 @@ public class Broadcast {
 	@ApiModelProperty(value = "the category of the stream")
 	private String category;
 	
-	@ApiModelProperty(value = "the IP Address of the IP Camera")
+	@ApiModelProperty(value = "the IP Address of the IP Cameraor publisher")
 	private String ipAddr;
 	
 	@ApiModelProperty(value = "the user name of the IP Camera")
@@ -221,7 +221,14 @@ public class Broadcast {
 	@ApiModelProperty(value = "the publishing start time of the stream")
 	private long startTime = 0;
 	
+	@ApiModelProperty(value = "the received bytes until now")
+	private long receivedBytes = 0;
 	
+	@ApiModelProperty(value = "the received bytes / duration")
+	private long bitrate = 0;
+	
+	@ApiModelProperty(value = "User - Agent")
+	private String userAgent = "N/A";
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -507,6 +514,30 @@ public class Broadcast {
 
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
+	}
+
+	public long getReceivedBytes() {
+		return receivedBytes;
+	}
+
+	public void setReceivedBytes(long receivedBytes) {
+		this.receivedBytes = receivedBytes;
+	}
+
+	public long getBitrate() {
+		return bitrate;
+	}
+
+	public void setBitrate(long bitrate) {
+		this.bitrate = bitrate;
+	}
+
+	public String getUserAgent() {
+		return userAgent;
+	}
+
+	public void setUserAgent(String userAgent) {
+		this.userAgent = userAgent;
 	}
 
 }
