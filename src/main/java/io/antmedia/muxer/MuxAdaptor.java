@@ -137,6 +137,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int lastFrameTimestamp;
 	private int maxAnalyzeDurationMS = 1000;
 	private long streamInfoFindTime;
+	protected boolean generatePreview = true;
 
 
 	/*
@@ -270,7 +271,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		encoderSettingsList = appSettingsLocal.getEncoderSettings();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
 		maxAnalyzeDurationMS = appSettingsLocal.getMaxAnalyzeDurationMS();
-		setPreviewHeight(appSettingsLocal.getPreviewHeight());
+		generatePreview = appSettingsLocal.isGeneratePreview();
+		previewHeight = appSettingsLocal.getPreviewHeight();
 	}
 
 	public void initStorageClient() {
