@@ -8,9 +8,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.event.ProgressEvent;
 import com.amazonaws.event.ProgressEventType;
 import com.amazonaws.event.ProgressListener;
 import com.amazonaws.regions.Region;
@@ -19,6 +20,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
+import com.amazonaws.services.s3.transfer.Upload;
 
 public class AmazonS3StorageClient extends StorageClient {
 
@@ -62,27 +66,43 @@ public class AmazonS3StorageClient extends StorageClient {
 		String key = type.getValue() + "/" + file.getName();
 
 		AmazonS3 s3 = getAmazonS3();
-		PutObjectRequest putRequest = new PutObjectRequest(getStorageName(), key, file);
 		
-		putRequest.setCannedAcl(CannedAccessControlList.PublicRead);
-		putRequest.setGeneralProgressListener(new ProgressListener() {
+		TransferManager tm = TransferManagerBuilder.standard()
+                .withS3Client(s3)
+                .build();
 
-			@Override
-			public void progressChanged(ProgressEvent event) {
-				if (event.getEventType() == ProgressEventType.TRANSFER_FAILED_EVENT){
-					logger.error("S3 - Error: Upload failed for {}", file.getName());
+        // TransferManager processes all transfers asynchronously,
+        // so this call returns immediately.
+        Upload upload = tm.upload(getStorageName(), key, file);
+        logger.info("Mp4 {} upload has started", file.getName());
+        
+        upload.addProgressListener((ProgressListener) event -> {
+			if (event.getEventType() == ProgressEventType.TRANSFER_FAILED_EVENT){
+				logger.error("S3 - Error: Upload failed for {}", file.getName());
+			}
+			else if (event.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT){
+				try {
+					Files.delete(file.toPath());
+				} catch (IOException e) {
+					logger.error(ExceptionUtils.getStackTrace(e));
 				}
-				else if (event.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT){
-					try {
-						Files.delete(file.toPath());
-					} catch (IOException e) {
-						logger.error(ExceptionUtils.getStackTrace(e));
-					}
-					logger.info("File {} uploaded to S3", file.getName());
-				}
+				logger.info("File {} uploaded to S3", file.getName());
 			}
 		});
-		s3.putObject(putRequest);
+        
+
+        // Optionally, wait for the upload to finish before continuing.
+        try {
+			upload.waitForCompletion();
+			
+			logger.info("Mp4 {} upload completed", file.getName());
+		} catch (AmazonServiceException e1) {
+			logger.error(ExceptionUtils.getStackTrace(e1));
+		} catch (InterruptedException e1) {
+			logger.error(ExceptionUtils.getStackTrace(e1));
+			Thread.currentThread().interrupt();
+		}
+        
 	}
 
 }
