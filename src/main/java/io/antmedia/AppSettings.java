@@ -102,7 +102,7 @@ public class AppSettings {
     
     public static final String SETTINGS_ENCODER_SELECTION_PREFERENCE = "settings.encoderSelectionPreference";
 
-    public static final String SETTINGS_ALLOWED_PUBLISHER_IPS = "settings.allowedPublisherIps";
+    public static final String SETTINGS_ALLOWED_PUBLISHER_IPS = "settings.allowedPublisherCIDR";
     
     public static final String BEAN_NAME = "app.settings";
     
@@ -433,8 +433,12 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_ENCODER_SELECTION_PREFERENCE+":'gpu_and_cpu'}")
 	private String encoderSelectionPreference;
 	
+	/**
+	 * Comma separated CIDR that server accepts/ingests RTMP streams from.
+	 * Default value is null which means that it accepts/ingests stream from everywhere
+	 */
 	@Value( "${" + SETTINGS_ALLOWED_PUBLISHER_IPS+":#{null}}")
-	private String allowedPublisherIps;
+	private String allowedPublisherCIDR;
 	
 	/**
 	 * *******************************************************
@@ -549,6 +553,10 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
 	private int maxAnalyzeDurationMS;
+
+	@JsonIgnore
+	@NotSaved
+	private List<NetMask> allowedPublisherCIDRList = new ArrayList<>();
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1037,6 +1045,31 @@ public class AppSettings {
 		}
 	}
 	
+	public String getAllowedPublisherCIDR() {
+		return allowedPublisherCIDR;
+	}
+
+	public void setAllowedPublisherCIDR(String allowedPublisherCIDR) 
+	{
+		synchronized (cidrLock) 
+		{
+			this.allowedPublisherCIDR = allowedPublisherCIDR;
+			allowedPublisherCIDRList = new ArrayList<>();
+			fillFromInput(allowedPublisherCIDR, allowedPublisherCIDRList);
+		}
+	}
+	
+	public List<NetMask> getAllowedPublisherCIDRList() 
+	{
+		synchronized (cidrLock) 
+		{
+			if (allowedPublisherCIDRList.isEmpty()) {
+				fillFromInput(allowedPublisherCIDR, allowedPublisherCIDRList);
+			}
+		}
+		return allowedPublisherCIDRList;
+	}
+	
 	
 	/**
 	 * Fill a {@link NetMask} list from a string input containing a
@@ -1073,14 +1106,6 @@ public class AppSettings {
 	
 	public void setEncoderSelectionPreference(String encoderSelectionPreference) {
 		this.encoderSelectionPreference = encoderSelectionPreference;
-	}
-
-	public String getAllowedPublisherIps() {
-		return allowedPublisherIps;
-	}
-
-	public void setAllowedPublisherIps(String allowedPublisherIps) {
-		this.allowedPublisherIps = allowedPublisherIps;
 	}
 
 	public int getExcessiveBandwidthCallThreshold() {
