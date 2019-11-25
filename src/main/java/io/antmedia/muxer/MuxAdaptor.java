@@ -137,6 +137,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int lastFrameTimestamp;
 	private int maxAnalyzeDurationMS = 1000;
 	private long streamInfoFindTime;
+	protected boolean generatePreview = true;
 
 
 	/*
@@ -157,7 +158,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					if (inputContext.queue != null) {
 						while ((packet = inputContext.queue.poll()) == null) {
 							if (inputContext.stopRequestExist) {
-								logger.info("stop request ");
+								logger.info("stop request for stream id : {}", inputContext.muxAdaptor.getStreamId());
 								break;
 							}
 							Thread.sleep(5);
@@ -165,7 +166,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						inputContext.queueSize.decrementAndGet();
 
 					} else {
-						logger.error("input queue null");
+						logger.error("input queue null for stream id: {}", inputContext.muxAdaptor.getStreamId());
 					}
 
 					if (packet != null) {
@@ -270,7 +271,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		encoderSettingsList = appSettingsLocal.getEncoderSettings();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
 		maxAnalyzeDurationMS = appSettingsLocal.getMaxAnalyzeDurationMS();
-		setPreviewHeight(appSettingsLocal.getPreviewHeight());
+		generatePreview = appSettingsLocal.isGeneratePreview();
+		previewHeight = appSettingsLocal.getPreviewHeight();
 	}
 
 	public void initStorageClient() {
@@ -430,11 +432,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public IAntMediaStreamHandler getStreamHandler() {
 		if (appAdapter == null) {
-
 			IContext context = MuxAdaptor.this.scope.getContext();
 			ApplicationContext appCtx = context.getApplicationContext();
+			//this returns the StreamApplication instance 
 			appAdapter = (IAntMediaStreamHandler) appCtx.getBean("web.handler");
-
 		}
 		return appAdapter;
 	}
@@ -565,7 +566,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		writeTrailer();
 
-		queueReferences.remove(inputFormatContext);
+		if (inputFormatContext != null) {
+			queueReferences.remove(inputFormatContext);
+		}
 
 		avformat_close_input(inputFormatContext);
 
