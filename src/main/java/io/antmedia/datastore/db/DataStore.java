@@ -388,8 +388,8 @@ public abstract class DataStore {
 					Comparable c1 = null;
 					Comparable c2 = null;
 					if(sortBy.contentEquals("name")) {
-						c1 = vod1.getVodName();
-						c2 = vod2.getVodName();
+						c1 = vod1.getVodName().toLowerCase();
+						c2 = vod2.getVodName().toLowerCase();
 					}
 					else if(sortBy.contentEquals("date")) {
 						c1 = new Long(vod1.getCreationDate());
