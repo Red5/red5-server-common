@@ -1,6 +1,8 @@
 package io.antmedia.datastore.db;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
@@ -71,7 +73,7 @@ public abstract class DataStore {
 
 	public abstract void close();
 
-	public abstract List<VoD> getVodList(int offset, int size);
+	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy);
 
 	public abstract boolean removeAllEndpoints(String id);
 
@@ -381,6 +383,40 @@ public abstract class DataStore {
 	 */
 	public long getLocalLiveBroadcastCount(String hostAddress) {
 		return getActiveBroadcastCount();
+	}
+	
+	protected List<VoD> sortAndCropVodList(List<VoD> vodList, int offset, int size, String sortBy, String orderBy) {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
+			Collections.sort(vodList, new Comparator<VoD>() {
+				@Override
+				public int compare(VoD vod1, VoD vod2) {
+					Comparable c1 = null;
+					Comparable c2 = null;
+					if(sortBy.contentEquals("name")) {
+						c1 = vod1.getVodName().toLowerCase();
+						c2 = vod2.getVodName().toLowerCase();
+					}
+					else if(sortBy.contentEquals("date")) {
+						c1 = new Long(vod1.getCreationDate());
+						c2 = new Long(vod2.getCreationDate());
+					}
+					
+					if(orderBy.contentEquals("desc")) {
+						return c2.compareTo(c1);
+					}
+					return c1.compareTo(c2);
+				}
+			});
+		}
+		
+		if (size > MAX_ITEM_IN_ONE_LIST) {
+			size = MAX_ITEM_IN_ONE_LIST;
+		}
+		if (offset < 0) {
+			offset = 0;
+		}
+		
+		return vodList.subList(offset, Math.min(offset+size, vodList.size()));
 	}
 
 
