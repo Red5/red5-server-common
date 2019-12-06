@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.event.ProgressEventType;
@@ -43,6 +44,12 @@ public class AmazonS3StorageClient extends StorageClient {
 			if (getRegion() != null) {
 				builder = builder.withRegion(Regions.fromName(getRegion()));
 			}
+			builder.withClientConfiguration(new ClientConfiguration().withMaxConnections(100)
+	                .withConnectionTimeout(120 * 1000)
+	                .withMaxErrorRetry(15));
+			
+			//.withConnectionTimeout(120 * 1000)
+            //.withMaxErrorRetry(15))
 			amazonS3 = builder.build();
 		}
 		return amazonS3; 
@@ -70,10 +77,17 @@ public class AmazonS3StorageClient extends StorageClient {
 		TransferManager tm = TransferManagerBuilder.standard()
                 .withS3Client(s3)
                 .build();
-
+		
+		PutObjectRequest putRequest = new PutObjectRequest(getStorageName(), key, file);
+		
+		putRequest.setCannedAcl(CannedAccessControlList.PublicRead);
+	
+		
+		
+		Upload upload = tm.upload(putRequest);
         // TransferManager processes all transfers asynchronously,
         // so this call returns immediately.
-        Upload upload = tm.upload(getStorageName(), key, file);
+        //Upload upload = tm.upload(getStorageName(), key, file);
         logger.info("Mp4 {} upload has started", file.getName());
         
         upload.addProgressListener((ProgressListener) event -> {
@@ -92,7 +106,7 @@ public class AmazonS3StorageClient extends StorageClient {
         
 
         // Optionally, wait for the upload to finish before continuing.
-        try {
+        try {  
 			upload.waitForCompletion();
 			
 			logger.info("Mp4 {} upload completed", file.getName());
