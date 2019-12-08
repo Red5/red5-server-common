@@ -138,6 +138,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private int maxAnalyzeDurationMS = 1000;
 	private long streamInfoFindTime;
 	protected boolean generatePreview = true;
+	private int firstReceivedFrameTimestamp = -1;
 
 
 	/*
@@ -669,7 +670,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	{
 		if(broadcastStream != null) 
 		{
-			while(lastFrameTimestamp < maxAnalyzeDurationMS) {
+			while((lastFrameTimestamp - firstReceivedFrameTimestamp) < maxAnalyzeDurationMS) {
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
 				enableAudio = broadcastStream.getCodecInfo().hasAudio();
 				if (enableVideo && enableAudio) {
@@ -743,6 +744,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			flvFrame = getFLVFrame(packet);
 
 			lastFrameTimestamp = packet.getTimestamp();
+			if (firstReceivedFrameTimestamp  == -1) {
+				firstReceivedFrameTimestamp = lastFrameTimestamp;
+			}
 			if (flvFrame.length <= BUFFER_SIZE) {
 				inputQueue.add(flvFrame);
 				inputContext.queueSize.incrementAndGet();
