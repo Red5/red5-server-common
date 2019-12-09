@@ -627,6 +627,16 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
 								 boolean isKeyFrame,long firstFrameTimeStamp) {
+		/*
+		 * this control is necessary to prevent server from a native crash 
+		 * in case of initiation and preparation takes long.
+		 * because native objects like videoPkt can not be initiated yet
+		 */
+		if (!isRunning.get()) {
+			logger.warn("Not writing to VideoBuffer because Is running:{}", isRunning.get());
+			return;
+		}
+		
 		videoPkt.stream_index(streamIndex);
 		videoPkt.pts(timestamp);
 		videoPkt.dts(timestamp);
