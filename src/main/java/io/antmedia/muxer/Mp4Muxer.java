@@ -433,6 +433,16 @@ public class Mp4Muxer extends Muxer {
 	@Override
 	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
 		/*
+		 * this control is necessary to prevent server from a native crash 
+		 * in case of initiation and preparation takes long.
+		 * because native objects like videoPkt can not be initiated yet
+		 */
+		if (!isRunning.get()) {
+			logger.warn("Not writing to VideoBuffer for {} because Is running:{}", streamId, isRunning.get());
+			return;
+		}
+		
+		/*
 		* Rotation field is used add metadata to the mp4.
 		* this method is called in directly creating mp4 from coming encoded WebRTC H264 stream
 		*/
