@@ -633,7 +633,7 @@ public class HLSMuxer extends Muxer  {
 		 * because native objects like videoPkt can not be initiated yet
 		 */
 		if (!isRunning.get()) {
-			logger.warn("Not writing to VideoBuffer because Is running:{}", isRunning.get());
+			logger.warn("Not writing to VideoBuffer for {} because Is running:{}", file.getName(), isRunning.get());
 			return;
 		}
 		
