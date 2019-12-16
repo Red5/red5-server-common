@@ -136,6 +136,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS = "settings.rtmp.maxAnalyzeDurationMS";
 
+	private static final String SETTINGS_DISABLE_IPV6_CANDIDATES = "settings.disableIPv6Candidates";
+
 
 	
 	
@@ -553,6 +555,12 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
 	private int maxAnalyzeDurationMS;
+	
+	/**
+	 * Enable/Disable IPv6 Candidates for WebRTC. It's disabled by default
+	 */
+	@Value("${" + SETTINGS_DISABLE_IPV6_CANDIDATES+ ":true}")
+	private boolean disableIPv6Candidates;
 
 	@JsonIgnore
 	@NotSaved
@@ -1230,6 +1238,14 @@ public class AppSettings {
 
 	public void setGeneratePreview(boolean generatePreview) {
 		this.generatePreview = generatePreview;
+	}
+
+	public boolean isDisableIPv6Candidates() {
+		return disableIPv6Candidates;
+	}
+
+	public void setDisableIPv6Candidates(boolean disableIPv6Candidates) {
+		this.disableIPv6Candidates = disableIPv6Candidates;
 	}
 
 
