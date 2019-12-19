@@ -8,6 +8,7 @@ import java.util.List;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
+import io.antmedia.datastore.db.types.P2PConnection;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -414,6 +415,26 @@ public abstract class DataStore {
 		return vodList.subList(offset, Math.min(offset+size, vodList.size()));
 	}
 
+	/**
+	 * Creates new P2PConnection
+	 * @param conn - P2PConnection object
+	 * @return boolean - success 
+	 */
+	public abstract boolean createP2PConnection(P2PConnection conn);
+	
+	/**
+	 * Get the P2PConnection by streamId
+	 * @param streamId - stream id for P2PConnection
+	 * @return P2PConnection - if exist else null 
+	 */
+	public abstract P2PConnection getP2PConnection(String streamId);
+	
+	/**
+	 * Deletes a P2PConnection
+	 * @param conn - P2PConnection object
+	 * @return boolean - success 
+	 */
+	public abstract boolean deleteP2PConnection(String streamId);
 
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
