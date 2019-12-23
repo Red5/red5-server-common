@@ -344,31 +344,36 @@ public abstract class DataStore {
 	 * @param ipAddr
 	 * @param streamUrl
 	 */
-	protected void updateStreamInfo(Broadcast broadcast, String name, String description, String userName, String password, String ipAddr, String streamUrl )
+	protected void updateStreamInfo(Broadcast broadcast, Broadcast newBroadcast)
 	{
-		if (name != null) {
-			broadcast.setName(name);
+		if (newBroadcast.getName() != null) {
+			broadcast.setName(newBroadcast.getName());
 		}
 		
-		if (description != null) {
-			broadcast.setDescription(description);
+		if (newBroadcast.getDescription() != null) {
+			broadcast.setDescription(newBroadcast.getDescription());
 		}
 		
-		if (userName!= null) {
-			broadcast.setUsername(userName);
+		if (newBroadcast.getUsername() != null) {
+			broadcast.setUsername(newBroadcast.getUsername());
 		}
 		
-		if (password != null) {
-			broadcast.setPassword(password);
+		if (newBroadcast.getPassword() != null) {
+			broadcast.setPassword(newBroadcast.getPassword());
 		}
 		
-		if (ipAddr != null) {
-			broadcast.setIpAddr(ipAddr);
+		if (newBroadcast.getIpAddr() != null) {
+			broadcast.setIpAddr(newBroadcast.getIpAddr());
 		}
 		
-		if (streamUrl != null) {
-			broadcast.setStreamUrl(streamUrl);
+		if (newBroadcast.getStreamUrl() != null) {
+			broadcast.setStreamUrl(newBroadcast.getStreamUrl());
 		}
+		
+		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
+		broadcast.setDuration(newBroadcast.getDuration());
+		broadcast.setBitrate(newBroadcast.getBitrate());
+		broadcast.setUserAgent(newBroadcast.getUserAgent());
 	}
 
 	/**
