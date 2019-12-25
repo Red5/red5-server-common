@@ -128,22 +128,18 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String jvmMaxMemory(String size, Boolean txtByte) {
-		return convertByteSize(Runtime.getRuntime().maxMemory(), size, txtByte);
+	public static long jvmMaxMemory() {
+		return Runtime.getRuntime().maxMemory();
 	}
 
 	/**
 	 * Obtain JVM's Total Memory.
-	 * 
-	 * @param size null, AUTO, B, KB, MB, GB, TB, or PB
-	 * (PetaByte does not exist yet)
-	 * Is not case sensitive.
-	 * @param txtByte true if include byte extension, false exclude extension
+	 *
 	 * @return bytes size
 	 * 
 	 */
-	public static String jvmTotalMemory(String size, Boolean txtByte) {
-		return convertByteSize(Runtime.getRuntime().totalMemory(), size, txtByte);
+	public static long jvmTotalMemory() {
+		return Runtime.getRuntime().totalMemory();
 	}
 
 	/**
@@ -156,8 +152,8 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String jvmFreeMemory(String size, Boolean txtByte) {
-		return convertByteSize(Runtime.getRuntime().freeMemory(), size, txtByte);
+	public static long jvmFreeMemory() {
+		return Runtime.getRuntime().freeMemory();
 	}
 
 	/**
@@ -170,8 +166,8 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String jvmInUseMemory(String size, Boolean txtByte) {
-		return convertByteSize(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(), size, txtByte);
+	public static long jvmInUseMemory() {
+		return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 	}
 
 	/**
@@ -197,45 +193,31 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osCommittedVirtualMemory(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
+	public static long osCommittedVirtualMemory() {
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getCommittedVirtualMemorySize");
 			m.setAccessible(true);
-			return convertByteSize((Long) m.invoke(osBean), size, txtByte);
+			return (Long) m.invoke(osBean);
 		} catch (Exception e) {
 			error(e);
-			return null;
+			return -1L;
 		}
 	}
 
 	/**
 	 * Obtain Total Physical Memory from Operating System's RAM.
-	 * 
-	 * @param size null, AUTO, B, KB, MB, GB, TB, or PB
-	 * (PetaByte does not exist yet)
-	 * Is not case sensitive.
-	 * @param txtByte true if include byte extension, false exclude extension
 	 * @return bytes size
-	 * 
 	 */
-	public static String osTotalPhysicalMemory(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
+	public static long osTotalPhysicalMemory() {
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
 			m.setAccessible(true);
-			return convertByteSize((Long) m.invoke(osBean), size, txtByte);
+			return (Long) m.invoke(osBean);
 		} catch (Exception e) {
 			error(e);
-			return null;
+			return -1L;
 		}
 
 	}
@@ -250,19 +232,15 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osFreePhysicalMemory(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
+	public static long osFreePhysicalMemory() {
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getFreePhysicalMemorySize");
 			m.setAccessible(true);
-			return convertByteSize((Long) m.invoke(osBean), size, txtByte);
+			return (Long) m.invoke(osBean);
 		} catch (Exception e) {
 			error(e);
-			return null;
+			return -1L;
 		}
 	}
 
@@ -276,12 +254,8 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osInUsePhysicalMemory(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
-		return convertByteSize(Long.parseLong(osTotalPhysicalMemory("NONE", false)) - Long.parseLong(osFreePhysicalMemory("NONE", false)), size, txtByte);
+	public static long osInUsePhysicalMemory() {
+		return osTotalPhysicalMemory() - osFreePhysicalMemory();
 	}
 
 	/**
@@ -294,19 +268,15 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osTotalSwapSpace(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
+	public static long osTotalSwapSpace() {
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getTotalSwapSpaceSize");
 			m.setAccessible(true);
-			return convertByteSize((Long) m.invoke(osBean), size, txtByte);
+			return (Long) m.invoke(osBean);
 		} catch (Exception e) {
 			error(e);
-			return null;
+			return -1L;
 		}
 	}
 
@@ -320,19 +290,16 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osFreeSwapSpace(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
+	public static long osFreeSwapSpace() {
+		
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getFreeSwapSpaceSize");
 			m.setAccessible(true);
-			return convertByteSize((Long) m.invoke(osBean), size, txtByte);
+			return (Long) m.invoke(osBean);
 		} catch (Exception e) {
 			error(e);
-			return null;
+			return -1L;
 		}
 	}
 
@@ -346,12 +313,8 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osInUseSwapSpace(String size, Boolean txtByte) {
-		if (txtByte == null)
-			txtByte = true;
-		if (size == null)
-			size = "AUTO";
-		return convertByteSize(Long.parseLong(osTotalSwapSpace("NONE", false)) - Long.parseLong(osFreeSwapSpace("NONE", false)), size, txtByte);
+	public static long osInUseSwapSpace() {
+		return osTotalSwapSpace() - osFreeSwapSpace();
 	}
 
 	/**
@@ -376,16 +339,16 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osHDUsableSpace(String path, String size, Boolean txtByte) {
+	public static long osHDUsableSpace(String path) {
 		if (path == null)
 			path = File.listRoots()[0].getPath();
 		File f = new File(path);
 		if (f.getTotalSpace() == 0) {
 			error(0, f.getPath());
 		} else {
-			return convertByteSizeToDisk(f.getUsableSpace(), size, txtByte);
+			return f.getUsableSpace();
 		}
-		return null;
+		return -1L;
 	}
 
 	/**
@@ -399,16 +362,16 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osHDTotalSpace(String path, String size, Boolean txtByte) {
+	public static long osHDTotalSpace(String path) {
 		if (path == null)
 			path = File.listRoots()[0].getPath();
 		File f = new File(path);
 		if (f.getTotalSpace() == 0) {
 			error(0, f.getPath());
 		} else {
-			return convertByteSizeToDisk(f.getTotalSpace(), size, txtByte);
+			return f.getTotalSpace();
 		}
-		return null;
+		return -1L;
 	}
 
 	/**
@@ -422,16 +385,16 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osHDFreeSpace(String path, String size, Boolean txtByte) {
+	public static long osHDFreeSpace(String path) {
 		if (path == null)
 			path = File.listRoots()[0].getPath();
 		File f = new File(path);
 		if (f.getTotalSpace() == 0) {
 			error(0, f.getPath());
 		} else {
-			return convertByteSizeToDisk(f.getFreeSpace(), size, txtByte);
+			return f.getFreeSpace();
 		}
-		return null;
+		return -1L;
 	}
 
 	/**
@@ -445,15 +408,15 @@ public final class SystemUtils {
 	 * @return bytes size
 	 * 
 	 */
-	public static String osHDInUseSpace(String path, String size, Boolean txtByte) {
+	public static long osHDInUseSpace(String path) {
 		if (path == null)
 			path = File.listRoots()[0].getPath();
 		File f = new File(path);
 		if (f.getTotalSpace() == 0) {
 			error(0, f.getPath());
-			return null;
+			return -1L;
 		} else {
-			return convertByteSizeToDisk(f.getTotalSpace() - f.getFreeSpace(), size, txtByte);
+			return f.getTotalSpace() - f.getFreeSpace();
 		}
 	}
 
