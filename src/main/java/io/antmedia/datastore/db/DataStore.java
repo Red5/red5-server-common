@@ -74,6 +74,15 @@ public abstract class DataStore {
 
 	public abstract void close();
 
+	/**
+	 * Returns the VoD List in order
+	 * 
+	 * @param offset: the number of items to skip
+	 * @param size: batch size
+	 * @param sortBy can get "name" or "date" values
+	 * @param orderBy can get "desc" or "asc"
+	 * @return
+	 */
 	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy);
 
 	public abstract boolean removeAllEndpoints(String id);
