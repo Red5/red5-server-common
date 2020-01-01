@@ -1,27 +1,17 @@
 package io.antmedia;
 
-/*
- * RED5 Open Source Flash Server - http://code.google.com/p/red5/
- * 
- * Copyright 2006-2012 by respective authors (see below). All rights reserved.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import java.io.File;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
+
+import javax.management.MBeanServer;
+
+import static java.lang.management.ManagementFactory.getThreadMXBean;
+import com.sun.management.HotSpotDiagnosticMXBean;
 
 /**
  * This utility is designed for accessing server's
@@ -35,7 +25,7 @@ import java.lang.reflect.Method;
  * 
  * 	Server-side Status for Red5
  * 	-------------------------------
- * 	System.getProperty("_____");
+ * 	System.getProperty("_____")
  * 	===============================
  * 	os.name						:Operating System Name
  * 	os.arch						: x86/x64/...
@@ -70,14 +60,7 @@ import java.lang.reflect.Method;
  */
 public final class SystemUtils {
 
-	//private static Logger log = Red5LoggerFactory.getLogger(SystemUtils.class, "SystemUtils");
-
-	/**
-	 * Current SystemUtils version.
-	 * 
-	 * @return SystemUtils version
-	 */
-	public static final String VERSION = "0.1.0";
+	public static final String HEAPDUMP_HPROF = "heapdump.hprof";
 
 	/**
 	 * Obtain Operating System's name.
@@ -106,6 +89,12 @@ public final class SystemUtils {
 	 * @return Number of Processor(s)
 	 */
 	public static final int osProcessorX = Runtime.getRuntime().availableProcessors();
+
+
+	private static final String HOTSPOT_BEAN_NAME =
+			"com.sun.management:type=HotSpotDiagnostic";
+
+	private static HotSpotDiagnosticMXBean hotspotMBean;
 
 	/**
 	 * These functions below are used for Java Virtual Machine (JVM)
@@ -291,7 +280,7 @@ public final class SystemUtils {
 	 * 
 	 */
 	public static long osFreeSwapSpace() {
-		
+
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getFreeSwapSpaceSize");
@@ -440,24 +429,24 @@ public final class SystemUtils {
 	 * osHDInUseSpace()
 	 * -------------------------------
 	 */
-	
-	
-	
-	
+
+
+
+
 	public static String convertByteSize(Long bytes, String size, boolean txtByte) {
 		return convertByteSize( bytes,  size,  txtByte,  false);
 	}
-	
+
 	public static String convertByteSizeToDisk(Long bytes, String size, boolean txtByte) {
 		return convertByteSize( bytes,  size,  txtByte,  true);
 	}
-	
-	
+
+
 	public static long convertByteSize(long bytes, String size) {
 		Long num = 1024L;
 		long convertB;
 		size = size.toUpperCase();
-		
+
 		if (size.equals("PB")) {
 			convertB = bytes / (num * num * num * num * num);
 		} else if (size.equals("TB")) {
@@ -471,7 +460,7 @@ public final class SystemUtils {
 		} else {
 			convertB = bytes;
 		}
-		
+
 		return convertB;
 	}
 	/**
@@ -558,13 +547,8 @@ public final class SystemUtils {
 	 */
 	protected static void error(Exception e) {
 		String preError = "SystemUtils: ";
-		//Red5 logs
-		/*/
-		log.error(preError+e);
-		/*/
-		//Local debug logs
+
 		System.out.println(preError + e);
-		//*/
 	}
 
 	/**
@@ -576,16 +560,6 @@ public final class SystemUtils {
 	protected static void error(int error, String info) {
 		String preError = "SystemUtils: ";
 		//Red5 logs
-		/*/
-		if (error==0) {
-			log.error(preError+"Harddrive: "+info+", doesn't appears to exist!");
-		} else if (error==1) {
-			log.error(preError+"Your current JVM Version is "+info
-						+", this function required 1.6 or above!");
-		} else {
-			log.error(preError+"Unknown error");
-		}
-		/*/
 		//IDE debug logs
 		if (error == 0) {
 			System.out.println(preError + "Harddrive: " + info + ", doesn't appears to exist!");
@@ -596,15 +570,15 @@ public final class SystemUtils {
 		}
 		//*/
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Returns the "% recent cpu usage" for the whole system. 
 	 * @return
 	 */
 	public static Integer getSystemCpuLoad() {
-		
+
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getSystemCpuLoad");
@@ -615,14 +589,14 @@ public final class SystemUtils {
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Returns the "% recent cpu usage" for the Java Virtual Machine process. 
 	 *  the method returns a negative value.
 	 * @return
 	 */
 	public static Integer getProcessCpuLoad() {
-		
+
 		try {
 			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getProcessCpuLoad");
@@ -633,7 +607,7 @@ public final class SystemUtils {
 			return -1;
 		}
 	}
-	
+
 	/**
 	 * Returns the CPU time used by the process on which the Java virtual machine 
 	 * is running in microseconds.
@@ -649,5 +623,31 @@ public final class SystemUtils {
 			error(e);
 			return -1l;
 		}
+	}	
+	
+	public static void getHeapDump(String filepath) {
+		try {
+			getHotspotMBean().dumpHeap(filepath, true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private static HotSpotDiagnosticMXBean getHotspotMBean() {
+		try {
+			synchronized (SystemUtils.class) {
+				if (hotspotMBean == null) {
+					MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+					hotspotMBean = ManagementFactory.newPlatformMXBeanProxy(server,
+							HOTSPOT_BEAN_NAME, HotSpotDiagnosticMXBean.class);
+				}
+			}
+		} catch (RuntimeException re) {
+			throw re;
+		} catch (Exception exp) {
+			throw new RuntimeException(exp);
+		}
+		return hotspotMBean;
 	}
 }
