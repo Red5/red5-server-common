@@ -152,22 +152,22 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		public int call(Pointer opaque, BytePointer buf, int bufSize) {
 			int length = -1;
 			try {
-				InputContext inputContext = queueReferences.get(opaque);
-				if (inputContext.isHeaderWritten) {
+				InputContext inputContextLocal = queueReferences.get(opaque);
+				if (inputContextLocal.isHeaderWritten) {
 					byte[] packet = null;
 
-					if (inputContext.queue != null) {
-						while ((packet = inputContext.queue.poll()) == null) {
-							if (inputContext.stopRequestExist) {
-								logger.info("stop request for stream id : {}", inputContext.muxAdaptor.getStreamId());
+					if (inputContextLocal.queue != null) {
+						while ((packet = inputContextLocal.queue.poll()) == null) {
+							if (inputContextLocal.stopRequestExist) {
+								logger.info("stop request for stream id : {}", inputContextLocal.muxAdaptor.getStreamId());
 								break;
 							}
 							Thread.sleep(5);
 						}
-						inputContext.queueSize.decrementAndGet();
+						inputContextLocal.queueSize.decrementAndGet();
 
 					} else {
-						logger.error("input queue null for stream id: {}", inputContext.muxAdaptor.getStreamId());
+						logger.error("input queue null for stream id: {}", inputContextLocal.muxAdaptor.getStreamId());
 					}
 
 					if (packet != null) {
@@ -178,10 +178,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						logger.info("packet is null and return length is {}", length);
 					}
 				} else {
-					inputContext.isHeaderWritten = true;
-					inputContext.muxAdaptor.checkStreams();
-					logger.debug("writing header for stream: {}", inputContext.muxAdaptor.streamId);
-					byte[] flvHeader = getFLVHeader(inputContext.muxAdaptor);
+					inputContextLocal.isHeaderWritten = true;
+					inputContextLocal.muxAdaptor.checkStreams();
+					logger.debug("writing header for stream: {}", inputContextLocal.muxAdaptor.streamId);
+					byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
 					length = flvHeader.length;
 
 					buf.put(flvHeader, 0, length);
@@ -369,7 +369,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
-		logger.info("before avformat_find_sream_info for stream: {}", streamId);
+		logger.info("before avformat_find_stream_info for stream: {}", streamId);
 		ret = avformat_find_stream_info(inputFormatContextLocal, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
@@ -670,17 +670,28 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	{
 		if(broadcastStream != null) 
 		{
-			while((lastFrameTimestamp - firstReceivedFrameTimestamp) < maxAnalyzeDurationMS) {
+			long checkStreamsStartTime = System.currentTimeMillis();
+			long totalTime = 0;
+			while((lastFrameTimestamp - firstReceivedFrameTimestamp) < maxAnalyzeDurationMS
+					&& totalTime < (2* maxAnalyzeDurationMS))
+			{
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
 				enableAudio = broadcastStream.getCodecInfo().hasAudio();
 				if (enableVideo && enableAudio) {
+					logger.info("Video and Audio is detected in the incoming stream for stream: {}", streamId);
 					break;
 				}
+				
 				//sleeping is not something we like. But it seems the best option for this case
 				Thread.sleep(5);
+				totalTime = System.currentTimeMillis() - checkStreamsStartTime;
 			}
 			
-			logger.info("Streams for {} enableVideo:{} enableAudio:{}", streamId, enableVideo, enableAudio);
+			if ( totalTime < (2* maxAnalyzeDurationMS)) {
+				logger.error("Total max time({}) is spend to determine video and audio existence for stream:{}. It's skipped waiting", 2* maxAnalyzeDurationMS, streamId);
+			}
+			
+			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {}", streamId, enableVideo, enableAudio, totalTime);
 		}
 		else {
 			logger.warn("broadcastStream is null while checking streams for {}", streamId);
