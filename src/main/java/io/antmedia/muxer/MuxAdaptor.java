@@ -79,7 +79,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 	}
 
-	protected static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
+	private static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 	protected static final int BUFFER_SIZE = 4096;
 	public static final String QUALITY_GOOD = "good";
 	public static final String QUALITY_AVERAGE = "average";
@@ -88,6 +88,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final int MP4_ENABLED_FOR_STREAM = 1;
 	public static final int MP4_DISABLED_FOR_STREAM = -1;
 	public static final int MP4_NO_SET_FOR_STREAM = 0;
+	protected static final long WAIT_TIME_MILLISECONDS = 5;
 	protected boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
@@ -157,12 +158,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					byte[] packet = null;
 
 					if (inputContextLocal.queue != null) {
+						long waitCount = 0;
 						while ((packet = inputContextLocal.queue.poll()) == null) {
-							if (inputContextLocal.stopRequestExist) {
-								logger.info("stop request for stream id : {}", inputContextLocal.muxAdaptor.getStreamId());
+							if (inputContextLocal.stopRequestExist) 
+							{
+								logger.info("stop request for stream id : {} ", inputContextLocal.muxAdaptor.getStreamId());
 								break;
 							}
-							Thread.sleep(5);
+							Thread.sleep(WAIT_TIME_MILLISECONDS);
+							waitCount++;
+							if (waitCount % 50 == 0) {
+								logger.warn("Stream: {} does not get packet for {} ms",inputContextLocal.muxAdaptor.getStreamId(), waitCount * WAIT_TIME_MILLISECONDS);
+							}
 						}
 						inputContextLocal.queueSize.decrementAndGet();
 
@@ -177,14 +184,17 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					} else {
 						logger.info("packet is null and return length is {}", length);
 					}
-				} else {
-					inputContextLocal.isHeaderWritten = true;
-					inputContextLocal.muxAdaptor.checkStreams();
-					logger.debug("writing header for stream: {}", inputContextLocal.muxAdaptor.streamId);
-					byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
-					length = flvHeader.length;
-
-					buf.put(flvHeader, 0, length);
+				} 
+				else {
+					
+					logger.info("Checking streams for stream: {}", inputContextLocal.muxAdaptor.streamId);
+					if (inputContextLocal.muxAdaptor.checkStreams()) {
+						inputContextLocal.isHeaderWritten = true;
+						byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
+						length = flvHeader.length;
+	
+						buf.put(flvHeader, 0, length);
+					}
 				}
 
 			} catch (Exception e) {
@@ -344,24 +354,23 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public boolean prepare() throws Exception {
 
-		AVFormatContext inputFormatContextLocal = avformat.avformat_alloc_context();
-		if (inputFormatContextLocal == null) 
+		inputFormatContext = avformat.avformat_alloc_context();
+		if (inputFormatContext == null) 
 		{
 			logger.info("cannot allocate input context");
 			return false;
 		}
 
 		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
-				inputFormatContextLocal, getReadCallback(), null, null);
+				inputFormatContext, getReadCallback(), null, null);
 
-		inputFormatContextLocal.pb(avio_alloc_context);
+		inputFormatContext.pb(avio_alloc_context);
 
-		queueReferences.put(inputFormatContextLocal, inputContext);
+		queueReferences.put(inputFormatContext, inputContext);
 
-		int ret;
-		logger.debug("before avformat_open_input for stream {}", streamId);
+		logger.info("before avformat_open_input for stream {}", streamId);
 
-		if (avformat_open_input(inputFormatContextLocal, (String) null, avformat.av_find_input_format("flv"),
+		if (avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
 				(AVDictionary) null) < 0) {
 			logger.error("cannot open input context for stream: {}", streamId);
 			return false;
@@ -370,7 +379,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		long startFindStreamInfoTime = System.currentTimeMillis();
 
 		logger.info("before avformat_find_stream_info for stream: {}", streamId);
-		ret = avformat_find_stream_info(inputFormatContextLocal, (AVDictionary) null);
+		int ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
@@ -379,10 +388,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
 
-		return prepareInternal(inputFormatContextLocal);
+		return prepareInternal(inputFormatContext);
 	}
 
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
+		//StreamFetcher Worker Thread only calls prepareInternal so that inputFormatContext is set here
 		this.inputFormatContext = inputFormatContext;
 		return prepareMuxers(inputFormatContext);
 	}
@@ -666,14 +676,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return header.array();
 	}
 
-	public void checkStreams() throws InterruptedException 
+	public boolean checkStreams() throws InterruptedException 
 	{
 		if(broadcastStream != null) 
 		{
 			long checkStreamsStartTime = System.currentTimeMillis();
 			long totalTime = 0;
 			while((lastFrameTimestamp - firstReceivedFrameTimestamp) < maxAnalyzeDurationMS
-					&& totalTime < (2* maxAnalyzeDurationMS))
+					&& totalTime < (2* maxAnalyzeDurationMS) && !inputContext.stopRequestExist)
 			{
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
 				enableAudio = broadcastStream.getCodecInfo().hasAudio();
@@ -687,15 +697,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				totalTime = System.currentTimeMillis() - checkStreamsStartTime;
 			}
 			
-			if ( totalTime < (2* maxAnalyzeDurationMS)) {
-				logger.error("Total max time({}) is spend to determine video and audio existence for stream:{}. It's skipped waiting", 2* maxAnalyzeDurationMS, streamId);
+			if ( totalTime >= (2* maxAnalyzeDurationMS)) {
+				logger.error("Total max time({}) is spent to determine video and audio existence for stream:{}. It's skipped waiting", (2*maxAnalyzeDurationMS), streamId);
 			}
 			
-			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {}", streamId, enableVideo, enableAudio, totalTime);
+			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {} stop request exists: {}", streamId, enableVideo, enableAudio, totalTime, inputContext.stopRequestExist);
 		}
 		else {
 			logger.warn("broadcastStream is null while checking streams for {}", streamId);
 		}
+		
+		//return true if video or audio tracks enable
+		return enableVideo || enableAudio;
 	}
 
 
@@ -1082,6 +1095,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public long getStreamInfoFindTime() {
 		return streamInfoFindTime;
+	}
+
+
+	public static Map<Pointer, InputContext> getQueueReferences() {
+		return queueReferences;
+	}
+
+
+	public static void setQueueReferences(Map<Pointer, InputContext> queueReferences) {
+		MuxAdaptor.queueReferences = queueReferences;
 	}
 }
 
