@@ -682,7 +682,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		{
 			long checkStreamsStartTime = System.currentTimeMillis();
 			long totalTime = 0;
-			while((lastFrameTimestamp - firstReceivedFrameTimestamp) < maxAnalyzeDurationMS
+			long frameElapsedTimestamp = 0;
+			while( frameElapsedTimestamp < maxAnalyzeDurationMS
 					&& totalTime < (2* maxAnalyzeDurationMS) && !inputContext.stopRequestExist)
 			{
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
@@ -695,13 +696,14 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				//sleeping is not something we like. But it seems the best option for this case
 				Thread.sleep(5);
 				totalTime = System.currentTimeMillis() - checkStreamsStartTime;
+				frameElapsedTimestamp = lastFrameTimestamp - firstReceivedFrameTimestamp;
 			}
 			
 			if ( totalTime >= (2* maxAnalyzeDurationMS)) {
 				logger.error("Total max time({}) is spent to determine video and audio existence for stream:{}. It's skipped waiting", (2*maxAnalyzeDurationMS), streamId);
 			}
 			
-			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {} stop request exists: {}", streamId, enableVideo, enableAudio, totalTime, inputContext.stopRequestExist);
+			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {} elapsed frame timestamp: {} stop request exists: {}", streamId, enableVideo, enableAudio, totalTime, frameElapsedTimestamp, inputContext.stopRequestExist);
 		}
 		else {
 			logger.warn("broadcastStream is null while checking streams for {}", streamId);
