@@ -229,6 +229,15 @@ public class Broadcast {
 	
 	@ApiModelProperty(value = "User - Agent")
 	private String userAgent = "N/A";
+	
+	@ApiModelProperty(value = "latitude of the broadcasting location")
+	private String latitude;
+	
+	@ApiModelProperty(value = "longitude of the broadcasting location")
+	private String longitude;
+	
+	@ApiModelProperty(value = "altitude of the broadcasting location")
+	private String altitude;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -540,4 +549,27 @@ public class Broadcast {
 		this.userAgent = userAgent;
 	}
 
+	public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
+
+	public String getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
+	}
+
+	public String getAltitude() {
+		return altitude;
+	}
+
+	public void setAltitude(String altitude) {
+		this.altitude = altitude;
+	}
 }

@@ -379,6 +379,18 @@ public abstract class DataStore {
 			broadcast.setStreamUrl(newBroadcast.getStreamUrl());
 		}
 		
+		if (newBroadcast.getLatitude() != null) {
+			broadcast.setLatitude(newBroadcast.getLatitude());
+		}
+		
+		if (newBroadcast.getLongitude() != null) {
+			broadcast.setLongitude(newBroadcast.getLongitude());
+		}
+		
+		if (newBroadcast.getAltitude() != null) {
+			broadcast.setAltitude(newBroadcast.getAltitude());
+		}
+		
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
