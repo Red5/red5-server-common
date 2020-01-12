@@ -9,6 +9,7 @@ import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
+import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -461,6 +462,27 @@ public abstract class DataStore {
 	 * @return boolean - success 
 	 */
 	public abstract boolean deleteP2PConnection(String streamId);
+
+	/**
+	 * Creates new Playlist
+	 * @param playlist - Playlist object
+	 * @return boolean - success 
+	 */
+	public abstract boolean createPlaylist(Playlist playlist);
+	
+	/**
+	 * Get the Playlist by playlistId
+	 * @param playlistId - playlist id for Playlist
+	 * @return Playlist - if exist else null 
+	 */
+	public abstract Playlist getPlaylist(String playlistId);
+	
+	/**
+	 * Deletes a Playlist
+	 * @param playlistId - Playlist object
+	 * @return boolean - success 
+	 */
+	public abstract boolean deletePlaylist(String playlistId);	
 
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
