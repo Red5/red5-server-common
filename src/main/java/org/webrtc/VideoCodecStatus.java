@@ -15,7 +15,6 @@ package org.webrtc;
  * video_error_codes.h.
  */
 public enum VideoCodecStatus {
-  REQUEST_KEY_FRAME(4),	
   REQUEST_SLI(2),
   NO_OUTPUT(1),
   OK(0),
