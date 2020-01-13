@@ -45,9 +45,6 @@ public class Playlist {
 	@ApiModelProperty(value = "the duration of the Playlist")
 	private long duration;
 	
-	@ApiModelProperty(value = "the path of the Playlist")
-	private String filePath;
-	
 	public Playlist() {
 		//default constructor is used to return not found playlist in rest service 
 	}
@@ -99,14 +96,6 @@ public class Playlist {
 
 	public void setDuration(long duration) {
 		this.duration = duration;
-	}
-
-	public String getFilePath() {
-		return filePath;
-	}
-
-	public void setFilePath(String filePath) {
-		this.filePath = filePath;
 	}
 	
 }
