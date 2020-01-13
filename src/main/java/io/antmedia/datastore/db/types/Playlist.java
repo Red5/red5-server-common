@@ -1,9 +1,7 @@
 package io.antmedia.datastore.db.types;
 
-import java.io.Serializable;
 import java.util.List;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Embedded;
 import org.mongodb.morphia.annotations.Entity;
@@ -21,12 +19,11 @@ import io.swagger.annotations.ApiModelProperty;
 
 @Indexes({ @Index(fields = @Field("playlistId")) })
 @ApiModel(value="Playlist", description="The playlist in video list object class")
-public class Playlist implements Serializable {
-
-	private static final long serialVersionUID = 1L;
-
+public class Playlist {
+	
 	@JsonIgnore
 	@Id
+	@ApiModelProperty(value = "the db id of the Playlist")
 	private ObjectId dbId;
 	
 	@ApiModelProperty(value = "the object id of the Playlist")

@@ -484,6 +484,13 @@ public abstract class DataStore {
 	 */
 	public abstract boolean deletePlaylist(String playlistId);	
 
+	/**
+	 * Edits previously saved Playlist
+	 * @param playlist - Playlist 
+	 * @return true if successfully edited, false if not
+	 */
+	public abstract boolean editPlaylist(Playlist playlist);
+	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
