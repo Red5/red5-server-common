@@ -59,7 +59,6 @@ public class PeerConnectionFactory {
   @Nullable private volatile ThreadInfo signalingThread;
 
   public static class InitializationOptions {
-    final Object applicationContext;
     final String fieldTrials;
     final boolean enableInternalTracer;
     final NativeLibraryLoader nativeLibraryLoader;
@@ -67,11 +66,10 @@ public class PeerConnectionFactory {
     @Nullable Loggable loggable;
     @Nullable Severity loggableSeverity;
 
-    private InitializationOptions(Object applicationContext, String fieldTrials,
+    private InitializationOptions(String fieldTrials,
         boolean enableInternalTracer, NativeLibraryLoader nativeLibraryLoader,
         String nativeLibraryName, @Nullable Loggable loggable,
         @Nullable Severity loggableSeverity) {
-      this.applicationContext = applicationContext;
       this.fieldTrials = fieldTrials;
       this.enableInternalTracer = enableInternalTracer;
       this.nativeLibraryLoader = nativeLibraryLoader;
@@ -80,12 +78,11 @@ public class PeerConnectionFactory {
       this.loggableSeverity = loggableSeverity;
     }
 
-    public static Builder builder(Object applicationContext) {
-      return new Builder(applicationContext);
+    public static Builder builder() {
+      return new Builder();
     }
 
     public static class Builder {
-      private final Object applicationContext;
       private String fieldTrials = "";
       private boolean enableInternalTracer;
       private NativeLibraryLoader nativeLibraryLoader = new NativeLibrary.DefaultLoader();
@@ -93,8 +90,7 @@ public class PeerConnectionFactory {
       @Nullable private Loggable loggable;
       @Nullable private Severity loggableSeverity;
 
-      Builder(Object applicationContext) {
-        this.applicationContext = applicationContext;
+      Builder() {
       }
 
       public Builder setFieldTrials(String fieldTrials) {
@@ -124,7 +120,7 @@ public class PeerConnectionFactory {
       }
 
       public PeerConnectionFactory.InitializationOptions createInitializationOptions() {
-        return new PeerConnectionFactory.InitializationOptions(applicationContext, fieldTrials,
+        return new PeerConnectionFactory.InitializationOptions(fieldTrials,
             enableInternalTracer, nativeLibraryLoader, nativeLibraryName, loggable,
             loggableSeverity);
       }
@@ -289,7 +285,7 @@ public class PeerConnectionFactory {
    * a PeerConnectionFactory is alive.
    */
   public static void initialize(InitializationOptions options) {
-    ContextUtils.initialize(options.applicationContext);
+    //ContextUtils.initialize(options.applicationContext);
     NativeLibrary.initialize(options.nativeLibraryLoader, options.nativeLibraryName);
     nativeInitializeAndroidGlobals();
     nativeInitializeFieldTrials(options.fieldTrials);
@@ -309,7 +305,7 @@ public class PeerConnectionFactory {
   }
 
   private static void checkInitializeHasBeenCalled() {
-    if (!NativeLibrary.isLoaded() || ContextUtils.getApplicationContext() == null) {
+    if (!NativeLibrary.isLoaded()) {
       throw new IllegalStateException(
           "PeerConnectionFactory.initialize was not called before creating a "
           + "PeerConnectionFactory.");

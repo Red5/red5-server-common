@@ -31,7 +31,9 @@ import org.webrtc.audio.JavaAudioDeviceModule.AudioRecordStartErrorCode;
 import org.webrtc.audio.JavaAudioDeviceModule.AudioRecordStateCallback;
 import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
 
-class WebRtcAudioRecord {
+import io.antmedia.webrtc.api.IAudioRecordListener;
+
+public class WebRtcAudioRecord {
   private static final String TAG = "WebRtcAudioRecordExternal";
 
   // Requested size of each recorded buffer provided to the client.
@@ -93,6 +95,8 @@ class WebRtcAudioRecord {
   private final @Nullable SamplesReadyCallback audioSamplesReadyCallback;
   private final boolean isAcousticEchoCancelerSupported;
   private final boolean isNoiseSuppressorSupported;
+
+private IAudioRecordListener audioRecordListener;
 
   /**
    * Audio thread which keeps calling ByteBuffer.read() waiting for audio
@@ -173,15 +177,14 @@ class WebRtcAudioRecord {
   WebRtcAudioRecord(Object context, Object audioManager) {
     this(context, audioManager, DEFAULT_AUDIO_SOURCE, DEFAULT_AUDIO_FORMAT,
         null /* errorCallback */, null /* stateCallback */, null /* audioSamplesReadyCallback */,
-        false,
-        false);
+        false, false, null);
   }
 
   public WebRtcAudioRecord(Object context, Object audioManager, int audioSource,
       int audioFormat, @Nullable AudioRecordErrorCallback errorCallback,
       @Nullable AudioRecordStateCallback stateCallback,
       @Nullable SamplesReadyCallback audioSamplesReadyCallback,
-      boolean isAcousticEchoCancelerSupported, boolean isNoiseSuppressorSupported) {
+      boolean isAcousticEchoCancelerSupported, boolean isNoiseSuppressorSupported, IAudioRecordListener audioRecordListener) {
 //    if (isAcousticEchoCancelerSupported && !WebRtcAudioEffects.isAcousticEchoCancelerSupported()) {
 //      throw new IllegalArgumentException("HW AEC not supported");
 //    }
@@ -197,6 +200,7 @@ class WebRtcAudioRecord {
     this.audioSamplesReadyCallback = audioSamplesReadyCallback;
     this.isAcousticEchoCancelerSupported = isAcousticEchoCancelerSupported;
     this.isNoiseSuppressorSupported = isNoiseSuppressorSupported;
+    this.audioRecordListener = audioRecordListener;
  //   Logging.d(TAG, "ctor" + WebRtcAudioUtils.getThreadInfo());
   }
 
@@ -331,50 +335,20 @@ class WebRtcAudioRecord {
   private boolean startRecording() {
     Logging.d(TAG, "startRecording");
     
-//    assertTrue(audioRecord != null);
-//    assertTrue(audioThread == null);
-//    try {
-//      audioRecord.startRecording();
-//    } catch (IllegalStateException e) {
-//      reportWebRtcAudioRecordStartError(AudioRecordStartErrorCode.AUDIO_RECORD_START_EXCEPTION,
-//          "AudioRecord.startRecording failed: " + e.getMessage());
-//      return false;
-//    }
-//    if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
-//      reportWebRtcAudioRecordStartError(AudioRecordStartErrorCode.AUDIO_RECORD_START_STATE_MISMATCH,
-//          "AudioRecord.startRecording failed - incorrect state: "
-//              + audioRecord.getRecordingState());
-//      return false;
-//    }
-//    audioThread = new AudioRecordThread("AudioRecordJavaThread");
-//    audioThread.start();
-//    scheduleLogRecordingConfigurationsTask();
+    if (audioRecordListener != null) {
+		audioRecordListener.audioRecordStarted();
+	}
     return true;
   }
 
   @CalledByNative
   private boolean stopRecording() {
     Logging.d(TAG, "stopRecording");
-//    assertTrue(audioThread != null);
-//    if (future != null) {
-//      if (!future.isDone()) {
-//        // Might be needed if the client calls startRecording(), stopRecording() back-to-back.
-//        future.cancel(true /* mayInterruptIfRunning */);
-//      }
-//      future = null;
-//    }
-//    if (executor != null) {
-//      executor.shutdownNow();
-//      executor = null;
-//    }
-//    audioThread.stopThread();
-//    if (!ThreadUtils.joinUninterruptibly(audioThread, AUDIO_RECORD_THREAD_JOIN_TIMEOUT_MS)) {
-//      Logging.e(TAG, "Join of AudioRecordJavaThread timed out");
-//      WebRtcAudioUtils.logAudioState(TAG, context, audioManager);
-//    }
-//    audioThread = null;
-//    effects.release();
-    releaseAudioResources();
+
+    if (audioRecordListener != null) {
+		audioRecordListener.audioRecordStoppped();
+		audioRecordListener = null;
+	}
     return true;
   }
 
@@ -468,14 +442,6 @@ class WebRtcAudioRecord {
     microphoneMute = mute;
   }
 
-  // Releases the native AudioRecord resources.
-  private void releaseAudioResources() {
-    Logging.d(TAG, "releaseAudioResources");
-  //  if (audioRecord != null) {
-  //    audioRecord.release();
-  //    audioRecord = null;
-  //  }
-  }
 
   private void reportWebRtcAudioRecordInitError(String errorMessage) {
     Logging.e(TAG, "Init recording error: " + errorMessage);

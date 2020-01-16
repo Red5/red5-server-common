@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 /** Container for static helper functions related to dealing with H264 codecs. */
-class H264Utils {
+public class H264Utils {
   public static final String H264_FMTP_PROFILE_LEVEL_ID = "profile-level-id";
   public static final String H264_FMTP_LEVEL_ASYMMETRY_ALLOWED = "level-asymmetry-allowed";
   public static final String H264_FMTP_PACKETIZATION_MODE = "packetization-mode";

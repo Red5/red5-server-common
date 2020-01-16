@@ -38,8 +38,10 @@ public class ContextUtils {
    *
    * @deprecated crbug.com/webrtc/8937
    */
+  
   @Deprecated
   public static Object getApplicationContext() {
     return applicationContext;
   }
+  
 }

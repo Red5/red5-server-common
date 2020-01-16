@@ -27,13 +27,13 @@ class WebRtcAudioManager {
 
   private static final int DEFAULT_FRAME_PER_BUFFER = 256;
 
-  @CalledByNative
+  //@CalledByNative
   static Object getAudioManager(Object context) {
     //return (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     return null;
   }
 
-  @CalledByNative
+  //@CalledByNative
   static int getOutputBufferSize(
       Object context, Object audioManager, int sampleRate, int numberOfOutputChannels) {
 //    return isLowLatencyOutputSupported(context)
@@ -43,7 +43,7 @@ class WebRtcAudioManager {
     return DEFAULT_FRAME_PER_BUFFER;
   }
 
-  @CalledByNative
+  //@CalledByNative
   static int getInputBufferSize(
 		  Object context, Object audioManager, int sampleRate, int numberOfInputChannels) {
 //    return isLowLatencyInputSupported(context)

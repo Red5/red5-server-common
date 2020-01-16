@@ -14,6 +14,9 @@ package org.webrtc.audio;
 import org.webrtc.JniCommon;
 import org.webrtc.Logging;
 
+import io.antmedia.webrtc.api.IAudioRecordListener;
+import io.antmedia.webrtc.api.IAudioTrackListener;
+
 /**
  * AudioDeviceModule implemented using android.media.AudioRecord as input and
  * android.media.AudioTrack as output.
@@ -41,10 +44,10 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
     private boolean useHardwareNoiseSuppressor = isBuiltInNoiseSuppressorSupported();
     private boolean useStereoInput;
     private boolean useStereoOutput;
+	private IAudioRecordListener audioRecordListener;
+	private IAudioTrackListener audioTrackListener;
 
     private Builder(Object context) {
-  //    this.context = context;
-  //    this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
       this.inputSampleRate = 0; //WebRtcAudioManager.getSampleRate(audioManager);
       this.outputSampleRate = 0; //WebRtcAudioManager.getSampleRate(audioManager);
     }
@@ -206,12 +209,24 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
       }
       final WebRtcAudioRecord audioInput = new WebRtcAudioRecord(null, null, audioSource,
           audioFormat, audioRecordErrorCallback, audioRecordStateCallback, samplesReadyCallback,
-          useHardwareAcousticEchoCanceler, useHardwareNoiseSuppressor);
+          useHardwareAcousticEchoCanceler, useHardwareNoiseSuppressor, audioRecordListener);
       final WebRtcAudioTrack audioOutput = new WebRtcAudioTrack(
-          null, null, audioTrackErrorCallback, audioTrackStateCallback);
+          null, null, audioTrackErrorCallback, audioTrackStateCallback, audioTrackListener);
       return new JavaAudioDeviceModule(null, null, audioInput, audioOutput,
           inputSampleRate, outputSampleRate, useStereoInput, useStereoOutput);
     }
+
+	public Builder setAudioRecordListener(IAudioRecordListener iAudioRecordListener) {
+		this.audioRecordListener = iAudioRecordListener;
+		return this;
+	}
+	
+	public Builder setAudioTrackListener(IAudioTrackListener iAudioTrackListener) {
+		this.audioTrackListener = iAudioTrackListener;
+		return this;
+	}
+	
+	
   }
 
   /* AudioRecord */
@@ -326,9 +341,8 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
 
   private JavaAudioDeviceModule(Object context, Object audioManager,
       WebRtcAudioRecord audioInput, WebRtcAudioTrack audioOutput, int inputSampleRate,
-      int outputSampleRate, boolean useStereoInput, boolean useStereoOutput) {
-//    this.context = context;
-//    this.audioManager = audioManager;
+      int outputSampleRate, boolean useStereoInput, boolean useStereoOutput) 
+  {
     this.audioInput = audioInput;
     this.audioOutput = audioOutput;
     this.inputSampleRate = inputSampleRate;
@@ -358,6 +372,14 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
     }
   }
 
+  public WebRtcAudioTrack getAudioTrack() {
+	  return audioOutput;
+  }
+  
+  public WebRtcAudioRecord getAudioRecord() {
+	  return audioInput;
+  }
+  
   @Override
   public void setSpeakerMute(boolean mute) {
     Logging.d(TAG, "setSpeakerMute: " + mute);
