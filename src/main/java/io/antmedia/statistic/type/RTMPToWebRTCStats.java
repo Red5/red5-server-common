@@ -1,7 +1,9 @@
 package io.antmedia.statistic.type;
 
-public class RTMP2WebRTCStats 
+public class RTMPToWebRTCStats 
 {
+	private String streamId;
+
 	private long avgRtmpIngestionTime;
 	
 	private long totalVideoDecodeTime;
@@ -13,8 +15,9 @@ public class RTMP2WebRTCStats
 	private long totalVideoDeliveryTime;
 	private long totalDeliveredVideoPacketCount;
 	
-
-	
+	public RTMPToWebRTCStats(String streamId) {
+		this.setStreamId(streamId);
+	}
 	public long getAvgRtmpIngestionTime() {
 		return avgRtmpIngestionTime;
 	}
@@ -65,6 +68,12 @@ public class RTMP2WebRTCStats
 				"totalEncodedVideoPacketCount:"+totalEncodedVideoPacketCount+"\n"+
 				"totalVideoDeliveryTime:"+totalVideoDeliveryTime+"\n"+
 				"totalDeliveredVideoPacketCount:"+totalDeliveredVideoPacketCount+"\n";
+	}
+	public String getStreamId() {
+		return streamId;
+	}
+	public void setStreamId(String streamId) {
+		this.streamId = streamId;
 	}
 	
 }
