@@ -143,7 +143,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private long firstFrameTime;
 	private int totalReceivePacket;
 	private int totalReadPacket;
-	protected long avgRtmpIngestTime;
+	protected long avgRtmpIngestRate;
 
 
 	/*
@@ -484,9 +484,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
-					totalReadPacket++;
-					avgRtmpIngestTime = ((System.currentTimeMillis() - firstFrameTime)) / totalReadPacket;
-					//System.out.println((System.currentTimeMillis() - firstFrameTime)+" total received:"+totalReceivePacket+" total read:"+totalReadPacket);
+					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+						totalReadPacket++;
+						avgRtmpIngestRate = ((System.currentTimeMillis() - firstFrameTime)) / totalReadPacket;
+					}
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);

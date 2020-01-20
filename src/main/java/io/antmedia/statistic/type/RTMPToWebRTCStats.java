@@ -4,7 +4,7 @@ public class RTMPToWebRTCStats
 {
 	private String streamId;
 
-	private long avgRtmpIngestionTime;
+	private long avgRtmpVideoIngestionRate;
 	
 	private long totalVideoDecodeTime;
 	private long totalDecodedVideoFrameCount;
@@ -19,10 +19,10 @@ public class RTMPToWebRTCStats
 		this.setStreamId(streamId);
 	}
 	public long getAvgRtmpIngestionTime() {
-		return avgRtmpIngestionTime;
+		return avgRtmpVideoIngestionRate;
 	}
-	public void setAvgRtmpIngestionTime(long avgRtmpIngestionTime) {
-		this.avgRtmpIngestionTime = avgRtmpIngestionTime;
+	public void setAvgRtmpVideoIngestionRate(long avgRtmpIngestionRate) {
+		this.avgRtmpVideoIngestionRate = avgRtmpIngestionRate;
 	}
 	public long getTotalVideoDecodeTime() {
 		return totalVideoDecodeTime;
@@ -59,15 +59,6 @@ public class RTMPToWebRTCStats
 	}
 	public void setTotalDeliveredVideoPacketCount(long totalDeliveredVideoPacketCount) {
 		this.totalDeliveredVideoPacketCount = totalDeliveredVideoPacketCount;
-	}
-	public String getReport() {
-		return "avgRtmpIngestionTime:"+avgRtmpIngestionTime+"\n"+
-				"totalVideoDecodeTime:"+totalVideoDecodeTime+"\n"+
-				"totalDecodedVideoFrameCount:"+totalDecodedVideoFrameCount+"\n"+
-				"totalVideoEncodeTime:"+totalVideoEncodeTime+"\n"+
-				"totalEncodedVideoPacketCount:"+totalEncodedVideoPacketCount+"\n"+
-				"totalVideoDeliveryTime:"+totalVideoDeliveryTime+"\n"+
-				"totalDeliveredVideoPacketCount:"+totalDeliveredVideoPacketCount+"\n";
 	}
 	public String getStreamId() {
 		return streamId;
