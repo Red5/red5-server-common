@@ -28,16 +28,16 @@ public class Playlist {
 	
 	@ApiModelProperty(value = "the object id of the Playlist")
 	private String playlistId;
+	
+	@ApiModelProperty(value = "the current play index of the Playlist")
+	private int currentPlayIndex;
 
 	@ApiModelProperty(value = "the name of the Playlist")
 	private String playlistName;
 	
-	@ApiModelProperty(value = "the list of the selected VoD lists")
-	private String playlistVod;
-	
-	@ApiModelProperty(value = "the list of VoDs")
+	@ApiModelProperty(value = "the list broadcasts of Playlist Items")
 	@Embedded
-	private List<VoD> playlistVodList;
+	private List<Broadcast> broadcastItemList;
 
 	@ApiModelProperty(value = "the creation of the Playlist")
 	private long creationDate;
@@ -49,13 +49,15 @@ public class Playlist {
 		//default constructor is used to return not found playlist in rest service 
 	}
 	
-	public Playlist(String playlistId, String playlistName, long creationDate, long duration, List<VoD> playlistVodList) {
+	public Playlist(String playlistId, int currentPlayIndex, String playlistName, long creationDate, long duration, List<Broadcast> broadcastItemList) {
 
 		this.playlistId = playlistId;
+		this.currentPlayIndex = currentPlayIndex;
 		this.playlistName = playlistName;
 		this.creationDate = creationDate;
 		this.duration = duration;
-		this.playlistVodList = playlistVodList;
+		this.broadcastItemList = broadcastItemList;
+		
 	}
 	
 	public String getPlaylistId() {
@@ -64,6 +66,14 @@ public class Playlist {
 
 	public void setPlaylistId(String playlistId) {
 		this.playlistId = playlistId;
+	}
+	
+	public int getCurrentPlayIndex() {
+		return currentPlayIndex;
+	}
+
+	public void setCurrentPlayIndex(int currentPlayIndex) {
+		this.currentPlayIndex = currentPlayIndex;
 	}
 
 	public String getPlaylistName() {
@@ -74,12 +84,12 @@ public class Playlist {
 		this.playlistName = playlistName;
 	}
 	
-	public List<VoD> getPlaylistVodList() {
-		return playlistVodList;
+	public List<Broadcast> getBroadcastItemList() {
+		return broadcastItemList;
 	}
 
-	public void setPlaylistVodList(List<VoD> playlistVodList) {
-		this.playlistVodList = playlistVodList;
+	public void setBroadcastItemList(List<Broadcast> broadcastItemList) {
+		this.broadcastItemList = broadcastItemList;
 	}
 
 	public long getCreationDate() {
