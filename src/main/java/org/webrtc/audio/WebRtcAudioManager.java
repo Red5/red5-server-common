@@ -19,6 +19,7 @@ import org.webrtc.CalledByNative;
 class WebRtcAudioManager {
   private static final String TAG = "WebRtcAudioManagerExternal";
 
+  //TODO: We may use different sample rate?
   private static final int DEFAULT_SAMPLE_RATE_HZ = 16000;
 
   // Default audio data format is PCM 16 bit per sample.
@@ -67,7 +68,7 @@ class WebRtcAudioManager {
   /**
    * Returns the native input/output sample rate for this device's output stream.
    */
-  @CalledByNative
+  //@CalledByNative
   static int getSampleRate(Object audioManager) {
     // Override this if we're running on an old emulator image which only
     // supports 8 kHz and doesn't support PROPERTY_OUTPUT_SAMPLE_RATE.

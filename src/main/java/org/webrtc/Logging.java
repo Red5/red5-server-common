@@ -14,11 +14,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.EnumSet;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.webrtc.Loggable;
+
 
 /**
  * Java wrapper for WebRTC logging. Logging defaults to java.util.logging.Logger, but a custom
@@ -42,16 +44,14 @@ import org.webrtc.Loggable;
  * loaded, using PeerConnectionFactory.initialize.
  */
 public class Logging {
-  private static final Logger fallbackLogger = createFallbackLogger();
-  private static volatile boolean loggingEnabled;
+	
+  private static final String TAG_MESSAGE = "Tag:{} - Message:{}";
+
+private static Logger logger = LoggerFactory.getLogger(Logging.class);
+  
   @Nullable private static Loggable loggable;
   private static Severity loggableSeverity;
 
-  private static Logger createFallbackLogger() {
-    final Logger fallbackLogger = Logger.getLogger("org.webrtc.Logging");
-    fallbackLogger.setLevel(Level.ALL);
-    return fallbackLogger;
-  }
 
   static void injectLoggable(Loggable injectedLoggable, Severity severity) {
     if (injectedLoggable != null) {
@@ -116,7 +116,6 @@ public class Logging {
           + "Delete the Loggable before calling this method.");
     }
     nativeEnableLogToDebugOutput(severity.ordinal());
-    loggingEnabled = true;
   }
 
   public static void log(Severity severity, String tag, String message) {
@@ -133,28 +132,27 @@ public class Logging {
     }
 
     // Try native logging if no loggable is injected.
-    if (loggingEnabled) {
+/*    if (loggingEnabled) {
       nativeLog(severity.ordinal(), tag, message);
       return;
     }
-
+*/
     // Fallback to system log.
     Level level;
     switch (severity) {
       case LS_ERROR:
-        level = Level.SEVERE;
+        logger.error(TAG_MESSAGE, tag, message);
         break;
       case LS_WARNING:
-        level = Level.WARNING;
+        logger.warn(TAG_MESSAGE, tag, message);
         break;
       case LS_INFO:
-        level = Level.INFO;
+        logger.info(TAG_MESSAGE, tag, message);
         break;
       default:
         level = Level.FINE;
         break;
     }
-    fallbackLogger.log(level, tag + ": " + message);
   }
 
   public static void d(String tag, String message) {

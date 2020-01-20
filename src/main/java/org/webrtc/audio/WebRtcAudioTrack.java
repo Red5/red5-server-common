@@ -120,6 +120,7 @@ public class WebRtcAudioTrack {
   @CalledByNative
   private boolean initPlayout(int sampleRate, int channels, double bufferSizeFactor) {
     threadChecker.checkIsOnValidThread();
+    this.sampleRate = sampleRate;
     Logging.d(TAG,
             "initPlayout(sampleRate=" + sampleRate + ", channels=" + channels
                 + ", bufferSizeFactor=" + bufferSizeFactor + ")");

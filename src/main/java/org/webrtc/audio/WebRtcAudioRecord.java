@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.webrtc.CalledByNative;
 import org.webrtc.Logging;
 import org.webrtc.ThreadUtils;
@@ -34,6 +36,9 @@ import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
 import io.antmedia.webrtc.api.IAudioRecordListener;
 
 public class WebRtcAudioRecord {
+	
+	private static Logger logger = LoggerFactory.getLogger(WebRtcAudioRecord.class);
+
   private static final String TAG = "WebRtcAudioRecordExternal";
 
   // Requested size of each recorded buffer provided to the client.
@@ -96,7 +101,9 @@ public class WebRtcAudioRecord {
   private final boolean isAcousticEchoCancelerSupported;
   private final boolean isNoiseSuppressorSupported;
 
-private IAudioRecordListener audioRecordListener;
+  private IAudioRecordListener audioRecordListener;
+  
+  private ByteBuffer encodedByteBuffer;
 
   /**
    * Audio thread which keeps calling ByteBuffer.read() waiting for audio
@@ -242,93 +249,39 @@ private IAudioRecordListener audioRecordListener;
   @CalledByNative
   private boolean enableBuiltInAEC(boolean enable) {
     Logging.d(TAG, "enableBuiltInAEC(" + enable + ")");
-    //return effects.setAEC(enable);
     return false;
   }
 
   @CalledByNative
   private boolean enableBuiltInNS(boolean enable) {
     Logging.d(TAG, "enableBuiltInNS(" + enable + ")");
-    //return effects.setNS(enable);
     return false;
   }
 
   @CalledByNative
   private int initRecording(int sampleRate, int channels) {
-    Logging.d(TAG, "initRecording(sampleRate=" + sampleRate + ", channels=" + channels + ")");
-    
-    return -1;
-//    if (audioRecord != null) {
-//      reportWebRtcAudioRecordInitError("InitRecording called twice without StopRecording.");
-//      return -1;
-//    }
-//    final int bytesPerFrame = channels * getBytesPerSample(audioFormat);
-//    final int framesPerBuffer = sampleRate / BUFFERS_PER_SECOND;
-//    byteBuffer = ByteBuffer.allocateDirect(bytesPerFrame * framesPerBuffer);
-//    if (!(byteBuffer.hasArray())) {
-//      reportWebRtcAudioRecordInitError("ByteBuffer does not have backing array.");
-//      return -1;
-//    }
-//    Logging.d(TAG, "byteBuffer.capacity: " + byteBuffer.capacity());
-//    emptyBytes = new byte[byteBuffer.capacity()];
-//    // Rather than passing the ByteBuffer with every callback (requiring
-//    // the potentially expensive GetDirectBufferAddress) we simply have the
-//    // the native class cache the address to the memory once.
-//    nativeCacheDirectBufferAddress(nativeAudioRecord, byteBuffer);
-//
-//    // Get the minimum buffer size required for the successful creation of
-//    // an AudioRecord object, in byte units.
-//    // Note that this size doesn't guarantee a smooth recording under load.
-//    final int channelConfig = channelCountToConfiguration(channels);
-//    int minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-//    if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
-//      reportWebRtcAudioRecordInitError("AudioRecord.getMinBufferSize failed: " + minBufferSize);
-//      return -1;
-//    }
-//    Logging.d(TAG, "AudioRecord.getMinBufferSize: " + minBufferSize);
-//
-//    // Use a larger buffer size than the minimum required when creating the
-//    // AudioRecord instance to ensure smooth recording under load. It has been
-//    // verified that it does not increase the actual recording latency.
-//    int bufferSizeInBytes = Math.max(BUFFER_SIZE_FACTOR * minBufferSize, byteBuffer.capacity());
-//    Logging.d(TAG, "bufferSizeInBytes: " + bufferSizeInBytes);
-//    try {
-//      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//        // Use the AudioRecord.Builder class on Android M (23) and above.
-//        // Throws IllegalArgumentException.
-//        audioRecord = createAudioRecordOnMOrHigher(
-//            audioSource, sampleRate, channelConfig, audioFormat, bufferSizeInBytes);
-//      } else {
-//        // Use the old AudioRecord constructor for API levels below 23.
-//        // Throws UnsupportedOperationException.
-//        audioRecord = createAudioRecordOnLowerThanM(
-//            audioSource, sampleRate, channelConfig, audioFormat, bufferSizeInBytes);
-//      }
-//    } catch (IllegalArgumentException | UnsupportedOperationException e) {
-//      // Report of exception message is sufficient. Example: "Cannot create AudioRecord".
-//      reportWebRtcAudioRecordInitError(e.getMessage());
-//      releaseAudioResources();
-//      return -1;
-//    }
-//    if (audioRecord == null || audioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-//      reportWebRtcAudioRecordInitError("Creation or initialization of audio recorder failed.");
-//      releaseAudioResources();
-//      return -1;
-//    }
-//    effects.enable(audioRecord.getAudioSessionId());
-//    logMainParameters();
-//    logMainParametersExtended();
-//    // Check number of active recording sessions. Should be zero but we have seen conflict cases
-//    // and adding a log for it can help us figure out details about conflicting sessions.
-//    final int numActiveRecordingSessions =
-//        logRecordingConfigurations(false /* verifyAudioConfig */);
-//    if (numActiveRecordingSessions != 0) {
-//      // Log the conflict as a warning since initialization did in fact succeed. Most likely, the
-//      // upcoming call to startRecording() will fail under these conditions.
-//      Logging.w(
-//          TAG, "Potential microphone conflict. Active sessions: " + numActiveRecordingSessions);
-//    }
-//    return framesPerBuffer;    
+	  	System.out.println("initRecording(sampleRate=" + sampleRate + ", channels=" + channels + ")");
+
+	  	//TODO: Different Audio format other than PCM_16 may be supported 
+	  	//below 2 is BITS_PER_SAMPLE(16)/8 = 2 
+		final int bytesPerFrame = channels * 2;
+		final int framesPerBuffer = sampleRate / BUFFERS_PER_SECOND;
+		byteBuffer = ByteBuffer.allocateDirect(bytesPerFrame * framesPerBuffer);
+		//if (!(byteBuffer.hasArray())) {
+		//	reportWebRtcAudioRecordInitError("ByteBuffer does not have backing array.");
+		//	return -1;
+		//}
+		System.out.println("byteBuffer.capacity: " + byteBuffer.capacity());
+		emptyBytes = new byte[byteBuffer.capacity()];
+		// Rather than passing the ByteBuffer with every callback (requiring
+		// the potentially expensive GetDirectBufferAddress) we simply have the
+		// the native class cache the address to the memory once.
+		nativeCacheDirectBufferAddress(nativeAudioRecord, byteBuffer);
+
+		encodedByteBuffer = ByteBuffer.allocateDirect(byteBuffer.capacity()*10);
+		nativeCacheDirectBufferAddressForEncodedAudio(nativeAudioRecord, encodedByteBuffer);
+
+		return framesPerBuffer;
   }
 
   @CalledByNative
@@ -352,74 +305,6 @@ private IAudioRecordListener audioRecordListener;
     return true;
   }
 
-//  @TargetApi(Build.VERSION_CODES.M)
-//  private static AudioRecord createAudioRecordOnMOrHigher(
-//      int audioSource, int sampleRate, int channelConfig, int audioFormat, int bufferSizeInBytes) {
-//    Logging.d(TAG, "createAudioRecordOnMOrHigher");
-//    return new AudioRecord.Builder()
-//        .setAudioSource(audioSource)
-//        .setAudioFormat(new AudioFormat.Builder()
-//                            .setEncoding(audioFormat)
-//                            .setSampleRate(sampleRate)
-//                            .setChannelMask(channelConfig)
-//                            .build())
-//        .setBufferSizeInBytes(bufferSizeInBytes)
-//        .build();
-//  }
-//
-//  private static AudioRecord createAudioRecordOnLowerThanM(
-//      int audioSource, int sampleRate, int channelConfig, int audioFormat, int bufferSizeInBytes) {
-//    Logging.d(TAG, "createAudioRecordOnLowerThanM");
-//    return new AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSizeInBytes);
-//  }
-//
-//  private void logMainParameters() {
-//    Logging.d(TAG,
-//        "AudioRecord: "
-//            + "session ID: " + audioRecord.getAudioSessionId() + ", "
-//            + "channels: " + audioRecord.getChannelCount() + ", "
-//            + "sample rate: " + audioRecord.getSampleRate());
-//  }
-//
-//  @TargetApi(Build.VERSION_CODES.M)
-//  private void logMainParametersExtended() {
-//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//      Logging.d(TAG,
-//          "AudioRecord: "
-//              // The frame count of the native AudioRecord buffer.
-//              + "buffer size in frames: " + audioRecord.getBufferSizeInFrames());
-//    }
-//  }
-//
-//  @TargetApi(Build.VERSION_CODES.N)
-//  // Checks the number of active recording sessions and logs the states of all active sessions.
-//  // Returns number of active sessions.
-//  private int logRecordingConfigurations(boolean verifyAudioConfig) {
-//    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-//      Logging.w(TAG, "AudioManager#getActiveRecordingConfigurations() requires N or higher");
-//      return 0;
-//    }
-//    // Get a list of the currently active audio recording configurations of the device (can be more
-//    // than one). An empty list indicates there is no recording active when queried.
-//    List<AudioRecordingConfiguration> configs = audioManager.getActiveRecordingConfigurations();
-//    final int numActiveRecordingSessions = configs.size();
-//    Logging.d(TAG, "Number of active recording sessions: " + numActiveRecordingSessions);
-//    if (numActiveRecordingSessions > 0) {
-//      logActiveRecordingConfigs(audioRecord.getAudioSessionId(), configs);
-//      if (verifyAudioConfig) {
-//        // Run an extra check to verify that the existing audio source doing the recording (tied
-//        // to the AudioRecord instance) is matching what the audio recording configuration lists
-//        // as its client parameters. If these do not match, recording might work but under invalid
-//        // conditions.
-//        audioSourceMatchesRecordingSession =
-//            verifyAudioConfig(audioRecord.getAudioSource(), audioRecord.getAudioSessionId(),
-//                audioRecord.getFormat(), audioRecord.getRoutedDevice(), configs);
-//        isAudioConfigVerified = true;
-//      }
-//    }
-//    return numActiveRecordingSessions;
-//  }
-
   // Helper method which throws an exception  when an assertion has failed.
   private static void assertTrue(boolean condition) {
     if (!condition) {
@@ -434,6 +319,12 @@ private IAudioRecordListener audioRecordListener;
   private native void nativeCacheDirectBufferAddress(
       long nativeAudioRecordJni, ByteBuffer byteBuffer);
   private native void nativeDataIsRecorded(long nativeAudioRecordJni, int bytes);
+  
+  private native void nativeCacheDirectBufferAddressForEncodedAudio(
+			long nativeAudioRecordJni, ByteBuffer byteBuffer);
+
+  private native void nativeEncodedDataIsReady(long nativeAudioRecordJni, int bytes);
+
 
   // Sets all recorded samples to zero if |mute| is true, i.e., ensures that
   // the microphone is muted.
@@ -503,6 +394,7 @@ private IAudioRecordListener audioRecordListener;
     }
   }
   */
+  
 
   // Use an ExecutorService to schedule a task after a given delay where the task consists of
   // checking (by logging) the current status of active recording sessions.
@@ -595,47 +487,7 @@ private IAudioRecordListener audioRecordListener;
 //    return true;
 //  }
 //
-//  // Verify that the client audio configuration (device and format) matches the requested
-//  // configuration (same as AudioRecord's).
-//  @TargetApi(Build.VERSION_CODES.N)
-//  private static boolean verifyAudioConfig(int source, int session, AudioFormat format,
-//      AudioDeviceInfo device, List<AudioRecordingConfiguration> configs) {
-//    assertTrue(!configs.isEmpty());
-//    final Iterator<AudioRecordingConfiguration> it = configs.iterator();
-//    while (it.hasNext()) {
-//      final AudioRecordingConfiguration config = it.next();
-//      final AudioDeviceInfo configDevice = config.getAudioDevice();
-//      if (configDevice == null) {
-//        continue;
-//      }
-//      if ((config.getClientAudioSource() == source)
-//          && (config.getClientAudioSessionId() == session)
-//          // Check the client format (should match the format of the AudioRecord instance).
-//          && (config.getClientFormat().getEncoding() == format.getEncoding())
-//          && (config.getClientFormat().getSampleRate() == format.getSampleRate())
-//          && (config.getClientFormat().getChannelMask() == format.getChannelMask())
-//          && (config.getClientFormat().getChannelIndexMask() == format.getChannelIndexMask())
-//          // Ensure that the device format is properly configured.
-//          && (config.getFormat().getEncoding() != AudioFormat.ENCODING_INVALID)
-//          && (config.getFormat().getSampleRate() > 0)
-//          //  For the channel mask, either the position or index-based value must be valid.
-//          && ((config.getFormat().getChannelMask() != AudioFormat.CHANNEL_INVALID)
-//              || (config.getFormat().getChannelIndexMask() != AudioFormat.CHANNEL_INVALID))
-//          && checkDeviceMatch(configDevice, device)) {
-//        Logging.d(TAG, "verifyAudioConfig: PASS");
-//        return true;
-//      }
-//    }
-//    Logging.e(TAG, "verifyAudioConfig: FAILED");
-//    return false;
-//  }
-//
-//  @TargetApi(Build.VERSION_CODES.N)
-//  // Returns true if device A parameters matches those of device B.
-//  // TODO(henrika): can be improved by adding AudioDeviceInfo#getAddress() but it requires API 29.
-//  private static boolean checkDeviceMatch(AudioDeviceInfo devA, AudioDeviceInfo devB) {
-//    return ((devA.getId() == devB.getId() && (devA.getType() == devB.getType())));
-//  }
+
   
 
   private static String audioStateToString(int state) {
@@ -648,4 +500,19 @@ private IAudioRecordListener audioRecordListener;
         return "INVALID";
     }
   }
+  
+  /**
+	 * @param audio => 20ms of encoded audio data
+	 */
+	public void notifyEncodedData(ByteBuffer audio) {
+		if (audio.limit() <= encodedByteBuffer.capacity()) {
+			encodedByteBuffer.clear();
+			audio.rewind();
+			encodedByteBuffer.put(audio);
+			nativeEncodedDataIsReady(nativeAudioRecord, audio.limit());
+		}
+		else {
+			 logger.warn("Discarding audio packet because audio packet size({}) is bigger than buffer capacity{} and limit {}", audio.limit(), encodedByteBuffer.capacity(), encodedByteBuffer.limit());
+		}
+	}
 }

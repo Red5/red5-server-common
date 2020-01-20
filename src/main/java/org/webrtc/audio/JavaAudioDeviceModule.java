@@ -48,8 +48,10 @@ public class JavaAudioDeviceModule implements AudioDeviceModule {
 	private IAudioTrackListener audioTrackListener;
 
     private Builder(Object context) {
-      this.inputSampleRate = 0; //WebRtcAudioManager.getSampleRate(audioManager);
-      this.outputSampleRate = 0; //WebRtcAudioManager.getSampleRate(audioManager);
+    	  //TODO: Check that sample rate other than 16K may be compatible
+    	  //TODO: Check that the channel count stereo or not
+      this.inputSampleRate = WebRtcAudioManager.getSampleRate(null);
+      this.outputSampleRate = WebRtcAudioManager.getSampleRate(null);
     }
 
     /**
