@@ -140,6 +140,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private long streamInfoFindTime;
 	protected boolean generatePreview = true;
 	private int firstReceivedFrameTimestamp = -1;
+	private long firstFrameTime;
+	private int totalReceivePacket;
+	private int totalReadPacket;
+	protected long avgRtmpIngestRate;
 
 
 	/*
@@ -480,7 +484,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				int ret = av_read_frame(inputFormatContext, pkt);
 
 				if (ret >= 0) {
-
+					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
+						totalReadPacket++;
+						avgRtmpIngestRate = ((System.currentTimeMillis() - firstFrameTime)) / totalReadPacket;
+					}
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
@@ -764,7 +771,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
-
 		byte[] flvFrame;
 		try {
 			flvFrame = getFLVFrame(packet);
@@ -772,10 +778,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			lastFrameTimestamp = packet.getTimestamp();
 			if (firstReceivedFrameTimestamp  == -1) {
 				firstReceivedFrameTimestamp = lastFrameTimestamp;
+				firstFrameTime = System.currentTimeMillis();
 			}
 			if (flvFrame.length <= BUFFER_SIZE) {
-				inputQueue.add(flvFrame);
-				inputContext.queueSize.incrementAndGet();
+				addPacketToQueue(flvFrame);
 			} else {
 				int numberOfBytes = flvFrame.length;
 				int startIndex = 0;
@@ -787,8 +793,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 						copySize = numberOfBytes;
 					}
 					byte[] data = Arrays.copyOfRange(flvFrame, startIndex, startIndex + copySize);
-					inputQueue.add(data);
-					inputContext.queueSize.incrementAndGet();
+					addPacketToQueue(data);
 					numberOfBytes -= copySize;
 					startIndex += copySize;
 				}
@@ -797,6 +802,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		} catch (IOException e) {
 			logger.error(e.getMessage());
 		}
+	}
+
+
+	private void addPacketToQueue(byte[] data) {
+		inputQueue.add(data);
+		inputContext.queueSize.incrementAndGet();
+		totalReceivePacket++;
 	}
 
 	@Override
