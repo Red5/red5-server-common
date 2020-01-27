@@ -35,6 +35,13 @@ public class Playlist {
 	@ApiModelProperty(value = "the name of the Playlist")
 	private String playlistName;
 	
+	/**
+	 * "finished", "broadcasting", "created"
+	 */
+	
+	@ApiModelProperty(value = "the status of the playlist", allowableValues = "finished, broadcasting, created")
+	private String playlistStatus;
+
 	@ApiModelProperty(value = "the list broadcasts of Playlist Items")
 	@Embedded
 	private List<Broadcast> broadcastItemList;
@@ -82,6 +89,14 @@ public class Playlist {
 
 	public void setPlaylistName(String playlistName) {
 		this.playlistName = playlistName;
+	}
+	
+	public String getPlaylistStatus() {
+		return playlistStatus;
+	}
+
+	public void setPlaylistStatus(String playlistStatus) {
+		this.playlistStatus = playlistStatus;
 	}
 	
 	public List<Broadcast> getBroadcastItemList() {
