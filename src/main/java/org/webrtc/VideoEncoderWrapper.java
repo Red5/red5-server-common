@@ -12,6 +12,7 @@ package org.webrtc;
 
 // Explicit imports necessary for JNI generation.
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -41,9 +42,9 @@ class VideoEncoderWrapper {
   @CalledByNative
   static VideoEncoder.Callback createEncoderCallback(final long nativeEncoder) {
     return (EncodedImage frame,
-               VideoEncoder.CodecSpecificInfo info) -> nativeOnEncodedFrame(nativeEncoder, frame);
+               VideoEncoder.CodecSpecificInfo info, List<NaluIndex> naluSequence) -> nativeOnEncodedFrame(nativeEncoder, frame, naluSequence);
   }
 
   private static native void nativeOnEncodedFrame(
-      long nativeVideoEncoderWrapper, EncodedImage frame);
+      long nativeVideoEncoderWrapper, EncodedImage frame, List<NaluIndex> naluSequence);
 }

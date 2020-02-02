@@ -249,7 +249,7 @@ public interface VideoEncoder {
      * they want to keep a reference to the buffer, and fall back to copying if that method returns
      * false.
      */
-    void onEncodedFrame(EncodedImage frame, CodecSpecificInfo info);
+    void onEncodedFrame(EncodedImage frame, CodecSpecificInfo info, List<NaluIndex> naluSequence);
   }
 
   /**
