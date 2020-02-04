@@ -89,7 +89,7 @@ public class VideoFrame implements RefCounted {
 
   private final Buffer buffer;
   private final int rotation;
-  private final long timestampNs;
+  private long timestampNs;
 
   /**
    * Constructs a new VideoFrame backed by the given {@code buffer}.
@@ -153,5 +153,9 @@ public class VideoFrame implements RefCounted {
   @CalledByNative
   public void release() {
     buffer.release();
+  }
+  
+  public void setTimestampNs(long timestampNs) {
+	  this.timestampNs = timestampNs;
   }
 }

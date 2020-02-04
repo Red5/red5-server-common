@@ -556,6 +556,7 @@ public class PeerConnectionFactory {
     }
   }
 
+  /*
   @CalledByNative
   private void onNetworkThreadReady() {
     networkThread = ThreadInfo.getCurrent();
@@ -576,6 +577,7 @@ public class PeerConnectionFactory {
     staticSignalingThread = signalingThread;
     Logging.d(TAG, "onSignalingThreadReady");
   }
+  */
 
   // Must be called at least once before creating a PeerConnectionFactory
   // (for example, at application startup time).
