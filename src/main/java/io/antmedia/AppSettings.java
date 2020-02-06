@@ -564,6 +564,10 @@ public class AppSettings {
 	@Value("${" + SETTINGS_DISABLE_IPV6_CANDIDATES+ ":true}")
 	private boolean disableIPv6Candidates;
 	
+	/**
+	 * Specify the rtsp transport type in pulling IP Camera or RTSP sources. 
+	 * It can be tcp or udp
+	 */
 	@Value("${" + SETTINGS_RTSP_PULL_TRANSPORT_TYPE+ ":tcp}")
 	private String rtspPullTransportType;
 
