@@ -138,6 +138,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_DISABLE_IPV6_CANDIDATES = "settings.disableIPv6Candidates";
 
+	private static final String SETTINGS_RTSP_PULL_TRANSPORT_TYPE = "settings.rtspPullTransportType";
+
 
 	
 	
@@ -561,6 +563,9 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_DISABLE_IPV6_CANDIDATES+ ":true}")
 	private boolean disableIPv6Candidates;
+	
+	@Value("${" + SETTINGS_RTSP_PULL_TRANSPORT_TYPE+ ":tcp}")
+	private String rtspPullTransportType;
 
 	@JsonIgnore
 	@NotSaved
@@ -1246,6 +1251,14 @@ public class AppSettings {
 
 	public void setDisableIPv6Candidates(boolean disableIPv6Candidates) {
 		this.disableIPv6Candidates = disableIPv6Candidates;
+	}
+
+	public String getRtspPullTransportType() {
+		return rtspPullTransportType;
+	}
+
+	public void setRtspPullTransportType(String rtspPullTransportType) {
+		this.rtspPullTransportType = rtspPullTransportType;
 	}
 
 
