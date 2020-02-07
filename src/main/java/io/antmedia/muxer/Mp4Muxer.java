@@ -486,7 +486,26 @@ public class Mp4Muxer extends Muxer {
 		String absolutePath = fileTmp.getAbsolutePath();
 
 		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
-
+		
+		if(storageClient != null) {
+			
+			String fileName = fileTmp.getName().replace(TEMP_EXTENSION, "");
+			
+			if (storageClient.fileExist(fileName,FileType.TYPE_STREAM)) {
+				
+				String tmpName = fileName;
+				String newFileName;
+				
+				int i = 1;
+				do {
+					i++;
+					newFileName = tmpName.replace(".", "_"+ i +".");
+				} while (storageClient.fileExist(newFileName,FileType.TYPE_STREAM));
+				
+				origFileName = origFileName.replace(".", "_"+ i +".");
+			}
+		}
+		
 		final File f = new File(origFileName);
 
 		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
