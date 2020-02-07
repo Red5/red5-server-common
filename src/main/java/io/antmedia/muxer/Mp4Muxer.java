@@ -483,36 +483,39 @@ public class Mp4Muxer extends Muxer {
 		clearResource();
 
 		isRecording = false;
-		String absolutePath = fileTmp.getAbsolutePath();
-
-		String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 		
-		if(storageClient != null) {
-			
-			String fileName = fileTmp.getName().replace(TEMP_EXTENSION, "");
-			
-			if (storageClient.fileExist(fileName,FileType.TYPE_STREAM)) {
-				
-				String tmpName = fileName;
-				String newFileName;
-				
-				int i = 1;
-				do {
-					i++;
-					newFileName = tmpName.replace(".", "_"+ i +".");
-				} while (storageClient.fileExist(newFileName,FileType.TYPE_STREAM));
-				
-				origFileName = origFileName.replace(".", "_"+ i +".");
-			}
-		}
-		
-		final File f = new File(origFileName);
-
 		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
 
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
 				try {
+					
+					String absolutePath = fileTmp.getAbsolutePath();
+
+					String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
+					
+					// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
+					if(storageClient != null) {
+						
+						String fileName = fileTmp.getName().replace(TEMP_EXTENSION, "");
+						
+						if (storageClient.fileExist(fileName,FileType.TYPE_STREAM)) {
+							
+							String tmpName = fileName;
+							String newFileName;
+							
+							int i = 0;
+							do {
+								i++;
+								newFileName = tmpName.replace(".", "_"+ i +".");
+							} while (storageClient.fileExist(newFileName,FileType.TYPE_STREAM));
+							
+							origFileName = origFileName.replace(".", "_"+ i +".");
+						}
+					}
+					
+					final File f = new File(origFileName);
+					
 					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
 					if (isAVCConversionRequired ) {
 						logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
