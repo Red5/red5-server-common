@@ -47,6 +47,14 @@ public abstract class StorageClient {
 	 * type of the file
 	 */
 	public abstract void save(final File file, FileType type);
+	
+	/**
+	 * Save file to storage and delete the local file 
+	 * 
+	 * @param key
+	 * @param file
+	 */
+	public abstract void save(String key, File file);
 
 	/**
 	 * Checks file exists on storage
@@ -56,6 +64,14 @@ public abstract class StorageClient {
 	 * @return
 	 */
 	public abstract boolean fileExist(String fileName, FileType type);
+	
+	/**
+	 * Check if the key exists in the bucket
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public abstract boolean fileExist(String key);
 
 	public String getAccessKey() {
 		return accessKey;
