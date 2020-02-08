@@ -67,11 +67,16 @@ public class AmazonS3StorageClient extends StorageClient {
 		return s3.doesObjectExist(getStorageName(), type.getValue() + "/" + fileName); 
 	}
 	
-	public void save(final File file, FileType type) 
-	{
-		
-		String key = type.getValue() + "/" + file.getName();
-
+	public boolean fileExist(String key) {
+		return getAmazonS3().doesObjectExist(getStorageName(), key);
+	}
+	
+	public void save(final File file, FileType type) {
+		save(type.getValue() + "/" + file.getName(), file);
+	}
+	
+	public void save(String key, File file)
+	{	
 		AmazonS3 s3 = getAmazonS3();
 		
 		TransferManager tm = TransferManagerBuilder.standard()
@@ -88,11 +93,12 @@ public class AmazonS3StorageClient extends StorageClient {
         // TransferManager processes all transfers asynchronously,
         // so this call returns immediately.
         //Upload upload = tm.upload(getStorageName(), key, file);
-        logger.info("Mp4 {} upload has started", file.getName());
+        logger.info("Mp4 {} upload has started with key: {}", file.getName(), key);
         
-        upload.addProgressListener((ProgressListener) event -> {
+        upload.addProgressListener((ProgressListener) event -> 
+        {
 			if (event.getEventType() == ProgressEventType.TRANSFER_FAILED_EVENT){
-				logger.error("S3 - Error: Upload failed for {}", file.getName());
+				logger.error("S3 - Error: Upload failed for {} with key {}", file.getName(), key);
 			}
 			else if (event.getEventType() == ProgressEventType.TRANSFER_COMPLETED_EVENT){
 				try {
@@ -100,7 +106,7 @@ public class AmazonS3StorageClient extends StorageClient {
 				} catch (IOException e) {
 					logger.error(ExceptionUtils.getStackTrace(e));
 				}
-				logger.info("File {} uploaded to S3", file.getName());
+				logger.info("File {} uploaded to S3 with key: {}", file.getName(), key);
 			}
 		});
         

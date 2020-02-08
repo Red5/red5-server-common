@@ -494,26 +494,6 @@ public class Mp4Muxer extends Muxer {
 
 					String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 					
-					// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
-					if(storageClient != null) {
-						
-						String fileName = fileTmp.getName().replace(TEMP_EXTENSION, "");
-						
-						if (storageClient.fileExist(fileName,FileType.TYPE_STREAM)) {
-							
-							String tmpName = fileName;
-							String newFileName;
-							
-							int i = 0;
-							do {
-								i++;
-								newFileName = tmpName.replace(".", "_"+ i +".");
-							} while (storageClient.fileExist(newFileName,FileType.TYPE_STREAM));
-							
-							origFileName = origFileName.replace(".", "_"+ i +".");
-						}
-					}
-					
 					final File f = new File(origFileName);
 					
 					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
@@ -541,7 +521,22 @@ public class Mp4Muxer extends Muxer {
 
 							@Override
 							public void execute(ISchedulingService service) throws CloneNotSupportedException {
-								storageClient.save(f, FileType.TYPE_STREAM);
+								
+								// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
+								
+								String fileName = streamId + ".mp4";
+								if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
+									
+									String tmpName =  fileName;
+									
+									int i = 0;
+									do {
+										i++;
+										fileName = tmpName.replace(".", "_"+ i +".");
+									} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
+								}
+								
+								storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, f);
 							}
 						});
 
