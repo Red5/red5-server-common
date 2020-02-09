@@ -56,11 +56,12 @@ public class Playlist {
 		//default constructor is used to return not found playlist in rest service 
 	}
 	
-	public Playlist(String playlistId, int currentPlayIndex, String playlistName, long creationDate, long duration, List<Broadcast> broadcastItemList) {
+	public Playlist(String playlistId, int currentPlayIndex, String playlistName, String playlistStatus, long creationDate, long duration, List<Broadcast> broadcastItemList) {
 
 		this.playlistId = playlistId;
 		this.currentPlayIndex = currentPlayIndex;
 		this.playlistName = playlistName;
+		this.playlistStatus = playlistStatus;
 		this.creationDate = creationDate;
 		this.duration = duration;
 		this.broadcastItemList = broadcastItemList;
