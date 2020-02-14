@@ -39,7 +39,7 @@ import static org.bytedeco.javacpp.avcodec.*;
 import static org.bytedeco.javacpp.avformat.*;
 import static org.bytedeco.javacpp.avutil.*;
 
-public class MuxAdaptor implements IRecordingListener, IScheduledJob {
+public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcceptFilter {
 
 	private static final byte[] DEFAULT_STREAM_ID = new byte[]{(byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff)};
@@ -103,7 +103,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
-
+	private IStreamAcceptFilter streamAcceptFilter;
+	
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
@@ -1120,6 +1121,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static void setQueueReferences(Map<Pointer, InputContext> queueReferences) {
 		MuxAdaptor.queueReferences = queueReferences;
 	}
+	
+
+	public IStreamAcceptFilter checkStreamParameters(String streamParameters) {
+		return streamAcceptFilter;
+	}
+
+	public void setStreamAcceptFilter(IStreamAcceptFilter streamAcceptFilter) {
+		this.streamAcceptFilter = streamAcceptFilter;
+	}
+	
 }
 
 

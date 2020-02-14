@@ -140,7 +140,11 @@ public class AppSettings {
 
 	private static final String SETTINGS_RTSP_PULL_TRANSPORT_TYPE = "settings.rtspPullTransportType";
 
+	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
+	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
+	
+	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
 	
 	@JsonIgnore
@@ -570,6 +574,24 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_RTSP_PULL_TRANSPORT_TYPE+ ":tcp}")
 	private String rtspPullTransportType;
+	
+	/**
+	 * Max FPS value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":#{null}}")
+	private String maxFpsAccept;
+	
+	/**
+	 * Max Resolution value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":#{null}}")
+	private String maxResolutionAccept;
+	
+	/**
+	 * Max Bitrate value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":#{null}}")
+	private String maxBitrateAccept;
 
 	@JsonIgnore
 	@NotSaved
@@ -1263,6 +1285,30 @@ public class AppSettings {
 
 	public void setRtspPullTransportType(String rtspPullTransportType) {
 		this.rtspPullTransportType = rtspPullTransportType;
+	}
+	
+	public String getMaxFpsAccept() {
+		return maxFpsAccept;
+	}
+
+	public void setMaxFpsAccept(String maxFpsAccept) {
+		this.maxFpsAccept = maxFpsAccept;
+	}
+
+	public String getMaxResolutionAccept() {
+		return maxResolutionAccept;
+	}
+
+	public void setMaxResolutionAccept(String maxResolutionAccept) {
+		this.maxResolutionAccept = maxResolutionAccept;
+	}
+
+	public String getMaxBitrateAccept() {
+		return maxBitrateAccept;
+	}
+
+	public void setMaxBitrateAccept(String maxBitrateAccept) {
+		this.maxBitrateAccept = maxBitrateAccept;
 	}
 
 
