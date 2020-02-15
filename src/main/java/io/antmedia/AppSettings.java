@@ -391,22 +391,46 @@ public class AppSettings {
     @Value( "${" + SETTINGS_COLLECT_SOCIAL_MEDIA_ACTIVITY_ENABLED +":false}")
 	private boolean collectSocialMediaActivity;
 
-	
+	/**
+	 * Name of the encoder to be used in adaptive bitrate. 
+	 * If there is a GPU, server tries to open h264_nvenc.
+	 * If there is no GPU, server tries to open libx264 by default
+	 */
 	@Value( "${" + SETTINGS_ENCODING_ENCODER_NAME +":#{null}}")
 	private String encoderName;
 	
+	/**
+	 * Encoder's preset value in adaptive bitrate
+	 * Libx264 presets are there
+	 * https://trac.ffmpeg.org/wiki/Encode/H.264.
+	 * Ant Media Server uses "veryfast" by default
+	 */
 	@Value( "${" + SETTINGS_ENCODING_PRESET +":#{null}}")
 	private String encoderPreset;
 	
+	/**
+	 * Encoder profile in adaptive bitrate. 
+	 * It's baseline by default.
+	 */
 	@Value( "${" + SETTINGS_ENCODING_PROFILE +":#{null}}")
 	private String encoderProfile;
 	
+	/**
+	 * Encoder level in adaptive bitrate
+	 */
 	@Value( "${" + SETTINGS_ENCODING_LEVEL +":#{null}}")
 	private String encoderLevel;
 	
+	/**
+	 * Encoding rate control in adaptive bitrate
+	 */
 	@Value( "${" + SETTINGS_ENCODING_RC +":#{null}}")
 	private String encoderRc;
 	
+	/**
+	 * Encoder specific configuration for libx264 in adaptive bitrate.
+	 * This is the x264-params in ffmpeg
+	 */
 	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
 	private String encoderSpecific;
 	
