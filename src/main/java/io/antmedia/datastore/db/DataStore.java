@@ -480,28 +480,30 @@ public abstract class DataStore {
 	 * @param playlist - Playlist object
 	 * @return boolean - success 
 	 */
-	public abstract boolean createPlaylist(Playlist playlist);
+	//public abstract boolean createPlaylist(Playlist playlist);
 	
 	/**
 	 * Get the Playlist by playlistId
 	 * @param playlistId - playlist id for Playlist
 	 * @return Playlist - if exist else null 
 	 */
-	public abstract Playlist getPlaylist(String playlistId);
+	//public abstract Playlist getPlaylist(String playlistId);
 	
 	/**
 	 * Deletes a Playlist
 	 * @param playlistId - Playlist object
 	 * @return boolean - success 
 	 */
-	public abstract boolean deletePlaylist(String playlistId);	
+	//public abstract boolean deletePlaylist(String playlistId);	
 
 	/**
 	 * Edits previously saved Playlist
 	 * @param playlist - Playlist 
 	 * @return true if successfully edited, false if not
 	 */
-	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
+	//public abstract boolean editPlaylist(String playlistId, Playlist playlist);
+	
+	
 	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
