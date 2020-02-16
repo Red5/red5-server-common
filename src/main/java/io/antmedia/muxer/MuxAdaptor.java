@@ -1,16 +1,47 @@
 package io.antmedia.muxer;
 
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.DataStore;
-import io.antmedia.datastore.db.IDataStoreFactory;
-import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.storage.StorageClient;
+import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.javacpp.avcodec.av_packet_free;
+import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avformat.av_dump_format;
+import static org.bytedeco.javacpp.avformat.av_read_frame;
+import static org.bytedeco.javacpp.avformat.avformat_close_input;
+import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
+import static org.bytedeco.javacpp.avformat.avformat_open_input;
+import static org.bytedeco.javacpp.avformat.avio_alloc_context;
+import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
+import static org.bytedeco.javacpp.avutil.av_free;
+import static org.bytedeco.javacpp.avutil.av_log_get_level;
+import static org.bytedeco.javacpp.avutil.av_rescale_q;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.bytedeco.javacpp.*;
-import org.bytedeco.javacpp.avcodec.*;
-import org.bytedeco.javacpp.avformat.*;
-import org.bytedeco.javacpp.avutil.*;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.avcodec;
+import org.bytedeco.javacpp.avcodec.AVPacket;
+import org.bytedeco.javacpp.avformat;
+import org.bytedeco.javacpp.avformat.AVFormatContext;
+import org.bytedeco.javacpp.avformat.AVIOContext;
+import org.bytedeco.javacpp.avformat.AVStream;
+import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
+import org.bytedeco.javacpp.avutil;
+import org.bytedeco.javacpp.avutil.AVDictionary;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -27,19 +58,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
+import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.storage.StorageClient;
 
-import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avformat.*;
-import static org.bytedeco.javacpp.avutil.*;
-
-public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcceptFilter {
+public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	private static final byte[] DEFAULT_STREAM_ID = new byte[]{(byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff)};
@@ -61,6 +87,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcc
 	
 	protected boolean enableVideo = false;
 	protected boolean enableAudio = false;
+
+	private Long streamBitrateValue;
+	private Integer streamFrameRateValue;
+	private Integer streamResolutionValue;
+	private Integer result;
 
 	public static class InputContext {
 		public Queue<byte[]> queue;
@@ -492,6 +523,12 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcc
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
+					
+					if(result == null) {
+						String[] parameters = {streamFrameRateValue.toString(), streamResolutionValue.toString(), streamBitrateValue.toString()};
+						result = getStreamAcceptFilter().checkStreamParameters(parameters);
+					}
+
 				} else {
 					closeResources();
 				}
@@ -557,6 +594,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcc
 			for (Muxer muxer : muxerList) {
 				muxer.writePacket(pkt, stream);
 			}
+		}
+
+		if(streamFrameRateValue == null) {
+			streamFrameRateValue = (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().num()) / (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().den());
+		}
+		
+		if(streamResolutionValue == null) {
+			streamResolutionValue = inputFormatContext.streams(pkt.stream_index()).codec().height();
+		}
+		
+		if(streamBitrateValue == null) {
+			streamBitrateValue = inputFormatContext.streams(pkt.stream_index()).codec().bit_rate();
 		}
 
 	}
@@ -1123,14 +1172,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob, IStreamAcc
 	}
 	
 
-	public IStreamAcceptFilter checkStreamParameters(String streamParameters) {
-		return streamAcceptFilter;
-	}
 
 	public void setStreamAcceptFilter(IStreamAcceptFilter streamAcceptFilter) {
 		this.streamAcceptFilter = streamAcceptFilter;
 	}
-	
+
+	public IStreamAcceptFilter getStreamAcceptFilter() {
+		if (streamAcceptFilter == null) {
+			streamAcceptFilter = (IStreamAcceptFilter) scope.getContext().getApplicationContext().getBean(IStreamAcceptFilter.BEAN_NAME);
+		}
+		return streamAcceptFilter;
+	}
+
 }
 
 

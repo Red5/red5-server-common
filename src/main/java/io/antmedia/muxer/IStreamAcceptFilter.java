@@ -7,15 +7,14 @@ public interface IStreamAcceptFilter {
 	
 	/**
 	 * Check below parameters in streams
-	 * Max Bitrate Check
-	 * Max FPS Check
-	 * Max Resolution Check
-	 * 
+	 * [0] -> Current FPS value
+	 * [1] -> Current Resolution value
+	 * [2] -> Current Bitrate value
 	 * 
 	 * @param parameter is the information of the streams 
 	 * @return 
 	 */
-	public IStreamAcceptFilter checkStreamParameters(String parameters);
+	public int checkStreamParameters(String[] parameters);
 	
 	
 	
