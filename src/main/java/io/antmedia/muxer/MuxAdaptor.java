@@ -523,11 +523,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
-					
-					if(result == null) {
-						String[] parameters = {streamFrameRateValue.toString(), streamResolutionValue.toString(), streamBitrateValue.toString()};
-						result = getStreamAcceptFilter().checkStreamParameters(parameters);
-					}
 
 				} else {
 					closeResources();
@@ -581,6 +576,19 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
+				
+				if(broadcast.getType().equals("liveStream")) {
+					// Get Stream FPS, Bitrate, Resolution values collect
+					getStreamParameters();		
+				
+					if(result == null) {
+						String[] parameters = {streamFrameRateValue.toString(), streamResolutionValue.toString(), streamBitrateValue.toString()};
+						result = getStreamAcceptFilter().checkStreamParameters(parameters);
+					
+						getStreamResultProcess(result);
+					}
+				}
+				
 			} else {
 				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
@@ -595,19 +603,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				muxer.writePacket(pkt, stream);
 			}
 		}
-
-		if(streamFrameRateValue == null) {
-			streamFrameRateValue = (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().num()) / (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().den());
-		}
-		
-		if(streamResolutionValue == null) {
-			streamResolutionValue = inputFormatContext.streams(pkt.stream_index()).codec().height();
-		}
-		
-		if(streamBitrateValue == null) {
-			streamBitrateValue = inputFormatContext.streams(pkt.stream_index()).codec().bit_rate();
-		}
-
 	}
 
 	public void writeTrailer() {
@@ -1182,6 +1177,40 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			streamAcceptFilter = (IStreamAcceptFilter) scope.getContext().getApplicationContext().getBean(IStreamAcceptFilter.BEAN_NAME);
 		}
 		return streamAcceptFilter;
+	}
+	
+	public void getStreamParameters() {
+		if(streamFrameRateValue == null) {
+			streamFrameRateValue = (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().num()) / (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().den());
+			logger.info("Stream FrameRate value: {}",streamFrameRateValue);
+		}
+		
+		if(streamResolutionValue == null) {
+			streamResolutionValue = inputFormatContext.streams(pkt.stream_index()).codec().height();
+			logger.info("Stream Resolution value: {}",streamResolutionValue);
+		}
+		
+		if(streamBitrateValue == null) {
+			streamBitrateValue = inputFormatContext.streams(pkt.stream_index()).codec().bit_rate();
+			logger.info("Stream Bitrate value: {}",streamBitrateValue);
+		}
+	}
+	
+	public void getStreamResultProcess(int result) {
+		
+		if(result == -1) {
+			logger.error("Stream parameters are fine");
+		}
+		else if(result == 0) {
+			logger.error("Max stream frameRate reached");
+		}
+		else if(result == 1) {
+			logger.error("Max stream resolution reached");
+		}
+		else if(result == 2) {
+			logger.error("Max stream bitrate reached");
+		}
+		
 	}
 
 }
