@@ -140,6 +140,9 @@ public class AppSettings {
 
 	private static final String SETTINGS_RTSP_PULL_TRANSPORT_TYPE = "settings.rtspPullTransportType";
 
+	public static final String SETTINGS_H264_ENABLED = "settings.h264Enabled";
+
+	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
 
 	
 	
@@ -598,6 +601,19 @@ public class AppSettings {
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedPublisherCIDRList = new ArrayList<>();
+	
+	
+	/**
+	 * Enable/Disable h264 encoding. It's enabled by default
+	 */
+	@Value("${" + SETTINGS_H264_ENABLED+ ":true}")
+	private boolean h264Enabled;
+	
+	/**
+	 * Enable/Disable vp8 encoding. It's disabled by default
+	 */
+	@Value("${" + SETTINGS_VP8_ENABLED+ ":false}")
+	private boolean vp8Enabled;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1287,6 +1303,22 @@ public class AppSettings {
 
 	public void setRtspPullTransportType(String rtspPullTransportType) {
 		this.rtspPullTransportType = rtspPullTransportType;
+	}
+
+	public boolean isH264Enabled() {
+		return h264Enabled;
+	}
+
+	public void setH264Enabled(boolean h264Enabled) {
+		this.h264Enabled = h264Enabled;
+	}
+
+	public boolean isVp8Enabled() {
+		return vp8Enabled;
+	}
+
+	public void setVp8Enabled(boolean vp8Enabled) {
+		this.vp8Enabled = vp8Enabled;
 	}
 
 

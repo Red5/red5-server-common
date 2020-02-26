@@ -134,7 +134,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private boolean audioOnly = false;
 	private long lastQualityUpdateTime = 0;
 	protected Broadcast broadcast;
-	private AppSettings appSettings;
+	protected AppSettings appSettings;
 	private int previewHeight;
 	private int lastFrameTimestamp;
 	private int maxAnalyzeDurationMS = 1000;
