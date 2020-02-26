@@ -13,115 +13,115 @@ import org.mongodb.morphia.annotations.Indexes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModelProperty;	
 
-@Entity("playlist")
+@Entity("playlist")	
 
-@Indexes({ @Index(fields = @Field("playlistId")) })
-@ApiModel(value="Playlist", description="The playlist in video list object class")
-public class Playlist {
-	
-	@JsonIgnore
-	@Id
-	@ApiModelProperty(value = "the db id of the Playlist")
-	private ObjectId dbId;
-	
-	@ApiModelProperty(value = "the object id of the Playlist")
-	private String playlistId;
-	
-	@ApiModelProperty(value = "the current play index of the Playlist")
-	private int currentPlayIndex;
+@Indexes({ @Index(fields = @Field("playlistId")) })	
+@ApiModel(value="Playlist", description="The playlist in video list object class")	
+public class Playlist {	
 
-	@ApiModelProperty(value = "the name of the Playlist")
-	private String playlistName;
-	
-	/**
-	 * "finished", "broadcasting", "created"
-	 */
-	
-	@ApiModelProperty(value = "the status of the playlist", allowableValues = "finished, broadcasting, created")
-	private String playlistStatus;
+	@JsonIgnore	
+	@Id	
+	@ApiModelProperty(value = "the db id of the Playlist")	
+	private ObjectId dbId;	
 
-	@ApiModelProperty(value = "the list broadcasts of Playlist Items")
-	@Embedded
-	private List<Broadcast> broadcastItemList;
+	@ApiModelProperty(value = "the object id of the Playlist")	
+	private String playlistId;	
 
-	@ApiModelProperty(value = "the creation of the Playlist")
-	private long creationDate;
-	
-	@ApiModelProperty(value = "the duration of the Playlist")
-	private long duration;
-	
-	public Playlist() {
-		//default constructor is used to return not found playlist in rest service 
-	}
-	
-	public Playlist(String playlistId, int currentPlayIndex, String playlistName, String playlistStatus, long creationDate, long duration, List<Broadcast> broadcastItemList) {
+	@ApiModelProperty(value = "the current play index of the Playlist")	
+	private int currentPlayIndex;	
 
-		this.playlistId = playlistId;
-		this.currentPlayIndex = currentPlayIndex;
-		this.playlistName = playlistName;
-		this.playlistStatus = playlistStatus;
-		this.creationDate = creationDate;
-		this.duration = duration;
-		this.broadcastItemList = broadcastItemList;
-		
-	}
-	
-	public String getPlaylistId() {
-		return playlistId;
-	}
+	@ApiModelProperty(value = "the name of the Playlist")	
+	private String playlistName;	
 
-	public void setPlaylistId(String playlistId) {
-		this.playlistId = playlistId;
-	}
-	
-	public int getCurrentPlayIndex() {
-		return currentPlayIndex;
-	}
+	/**	
+	 * "finished", "broadcasting", "created"	
+	 */	
 
-	public void setCurrentPlayIndex(int currentPlayIndex) {
-		this.currentPlayIndex = currentPlayIndex;
-	}
+	@ApiModelProperty(value = "the status of the playlist", allowableValues = "finished, broadcasting, created")	
+	private String playlistStatus;	
 
-	public String getPlaylistName() {
-		return playlistName;
-	}
+	@ApiModelProperty(value = "the list broadcasts of Playlist Items")	
+	@Embedded	
+	private List<Broadcast> broadcastItemList;	
 
-	public void setPlaylistName(String playlistName) {
-		this.playlistName = playlistName;
-	}
-	
-	public String getPlaylistStatus() {
-		return playlistStatus;
-	}
+	@ApiModelProperty(value = "the creation of the Playlist")	
+	private long creationDate;	
 
-	public void setPlaylistStatus(String playlistStatus) {
-		this.playlistStatus = playlistStatus;
-	}
-	
-	public List<Broadcast> getBroadcastItemList() {
-		return broadcastItemList;
-	}
+	@ApiModelProperty(value = "the duration of the Playlist")	
+	private long duration;	
 
-	public void setBroadcastItemList(List<Broadcast> broadcastItemList) {
-		this.broadcastItemList = broadcastItemList;
-	}
+	public Playlist() {	
+		//default constructor is used to return not found playlist in rest service 	
+	}	
 
-	public long getCreationDate() {
-		return creationDate;
-	}
+	public Playlist(String playlistId, int currentPlayIndex, String playlistName, String playlistStatus, long creationDate, long duration, List<Broadcast> broadcastItemList) {	
 
-	public void setCreationDate(long creationDate) {
-		this.creationDate = creationDate;
-	}
+		this.playlistId = playlistId;	
+		this.currentPlayIndex = currentPlayIndex;	
+		this.playlistName = playlistName;	
+		this.playlistStatus = playlistStatus;	
+		this.creationDate = creationDate;	
+		this.duration = duration;	
+		this.broadcastItemList = broadcastItemList;	
 
-	public long getDuration() {
-		return duration;
-	}
+	}	
 
-	public void setDuration(long duration) {
-		this.duration = duration;
-	}
-	
+	public String getPlaylistId() {	
+		return playlistId;	
+	}	
+
+	public void setPlaylistId(String playlistId) {	
+		this.playlistId = playlistId;	
+	}	
+
+	public int getCurrentPlayIndex() {	
+		return currentPlayIndex;	
+	}	
+
+	public void setCurrentPlayIndex(int currentPlayIndex) {	
+		this.currentPlayIndex = currentPlayIndex;	
+	}	
+
+	public String getPlaylistName() {	
+		return playlistName;	
+	}	
+
+	public void setPlaylistName(String playlistName) {	
+		this.playlistName = playlistName;	
+	}	
+
+	public String getPlaylistStatus() {	
+		return playlistStatus;	
+	}	
+
+	public void setPlaylistStatus(String playlistStatus) {	
+		this.playlistStatus = playlistStatus;	
+	}	
+
+	public List<Broadcast> getBroadcastItemList() {	
+		return broadcastItemList;	
+	}	
+
+	public void setBroadcastItemList(List<Broadcast> broadcastItemList) {	
+		this.broadcastItemList = broadcastItemList;	
+	}	
+
+	public long getCreationDate() {	
+		return creationDate;	
+	}	
+
+	public void setCreationDate(long creationDate) {	
+		this.creationDate = creationDate;	
+	}	
+
+	public long getDuration() {	
+		return duration;	
+	}	
+
+	public void setDuration(long duration) {	
+		this.duration = duration;	
+	}	
+
 }
