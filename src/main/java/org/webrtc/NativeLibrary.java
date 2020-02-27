@@ -16,12 +16,11 @@ class NativeLibrary {
   static class DefaultLoader implements NativeLibraryLoader {
     @Override
     public boolean load(String name) {
-      System.out.println("Loading library: " + name);
+      Logging.d(TAG, "Loading library: " + name);
       try {
         System.loadLibrary(name);
       } catch (UnsatisfiedLinkError e) {
-    	  e.printStackTrace();
-    	  System.err.println("Failed to load native library: " + name);
+        Logging.e(TAG, "Failed to load native library: " + name, e);
         return false;
       }
       return true;
@@ -29,7 +28,7 @@ class NativeLibrary {
   }
 
   private static Object lock = new Object();
-  private static boolean libraryLoaded = false;
+  private static boolean libraryLoaded;
 
   /**
    * Loads the native library. Clients should call PeerConnectionFactory.initialize. It will call
@@ -38,10 +37,10 @@ class NativeLibrary {
   static void initialize(NativeLibraryLoader loader, String libraryName) {
     synchronized (lock) {
       if (libraryLoaded) {
-    	  	System.out.println("Native library has already been loaded.");
+        Logging.d(TAG, "Native library has already been loaded.");
         return;
       }
-      System.err.println("Loading native library: " + libraryName);
+      Logging.d(TAG, "Loading native library: " + libraryName);
       libraryLoaded = loader.load(libraryName);
     }
   }

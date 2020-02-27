@@ -238,6 +238,12 @@ public class Broadcast {
 	
 	@ApiModelProperty(value = "altitude of the broadcasting location")
 	private String altitude;
+	
+	@ApiModelProperty(value = "If this broadcast is a track of a WebRTC stream. This variable is Id of that stream.")
+	private String mainTrackStreamId;
+	
+	@ApiModelProperty(value = "If this broadcast is main track. This variable hold sub track ids.")
+	private List<String> subTrackStreamIds;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -571,5 +577,21 @@ public class Broadcast {
 
 	public void setAltitude(String altitude) {
 		this.altitude = altitude;
+	}
+
+	public String getMainTrackStreamId() {
+		return mainTrackStreamId;
+	}
+
+	public void setMainTrackStreamId(String mainTrackStreamId) {
+		this.mainTrackStreamId = mainTrackStreamId;
+	}
+	
+	public List<String> getSubTrackStreamIds() {
+		return subTrackStreamIds;
+	}
+
+	public void setSubTrackStreamIds(List<String> subTrackStreamIds) {
+		this.subTrackStreamIds = subTrackStreamIds;
 	}
 }

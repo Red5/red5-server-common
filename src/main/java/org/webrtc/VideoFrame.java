@@ -10,9 +10,7 @@
 
 package org.webrtc;
 
-
 import java.nio.ByteBuffer;
-import javax.annotation.Nullable;
 
 /**
  * Java version of webrtc::VideoFrame and webrtc::VideoFrameBuffer. A difference from the C++
@@ -89,11 +87,9 @@ public class VideoFrame implements RefCounted {
     @CalledByNative("I420Buffer") int getStrideV();
   }
 
-  
-
   private final Buffer buffer;
   private final int rotation;
-  private final long timestampNs;
+  private long timestampNs;
 
   /**
    * Constructs a new VideoFrame backed by the given {@code buffer}.
@@ -158,37 +154,8 @@ public class VideoFrame implements RefCounted {
   public void release() {
     buffer.release();
   }
-
-  // TODO(sakal): This file should be strictly an interface. This method should be moved somewhere
-  // else.
-  public static VideoFrame.Buffer cropAndScaleI420(final I420Buffer buffer, int cropX, int cropY,
-      int cropWidth, int cropHeight, int scaleWidth, int scaleHeight) {
-    if (cropWidth == scaleWidth && cropHeight == scaleHeight) {
-      // No scaling.
-      ByteBuffer dataY = buffer.getDataY();
-      ByteBuffer dataU = buffer.getDataU();
-      ByteBuffer dataV = buffer.getDataV();
-
-      dataY.position(cropX + cropY * buffer.getStrideY());
-      dataU.position(cropX / 2 + cropY / 2 * buffer.getStrideU());
-      dataV.position(cropX / 2 + cropY / 2 * buffer.getStrideV());
-
-      buffer.retain();
-      return JavaI420Buffer.wrap(scaleWidth, scaleHeight, dataY.slice(), buffer.getStrideY(),
-          dataU.slice(), buffer.getStrideU(), dataV.slice(), buffer.getStrideV(), buffer::release);
-    }
-
-    JavaI420Buffer newBuffer = JavaI420Buffer.allocate(scaleWidth, scaleHeight);
-    nativeCropAndScaleI420(buffer.getDataY(), buffer.getStrideY(), buffer.getDataU(),
-        buffer.getStrideU(), buffer.getDataV(), buffer.getStrideV(), cropX, cropY, cropWidth,
-        cropHeight, newBuffer.getDataY(), newBuffer.getStrideY(), newBuffer.getDataU(),
-        newBuffer.getStrideU(), newBuffer.getDataV(), newBuffer.getStrideV(), scaleWidth,
-        scaleHeight);
-    return newBuffer;
+  
+  public void setTimestampNs(long timestampNs) {
+	  this.timestampNs = timestampNs;
   }
-
-  private static native void nativeCropAndScaleI420(ByteBuffer srcY, int srcStrideY,
-      ByteBuffer srcU, int srcStrideU, ByteBuffer srcV, int srcStrideV, int cropX, int cropY,
-      int cropWidth, int cropHeight, ByteBuffer dstY, int dstStrideY, ByteBuffer dstU,
-      int dstStrideU, ByteBuffer dstV, int dstStrideV, int scaleWidth, int scaleHeight);
 }

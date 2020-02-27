@@ -10,15 +10,16 @@
 
 package org.webrtc;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 /** Java wrapper for a C++ RtpSenderInterface. */
 public class RtpSender {
-  final long nativeRtpSender;
+  private long nativeRtpSender;
 
   @Nullable private MediaStreamTrack cachedTrack;
   private boolean ownsTrack = true;
-
   private final @Nullable DtmfSender dtmfSender;
 
   @CalledByNative
@@ -46,7 +47,8 @@ public class RtpSender {
    * @return              true on success and false on failure.
    */
   public boolean setTrack(@Nullable MediaStreamTrack track, boolean takeOwnership) {
-    if (!nativeSetTrack(nativeRtpSender, (track == null) ? 0 : track.nativeTrack)) {
+    checkRtpSenderExists();
+    if (!nativeSetTrack(nativeRtpSender, (track == null) ? 0 : track.getNativeMediaStreamTrack())) {
       return false;
     }
     if (cachedTrack != null && ownsTrack) {
@@ -62,15 +64,28 @@ public class RtpSender {
     return cachedTrack;
   }
 
+  public void setStreams(List<String> streamIds) {
+    checkRtpSenderExists();
+    nativeSetStreams(nativeRtpSender, streamIds);
+  }
+
+  public List<String> getStreams() {
+    checkRtpSenderExists();
+    return nativeGetStreams(nativeRtpSender);
+  }
+
   public boolean setParameters(RtpParameters parameters) {
+    checkRtpSenderExists();
     return nativeSetParameters(nativeRtpSender, parameters);
   }
 
   public RtpParameters getParameters() {
+    checkRtpSenderExists();
     return nativeGetParameters(nativeRtpSender);
   }
 
   public String id() {
+    checkRtpSenderExists();
     return nativeGetId(nativeRtpSender);
   }
 
@@ -79,7 +94,13 @@ public class RtpSender {
     return dtmfSender;
   }
 
+  public void setFrameEncryptor(FrameEncryptor frameEncryptor) {
+    checkRtpSenderExists();
+    nativeSetFrameEncryptor(nativeRtpSender, frameEncryptor.getNativeFrameEncryptor());
+  }
+
   public void dispose() {
+    checkRtpSenderExists();
     if (dtmfSender != null) {
       dtmfSender.dispose();
     }
@@ -87,6 +108,19 @@ public class RtpSender {
       cachedTrack.dispose();
     }
     JniCommon.nativeReleaseRef(nativeRtpSender);
+    nativeRtpSender = 0;
+  }
+
+  /** Returns a pointer to webrtc::RtpSenderInterface. */
+  long getNativeRtpSender() {
+    checkRtpSenderExists();
+    return nativeRtpSender;
+  }
+
+  private void checkRtpSenderExists() {
+    if (nativeRtpSender == 0) {
+      throw new IllegalStateException("RtpSender has been disposed.");
+    }
   }
 
   private static native boolean nativeSetTrack(long rtpSender, long nativeTrack);
@@ -94,6 +128,10 @@ public class RtpSender {
   // This should increment the reference count of the track.
   // Will be released in dispose() or setTrack().
   private static native long nativeGetTrack(long rtpSender);
+
+  private static native void nativeSetStreams(long rtpSender, List<String> streamIds);
+
+  private static native List<String> nativeGetStreams(long rtpSender);
 
   // This should increment the reference count of the DTMF sender.
   // Will be released in dispose().
@@ -104,4 +142,6 @@ public class RtpSender {
   private static native RtpParameters nativeGetParameters(long rtpSender);
 
   private static native String nativeGetId(long rtpSender);
+
+  private static native void nativeSetFrameEncryptor(long rtpSender, long nativeFrameEncryptor);
 };
