@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017 The WebRTC project authors. All Rights Reserved.
+ *  Copyright 2018 The WebRTC project authors. All Rights Reserved.
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
@@ -10,16 +10,12 @@
 
 package org.webrtc;
 
-class VP8Encoder extends WrappedNativeVideoEncoder {
-  @Override
-  public long createNativeVideoEncoder() {
-    return nativeCreateEncoder();
-  }
-
-  static native long nativeCreateEncoder();
-
-  @Override
-  public boolean isHardwareEncoder() {
-    return false;
-  }
+/**
+ * Implementations of this interface can create a native {@code webrtc::AudioEncoderFactory}.
+ */
+public interface AudioEncoderFactoryFactory {
+  /**
+   * Returns a pointer to a {@code webrtc::AudioEncoderFactory}. The caller takes ownership.
+   */
+  long createNativeAudioEncoderFactory();
 }

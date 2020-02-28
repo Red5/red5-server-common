@@ -140,7 +140,11 @@ public class AppSettings {
 
 	private static final String SETTINGS_RTSP_PULL_TRANSPORT_TYPE = "settings.rtspPullTransportType";
 
-	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
+	public static final String SETTINGS_H264_ENABLED = "settings.h264Enabled";
+
+	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
+  
+  private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
 	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	
@@ -395,22 +399,46 @@ public class AppSettings {
     @Value( "${" + SETTINGS_COLLECT_SOCIAL_MEDIA_ACTIVITY_ENABLED +":false}")
 	private boolean collectSocialMediaActivity;
 
-	
+	/**
+	 * Name of the encoder to be used in adaptive bitrate. 
+	 * If there is a GPU, server tries to open h264_nvenc.
+	 * If there is no GPU, server tries to open libx264 by default
+	 */
 	@Value( "${" + SETTINGS_ENCODING_ENCODER_NAME +":#{null}}")
 	private String encoderName;
 	
+	/**
+	 * Encoder's preset value in adaptive bitrate
+	 * Libx264 presets are there
+	 * https://trac.ffmpeg.org/wiki/Encode/H.264.
+	 * Ant Media Server uses "veryfast" by default
+	 */
 	@Value( "${" + SETTINGS_ENCODING_PRESET +":#{null}}")
 	private String encoderPreset;
 	
+	/**
+	 * Encoder profile in adaptive bitrate. 
+	 * It's baseline by default.
+	 */
 	@Value( "${" + SETTINGS_ENCODING_PROFILE +":#{null}}")
 	private String encoderProfile;
 	
+	/**
+	 * Encoder level in adaptive bitrate
+	 */
 	@Value( "${" + SETTINGS_ENCODING_LEVEL +":#{null}}")
 	private String encoderLevel;
 	
+	/**
+	 * Encoding rate control in adaptive bitrate
+	 */
 	@Value( "${" + SETTINGS_ENCODING_RC +":#{null}}")
 	private String encoderRc;
 	
+	/**
+	 * Encoder specific configuration for libx264 in adaptive bitrate.
+	 * This is the x264-params in ffmpeg
+	 */
 	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
 	private String encoderSpecific;
 	
@@ -596,6 +624,19 @@ public class AppSettings {
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedPublisherCIDRList = new ArrayList<>();
+	
+	
+	/**
+	 * Enable/Disable h264 encoding. It's enabled by default
+	 */
+	@Value("${" + SETTINGS_H264_ENABLED+ ":true}")
+	private boolean h264Enabled;
+	
+	/**
+	 * Enable/Disable vp8 encoding. It's disabled by default
+	 */
+	@Value("${" + SETTINGS_VP8_ENABLED+ ":false}")
+	private boolean vp8Enabled;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1309,6 +1350,22 @@ public class AppSettings {
 
 	public void setMaxBitrateAccept(String maxBitrateAccept) {
 		this.maxBitrateAccept = maxBitrateAccept;
+	}
+
+	public boolean isH264Enabled() {
+		return h264Enabled;
+	}
+
+	public void setH264Enabled(boolean h264Enabled) {
+		this.h264Enabled = h264Enabled;
+	}
+
+	public boolean isVp8Enabled() {
+		return vp8Enabled;
+	}
+
+	public void setVp8Enabled(boolean vp8Enabled) {
+		this.vp8Enabled = vp8Enabled;
 	}
 
 

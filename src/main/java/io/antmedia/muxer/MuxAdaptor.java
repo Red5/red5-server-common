@@ -50,6 +50,7 @@ import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamPacket;
+import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.IRecordingListener;
@@ -164,8 +165,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private long firstPacketTime = -1;
 	private boolean audioOnly = false;
 	private long lastQualityUpdateTime = 0;
-	private Broadcast broadcast;
-	private AppSettings appSettings;
+	protected Broadcast broadcast;
+	protected AppSettings appSettings;
 	private int previewHeight;
 	private int lastFrameTimestamp;
 	private int maxAnalyzeDurationMS = 1000;
@@ -173,9 +174,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean generatePreview = true;
 	private int firstReceivedFrameTimestamp = -1;
 	private long firstFrameTime;
-	private int totalReceivePacket;
-	private int totalReadPacket;
-	protected long avgRtmpIngestRate;
+	protected int totalIngestedVideoPacketCount;
+	protected long totalIngestTime = 0;
+	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
+	
+	class PacketTs {
+		int dts;
+		long time;
+		public PacketTs(int dts, long time) {
+			this.dts = dts;
+			this.time = time;
+		}
+	}
 
 
 	/*
@@ -517,9 +527,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 				if (ret >= 0) {
 					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
-						totalReadPacket++;
-						avgRtmpIngestRate = ((System.currentTimeMillis() - firstFrameTime)) / totalReadPacket;
+						totalIngestedVideoPacketCount++;
+						int dts = (int) pkt.dts();
+						PacketTs packetTs = packetTsQueue.poll();
+						while (packetTs.dts != dts) {
+							packetTs = packetTsQueue.poll();
+						}
+						long queueEntranceTime = packetTs.time;
+						totalIngestTime += (System.currentTimeMillis() - queueEntranceTime);
 					}
+
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
@@ -816,6 +833,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	@Override
 	public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
+		if(packet.getDataType() == Constants.TYPE_VIDEO_DATA) {
+			packetTsQueue.add(new PacketTs(packet.getTimestamp(), System.currentTimeMillis()));
+		}
 		byte[] flvFrame;
 		try {
 			flvFrame = getFLVFrame(packet);
@@ -853,7 +873,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	private void addPacketToQueue(byte[] data) {
 		inputQueue.add(data);
 		inputContext.queueSize.incrementAndGet();
-		totalReceivePacket++;
 	}
 
 	@Override

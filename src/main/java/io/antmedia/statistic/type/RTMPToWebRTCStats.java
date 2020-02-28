@@ -3,12 +3,15 @@ package io.antmedia.statistic.type;
 public class RTMPToWebRTCStats 
 {
 	private String streamId;
+	private int encoderCount;
 
-	private long avgRtmpVideoIngestionRate;
+	private long totalVideoIngestTime;
+	private long totalIngestedVideoPacketCount;
 	
 	private long totalVideoDecodeTime;
 	private long totalDecodedVideoFrameCount;
 
+	private long totalVideoEncodeQueueTime;
 	private long totalVideoEncodeTime;
 	private long totalEncodedVideoPacketCount;
 	
@@ -17,12 +20,6 @@ public class RTMPToWebRTCStats
 	
 	public RTMPToWebRTCStats(String streamId) {
 		this.setStreamId(streamId);
-	}
-	public long getAvgRtmpIngestionTime() {
-		return avgRtmpVideoIngestionRate;
-	}
-	public void setAvgRtmpVideoIngestionRate(long avgRtmpIngestionRate) {
-		this.avgRtmpVideoIngestionRate = avgRtmpIngestionRate;
 	}
 	public long getTotalVideoDecodeTime() {
 		return totalVideoDecodeTime;
@@ -65,6 +62,30 @@ public class RTMPToWebRTCStats
 	}
 	public void setStreamId(String streamId) {
 		this.streamId = streamId;
+	}
+	public long getTotalVideoIngestTime() {
+		return totalVideoIngestTime;
+	}
+	public void setTotalVideoIngestTime(long totalVideoIngestTime) {
+		this.totalVideoIngestTime = totalVideoIngestTime;
+	}
+	public long getTotalIngestedVideoPacketCount() {
+		return totalIngestedVideoPacketCount;
+	}
+	public void setTotalIngestedVideoPacketCount(long totalIngestedVideoPacketCount) {
+		this.totalIngestedVideoPacketCount = totalIngestedVideoPacketCount;
+	}
+	public int getEncoderCount() {
+		return encoderCount;
+	}
+	public void setEncoderCount(int encoderCount) {
+		this.encoderCount = encoderCount;
+	}
+	public long getTotalVideoEncodeQueueTime() {
+		return totalVideoEncodeQueueTime;
+	}
+	public void setTotalVideoEncodeQueueTime(long totalVideoEncodeQueueTime) {
+		this.totalVideoEncodeQueueTime = totalVideoEncodeQueueTime;
 	}
 	
 }

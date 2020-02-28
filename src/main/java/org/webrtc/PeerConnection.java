@@ -11,9 +11,18 @@
 package org.webrtc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.annotation.Nullable;
+
+import org.webrtc.CandidatePairChangeEvent;
+import org.webrtc.DataChannel;
+import org.webrtc.MediaStreamTrack;
+import org.webrtc.RtpTransceiver;
 
 /**
  * Java-land version of the PeerConnection APIs; wraps the C++ API
@@ -50,6 +59,21 @@ public class PeerConnection {
     }
   }
 
+  /** Tracks PeerConnectionInterface::PeerConnectionState */
+  public enum PeerConnectionState {
+    NEW,
+    CONNECTING,
+    CONNECTED,
+    DISCONNECTED,
+    FAILED,
+    CLOSED;
+
+    @CalledByNative("PeerConnectionState")
+    static PeerConnectionState fromNativeIndex(int nativeIndex) {
+      return values()[nativeIndex];
+    }
+  }
+
   /** Tracks PeerConnectionInterface::TlsCertPolicy */
   public enum TlsCertPolicy {
     TLS_CERT_POLICY_SECURE,
@@ -79,6 +103,14 @@ public class PeerConnection {
     /** Triggered when the IceConnectionState changes. */
     @CalledByNative("Observer") void onIceConnectionChange(IceConnectionState newState);
 
+    /* Triggered when the standard-compliant state transition of IceConnectionState happens. */
+    @CalledByNative("Observer")
+    default void onStandardizedIceConnectionChange(IceConnectionState newState) {}
+
+    /** Triggered when the PeerConnectionState changes. */
+    @CalledByNative("Observer")
+    default void onConnectionChange(PeerConnectionState newState) {}
+
     /** Triggered when the ICE connection receiving status changes. */
     @CalledByNative("Observer") void onIceConnectionReceivingChange(boolean receiving);
 
@@ -90,6 +122,10 @@ public class PeerConnection {
 
     /** Triggered when some ICE candidates have been removed. */
     @CalledByNative("Observer") void onIceCandidatesRemoved(IceCandidate[] candidates);
+
+    /** Triggered when the ICE candidate pair is changed. */
+    @CalledByNative("Observer")
+    default void onSelectedCandidatePairChanged(CandidatePairChangeEvent event) {}
 
     /** Triggered when media is received on a new stream from remote peer. */
     @CalledByNative("Observer") void onAddStream(MediaStream stream);
@@ -198,6 +234,31 @@ public class PeerConnection {
     public String toString() {
       return urls + " [" + username + ":" + password + "] [" + tlsCertPolicy + "] [" + hostname
           + "] [" + tlsAlpnProtocols + "] [" + tlsEllipticCurves + "]";
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+      if (obj == null) {
+        return false;
+      }
+      if (obj == this) {
+        return true;
+      }
+      if (!(obj instanceof IceServer)) {
+        return false;
+      }
+      IceServer other = (IceServer) obj;
+      return (uri.equals(other.uri) && urls.equals(other.urls) && username.equals(other.username)
+          && password.equals(other.password) && tlsCertPolicy.equals(other.tlsCertPolicy)
+          && hostname.equals(other.hostname) && tlsAlpnProtocols.equals(other.tlsAlpnProtocols)
+          && tlsEllipticCurves.equals(other.tlsEllipticCurves));
+    }
+
+    @Override
+    public int hashCode() {
+      Object[] values = {uri, urls, username, password, tlsCertPolicy, hostname, tlsAlpnProtocols,
+          tlsEllipticCurves};
+      return Arrays.hashCode(values);
     }
 
     public static Builder builder(String uri) {
@@ -317,12 +378,29 @@ public class PeerConnection {
 
   // Keep in sync with webrtc/rtc_base/network_constants.h.
   public enum AdapterType {
-    UNKNOWN,
-    ETHERNET,
-    WIFI,
-    CELLULAR,
-    VPN,
-    LOOPBACK,
+    UNKNOWN(0),
+    ETHERNET(1 << 0),
+    WIFI(1 << 1),
+    CELLULAR(1 << 2),
+    VPN(1 << 3),
+    LOOPBACK(1 << 4),
+    ADAPTER_TYPE_ANY(1 << 5);
+
+    public final Integer bitMask;
+    private AdapterType(Integer bitMask) {
+      this.bitMask = bitMask;
+    }
+    private static final Map<Integer, AdapterType> BY_BITMASK = new HashMap<>();
+    static {
+      for (AdapterType t : values()) {
+        BY_BITMASK.put(t.bitMask, t);
+      }
+    }
+
+    @CalledByNative("AdapterType")
+    static AdapterType fromNativeIndex(int nativeIndex) {
+      return BY_BITMASK.get(nativeIndex);
+    }
   }
 
   /** Java version of rtc::KeyType */
@@ -330,6 +408,13 @@ public class PeerConnection {
 
   /** Java version of PeerConnectionInterface.ContinualGatheringPolicy */
   public enum ContinualGatheringPolicy { GATHER_ONCE, GATHER_CONTINUALLY }
+
+  /** Java version of webrtc::PortPrunePolicy */
+  public enum PortPrunePolicy {
+    NO_PRUNE, // Do not prune turn port.
+    PRUNE_BASED_ON_PRIORITY, // Prune turn port based the priority on the same network
+    KEEP_FIRST_READY // Keep the first ready port and prune the rest on the same network.
+  }
 
   /** Java version of rtc::IntervalRange */
   public static class IntervalRange {
@@ -385,6 +470,7 @@ public class PeerConnection {
     public IceTransportsType iceTransportsType;
     public List<IceServer> iceServers;
     public BundlePolicy bundlePolicy;
+    @Nullable public RtcCertificatePem certificate;
     public RtcpMuxPolicy rtcpMuxPolicy;
     public TcpCandidatePolicy tcpCandidatePolicy;
     public CandidateNetworkPolicy candidateNetworkPolicy;
@@ -395,8 +481,11 @@ public class PeerConnection {
     public KeyType keyType;
     public ContinualGatheringPolicy continualGatheringPolicy;
     public int iceCandidatePoolSize;
+    @Deprecated // by the turnPortPrunePolicy. See bugs.webrtc.org/11026
     public boolean pruneTurnPorts;
+    public PortPrunePolicy turnPortPrunePolicy;
     public boolean presumeWritableWhenFullyRelayed;
+    public boolean surfaceIceCandidatesOnIceTransportTypeChanged;
     // The following fields define intervals in milliseconds at which ICE
     // connectivity checks are sent.
     //
@@ -460,11 +549,36 @@ public class PeerConnection {
     // Actively reset the SRTP parameters whenever the DTLS transports underneath are reset for
     // every offer/answer negotiation.This is only intended to be a workaround for crbug.com/835958
     public boolean activeResetSrtpParams;
+
+    /*
+     * Experimental flag that enables a use of media transport. If this is true, the media transport
+     * factory MUST be provided to the PeerConnectionFactory.
+     */
+    public boolean useMediaTransport;
+
+    /*
+     * Experimental flag that enables a use of media transport for data channels. If this is true,
+     * the media transport factory MUST be provided to the PeerConnectionFactory.
+     */
+    public boolean useMediaTransportForDataChannels;
+
+    /**
+     * Defines advanced optional cryptographic settings related to SRTP and
+     * frame encryption for native WebRTC. Setting this will overwrite any
+     * options set through the PeerConnectionFactory (which is deprecated).
+     */
+    @Nullable public CryptoOptions cryptoOptions;
+
+    /**
+     * An optional string that if set will be attached to the
+     * TURN_ALLOCATE_REQUEST which can be used to correlate client
+     * logs with backend logs
+     */
+    @Nullable public String turnLoggingId;
     
     public int minPort;
     
     public int maxPort;
-    
     
     public static int PORTALLOCATOR_DISABLE_UDP = 0x01;
     public static int PORTALLOCATOR_DISABLE_STUN = 0x02;
@@ -490,7 +604,9 @@ public class PeerConnection {
       continualGatheringPolicy = ContinualGatheringPolicy.GATHER_ONCE;
       iceCandidatePoolSize = 0;
       pruneTurnPorts = false;
+      turnPortPrunePolicy = PortPrunePolicy.NO_PRUNE;
       presumeWritableWhenFullyRelayed = false;
+      surfaceIceCandidatesOnIceTransportTypeChanged = false;
       iceCheckIntervalStrongConnectivityMs = null;
       iceCheckIntervalWeakConnectivityMs = null;
       iceCheckMinInterval = null;
@@ -511,6 +627,10 @@ public class PeerConnection {
       networkPreference = AdapterType.UNKNOWN;
       sdpSemantics = SdpSemantics.PLAN_B;
       activeResetSrtpParams = false;
+      useMediaTransport = false;
+      useMediaTransportForDataChannels = false;
+      cryptoOptions = null;
+      turnLoggingId = null;
       minPort = 0;
       maxPort = 0;
       portAllocatorFlags = 0;
@@ -529,6 +649,17 @@ public class PeerConnection {
     @CalledByNative("RTCConfiguration")
     BundlePolicy getBundlePolicy() {
       return bundlePolicy;
+    }
+
+    @CalledByNative("RTCConfiguration")
+    PortPrunePolicy getTurnPortPrunePolicy() {
+      return turnPortPrunePolicy;
+    }
+
+    @Nullable
+    @CalledByNative("RTCConfiguration")
+    RtcCertificatePem getCertificate() {
+      return certificate;
     }
 
     @CalledByNative("RTCConfiguration")
@@ -589,6 +720,11 @@ public class PeerConnection {
     @CalledByNative("RTCConfiguration")
     boolean getPresumeWritableWhenFullyRelayed() {
       return presumeWritableWhenFullyRelayed;
+    }
+
+    @CalledByNative("RTCConfiguration")
+    boolean getSurfaceIceCandidatesOnIceTransportTypeChanged() {
+      return surfaceIceCandidatesOnIceTransportTypeChanged;
     }
 
     @Nullable
@@ -706,6 +842,28 @@ public class PeerConnection {
     boolean getActiveResetSrtpParams() {
       return activeResetSrtpParams;
     }
+
+    @CalledByNative("RTCConfiguration")
+    boolean getUseMediaTransport() {
+      return useMediaTransport;
+    }
+
+    @CalledByNative("RTCConfiguration")
+    boolean getUseMediaTransportForDataChannels() {
+      return useMediaTransportForDataChannels;
+    }
+
+    @Nullable
+    @CalledByNative("RTCConfiguration")
+    CryptoOptions getCryptoOptions() {
+      return cryptoOptions;
+    }
+
+    @Nullable
+    @CalledByNative("RTCConfiguration")
+    String getTurnLoggingId() {
+      return turnLoggingId;
+    }
     
     @CalledByNative("RTCConfiguration")
     int getMinPort() {
@@ -748,6 +906,10 @@ public class PeerConnection {
 
   public SessionDescription getRemoteDescription() {
     return nativeGetRemoteDescription();
+  }
+
+  public RtcCertificatePem getCertificate() {
+    return nativeGetCertificate();
   }
 
   public DataChannel createDataChannel(String label, DataChannel.Init init) {
@@ -810,7 +972,7 @@ public class PeerConnection {
    * use addTrack instead.
    */
   public boolean addStream(MediaStream stream) {
-    boolean ret = nativeAddLocalStream(stream.nativeStream);
+    boolean ret = nativeAddLocalStream(stream.getNativeMediaStream());
     if (!ret) {
       return false;
     }
@@ -824,7 +986,7 @@ public class PeerConnection {
    * removeTrack instead.
    */
   public void removeStream(MediaStream stream) {
-    nativeRemoveLocalStream(stream.nativeStream);
+    nativeRemoveLocalStream(stream.getNativeMediaStream());
     localStreams.remove(stream);
   }
 
@@ -934,7 +1096,7 @@ public class PeerConnection {
     if (track == null || streamIds == null) {
       throw new NullPointerException("No MediaStreamTrack specified in addTrack.");
     }
-    RtpSender newSender = nativeAddTrack(track.nativeTrack, streamIds);
+    RtpSender newSender = nativeAddTrack(track.getNativeMediaStreamTrack(), streamIds);
     if (newSender == null) {
       throw new IllegalStateException("C++ addTrack failed.");
     }
@@ -951,7 +1113,7 @@ public class PeerConnection {
     if (sender == null) {
       throw new NullPointerException("No RtpSender specified for removeTrack.");
     }
-    return nativeRemoveTrack(sender.nativeRtpSender);
+    return nativeRemoveTrack(sender.getNativeRtpSender());
   }
 
   /**
@@ -991,7 +1153,8 @@ public class PeerConnection {
     if (init == null) {
       init = new RtpTransceiver.RtpTransceiverInit();
     }
-    RtpTransceiver newTransceiver = nativeAddTransceiverWithTrack(track.nativeTrack, init);
+    RtpTransceiver newTransceiver =
+        nativeAddTransceiverWithTrack(track.getNativeMediaStreamTrack(), init);
     if (newTransceiver == null) {
       throw new IllegalStateException("C++ addTransceiver failed.");
     }
@@ -1022,7 +1185,7 @@ public class PeerConnection {
   // Older, non-standard implementation of getStats.
   @Deprecated
   public boolean getStats(StatsObserver observer, @Nullable MediaStreamTrack track) {
-    return nativeOldGetStats(observer, (track == null) ? 0 : track.nativeTrack);
+    return nativeOldGetStats(observer, (track == null) ? 0 : track.getNativeMediaStreamTrack());
   }
 
   /**
@@ -1072,6 +1235,10 @@ public class PeerConnection {
     return nativeIceConnectionState();
   }
 
+  public PeerConnectionState connectionState() {
+    return nativeConnectionState();
+  }
+
   public IceGatheringState iceGatheringState() {
     return nativeIceGatheringState();
   }
@@ -1099,7 +1266,7 @@ public class PeerConnection {
   public void dispose() {
     close();
     for (MediaStream stream : localStreams) {
-      nativeRemoveLocalStream(stream.nativeStream);
+      nativeRemoveLocalStream(stream.getNativeMediaStream());
       stream.dispose();
     }
     localStreams.clear();
@@ -1135,6 +1302,7 @@ public class PeerConnection {
   private native long nativeGetNativePeerConnection();
   private native SessionDescription nativeGetLocalDescription();
   private native SessionDescription nativeGetRemoteDescription();
+  private native RtcCertificatePem nativeGetCertificate();
   private native DataChannel nativeCreateDataChannel(String label, DataChannel.Init init);
   private native void nativeCreateOffer(SdpObserver observer, MediaConstraints constraints);
   private native void nativeCreateAnswer(SdpObserver observer, MediaConstraints constraints);
@@ -1145,6 +1313,7 @@ public class PeerConnection {
   private native boolean nativeSetBitrate(Integer min, Integer current, Integer max);
   private native SignalingState nativeSignalingState();
   private native IceConnectionState nativeIceConnectionState();
+  private native PeerConnectionState nativeConnectionState();
   private native IceGatheringState nativeIceGatheringState();
   private native void nativeClose();
   private static native long nativeCreatePeerConnectionObserver(Observer observer);

@@ -15,7 +15,7 @@ package org.webrtc;
  * bitrate.  Used for hardware codecs that pay attention to framerate but still deviate from the
  * target bitrate by unacceptable margins.
  */
-public class DynamicBitrateAdjuster extends BaseBitrateAdjuster {
+class DynamicBitrateAdjuster extends BaseBitrateAdjuster {
   // Change the bitrate at most once every three seconds.
   private static final double BITRATE_ADJUSTMENT_SEC = 3.0;
   // Maximum bitrate adjustment scale - no more than 4 times.
@@ -26,9 +26,9 @@ public class DynamicBitrateAdjuster extends BaseBitrateAdjuster {
   private static final double BITS_PER_BYTE = 8.0;
 
   // How far the codec has deviated above (or below) the target bitrate (tracked in bytes).
-  private double deviationBytes = 0;
-  private double timeSinceLastAdjustmentMs = 0;
-  private int bitrateAdjustmentScaleExp = 0;
+  private double deviationBytes;
+  private double timeSinceLastAdjustmentMs;
+  private int bitrateAdjustmentScaleExp;
 
   @Override
   public void setTargets(int targetBitrateBps, int targetFps) {

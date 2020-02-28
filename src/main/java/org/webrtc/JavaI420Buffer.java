@@ -11,7 +11,9 @@
 package org.webrtc;
 
 import java.nio.ByteBuffer;
+
 import javax.annotation.Nullable;
+
 import org.webrtc.VideoFrame.I420Buffer;
 
 /** Implementation of VideoFrame.I420Buffer backed by Java direct byte buffers. */
@@ -50,7 +52,8 @@ public class JavaI420Buffer implements VideoFrame.I420Buffer {
 
   /** Wraps existing ByteBuffers into JavaI420Buffer object without copying the contents. */
   public static JavaI420Buffer wrap(int width, int height, ByteBuffer dataY, int strideY,
-      ByteBuffer dataU, int strideU, ByteBuffer dataV, int strideV, Runnable releaseCallback) {
+      ByteBuffer dataU, int strideU, ByteBuffer dataV, int strideV,
+      @Nullable Runnable releaseCallback) {
     if (dataY == null || dataU == null || dataV == null) {
       throw new IllegalArgumentException("Data buffers cannot be null.");
     }
@@ -163,7 +166,37 @@ public class JavaI420Buffer implements VideoFrame.I420Buffer {
   @Override
   public VideoFrame.Buffer cropAndScale(
       int cropX, int cropY, int cropWidth, int cropHeight, int scaleWidth, int scaleHeight) {
-    return VideoFrame.cropAndScaleI420(
-        this, cropX, cropY, cropWidth, cropHeight, scaleWidth, scaleHeight);
+    return cropAndScaleI420(this, cropX, cropY, cropWidth, cropHeight, scaleWidth, scaleHeight);
   }
+
+  public static VideoFrame.Buffer cropAndScaleI420(final I420Buffer buffer, int cropX, int cropY,
+      int cropWidth, int cropHeight, int scaleWidth, int scaleHeight) {
+    if (cropWidth == scaleWidth && cropHeight == scaleHeight) {
+      // No scaling.
+      ByteBuffer dataY = buffer.getDataY();
+      ByteBuffer dataU = buffer.getDataU();
+      ByteBuffer dataV = buffer.getDataV();
+
+      dataY.position(cropX + cropY * buffer.getStrideY());
+      dataU.position(cropX / 2 + cropY / 2 * buffer.getStrideU());
+      dataV.position(cropX / 2 + cropY / 2 * buffer.getStrideV());
+
+      buffer.retain();
+      return JavaI420Buffer.wrap(scaleWidth, scaleHeight, dataY.slice(), buffer.getStrideY(),
+          dataU.slice(), buffer.getStrideU(), dataV.slice(), buffer.getStrideV(), buffer::release);
+    }
+
+    JavaI420Buffer newBuffer = JavaI420Buffer.allocate(scaleWidth, scaleHeight);
+    nativeCropAndScaleI420(buffer.getDataY(), buffer.getStrideY(), buffer.getDataU(),
+        buffer.getStrideU(), buffer.getDataV(), buffer.getStrideV(), cropX, cropY, cropWidth,
+        cropHeight, newBuffer.getDataY(), newBuffer.getStrideY(), newBuffer.getDataU(),
+        newBuffer.getStrideU(), newBuffer.getDataV(), newBuffer.getStrideV(), scaleWidth,
+        scaleHeight);
+    return newBuffer;
+  }
+
+  private static native void nativeCropAndScaleI420(ByteBuffer srcY, int srcStrideY,
+      ByteBuffer srcU, int srcStrideU, ByteBuffer srcV, int srcStrideV, int cropX, int cropY,
+      int cropWidth, int cropHeight, ByteBuffer dstY, int dstStrideY, ByteBuffer dstU,
+      int dstStrideU, ByteBuffer dstV, int dstStrideV, int scaleWidth, int scaleHeight);
 }

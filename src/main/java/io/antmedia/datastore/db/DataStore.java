@@ -393,6 +393,10 @@ public abstract class DataStore {
 			broadcast.setAltitude(newBroadcast.getAltitude());
 		}
 		
+		if (newBroadcast.getMainTrackStreamId() != null) {
+			broadcast.setMainTrackStreamId(newBroadcast.getMainTrackStreamId());
+		}
+		
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
@@ -464,6 +468,15 @@ public abstract class DataStore {
 	 */
 	public abstract boolean deleteP2PConnection(String streamId);
 	
+	/**
+	 * Add a subtrack id to a main track (broadcast)
+	 * @param mainTrackId - main track id
+	 * @param subTrackId - main track id
+	 * @return boolean - success 
+	 */
+	public abstract boolean addSubTrack(String mainTrackId, String subTrackId);
+
+
 	/**	
 	 * Creates new Playlist	
 	 * @param playlist - Playlist object	
@@ -492,7 +505,6 @@ public abstract class DataStore {
 	 */	
 	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
 	
-
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
