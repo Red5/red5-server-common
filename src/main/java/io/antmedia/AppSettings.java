@@ -144,7 +144,7 @@ public class AppSettings {
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
   
-  private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
+	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
 	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	

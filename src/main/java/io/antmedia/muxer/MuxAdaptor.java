@@ -85,14 +85,9 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean deleteHLSFilesOnExit = true;
 
 	protected boolean previewOverwrite = false;
-	
+
 	protected boolean enableVideo = false;
 	protected boolean enableAudio = false;
-
-	private Long streamBitrateValue;
-	private Integer streamFrameRateValue;
-	private Integer streamResolutionValue;
-	private Integer result;
 
 	public static class InputContext {
 		public Queue<byte[]> queue;
@@ -136,7 +131,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
 	private IStreamAcceptFilter streamAcceptFilter;
-	
+
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
@@ -177,7 +172,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected int totalIngestedVideoPacketCount;
 	protected long totalIngestTime = 0;
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
-	
+
 	class PacketTs {
 		int dts;
 		long time;
@@ -232,13 +227,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 				} 
 				else {
-					
+
 					logger.info("Checking streams for stream: {}", inputContextLocal.muxAdaptor.streamId);
 					if (inputContextLocal.muxAdaptor.checkStreams()) {
 						inputContextLocal.isHeaderWritten = true;
 						byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
 						length = flvHeader.length;
-	
+
 						buf.put(flvHeader, 0, length);
 					}
 				}
@@ -293,7 +288,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
 		this.broadcastStream = clientBroadcastStream;
-		
+
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
@@ -430,9 +425,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
 		}
-		
-		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
+		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
 		return prepareInternal(inputFormatContext);
 	}
@@ -586,26 +580,19 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		int inputQueueSize = getInputQueueSize();
-	
+
 		changeStreamQualityParameters(this.streamId, quality, speed, inputQueueSize);
 
 		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
-				/*
-				if(broadcast.getType().equals("liveStream")) {
-					// Get Stream FPS, Bitrate, Resolution values collect
-					getStreamParameters();		
-				
-					if(result == null) {
-						String[] parameters = {streamFrameRateValue.toString(), streamResolutionValue.toString(), streamBitrateValue.toString()};
-						result = getStreamAcceptFilter().checkStreamParameters(parameters);
-					
-						getStreamResultProcess(result);
-					}
+
+				if(!getStreamAcceptFilter().isValidStreamParameters(inputFormatContext, pkt)) {
+					getBroadcastStream().stop();
+					return;
 				}
-				*/
+
 			} else {
 				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
@@ -761,23 +748,23 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					logger.info("Video and Audio is detected in the incoming stream for stream: {}", streamId);
 					break;
 				}
-				
+
 				//sleeping is not something we like. But it seems the best option for this case
 				Thread.sleep(5);
 				totalTime = System.currentTimeMillis() - checkStreamsStartTime;
 				frameElapsedTimestamp = lastFrameTimestamp - firstReceivedFrameTimestamp;
 			}
-			
+
 			if ( totalTime >= (2* maxAnalyzeDurationMS)) {
 				logger.error("Total max time({}) is spent to determine video and audio existence for stream:{}. It's skipped waiting", (2*maxAnalyzeDurationMS), streamId);
 			}
-			
+
 			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {} elapsed frame timestamp: {} stop request exists: {}", streamId, enableVideo, enableAudio, totalTime, frameElapsedTimestamp, inputContext.stopRequestExist);
 		}
 		else {
 			logger.warn("broadcastStream is null while checking streams for {}", streamId);
 		}
-		
+
 		//return true if video or audio tracks enable
 		return enableVideo || enableAudio;
 	}
@@ -794,6 +781,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				logger.info("before prepare for {}", streamId);
 				try {
 					if (prepare()) {
+
 						logger.info("after prepare for {}", streamId);
 						isRecording = true;
 						startTime = System.currentTimeMillis();
@@ -1055,8 +1043,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return prepared;
 
 	}
-	
-	
+
+
 	public Muxer findDynamicMp4Muxer() {
 		synchronized (muxerList) 
 		{
@@ -1103,8 +1091,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		return prepared;
 	}
-	
-	
+
+
 	public RtmpMuxer getRtmpMuxer(String rtmpUrl) 
 	{
 		RtmpMuxer rtmpMuxer = null;
@@ -1155,7 +1143,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setEnableAudio(boolean enableAudio) {
 		this.enableAudio = enableAudio;
 	}
-	
+
 	public AVFormatContext getInputFormatContext() {
 		return inputFormatContext;
 	}
@@ -1184,7 +1172,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static void setQueueReferences(Map<Pointer, InputContext> queueReferences) {
 		MuxAdaptor.queueReferences = queueReferences;
 	}
-	
+
 
 
 	public void setStreamAcceptFilter(IStreamAcceptFilter streamAcceptFilter) {
@@ -1196,40 +1184,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			streamAcceptFilter = (IStreamAcceptFilter) scope.getContext().getApplicationContext().getBean(IStreamAcceptFilter.BEAN_NAME);
 		}
 		return streamAcceptFilter;
-	}
-	
-	public void getStreamParameters() {
-		if(streamFrameRateValue == null) {
-			streamFrameRateValue = (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().num()) / (inputFormatContext.streams(pkt.stream_index()).r_frame_rate().den());
-			logger.info("Stream FrameRate value: {}",streamFrameRateValue);
-		}
-		
-		if(streamResolutionValue == null) {
-			streamResolutionValue = inputFormatContext.streams(pkt.stream_index()).codec().height();
-			logger.info("Stream Resolution value: {}",streamResolutionValue);
-		}
-		
-		if(streamBitrateValue == null) {
-			streamBitrateValue = inputFormatContext.streams(pkt.stream_index()).codec().bit_rate();
-			logger.info("Stream Bitrate value: {}",streamBitrateValue);
-		}
-	}
-	
-	public void getStreamResultProcess(int result) {
-		
-		if(result == -1) {
-			logger.error("Stream parameters are fine");
-		}
-		else if(result == 0) {
-			logger.error("Max stream frameRate reached");
-		}
-		else if(result == 1) {
-			logger.error("Max stream resolution reached");
-		}
-		else if(result == 2) {
-			logger.error("Max stream bitrate reached");
-		}
-		
 	}
 
 }
