@@ -130,7 +130,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
-	private IStreamAcceptFilter streamAcceptFilter;
 
 	/**
 	 * By default first video key frame should be checked
@@ -586,13 +585,11 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
-				firstKeyFrameReceivedChecked = true;
-
-				if(!getStreamAcceptFilter().isValidStreamParameters(inputFormatContext, pkt)) {
+				firstKeyFrameReceivedChecked = true;				
+				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
 					getBroadcastStream().stop();
 					return;
 				}
-
 			} else {
 				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
@@ -1171,19 +1168,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 
 	public static void setQueueReferences(Map<Pointer, InputContext> queueReferences) {
 		MuxAdaptor.queueReferences = queueReferences;
-	}
-
-
-
-	public void setStreamAcceptFilter(IStreamAcceptFilter streamAcceptFilter) {
-		this.streamAcceptFilter = streamAcceptFilter;
-	}
-
-	public IStreamAcceptFilter getStreamAcceptFilter() {
-		if (streamAcceptFilter == null) {
-			streamAcceptFilter = (IStreamAcceptFilter) scope.getContext().getApplicationContext().getBean(IStreamAcceptFilter.BEAN_NAME);
-		}
-		return streamAcceptFilter;
 	}
 
 }
