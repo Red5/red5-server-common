@@ -144,7 +144,9 @@ public class AppSettings {
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
 
-	
+	public static final String SETTINGS_DATA_CHANNEL_ENABLED = "settings.dataChannelEnabled";
+
+	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
 	
 	@JsonIgnore
 	@NotSaved
@@ -614,6 +616,22 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_VP8_ENABLED+ ":false}")
 	private boolean vp8Enabled;
+	
+	
+	/**
+	 * Enable/Disable data channel. It's disabled by default
+	 */
+	@Value("${" + SETTINGS_DATA_CHANNEL_ENABLED+ ":false}")
+	private boolean dataChannelEnabled;
+	
+	
+	/**
+	 * Defines the distribution list for player messages
+	 * it can be  none/publisher/all
+	 */
+	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":none}")
+	private String dataChannelPlayerDistribution;
+	
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1319,6 +1337,22 @@ public class AppSettings {
 
 	public void setVp8Enabled(boolean vp8Enabled) {
 		this.vp8Enabled = vp8Enabled;
+	}
+
+	public boolean isDataChannelEnabled() {
+		return dataChannelEnabled;
+	}
+
+	public void setDataChannelEnabled(boolean dataChannelEnabled) {
+		this.dataChannelEnabled = dataChannelEnabled;
+	}
+
+	public String getDataChannelPlayerDistribution() {
+		return dataChannelPlayerDistribution;
+	}
+
+	public void setDataChannelPlayerDistribution(String dataChannelPlayerDistribution) {
+		this.dataChannelPlayerDistribution = dataChannelPlayerDistribution;
 	}
 
 
