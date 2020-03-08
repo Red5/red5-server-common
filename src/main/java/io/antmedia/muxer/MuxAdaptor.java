@@ -529,7 +529,6 @@ public class MuxAdaptor implements IRecordingListener {
 					break;
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
-
 				if (ret >= 0) {
 					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						totalIngestedVideoPacketCount++;
@@ -599,6 +598,7 @@ public class MuxAdaptor implements IRecordingListener {
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
 				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					getBroadcastStream().stop();
 					return;
 				}
