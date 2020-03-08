@@ -7,6 +7,8 @@ import org.bytedeco.javacpp.avformat.AVFormatContext;
 
 public interface IAntMediaStreamHandler {
 	
+	public static final String VERTX_BEAN_NAME = "vertxCore";
+	
 	/**
 	 * Called by some muxer like MP4Muxer
 	 * 

@@ -65,8 +65,9 @@ import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
+import io.vertx.core.Vertx;
 
-public class MuxAdaptor implements IRecordingListener, IScheduledJob {
+public class MuxAdaptor implements IRecordingListener {
 
 	private static final byte[] DEFAULT_STREAM_ID = new byte[]{(byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff)};
@@ -75,7 +76,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
-	protected String packetFeederJobName = null;
+	protected long packetFeederId = -1;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	protected AVIOContext avio_alloc_context;
@@ -171,6 +172,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected int totalIngestedVideoPacketCount;
 	protected long totalIngestTime = 0;
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
+	protected Vertx vertx;
 
 	class PacketTs {
 		int dts;
@@ -352,6 +354,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		enableSettings();
 		initStorageClient();
 		enableMp4Setting();
+		initVertx();
 
 		if (mp4MuxingEnabled) {
 			addMp4Muxer();
@@ -372,6 +375,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return true;
 	}
 
+	
+	private void initVertx() {
+		if (scope.getContext().getApplicationContext().containsBean(IAntMediaStreamHandler.VERTX_BEAN_NAME)) {
+			vertx = (Vertx)scope.getContext().getApplicationContext().getBean(IAntMediaStreamHandler.VERTX_BEAN_NAME);
+			logger.info("vertx exist {}", vertx);
+		}
+		else {
+			logger.info("No vertx bean for stream {}", streamId);
+		}
+	}
 
 	protected void enableMp4Setting() {
 		broadcast = getBroadcast();
@@ -508,8 +521,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return dataStore;
 	}
 
-	@Override
-	public void execute(ISchedulingService service) throws CloneNotSupportedException {
+	public void execute()  {
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
 			while (true) {
@@ -517,7 +529,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					break;
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
-
 				if (ret >= 0) {
 					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						totalIngestedVideoPacketCount++;
@@ -587,6 +598,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
 				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					getBroadcastStream().stop();
 					return;
 				}
@@ -623,9 +635,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void closeResources() {
 		logger.info("close resources for streamId -> {}", streamId);
 
-		if (packetFeederJobName != null) {
-			logger.info("removing scheduled job {} ", packetFeederJobName);
-			scheduler.removeScheduledJob(packetFeederJobName);
+		if (packetFeederId != -1) {
+			logger.info("removing packet feeder timer id {} for stream: {}", packetFeederId, streamId);
+			vertx.cancelTimer(packetFeederId);
+			packetFeederId = -1;
 		}
 
 		writeTrailer();
@@ -771,35 +784,34 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void start() {
 		isRecording = false;
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
-		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
+		
+		
+		vertx.runOnContext( h -> {
+			logger.info("before prepare for {}", streamId);
+			try {
+				if (prepare()) {
 
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare for {}", streamId);
-				try {
-					if (prepare()) {
+					logger.info("after prepare for {}", streamId);
+					isRecording = true;
+					startTime = System.currentTimeMillis();
+					packetFeederId = vertx.setPeriodic(10, e -> execute());
+					logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
 
-						logger.info("after prepare for {}", streamId);
-						isRecording = true;
-						startTime = System.currentTimeMillis();
-						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
-						logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
-
-						logger.info("Packet Feeder Job Name {}", packetFeederJobName);
-					} else {
-						logger.warn("input format context cannot be created for stream -> {}", streamId);
-						if (broadcastStream != null) {
-							broadcastStream.removeStreamListener(MuxAdaptor.this);
-						}
-						logger.warn("closing adaptor for {}", streamId);
-						closeResources();
-						logger.warn("closed adaptor for {}", streamId);
+					logger.info("Packet Feeder Job Id {} for stream {}", packetFeederId, streamId);
+				} else {
+					logger.warn("input format context cannot be created for stream -> {}", streamId);
+					if (broadcastStream != null) {
+						broadcastStream.removeStreamListener(MuxAdaptor.this);
 					}
-				} catch (Exception e) {
-					logger.error(ExceptionUtils.getStackTrace(e));
+					logger.warn("closing adaptor for {}", streamId);
+					closeResources();
+					logger.warn("closed adaptor for {}", streamId);
 				}
+			} catch (Exception e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
 			}
 		});
+
 
 	}
 
