@@ -143,10 +143,16 @@ public class AppSettings {
 	public static final String SETTINGS_H264_ENABLED = "settings.h264Enabled";
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
+  
+	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
 	public static final String SETTINGS_DATA_CHANNEL_ENABLED = "settings.dataChannelEnabled";
 
 	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
+
+	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
+	
+	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
 	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
 	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
@@ -603,6 +609,24 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_RTSP_PULL_TRANSPORT_TYPE+ ":tcp}")
 	private String rtspPullTransportType;
+	
+	/**
+	 * Max FPS value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":#{null}}")
+	private String maxFpsAccept;
+	
+	/**
+	 * Max Resolution value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":#{null}}")
+	private String maxResolutionAccept;
+	
+	/**
+	 * Max Bitrate value in RTMP streams
+	 */
+	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":#{null}}")
+	private String maxBitrateAccept;
 
 	@JsonIgnore
 	@NotSaved
@@ -1325,6 +1349,30 @@ public class AppSettings {
 
 	public void setRtspPullTransportType(String rtspPullTransportType) {
 		this.rtspPullTransportType = rtspPullTransportType;
+	}
+	
+	public String getMaxFpsAccept() {
+		return maxFpsAccept;
+	}
+
+	public void setMaxFpsAccept(String maxFpsAccept) {
+		this.maxFpsAccept = maxFpsAccept;
+	}
+
+	public String getMaxResolutionAccept() {
+		return maxResolutionAccept;
+	}
+
+	public void setMaxResolutionAccept(String maxResolutionAccept) {
+		this.maxResolutionAccept = maxResolutionAccept;
+	}
+
+	public String getMaxBitrateAccept() {
+		return maxBitrateAccept;
+	}
+
+	public void setMaxBitrateAccept(String maxBitrateAccept) {
+		this.maxBitrateAccept = maxBitrateAccept;
 	}
 
 	public boolean isH264Enabled() {

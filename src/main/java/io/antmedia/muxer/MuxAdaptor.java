@@ -1,16 +1,47 @@
 package io.antmedia.muxer;
 
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
-import io.antmedia.datastore.db.DataStore;
-import io.antmedia.datastore.db.IDataStoreFactory;
-import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.storage.StorageClient;
+import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.javacpp.avcodec.av_packet_free;
+import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avformat.av_dump_format;
+import static org.bytedeco.javacpp.avformat.av_read_frame;
+import static org.bytedeco.javacpp.avformat.avformat_close_input;
+import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
+import static org.bytedeco.javacpp.avformat.avformat_open_input;
+import static org.bytedeco.javacpp.avformat.avio_alloc_context;
+import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
+import static org.bytedeco.javacpp.avutil.av_free;
+import static org.bytedeco.javacpp.avutil.av_log_get_level;
+import static org.bytedeco.javacpp.avutil.av_rescale_q;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.bytedeco.javacpp.*;
-import org.bytedeco.javacpp.avcodec.*;
-import org.bytedeco.javacpp.avformat.*;
-import org.bytedeco.javacpp.avutil.*;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.avcodec;
+import org.bytedeco.javacpp.avcodec.AVPacket;
+import org.bytedeco.javacpp.avformat;
+import org.bytedeco.javacpp.avformat.AVFormatContext;
+import org.bytedeco.javacpp.avformat.AVIOContext;
+import org.bytedeco.javacpp.avformat.AVStream;
+import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
+import org.bytedeco.javacpp.avutil;
+import org.bytedeco.javacpp.avutil.AVDictionary;
+import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -28,19 +59,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.IDataStoreFactory;
+import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.storage.StorageClient;
+import io.vertx.core.Vertx;
 
-import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avformat.*;
-import static org.bytedeco.javacpp.avutil.*;
-
-public class MuxAdaptor implements IRecordingListener, IScheduledJob {
+public class MuxAdaptor implements IRecordingListener {
 
 	private static final byte[] DEFAULT_STREAM_ID = new byte[]{(byte) (0 & 0xff), (byte) (0 & 0xff),
 			(byte) (0 & 0xff)};
@@ -49,7 +76,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
-	protected String packetFeederJobName = null;
+	protected long packetFeederId = -1;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	protected AVIOContext avio_alloc_context;
@@ -59,7 +86,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected boolean deleteHLSFilesOnExit = true;
 
 	protected boolean previewOverwrite = false;
-	
+
 	protected boolean enableVideo = false;
 	protected boolean enableAudio = false;
 
@@ -145,7 +172,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected int totalIngestedVideoPacketCount;
 	protected long totalIngestTime = 0;
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
-	
+	protected Vertx vertx;
+
 	class PacketTs {
 		int dts;
 		long time;
@@ -200,13 +228,13 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					}
 				} 
 				else {
-					
+
 					logger.info("Checking streams for stream: {}", inputContextLocal.muxAdaptor.streamId);
 					if (inputContextLocal.muxAdaptor.checkStreams()) {
 						inputContextLocal.isHeaderWritten = true;
 						byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
 						length = flvHeader.length;
-	
+
 						buf.put(flvHeader, 0, length);
 					}
 				}
@@ -261,7 +289,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
 		this.broadcastStream = clientBroadcastStream;
-		
+
 		timeBaseForMS = new AVRational();
 		timeBaseForMS.num(1);
 		timeBaseForMS.den(1000);
@@ -326,6 +354,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		enableSettings();
 		initStorageClient();
 		enableMp4Setting();
+		initVertx();
 
 		if (mp4MuxingEnabled) {
 			addMp4Muxer();
@@ -346,6 +375,16 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return true;
 	}
 
+	
+	private void initVertx() {
+		if (scope.getContext().getApplicationContext().containsBean(IAntMediaStreamHandler.VERTX_BEAN_NAME)) {
+			vertx = (Vertx)scope.getContext().getApplicationContext().getBean(IAntMediaStreamHandler.VERTX_BEAN_NAME);
+			logger.info("vertx exist {}", vertx);
+		}
+		else {
+			logger.info("No vertx bean for stream {}", streamId);
+		}
+	}
 
 	protected void enableMp4Setting() {
 		broadcast = getBroadcast();
@@ -398,9 +437,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 			logger.info("Could not find stream information for stream {}", streamId);
 			return false;
 		}
-		
-		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
+		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
 		return prepareInternal(inputFormatContext);
 	}
@@ -483,8 +521,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return dataStore;
 	}
 
-	@Override
-	public void execute(ISchedulingService service) throws CloneNotSupportedException {
+	public void execute()  {
 
 		if (isPipeReaderJobRunning.compareAndSet(false, true)) {
 			while (true) {
@@ -492,7 +529,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					break;
 				}
 				int ret = av_read_frame(inputFormatContext, pkt);
-
 				if (ret >= 0) {
 					if (inputFormatContext.streams(pkt.stream_index()).codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 						totalIngestedVideoPacketCount++;
@@ -508,6 +544,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					writePacket(inputFormatContext.streams(pkt.stream_index()), pkt);
 
 					av_packet_unref(pkt);
+
 				} else {
 					closeResources();
 				}
@@ -553,13 +590,18 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 
 		int inputQueueSize = getInputQueueSize();
-	
+
 		changeStreamQualityParameters(this.streamId, quality, speed, inputQueueSize);
 
 		if (!firstKeyFrameReceivedChecked && stream.codec().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
-				firstKeyFrameReceivedChecked = true;
+				firstKeyFrameReceivedChecked = true;				
+				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
+					getBroadcastStream().stop();
+					return;
+				}
 			} else {
 				logger.warn("First video packet is not key frame. It will drop for direct muxing. Stream {}", streamId);
 				// return if firstKeyFrameReceived is not received
@@ -574,7 +616,6 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 				muxer.writePacket(pkt, stream);
 			}
 		}
-
 	}
 
 	public void writeTrailer() {
@@ -594,9 +635,10 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void closeResources() {
 		logger.info("close resources for streamId -> {}", streamId);
 
-		if (packetFeederJobName != null) {
-			logger.info("removing scheduled job {} ", packetFeederJobName);
-			scheduler.removeScheduledJob(packetFeederJobName);
+		if (packetFeederId != -1) {
+			logger.info("removing packet feeder timer id {} for stream: {}", packetFeederId, streamId);
+			vertx.cancelTimer(packetFeederId);
+			packetFeederId = -1;
 		}
 
 		writeTrailer();
@@ -716,23 +758,23 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 					logger.info("Video and Audio is detected in the incoming stream for stream: {}", streamId);
 					break;
 				}
-				
+
 				//sleeping is not something we like. But it seems the best option for this case
 				Thread.sleep(5);
 				totalTime = System.currentTimeMillis() - checkStreamsStartTime;
 				frameElapsedTimestamp = lastFrameTimestamp - firstReceivedFrameTimestamp;
 			}
-			
+
 			if ( totalTime >= (2* maxAnalyzeDurationMS)) {
 				logger.error("Total max time({}) is spent to determine video and audio existence for stream:{}. It's skipped waiting", (2*maxAnalyzeDurationMS), streamId);
 			}
-			
+
 			logger.info("Streams for {} enableVideo:{} enableAudio:{} total spend time: {} elapsed frame timestamp: {} stop request exists: {}", streamId, enableVideo, enableAudio, totalTime, frameElapsedTimestamp, inputContext.stopRequestExist);
 		}
 		else {
 			logger.warn("broadcastStream is null while checking streams for {}", streamId);
 		}
-		
+
 		//return true if video or audio tracks enable
 		return enableVideo || enableAudio;
 	}
@@ -742,34 +784,34 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void start() {
 		isRecording = false;
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
-		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
+		
+		
+		vertx.runOnContext( h -> {
+			logger.info("before prepare for {}", streamId);
+			try {
+				if (prepare()) {
 
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				logger.info("before prepare for {}", streamId);
-				try {
-					if (prepare()) {
-						logger.info("after prepare for {}", streamId);
-						isRecording = true;
-						startTime = System.currentTimeMillis();
-						packetFeederJobName = scheduler.addScheduledJob(10, MuxAdaptor.this);
-						logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
+					logger.info("after prepare for {}", streamId);
+					isRecording = true;
+					startTime = System.currentTimeMillis();
+					packetFeederId = vertx.setPeriodic(10, e -> execute());
+					logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
 
-						logger.info("Packet Feeder Job Name {}", packetFeederJobName);
-					} else {
-						logger.warn("input format context cannot be created for stream -> {}", streamId);
-						if (broadcastStream != null) {
-							broadcastStream.removeStreamListener(MuxAdaptor.this);
-						}
-						logger.warn("closing adaptor for {}", streamId);
-						closeResources();
-						logger.warn("closed adaptor for {}", streamId);
+					logger.info("Packet Feeder Job Id {} for stream {}", packetFeederId, streamId);
+				} else {
+					logger.warn("input format context cannot be created for stream -> {}", streamId);
+					if (broadcastStream != null) {
+						broadcastStream.removeStreamListener(MuxAdaptor.this);
 					}
-				} catch (Exception e) {
-					logger.error(ExceptionUtils.getStackTrace(e));
+					logger.warn("closing adaptor for {}", streamId);
+					closeResources();
+					logger.warn("closed adaptor for {}", streamId);
 				}
+			} catch (Exception e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
 			}
 		});
+
 
 	}
 
@@ -1010,8 +1052,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		return prepared;
 
 	}
-	
-	
+
+
 	public Muxer findDynamicMp4Muxer() {
 		synchronized (muxerList) 
 		{
@@ -1058,8 +1100,8 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 		}
 		return prepared;
 	}
-	
-	
+
+
 	public RtmpMuxer getRtmpMuxer(String rtmpUrl) 
 	{
 		RtmpMuxer rtmpMuxer = null;
@@ -1110,7 +1152,7 @@ public class MuxAdaptor implements IRecordingListener, IScheduledJob {
 	public void setEnableAudio(boolean enableAudio) {
 		this.enableAudio = enableAudio;
 	}
-	
+
 	public AVFormatContext getInputFormatContext() {
 		return inputFormatContext;
 	}

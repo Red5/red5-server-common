@@ -2,7 +2,12 @@ package io.antmedia.muxer;
 
 import java.io.File;
 
+import org.bytedeco.javacpp.avcodec.AVPacket;
+import org.bytedeco.javacpp.avformat.AVFormatContext;
+
 public interface IAntMediaStreamHandler {
+	
+	public static final String VERTX_BEAN_NAME = "vertxCore";
 	
 	/**
 	 * Called by some muxer like MP4Muxer
@@ -48,4 +53,11 @@ public interface IAntMediaStreamHandler {
      * @param muxAdaptor
      */
     public void muxAdaptorRemoved(MuxAdaptor muxAdaptor);
+
+    /***
+     * Checks a Stream parameters is valid.
+     *
+     * @param inputFormatContext, pkt
+     */
+	public boolean isValidStreamParameters(AVFormatContext inputFormatContext, AVPacket pkt);
 }
