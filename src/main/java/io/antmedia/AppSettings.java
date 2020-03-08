@@ -148,6 +148,10 @@ public class AppSettings {
 
 	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
 	
+	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
+	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
+	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -629,7 +633,7 @@ public class AppSettings {
 	 * Defines the distribution list for player messages
 	 * it can be  none/publisher/all
 	 */
-	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":none}")
+	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_NONE+"}")
 	private String dataChannelPlayerDistribution;
 	
 	
