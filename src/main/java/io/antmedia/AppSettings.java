@@ -143,6 +143,8 @@ public class AppSettings {
 	public static final String SETTINGS_H264_ENABLED = "settings.h264Enabled";
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
+	
+	public static final String SETTINGS_H265_ENABLED = "settings.h265Enabled";
   
 	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
@@ -637,6 +639,12 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_VP8_ENABLED+ ":false}")
 	private boolean vp8Enabled;
+
+	/**
+	 * Enable/disable H265 Encoding. Disabled by default
+	 */
+	@Value("${" + SETTINGS_H265_ENABLED+ ":false}")
+	private boolean h265Enabled;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1366,6 +1374,14 @@ public class AppSettings {
 
 	public void setVp8Enabled(boolean vp8Enabled) {
 		this.vp8Enabled = vp8Enabled;
+	}
+
+	public boolean isH265Enabled() {
+		return h265Enabled;
+	}
+	
+	public void setH265Enabled(boolean h265Enabled) {
+		this.h265Enabled = h265Enabled;
 	}
 
 
