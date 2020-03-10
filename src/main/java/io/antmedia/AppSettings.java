@@ -150,6 +150,8 @@ public class AppSettings {
 	
 	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
+	
 	
 	@JsonIgnore
 	@NotSaved
@@ -342,6 +344,7 @@ public class AppSettings {
 	/**
 	 * HLS Flags for FFmpeg HLS Muxer
 	 */
+	@Value( "${"+SETTINGS_HLS_FLAGS+":}" )
 	private String hlsflags;
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
@@ -587,7 +590,7 @@ public class AppSettings {
 	/**
 	 * Max analyze duration in for determining video and audio existence in RTMP streams
 	 */
-	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":1000}")
 	private int maxAnalyzeDurationMS;
 	
 	/**
