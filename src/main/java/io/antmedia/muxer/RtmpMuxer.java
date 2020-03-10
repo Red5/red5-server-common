@@ -215,8 +215,10 @@ public class RtmpMuxer extends Muxer {
 
 		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
 			//return if it is already null
+			logger.info("RTMPMuxer is not running or output context is null for stream: {}", url);
 			return;
 		}
+		logger.info("Writing trailer for stream id: {}", url);
 		isRunning.set(false);
 
 		av_write_trailer(outputFormatContext);
