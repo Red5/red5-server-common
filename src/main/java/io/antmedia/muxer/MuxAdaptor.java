@@ -786,7 +786,7 @@ public class MuxAdaptor implements IRecordingListener {
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 		
 		
-		vertx.runOnContext( h -> {
+		vertx.setTimer(1, h -> {
 			logger.info("before prepare for {}", streamId);
 			try {
 				if (prepare()) {
@@ -794,7 +794,23 @@ public class MuxAdaptor implements IRecordingListener {
 					logger.info("after prepare for {}", streamId);
 					isRecording = true;
 					startTime = System.currentTimeMillis();
-					packetFeederId = vertx.setPeriodic(10, e -> execute());
+					packetFeederId = vertx.setPeriodic(10, e -> 
+					
+						//execute it blocking because it may take long time if stream is not coming
+						//and it may block other threads
+						vertx.executeBlocking(p -> {
+							try {
+								execute(); //this 
+								p.complete();
+							}
+							catch (Exception err) {
+								logger.error(ExceptionUtils.getStackTrace(err));
+							}
+						}, r -> {
+							//no care
+						})
+						
+					);
 					logger.info("Number of items in the queue while adaptor is scheduled to process incoming packets is {}", getInputQueueSize());
 
 					logger.info("Packet Feeder Job Id {} for stream {}", packetFeederId, streamId);

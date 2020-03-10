@@ -158,6 +158,8 @@ public class AppSettings {
 	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
 	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
 
+	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
