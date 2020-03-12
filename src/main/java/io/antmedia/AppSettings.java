@@ -659,7 +659,7 @@ public class AppSettings {
 	 * Defines the distribution list for player messages
 	 * it can be  none/publisher/all
 	 */
-	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_NONE+"}")
+	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_ALL+"}")
 	private String dataChannelPlayerDistribution;
 	
 	
