@@ -159,6 +159,8 @@ public class AppSettings {
 	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
 
 	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
+	
+	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
 
 	@JsonIgnore
 	@NotSaved
@@ -244,6 +246,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
+
+	/**
+	 * The control for rooms
+	 */
+	@Value( "${"+SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE+":false}" )
+	private boolean acceptOnlyRoomsInDataStore;
 
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
@@ -803,6 +811,14 @@ public class AppSettings {
 
 	public void setAcceptOnlyStreamsInDataStore(boolean acceptOnlyStreamsInDataStore) {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
+	}
+	
+	public boolean isAcceptOnlyRoomsInDataStore() {
+		return acceptOnlyRoomsInDataStore;
+	}
+
+	public void setAcceptOnlyRoomsInDataStore(boolean acceptOnlyRoomsInDataStore) {
+		this.acceptOnlyRoomsInDataStore = acceptOnlyRoomsInDataStore;
 	}
 
 	public boolean isObjectDetectionEnabled() {
