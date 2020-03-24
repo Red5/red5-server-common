@@ -28,8 +28,10 @@ public class StreamInfo implements IStreamInfo {
 	private String host;
 	private int videoPort;
 	private int audioPort;
+	private int dataChannelPort;
 	private boolean videoEnabled;
 	private boolean audioEnabled;
+	private boolean dataChannelEnabled;
 
 	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase) {
 		this.height = height;
@@ -144,6 +146,22 @@ public class StreamInfo implements IStreamInfo {
 
 	public boolean isAudioEnabled() {
 		return this.audioEnabled;
+	}
+
+	public int getDataChannelPort() {
+		return dataChannelPort;
+	}
+
+	public void setDataChannelPort(int dataChannelPort) {
+		this.dataChannelPort = dataChannelPort;
+	}
+
+	public void setDataChannelEnabled(boolean dataChannelEnabled) {
+		this.dataChannelEnabled = dataChannelEnabled;
+	}
+
+	public boolean isDataChannelEnabled() {
+		return dataChannelEnabled;
 	}
 
 }

@@ -1197,7 +1197,10 @@ public class MuxAdaptor implements IRecordingListener {
 	public static void setQueueReferences(Map<Pointer, InputContext> queueReferences) {
 		MuxAdaptor.queueReferences = queueReferences;
 	}
-
+	
+	public void setAppSettings(AppSettings appSettings) {
+		this.appSettings = appSettings;
+	}
 }
 
 

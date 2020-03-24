@@ -148,13 +148,22 @@ public class AppSettings {
   
 	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
+	public static final String SETTINGS_DATA_CHANNEL_ENABLED = "settings.dataChannelEnabled";
+
+	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
+
 	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	
 	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
+	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
+	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
+
 	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
 	
-	
+	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -239,6 +248,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
+
+	/**
+	 * The control for rooms
+	 */
+	@Value( "${"+SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE+":false}" )
+	private boolean acceptOnlyRoomsInDataStore;
 
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
@@ -346,7 +361,6 @@ public class AppSettings {
 	/**
 	 * HLS Flags for FFmpeg HLS Muxer
 	 */
-	@Value( "${"+SETTINGS_HLS_FLAGS+":}" )
 	private String hlsflags;
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
@@ -592,7 +606,7 @@ public class AppSettings {
 	/**
 	 * Max analyze duration in for determining video and audio existence in RTMP streams
 	 */
-	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":1000}")
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
 	private int maxAnalyzeDurationMS;
 	
 	/**
@@ -648,6 +662,22 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_H265_ENABLED+ ":false}")
 	private boolean h265Enabled;
+	
+	
+	/**
+	 * Enable/Disable data channel. It's disabled by default
+	 */
+	@Value("${" + SETTINGS_DATA_CHANNEL_ENABLED+ ":false}")
+	private boolean dataChannelEnabled;
+	
+	
+	/**
+	 * Defines the distribution list for player messages
+	 * it can be  none/publisher/all
+	 */
+	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_ALL+"}")
+	private String dataChannelPlayerDistribution;
+	
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -789,6 +819,14 @@ public class AppSettings {
 
 	public void setAcceptOnlyStreamsInDataStore(boolean acceptOnlyStreamsInDataStore) {
 		this.acceptOnlyStreamsInDataStore = acceptOnlyStreamsInDataStore;
+	}
+	
+	public boolean isAcceptOnlyRoomsInDataStore() {
+		return acceptOnlyRoomsInDataStore;
+	}
+
+	public void setAcceptOnlyRoomsInDataStore(boolean acceptOnlyRoomsInDataStore) {
+		this.acceptOnlyRoomsInDataStore = acceptOnlyRoomsInDataStore;
 	}
 
 	public boolean isObjectDetectionEnabled() {
@@ -1385,6 +1423,22 @@ public class AppSettings {
 	
 	public void setH265Enabled(boolean h265Enabled) {
 		this.h265Enabled = h265Enabled;
+	}
+	
+	public boolean isDataChannelEnabled() {
+		return dataChannelEnabled;
+	}
+
+	public void setDataChannelEnabled(boolean dataChannelEnabled) {
+		this.dataChannelEnabled = dataChannelEnabled;
+	}
+
+	public String getDataChannelPlayerDistribution() {
+		return dataChannelPlayerDistribution;
+	}
+
+	public void setDataChannelPlayerDistribution(String dataChannelPlayerDistribution) {
+		this.dataChannelPlayerDistribution = dataChannelPlayerDistribution;
 	}
 
 
