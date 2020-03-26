@@ -160,6 +160,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
 	
+	public static final String SETTINGS_RTMP_INGEST_BUFFER_TIME_MS = "settings.rtmpIngestBufferTimeMs";
+	
 	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
 
 	@JsonIgnore
@@ -669,6 +671,9 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_ALL+"}")
 	private String dataChannelPlayerDistribution;
+
+	@Value("${" + SETTINGS_RTMP_INGEST_BUFFER_TIME_MS+ ":0}")
+	private long rtmpIngestBufferTimeMs;
 	
 	
 	public boolean isWriteStatsToDatastore() {
@@ -1423,6 +1428,14 @@ public class AppSettings {
 
 	public void setDataChannelPlayerDistribution(String dataChannelPlayerDistribution) {
 		this.dataChannelPlayerDistribution = dataChannelPlayerDistribution;
+	}
+
+	public long getRtmpIngestBufferTimeMs() {
+		return rtmpIngestBufferTimeMs;
+	}
+	
+	public void setRtmpIngestBufferTimeMs(long rtmpIngestBufferTimeMs) {
+		this.rtmpIngestBufferTimeMs = rtmpIngestBufferTimeMs;
 	}
 
 
