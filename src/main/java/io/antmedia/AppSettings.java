@@ -649,7 +649,7 @@ public class AppSettings {
 	 * Enable/Disable h264 encoding. It's enabled by default
 	 */
 	@Value("${" + SETTINGS_H264_ENABLED+ ":true}")
-	private boolean h264Enabled;
+	private boolean h264Enabled = true;
 	
 	/**
 	 * Enable/Disable vp8 encoding. It's disabled by default
