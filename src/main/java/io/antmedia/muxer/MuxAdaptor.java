@@ -92,7 +92,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected boolean enableVideo = false;
 	protected boolean enableAudio = false;
 
-	private ConcurrentLinkedQueue<AVPacket> bufferQueue = new ConcurrentLinkedQueue<>();
+	private Queue<AVPacket> bufferQueue = new ConcurrentLinkedQueue<>();
 
 	public static class InputContext {
 		public Queue<byte[]> queue;
@@ -147,7 +147,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected IScope scope;
 
 	private String oldQuality;
-	private AVRational timeBaseForMS;
+	public static final  AVRational TIME_BASE_FOR_MS;
 	private InputContext inputContext;
 	private IAntMediaStreamHandler appAdapter;
 
@@ -196,6 +196,12 @@ public class MuxAdaptor implements IRecordingListener {
 			this.dts = dts;
 			this.time = time;
 		}
+	}
+	
+	static {
+		TIME_BASE_FOR_MS = new AVRational();
+		TIME_BASE_FOR_MS.num(1);
+		TIME_BASE_FOR_MS.den(1000);
 	}
 
 
@@ -304,10 +310,6 @@ public class MuxAdaptor implements IRecordingListener {
 	protected MuxAdaptor(ClientBroadcastStream clientBroadcastStream) {
 
 		this.broadcastStream = clientBroadcastStream;
-
-		timeBaseForMS = new AVRational();
-		timeBaseForMS.num(1);
-		timeBaseForMS.den(1000);
 		inputContext = new InputContext(this);
 	}
 
@@ -589,8 +591,8 @@ public class MuxAdaptor implements IRecordingListener {
 						 * It's a very rare case to happen so that check if it's null
 						 */
 						if (pktHead != null) {
-							lastPacketTimeMsInQueue = av_rescale_q(pkt.pts(), inputFormatContext.streams(pkt.stream_index()).time_base(), timeBaseForMS);
-							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), timeBaseForMS);
+							lastPacketTimeMsInQueue = av_rescale_q(pkt.pts(), inputFormatContext.streams(pkt.stream_index()).time_base(), TIME_BASE_FOR_MS);
+							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long bufferDuration = (lastPacketTimeMsInQueue - firstPacketTimeMsInQueue);
 
 							if (bufferDuration > bufferTimeMs) 
@@ -637,7 +639,7 @@ public class MuxAdaptor implements IRecordingListener {
 	public long getBufferedDurationMs() {
 		AVPacket pktHead = bufferQueue.peek();
 		if (pktHead != null) {
-			long firstPacketInQueueTime = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), timeBaseForMS);
+			long firstPacketInQueueTime = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 			return lastPacketTimeMsInQueue - firstPacketInQueueTime;
 		}
 		return 0;
@@ -646,7 +648,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private void updateQualityParameters(long pts, AVRational timebase) {
 
 		if (firstPacketTime == -1) {
-			firstPacketTime = av_rescale_q(pts, timebase, timeBaseForMS);
+			firstPacketTime = av_rescale_q(pts, timebase, TIME_BASE_FOR_MS);
 			logger.info("first packet time {}", firstPacketTime);
 		}
 
@@ -654,7 +656,7 @@ public class MuxAdaptor implements IRecordingListener {
 		if (logCounter % COUNT_TO_LOG == 0) 
 		{
 			long currentTime = System.currentTimeMillis();
-			long packetTime = av_rescale_q(pts, timebase, timeBaseForMS);
+			long packetTime = av_rescale_q(pts, timebase, TIME_BASE_FOR_MS);
 			logCounter = 0;
 
 			elapsedTime = currentTime - startTime;
@@ -673,15 +675,10 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	int count = 0;
 	public void writePacket(AVStream stream, AVPacket pkt) {
 
 
 		updateQualityParameters(pkt.pts(), stream.time_base());
-
-		//if (stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
-		//	System.out.println("Mux:"+System.currentTimeMillis()+" pts:"+pkt.pts()+" dts:"+pkt.dts()+" size:"+pkt.size()+" type:"+stream.codecpar().codec_type()+" count:"+(count ++));
-		//}
 
 		if (!firstKeyFrameReceivedChecked && stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
@@ -714,11 +711,6 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
-
-		if (timeBaseForMS != null) {
-			timeBaseForMS.close();
-			timeBaseForMS = null;
-		}
 	}
 
 
@@ -961,7 +953,7 @@ public class MuxAdaptor implements IRecordingListener {
 				while(!bufferQueue.isEmpty()) 
 				{
 					AVPacket tempPacket = bufferQueue.peek(); 
-					long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), timeBaseForMS);
+					long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
 					long now = System.currentTimeMillis();
 					long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
 					long passedTime = now - bufferingFinishTimeMs;
@@ -1375,6 +1367,18 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean isBuffering() {
 		return buffering;
+	}
+	
+	public void setBuffering(boolean buffering) {
+		this.buffering = buffering;
+	}
+	
+	public Queue<AVPacket> getBufferQueue() {
+		return bufferQueue;
+	}
+	
+	public void setInputFormatContext(AVFormatContext inputFormatContext) {
+		this.inputFormatContext = inputFormatContext;
 	}
 }
 
