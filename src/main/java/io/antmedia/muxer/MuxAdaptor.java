@@ -610,7 +610,7 @@ public class MuxAdaptor implements IRecordingListener {
 							}
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG == 0) {
-								logger.info("Buffering status {}, buffer duration {}ms buffer time {}ms", buffering, bufferDuration, bufferTimeMs);
+								logger.info("Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
 								bufferLogCounter = 0;
 							}
 						}	
