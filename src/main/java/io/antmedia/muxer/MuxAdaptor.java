@@ -640,7 +640,6 @@ public class MuxAdaptor implements IRecordingListener {
 		AVPacket pktHead = bufferQueue.peek();
 		if (pktHead != null) {
 			long firstPacketInQueueTime = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
-			logger.info("lastPacket timeMsInQueue: {} firstPacketInQueueTime: {} pkt.pts: {} ",  lastPacketTimeMsInQueue, firstPacketInQueueTime);
 			return lastPacketTimeMsInQueue - firstPacketInQueueTime;
 		}
 		return 0;
@@ -971,8 +970,6 @@ public class MuxAdaptor implements IRecordingListener {
 					}
 
 				}
-				
-				logger.info("Bufferqueue size:{}", bufferQueue.isEmpty());
 
 				//update buffering. If bufferQueue is empty, it should start buffering
 				buffering = bufferQueue.isEmpty();
