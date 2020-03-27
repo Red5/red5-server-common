@@ -884,6 +884,7 @@ public class MuxAdaptor implements IRecordingListener {
 					isRecording = true;
 					packetFeederId = vertx.setPeriodic(10, e -> {
 
+						logger.info("packet feeder id enterring for {}", streamId);
 						//execute it blocking because it may take long time if stream is not coming
 						//and it may block other threads
 						vertx.executeBlocking(p -> {
@@ -901,7 +902,9 @@ public class MuxAdaptor implements IRecordingListener {
 
 						if (bufferTimeMs > 0)  
 						{
+							logger.info("Buffertime is bigger than zero for stream: {}", streamId);
 							vertx.executeBlocking(p-> {
+								logger.info("writeBufferedPacket for stream: {}", streamId);
 								writeBufferedPacket();
 								p.complete();
 							}, false, r -> {
