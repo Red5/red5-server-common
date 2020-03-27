@@ -132,7 +132,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
 	private long logCounter = 0;
-	private static final int COUNT_TO_LOG = 1000;
+	private static final int COUNT_TO_LOG = 100;
 
 	/**
 	 * By default first video key frame should be checked
@@ -188,6 +188,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private long bufferedPacketWriterId = -1;
 	private long lastPacketTimeMsInQueue = 0;
 	private long firstPacketReadyToSentTimeMs = 0;
+	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
 		int dts;
@@ -551,27 +552,8 @@ public class MuxAdaptor implements IRecordingListener {
 				int ret = av_read_frame(inputFormatContext, pkt);
 				if (ret >= 0) 
 				{
-					if (inputFormatContext.streams(pkt.stream_index()).codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) 
-					{
-						totalIngestedVideoPacketCount++;
-						int dts = (int) pkt.dts();
-						PacketTs packetTs = packetTsQueue.poll();
-
-						if (packetTs.dts != dts) 
-						{
-							logger.warn("Packet dts({}) queue value does not match with the native dts({}) for stream:{} try one more attempt", 
-									packetTs.dts, dts, streamId);
-							packetTs = packetTsQueue.poll();
-							if (packetTs.dts != dts) 
-							{
-								logger.warn("Packet dts({}) and nativ dts({}) does not match. "
-										+ " Total ingest time stats may not be correct for stream:{}", packetTs.dts, dts, streamId);
-							}
-
-						}
-						long queueEntranceTime = packetTs.time;
-						totalIngestTime += (System.currentTimeMillis() - queueEntranceTime);
-					}
+					
+					measureIngestTime();
 
 					if (bufferTimeMs == 0) 
 					{ //if there is no buffer 
@@ -609,7 +591,7 @@ public class MuxAdaptor implements IRecordingListener {
 								buffering = false;
 							}
 							bufferLogCounter++;
-							if (bufferLogCounter % COUNT_TO_LOG == 0) {
+							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
 								logger.info("ReadPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
 								bufferLogCounter = 0;
 							}
@@ -635,6 +617,31 @@ public class MuxAdaptor implements IRecordingListener {
 			isPipeReaderJobRunning.compareAndSet(true, false);
 		}
 
+	}
+
+
+	private void measureIngestTime() {
+		if (inputFormatContext.streams(pkt.stream_index()).codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) 
+		{
+			totalIngestedVideoPacketCount++;
+			int dts = (int) pkt.dts();
+			PacketTs packetTs = packetTsQueue.poll();
+
+			if (packetTs.dts != dts) 
+			{
+				logger.warn("Packet dts({}) queue value does not match with the native dts({}) for stream:{} try one more attempt", 
+						packetTs.dts, dts, streamId);
+				packetTs = packetTsQueue.poll();
+				if (packetTs.dts != dts) 
+				{
+					logger.warn("Packet dts({}) and nativ dts({}) does not match. "
+							+ " Total ingest time stats may not be correct for stream:{}", packetTs.dts, dts, streamId);
+				}
+
+			}
+			long queueEntranceTime = packetTs.time;
+			totalIngestTime += (System.currentTimeMillis() - queueEntranceTime);
+		}
 	}
 
 	public long getBufferedDurationMs() {
@@ -669,10 +676,12 @@ public class MuxAdaptor implements IRecordingListener {
 					logger.warn("speed is NaN, packetTime: {}, first packetTime: {}, elapsedTime:{}", packetTime, firstPacketTime, elapsedTime);
 				}
 			}
-
-			int inputQueueSize = getInputQueueSize();
-			changeStreamQualityParameters(this.streamId, null, speed, inputQueueSize);
+			changeStreamQualityParameters(this.streamId, null, speed, getInputQueueSize());
 		}
+		
+		
+		
+		
 	}
 
 
@@ -987,7 +996,7 @@ public class MuxAdaptor implements IRecordingListener {
 				buffering = bufferQueue.isEmpty();
 				
 				bufferLogCounter++; //we use this parameter in execute method as well 
-				if (bufferLogCounter % COUNT_TO_LOG == 0) {
+				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
 					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
 					bufferLogCounter = 0;
 				}

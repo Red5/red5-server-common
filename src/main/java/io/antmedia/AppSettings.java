@@ -625,20 +625,20 @@ public class AppSettings {
 	/**
 	 * Max FPS value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":#{null}}")
-	private String maxFpsAccept;
+	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":0}")
+	private int maxFpsAccept;
 	
 	/**
 	 * Max Resolution value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":#{null}}")
-	private String maxResolutionAccept;
+	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":0}")
+	private int maxResolutionAccept;
 	
 	/**
 	 * Max Bitrate value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":#{null}}")
-	private String maxBitrateAccept;
+	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":0}")
+	private int maxBitrateAccept;
 
 	@JsonIgnore
 	@NotSaved
@@ -1374,27 +1374,27 @@ public class AppSettings {
 		this.rtspPullTransportType = rtspPullTransportType;
 	}
 	
-	public String getMaxFpsAccept() {
+	public int getMaxFpsAccept() {
 		return maxFpsAccept;
 	}
 
-	public void setMaxFpsAccept(String maxFpsAccept) {
+	public void setMaxFpsAccept(int maxFpsAccept) {
 		this.maxFpsAccept = maxFpsAccept;
 	}
 
-	public String getMaxResolutionAccept() {
+	public int getMaxResolutionAccept() {
 		return maxResolutionAccept;
 	}
 
-	public void setMaxResolutionAccept(String maxResolutionAccept) {
+	public void setMaxResolutionAccept(int maxResolutionAccept) {
 		this.maxResolutionAccept = maxResolutionAccept;
 	}
 
-	public String getMaxBitrateAccept() {
+	public int getMaxBitrateAccept() {
 		return maxBitrateAccept;
 	}
 
-	public void setMaxBitrateAccept(String maxBitrateAccept) {
+	public void setMaxBitrateAccept(int maxBitrateAccept) {
 		this.maxBitrateAccept = maxBitrateAccept;
 	}
 
