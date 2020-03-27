@@ -27,6 +27,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,7 +80,6 @@ public class MuxAdaptor implements IRecordingListener {
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
 	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
-	protected long packetFeederId = -1;
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
 	private   AtomicBoolean isBufferedWriterRunning = new AtomicBoolean(false);
@@ -91,6 +93,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected boolean enableVideo = false;
 	protected boolean enableAudio = false;
+	
+	private ScheduledExecutorService packetPollerThread;
 
 	private Queue<AVPacket> bufferQueue = new ConcurrentLinkedQueue<>();
 
@@ -220,7 +224,6 @@ public class MuxAdaptor implements IRecordingListener {
 				InputContext inputContextLocal = queueReferences.get(opaque);
 				if (inputContextLocal.isHeaderWritten) {
 					byte[] packet = null;
-
 					if (inputContextLocal.queue != null) {
 						long waitCount = 0;
 						while ((packet = inputContextLocal.queue.poll()) == null) {
@@ -727,10 +730,18 @@ public class MuxAdaptor implements IRecordingListener {
 	public void closeResources() {
 		logger.info("close resources for streamId -> {}", streamId);
 
-		if (packetFeederId != -1) {
-			logger.info("removing packet feeder timer id {} for stream: {}", packetFeederId, streamId);
-			vertx.cancelTimer(packetFeederId);
-			packetFeederId = -1;
+
+		if (packetPollerThread != null) {
+			packetPollerThread.shutdown();
+			boolean terminated = false;
+			try {
+				terminated = packetPollerThread.awaitTermination(1000, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
+			}
+			logger.info("Shutdown packet poller thread. Is it terminated? -> {} ", terminated);
+			packetPollerThread = null;
+			
 		}
 
 		if (bufferedPacketWriterId != -1) {
@@ -892,33 +903,17 @@ public class MuxAdaptor implements IRecordingListener {
 
 					logger.info("after prepare for {}", streamId);
 					isRecording = true;
-					packetFeederId = vertx.setPeriodic(10, e -> {
+					
+					packetPollerThread = Executors.newSingleThreadScheduledExecutor();
+					packetPollerThread.scheduleAtFixedRate(MuxAdaptor.this::execute, 10, 10, TimeUnit.MILLISECONDS);
 
-						//execute it blocking because it may take long time if stream is not coming
-						//and it may block other threads
-						vertx.executeBlocking(p -> {
-							try {
-								execute(); //this 
-								p.complete();
-							}
-							catch (Exception err) {
-								logger.error(ExceptionUtils.getStackTrace(err));
-							}
-						}, false, r -> {
-							//no care
-						});
-					});
 
 					if (bufferTimeMs > 0)  
 					{
 						//this is just a simple hack to run in different context(different thread).
 						//TOD Eventually we need to get rid of avformat_find_streaminfo and {@link#readCallback}	
-						scheduler.addScheduledOnceJob(5, new IScheduledJob() {
-							
-							@Override
-							public void execute(ISchedulingService service) throws CloneNotSupportedException 
-							{
-								bufferedPacketWriterId = vertx.setPeriodic(10, k -> 
+					
+						bufferedPacketWriterId = vertx.setPeriodic(10, k -> 
 									
 									vertx.executeBlocking(p-> {
 										writeBufferedPacket();
@@ -927,13 +922,11 @@ public class MuxAdaptor implements IRecordingListener {
 										//no care
 									})
 								);
-							}
-						});
-		
+					
 					}
 
-					logger.info("Number of items in the queue while starting: {} packet feeder job id: {} for stream: {}", 
-							getInputQueueSize(), packetFeederId, streamId);
+					logger.info("Number of items in the queue while starting: {} for stream: {}", 
+							getInputQueueSize(), streamId);
 
 				} else {
 					logger.warn("input format context cannot be created for stream -> {}", streamId);
