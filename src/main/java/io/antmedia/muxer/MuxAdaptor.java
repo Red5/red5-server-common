@@ -132,7 +132,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
 	private long logCounter = 0;
-	private static final int COUNT_TO_LOG = 100;
+	private static final int COUNT_TO_LOG = 1000;
 
 	/**
 	 * By default first video key frame should be checked
@@ -610,7 +610,7 @@ public class MuxAdaptor implements IRecordingListener {
 							}
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG == 0) {
-								logger.info("Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
+								logger.info("ReadPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
 								bufferLogCounter = 0;
 							}
 						}	
@@ -620,7 +620,8 @@ public class MuxAdaptor implements IRecordingListener {
 					}
 
 
-				} else {
+				} 
+				else {
 					closeResources();
 				}
 				// if there is not element in the qeueue,
@@ -884,7 +885,6 @@ public class MuxAdaptor implements IRecordingListener {
 					isRecording = true;
 					packetFeederId = vertx.setPeriodic(10, e -> {
 
-						logger.info("packet feeder id enterring for {}", streamId);
 						//execute it blocking because it may take long time if stream is not coming
 						//and it may block other threads
 						vertx.executeBlocking(p -> {
@@ -898,21 +898,30 @@ public class MuxAdaptor implements IRecordingListener {
 						}, false, r -> {
 							//no care
 						});
-
-
-						if (bufferTimeMs > 0)  
-						{
-							logger.info("Buffertime is bigger than zero for stream: {}", streamId);
-							vertx.executeBlocking(p-> {
-								logger.info("writeBufferedPacket for stream: {}", streamId);
-								writeBufferedPacket();
-								p.complete();
-							}, false, r -> {
-								//no care
-							});
-						}
 					});
 
+					if (bufferTimeMs > 0)  
+					{
+						//this is just a simple hack to run in different context(different thread).
+						//TOD Eventually we need to get rid of avformat_find_streaminfo and {@link#readCallback}	
+						scheduler.addScheduledOnceJob(5, new IScheduledJob() {
+							
+							@Override
+							public void execute(ISchedulingService service) throws CloneNotSupportedException 
+							{
+								bufferedPacketWriterId = vertx.setPeriodic(10, k -> 
+									
+									vertx.executeBlocking(p-> {
+										writeBufferedPacket();
+										p.complete();
+									}, false, r -> {
+										//no care
+									})
+								);
+							}
+						});
+		
+					}
 
 					logger.info("Number of items in the queue while starting: {} packet feeder job id: {} for stream: {}", 
 							getInputQueueSize(), packetFeederId, streamId);
@@ -976,6 +985,12 @@ public class MuxAdaptor implements IRecordingListener {
 
 				//update buffering. If bufferQueue is empty, it should start buffering
 				buffering = bufferQueue.isEmpty();
+				
+				bufferLogCounter++; //we use this parameter in execute method as well 
+				if (bufferLogCounter % COUNT_TO_LOG == 0) {
+					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+					bufferLogCounter = 0;
+				}
 			}
 			isBufferedWriterRunning.compareAndSet(true, false);
 		}
