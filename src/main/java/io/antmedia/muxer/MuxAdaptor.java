@@ -181,7 +181,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
 	protected Vertx vertx;
 	private Queue<AVPacket> availableBufferQueue = new ConcurrentLinkedQueue<>();
-	private boolean buffering;
+	private volatile boolean buffering;
 	private int bufferLogCounter;
 
 	/**
@@ -592,6 +592,7 @@ public class MuxAdaptor implements IRecordingListener {
 								//make buffering false whenever bufferDuration is bigger than bufferTimeMS
 								//buffering is set to true when there is no packet left in the queue
 								buffering = false;
+								logger.info("Switching buffering from false to true for stream: {}", streamId);
 							}
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
@@ -988,11 +989,11 @@ public class MuxAdaptor implements IRecordingListener {
 				//update buffering. If bufferQueue is empty, it should start buffering
 				buffering = bufferQueue.isEmpty();
 				
-				bufferLogCounter++; //we use this parameter in execute method as well 
-				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-					bufferLogCounter = 0;
-				}
+			}
+			bufferLogCounter++; //we use this parameter in execute method as well 
+			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+				bufferLogCounter = 0;
 			}
 			isBufferedWriterRunning.compareAndSet(true, false);
 		}
