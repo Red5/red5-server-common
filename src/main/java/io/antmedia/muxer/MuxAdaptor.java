@@ -588,7 +588,6 @@ public class MuxAdaptor implements IRecordingListener {
 									bufferingFinishTimeMs = System.currentTimeMillis();
 									//have the first packet sent time
 									firstPacketReadyToSentTimeMs  = firstPacketTimeMsInQueue;
-									logger.info("Switching buffering from false to true for stream: {}", streamId);
 								}
 								//make buffering false whenever bufferDuration is bigger than bufferTimeMS
 								//buffering is set to true when there is no packet left in the queue
@@ -988,11 +987,12 @@ public class MuxAdaptor implements IRecordingListener {
 
 				//update buffering. If bufferQueue is empty, it should start buffering
 				buffering = bufferQueue.isEmpty();
-			}
-			bufferLogCounter++; //we use this parameter in execute method as well 
-			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-				bufferLogCounter = 0;
+				
+				bufferLogCounter++; //we use this parameter in execute method as well 
+				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+					bufferLogCounter = 0;
+				}
 			}
 			isBufferedWriterRunning.compareAndSet(true, false);
 		}
