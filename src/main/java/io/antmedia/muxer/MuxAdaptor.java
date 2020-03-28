@@ -911,8 +911,8 @@ public class MuxAdaptor implements IRecordingListener {
 					if (bufferTimeMs > 0)  
 					{
 						//this is just a simple hack to run in different context(different thread).
-						//TOD Eventually we need to get rid of avformat_find_streaminfo and {@link#readCallback}	
-					
+						//TODO: Eventually we need to get rid of avformat_find_streaminfo and {@link#readCallback}	
+						logger.info("Scheduling the buffered packet writer for stream: {} buffer duration:{}ms", streamId, bufferTimeMs);
 						bufferedPacketWriterId = vertx.setPeriodic(10, k -> 
 									
 									vertx.executeBlocking(p-> {
