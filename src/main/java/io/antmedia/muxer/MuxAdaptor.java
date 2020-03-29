@@ -49,8 +49,6 @@ import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamPacket;
@@ -91,8 +89,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected boolean previewOverwrite = false;
 
-	protected boolean enableVideo = false;
-	protected boolean enableAudio = false;
+	protected volatile boolean enableVideo = false;
+	protected volatile boolean enableAudio = false;
 	
 	private ScheduledExecutorService packetPollerThread;
 
@@ -163,7 +161,6 @@ public class MuxAdaptor implements IRecordingListener {
 	private int previewCreatePeriod;
 	private double oldspeed;
 	private long firstPacketTime = -1;
-	private boolean audioOnly = false;
 	private long lastQualityUpdateTime = 0;
 	protected Broadcast broadcast;
 	protected AppSettings appSettings;
@@ -173,7 +170,6 @@ public class MuxAdaptor implements IRecordingListener {
 	private long streamInfoFindTime;
 	protected boolean generatePreview = true;
 	private int firstReceivedFrameTimestamp = -1;
-	private long firstFrameTime;
 	protected int totalIngestedVideoPacketCount = 0;
 	protected long totalIngestTime = 0;
 	private long bufferTimeMs = 0;
@@ -181,17 +177,21 @@ public class MuxAdaptor implements IRecordingListener {
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
 	protected Vertx vertx;
 	private Queue<AVPacket> availableBufferQueue = new ConcurrentLinkedQueue<>();
-	private boolean buffering;
+	
+	/**
+	 * Accessed from multiple threads so make it volatile
+	 */
+	private volatile boolean buffering;
 	private int bufferLogCounter;
 
 	/**
-	 * 
+	 * The time when buffering has been finished. It's volatile because it's accessed from multiple threads
 	 */
-	private long bufferingFinishTimeMs = 0;
+	private volatile long bufferingFinishTimeMs = 0;
 
 	private long bufferedPacketWriterId = -1;
-	private long lastPacketTimeMsInQueue = 0;
-	private long firstPacketReadyToSentTimeMs = 0;
+	private volatile long lastPacketTimeMsInQueue = 0;
+	private volatile long firstPacketReadyToSentTimeMs = 0;
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -588,10 +588,12 @@ public class MuxAdaptor implements IRecordingListener {
 									bufferingFinishTimeMs = System.currentTimeMillis();
 									//have the first packet sent time
 									firstPacketReadyToSentTimeMs  = firstPacketTimeMsInQueue;
+									logger.info("Switching buffering from true to false for stream: {}", streamId);
 								}
 								//make buffering false whenever bufferDuration is bigger than bufferTimeMS
 								//buffering is set to true when there is no packet left in the queue
 								buffering = false;
+								
 							}
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
@@ -681,10 +683,6 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 			changeStreamQualityParameters(this.streamId, null, speed, getInputQueueSize());
 		}
-		
-		
-		
-		
 	}
 
 
@@ -732,14 +730,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 
 		if (packetPollerThread != null) {
-			packetPollerThread.shutdown();
-			boolean terminated = false;
-			try {
-				terminated = packetPollerThread.awaitTermination(1000, TimeUnit.MILLISECONDS);
-			} catch (InterruptedException e) {
-				logger.error(ExceptionUtils.getStackTrace(e));
-			}
-			logger.info("Shutdown packet poller thread. Is it terminated? -> {} ", terminated);
+			packetPollerThread.shutdownNow();
+			logger.info("Shutdown packet poller thread for streamId: {}. It's terminated: {}", streamId, packetPollerThread.isTerminated());
 			packetPollerThread = null;
 			
 		}
@@ -905,9 +897,7 @@ public class MuxAdaptor implements IRecordingListener {
 					isRecording = true;
 					
 					packetPollerThread = Executors.newSingleThreadScheduledExecutor();
-					packetPollerThread.scheduleAtFixedRate(MuxAdaptor.this::execute, 10, 10, TimeUnit.MILLISECONDS);
-
-
+					packetPollerThread.scheduleWithFixedDelay(MuxAdaptor.this::execute, 0, 10, TimeUnit.MILLISECONDS);
 					if (bufferTimeMs > 0)  
 					{
 						//this is just a simple hack to run in different context(different thread).
@@ -988,11 +978,11 @@ public class MuxAdaptor implements IRecordingListener {
 				//update buffering. If bufferQueue is empty, it should start buffering
 				buffering = bufferQueue.isEmpty();
 				
-				bufferLogCounter++; //we use this parameter in execute method as well 
-				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-					bufferLogCounter = 0;
-				}
+			}
+			bufferLogCounter++; //we use this parameter in execute method as well 
+			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+				bufferLogCounter = 0;
 			}
 			isBufferedWriterRunning.compareAndSet(true, false);
 		}
@@ -1028,7 +1018,6 @@ public class MuxAdaptor implements IRecordingListener {
 			lastFrameTimestamp = packet.getTimestamp();
 			if (firstReceivedFrameTimestamp  == -1) {
 				firstReceivedFrameTimestamp = lastFrameTimestamp;
-				firstFrameTime = System.currentTimeMillis();
 			}
 			if (flvFrame.length <= BUFFER_SIZE) {
 				addPacketToQueue(flvFrame);
