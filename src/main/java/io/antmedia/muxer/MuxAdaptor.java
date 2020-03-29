@@ -683,10 +683,6 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 			changeStreamQualityParameters(this.streamId, null, speed, getInputQueueSize());
 		}
-		
-		
-		
-		
 	}
 
 
