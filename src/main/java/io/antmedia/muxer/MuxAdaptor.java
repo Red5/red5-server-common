@@ -49,8 +49,6 @@ import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamPacket;
@@ -91,8 +89,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected boolean previewOverwrite = false;
 
-	protected boolean enableVideo = false;
-	protected boolean enableAudio = false;
+	protected volatile boolean enableVideo = false;
+	protected volatile boolean enableAudio = false;
 	
 	private ScheduledExecutorService packetPollerThread;
 
@@ -173,7 +171,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private long streamInfoFindTime;
 	protected boolean generatePreview = true;
 	private int firstReceivedFrameTimestamp = -1;
-	private long firstFrameTime;
+	private volatile long firstFrameTime;
 	protected int totalIngestedVideoPacketCount = 0;
 	protected long totalIngestTime = 0;
 	private long bufferTimeMs = 0;
@@ -181,17 +179,21 @@ public class MuxAdaptor implements IRecordingListener {
 	private Queue<PacketTs> packetTsQueue = new ConcurrentLinkedQueue<>();
 	protected Vertx vertx;
 	private Queue<AVPacket> availableBufferQueue = new ConcurrentLinkedQueue<>();
+	
+	/**
+	 * Accessed from multiple threads so make it volatile
+	 */
 	private volatile boolean buffering;
 	private int bufferLogCounter;
 
 	/**
-	 * 
+	 * The time when buffering has been finished. It's volatile because it's accessed from multiple threads
 	 */
-	private long bufferingFinishTimeMs = 0;
+	private volatile long bufferingFinishTimeMs = 0;
 
 	private long bufferedPacketWriterId = -1;
-	private long lastPacketTimeMsInQueue = 0;
-	private long firstPacketReadyToSentTimeMs = 0;
+	private volatile long lastPacketTimeMsInQueue = 0;
+	private volatile long firstPacketReadyToSentTimeMs = 0;
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -588,11 +590,12 @@ public class MuxAdaptor implements IRecordingListener {
 									bufferingFinishTimeMs = System.currentTimeMillis();
 									//have the first packet sent time
 									firstPacketReadyToSentTimeMs  = firstPacketTimeMsInQueue;
+									logger.info("Switching buffering from true to false for stream: {}", streamId);
 								}
 								//make buffering false whenever bufferDuration is bigger than bufferTimeMS
 								//buffering is set to true when there is no packet left in the queue
 								buffering = false;
-								logger.info("Switching buffering from false to true for stream: {}", streamId);
+								
 							}
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
