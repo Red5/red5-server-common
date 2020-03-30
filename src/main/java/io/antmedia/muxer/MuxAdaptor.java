@@ -51,6 +51,7 @@ import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IBroadcastStream;
+import org.red5.server.api.stream.IStreamCapableConnection;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.scheduling.QuartzSchedulingService;
@@ -678,6 +679,13 @@ public class MuxAdaptor implements IRecordingListener {
 		changeStreamQualityParameters(this.streamId, null, speed, getInputQueueSize());
 	}
 
+	private void closeRtmpConnection() {
+		getBroadcastStream().stop();
+		IStreamCapableConnection connection = getBroadcastStream().getConnection();
+		if (connection != null) {
+			connection.close();
+		}
+	}
 
 	public void writePacket(AVStream stream, AVPacket pkt) {
 
@@ -690,7 +698,7 @@ public class MuxAdaptor implements IRecordingListener {
 				firstKeyFrameReceivedChecked = true;				
 				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
 					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
-					getBroadcastStream().stop();
+					closeRtmpConnection();
 					return;
 				}
 			} else {
@@ -927,6 +935,7 @@ public class MuxAdaptor implements IRecordingListener {
 					logger.warn("closing adaptor for {}", streamId);
 					closeResources();
 					logger.warn("closed adaptor for {}", streamId);
+					closeRtmpConnection();
 				}
 			} catch (Exception e) {
 				logger.error(ExceptionUtils.getStackTrace(e));
