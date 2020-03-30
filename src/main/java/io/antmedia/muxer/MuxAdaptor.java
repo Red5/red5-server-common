@@ -92,7 +92,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected volatile boolean enableVideo = false;
 	protected volatile boolean enableAudio = false;
 
-	private ScheduledExecutorService packetPollerThread;
+	private long packetPollerId = -1;
 
 	private Queue<AVPacket> bufferQueue = new ConcurrentLinkedQueue<>();
 
@@ -722,10 +722,10 @@ public class MuxAdaptor implements IRecordingListener {
 		logger.info("close resources for streamId -> {}", streamId);
 
 
-		if (packetPollerThread != null) {
-			packetPollerThread.shutdownNow();
-			logger.info("Shutdown packet poller thread for streamId: {}. It's terminated: {}", streamId, packetPollerThread.isTerminated());
-			packetPollerThread = null;
+		if (packetPollerId != -1) {
+			vertx.cancelTimer(packetPollerId);
+			logger.info("Cancelling packet poller task(id:{}) for streamId: {}", packetPollerId, streamId);
+			packetPollerId = -1;
 
 		}
 
@@ -889,8 +889,16 @@ public class MuxAdaptor implements IRecordingListener {
 					logger.info("after prepare for {}", streamId);
 					isRecording = true;
 
-					packetPollerThread = Executors.newSingleThreadScheduledExecutor();
-					packetPollerThread.scheduleWithFixedDelay(MuxAdaptor.this::execute, 0, 10, TimeUnit.MILLISECONDS);
+					packetPollerId = vertx.setPeriodic(10, t-> 
+						vertx.executeBlocking(p-> {
+							execute();
+							p.complete();
+						}, false, r -> {
+							//no care
+						})
+					);
+					
+					
 					if (bufferTimeMs > 0)  
 					{
 						//this is just a simple hack to run in different context(different thread).
@@ -898,13 +906,13 @@ public class MuxAdaptor implements IRecordingListener {
 						logger.info("Scheduling the buffered packet writer for stream: {} buffer duration:{}ms", streamId, bufferTimeMs);
 						bufferedPacketWriterId = vertx.setPeriodic(10, k -> 
 
-						vertx.executeBlocking(p-> {
-							writeBufferedPacket();
-							p.complete();
-						}, false, r -> {
-							//no care
-						})
-								);
+								vertx.executeBlocking(p-> {
+										writeBufferedPacket();
+										p.complete();
+									}, false, r -> {
+										//no care
+									})
+						);
 
 					}
 
