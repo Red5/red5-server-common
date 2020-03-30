@@ -144,15 +144,15 @@ public class AppSettings {
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
   
-	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
+	public static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
 	public static final String SETTINGS_DATA_CHANNEL_ENABLED = "settings.dataChannelEnabled";
 
 	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
 
-	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
+	public static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	
-	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
+	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
 	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
 	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
