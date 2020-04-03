@@ -66,6 +66,11 @@ public class Endpoint
 		this.endpointServiceId = endpointServiceId;
 		this.serverStreamId = serverStreamId;
 	}
+	
+	public Endpoint(String rtmpUrl) {
+		this.rtmpUrl = rtmpUrl;
+	}
+	
 	public String getBroadcastId() {
 		return broadcastId;
 	}
