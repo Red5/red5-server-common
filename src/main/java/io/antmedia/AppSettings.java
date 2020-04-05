@@ -154,8 +154,20 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	/**
+	 * In data channel, player messages are delivered to nobody. 
+	 * In order words, player cannot send messages
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
+	
+	/**
+	 * In data channel, player messages are delivered to only publisher
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
+	
+	/**
+	 * In data channel, player messages are delivered to everyone both publisher and all players
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
 
 	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
@@ -163,6 +175,8 @@ public class AppSettings {
 	public static final String SETTINGS_RTMP_INGEST_BUFFER_TIME_MS = "settings.rtmpIngestBufferTimeMs";
 	
 	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
+	
+	public static final String SETTINGS_DATA_CHANNEL_WEBHOOK_URL = "settings.dataChannelWebHook";
 
 	@JsonIgnore
 	@NotSaved
@@ -659,7 +673,8 @@ public class AppSettings {
 	
 	
 	/**
-	 * Enable/Disable data channel. It's disabled by default
+	 * Enable/Disable data channel. It's disabled by default.
+	 * When data channel is enabled, publisher can send messages to the players
 	 */
 	@Value("${" + SETTINGS_DATA_CHANNEL_ENABLED+ ":false}")
 	private boolean dataChannelEnabled;
@@ -668,12 +683,26 @@ public class AppSettings {
 	/**
 	 * Defines the distribution list for player messages
 	 * it can be  none/publisher/all
+	 * none: player messages are delivered to nobody.
+	 * publisher: player messages are delivered to only publisher
+	 * all:  player messages are delivered to everyone both publisher and all players
 	 */
 	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_ALL+"}")
 	private String dataChannelPlayerDistribution;
 
+	/**
+	 * RTMP ingesting buffer time in Milliseconds. Server buffer this amount of video packet in order to compensate
+	 * when stream is not received for some time.
+	 */
 	@Value("${" + SETTINGS_RTMP_INGEST_BUFFER_TIME_MS+ ":0}")
 	private long rtmpIngestBufferTimeMs;
+
+	/**
+	 * All data channel messages are delivered to these hook as well. 
+	 * So that it'll be integrated to any third party application
+	 */
+	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
+	private String dataChannelWebHookURL;
 	
 	
 	public boolean isWriteStatsToDatastore() {
@@ -1436,6 +1465,14 @@ public class AppSettings {
 	
 	public void setRtmpIngestBufferTimeMs(long rtmpIngestBufferTimeMs) {
 		this.rtmpIngestBufferTimeMs = rtmpIngestBufferTimeMs;
+	}
+
+	public String getDataChannelWebHook() {
+		return dataChannelWebHookURL;
+	}
+	
+	public void setDataChannelWebHookURL(String dataChannelWebHookURL) {
+		this.dataChannelWebHookURL = dataChannelWebHookURL;
 	}
 
 

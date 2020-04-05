@@ -191,6 +191,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private long bufferedPacketWriterId = -1;
 	private volatile long lastPacketTimeMsInQueue = 0;
 	private volatile long firstPacketReadyToSentTimeMs = 0;
+	protected String dataChannelWebHookURL = null;
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -347,6 +348,7 @@ public class MuxAdaptor implements IRecordingListener {
 		generatePreview = appSettingsLocal.isGeneratePreview();
 		previewHeight = appSettingsLocal.getPreviewHeight();
 		bufferTimeMs = appSettingsLocal.getRtmpIngestBufferTimeMs();
+		dataChannelWebHookURL = appSettingsLocal.getDataChannelWebHook();
 	}
 
 	public void initStorageClient() {
@@ -1398,6 +1400,10 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public void setInputFormatContext(AVFormatContext inputFormatContext) {
 		this.inputFormatContext = inputFormatContext;
+	}
+	
+	public String getDataChannelWebHookURL() {
+		return dataChannelWebHookURL;
 	}
 }
 
