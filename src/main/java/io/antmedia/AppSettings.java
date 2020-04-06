@@ -212,7 +212,7 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
 	
-	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
+	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
 	private boolean webRTCEnabled;
 	
 	/**
