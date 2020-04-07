@@ -146,23 +146,39 @@ public class AppSettings {
 	
 	public static final String SETTINGS_H265_ENABLED = "settings.h265Enabled";
   
-	private static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
+	public static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
 	public static final String SETTINGS_DATA_CHANNEL_ENABLED = "settings.dataChannelEnabled";
 
 	public static final String SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION = "settings.dataChannelPlayerDistrubution";
 
-	private static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
+	public static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	
-	private static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
+	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	/**
+	 * In data channel, player messages are delivered to nobody. 
+	 * In order words, player cannot send messages
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_NONE = "none";
+	
+	/**
+	 * In data channel, player messages are delivered to only publisher
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_PUBLISHER = "publisher";
+	
+	/**
+	 * In data channel, player messages are delivered to everyone both publisher and all players
+	 */
 	public static final String DATA_CHANNEL_PLAYER_TO_ALL = "all";
 
 	private static final String SETTINGS_HLS_FLAGS = "settings.hlsflags";
 	
+	public static final String SETTINGS_RTMP_INGEST_BUFFER_TIME_MS = "settings.rtmpIngestBufferTimeMs";
+	
 	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
+	
+	public static final String SETTINGS_DATA_CHANNEL_WEBHOOK_URL = "settings.dataChannelWebHook";
 
 	@JsonIgnore
 	@NotSaved
@@ -198,7 +214,7 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
 	
-	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":false}" )
+	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
 	private boolean webRTCEnabled;
 	
 	/**
@@ -625,20 +641,20 @@ public class AppSettings {
 	/**
 	 * Max FPS value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":#{null}}")
-	private String maxFpsAccept;
+	@Value("${" + SETTINGS_MAX_FPS_ACCEPT+":0}")
+	private int maxFpsAccept;
 	
 	/**
 	 * Max Resolution value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":#{null}}")
-	private String maxResolutionAccept;
+	@Value("${" + SETTINGS_MAX_RESOLUTION_ACCEPT+":0}")
+	private int maxResolutionAccept;
 	
 	/**
 	 * Max Bitrate value in RTMP streams
 	 */
-	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":#{null}}")
-	private String maxBitrateAccept;
+	@Value("${" + SETTINGS_MAX_BITRATE_ACCEPT+":0}")
+	private int maxBitrateAccept;
 
 	@JsonIgnore
 	@NotSaved
@@ -649,7 +665,7 @@ public class AppSettings {
 	 * Enable/Disable h264 encoding. It's enabled by default
 	 */
 	@Value("${" + SETTINGS_H264_ENABLED+ ":true}")
-	private boolean h264Enabled;
+	private boolean h264Enabled = true;
 	
 	/**
 	 * Enable/Disable vp8 encoding. It's disabled by default
@@ -665,7 +681,8 @@ public class AppSettings {
 	
 	
 	/**
-	 * Enable/Disable data channel. It's disabled by default
+	 * Enable/Disable data channel. It's disabled by default.
+	 * When data channel is enabled, publisher can send messages to the players
 	 */
 	@Value("${" + SETTINGS_DATA_CHANNEL_ENABLED+ ":false}")
 	private boolean dataChannelEnabled;
@@ -674,9 +691,26 @@ public class AppSettings {
 	/**
 	 * Defines the distribution list for player messages
 	 * it can be  none/publisher/all
+	 * none: player messages are delivered to nobody.
+	 * publisher: player messages are delivered to only publisher
+	 * all:  player messages are delivered to everyone both publisher and all players
 	 */
 	@Value("${" + SETTINGS_DATA_CHANNEL_PLAYER_DISTRIBUTION+ ":"+DATA_CHANNEL_PLAYER_TO_ALL+"}")
 	private String dataChannelPlayerDistribution;
+
+	/**
+	 * RTMP ingesting buffer time in Milliseconds. Server buffer this amount of video packet in order to compensate
+	 * when stream is not received for some time.
+	 */
+	@Value("${" + SETTINGS_RTMP_INGEST_BUFFER_TIME_MS+ ":0}")
+	private long rtmpIngestBufferTimeMs;
+
+	/**
+	 * All data channel messages are delivered to these hook as well. 
+	 * So that it'll be integrated to any third party application
+	 */
+	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
+	private String dataChannelWebHookURL;
 	
 	
 	public boolean isWriteStatsToDatastore() {
@@ -1377,27 +1411,27 @@ public class AppSettings {
 		this.rtspPullTransportType = rtspPullTransportType;
 	}
 	
-	public String getMaxFpsAccept() {
+	public int getMaxFpsAccept() {
 		return maxFpsAccept;
 	}
 
-	public void setMaxFpsAccept(String maxFpsAccept) {
+	public void setMaxFpsAccept(int maxFpsAccept) {
 		this.maxFpsAccept = maxFpsAccept;
 	}
 
-	public String getMaxResolutionAccept() {
+	public int getMaxResolutionAccept() {
 		return maxResolutionAccept;
 	}
 
-	public void setMaxResolutionAccept(String maxResolutionAccept) {
+	public void setMaxResolutionAccept(int maxResolutionAccept) {
 		this.maxResolutionAccept = maxResolutionAccept;
 	}
 
-	public String getMaxBitrateAccept() {
+	public int getMaxBitrateAccept() {
 		return maxBitrateAccept;
 	}
 
-	public void setMaxBitrateAccept(String maxBitrateAccept) {
+	public void setMaxBitrateAccept(int maxBitrateAccept) {
 		this.maxBitrateAccept = maxBitrateAccept;
 	}
 
@@ -1439,6 +1473,22 @@ public class AppSettings {
 
 	public void setDataChannelPlayerDistribution(String dataChannelPlayerDistribution) {
 		this.dataChannelPlayerDistribution = dataChannelPlayerDistribution;
+	}
+
+	public long getRtmpIngestBufferTimeMs() {
+		return rtmpIngestBufferTimeMs;
+	}
+	
+	public void setRtmpIngestBufferTimeMs(long rtmpIngestBufferTimeMs) {
+		this.rtmpIngestBufferTimeMs = rtmpIngestBufferTimeMs;
+	}
+
+	public String getDataChannelWebHook() {
+		return dataChannelWebHookURL;
+	}
+	
+	public void setDataChannelWebHookURL(String dataChannelWebHookURL) {
+		this.dataChannelWebHookURL = dataChannelWebHookURL;
 	}
 
 
