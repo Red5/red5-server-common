@@ -57,6 +57,12 @@ public class Endpoint
 
 	}
 	
+	public Endpoint(String endpointServiceId, String type, String rtmpUrl) {
+		this.endpointServiceId = endpointServiceId;
+		this.type = type;
+		this.rtmpUrl = rtmpUrl;
+	}
+	
 	public Endpoint(String broadcastId, String streamId, String name, String rtmpUrl, String type, String endpointServiceId, String serverStreamId) {
 		this.broadcastId = broadcastId;
 		this.streamId = streamId;
@@ -65,10 +71,6 @@ public class Endpoint
 		this.type = type;
 		this.endpointServiceId = endpointServiceId;
 		this.serverStreamId = serverStreamId;
-	}
-	
-	public Endpoint(String rtmpUrl) {
-		this.rtmpUrl = rtmpUrl;
 	}
 	
 	public String getBroadcastId() {
