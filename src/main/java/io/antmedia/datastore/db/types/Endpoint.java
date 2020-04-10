@@ -11,8 +11,8 @@ public class Endpoint
 	 * it should match the VideoServiceEndpoint names or it can be generic
 	 */
 	@ApiModelProperty(value = "the service name like facebook, periscope, youtube or generic")
-	public String type;
-	
+	private String type;
+
 	/**
 	 * Broadcast id in the end point, Social endpoints has this field 
 	 * but generic endpoint does not have
@@ -115,6 +115,14 @@ public class Endpoint
 
 	public void setServerStreamId(String serverStreamId) {
 		this.serverStreamId = serverStreamId;
+	}
+	
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 
 }
