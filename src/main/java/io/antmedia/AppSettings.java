@@ -373,8 +373,15 @@ public class AppSettings {
 
 
 	/**
-	 * HLS Flags for FFmpeg HLS Muxer
+	 * HLS Flags for FFmpeg HLS Muxer.
+	 * Please add value by plus prefix in the properties file like this
+	 * settings.hlsflags=+program_date_time
+	 * 
+	 * you can add + separated more options like below
+	 * settings.hlsflags=+program_date_time+round_durations+append_list
+	 * 
 	 */
+	@Value( "${" + SETTINGS_HLS_FLAGS + ":#{null}}")
 	private String hlsflags;
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
