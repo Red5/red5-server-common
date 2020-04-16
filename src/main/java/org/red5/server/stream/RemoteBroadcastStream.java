@@ -1,20 +1,5 @@
 package org.red5.server.stream;
 
-import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
-import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.av_write_frame;
-import static org.bytedeco.javacpp.avformat.av_write_trailer;
-import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_free_context;
-import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
-import static org.bytedeco.javacpp.avformat.*;
-import static org.bytedeco.javacpp.avutil.*;
-import static org.bytedeco.javacpp.avcodec.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,18 +12,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.tika.utils.ExceptionUtils;
+
+import org.bytedeco.ffmpeg.avcodec.*;
+import org.bytedeco.ffmpeg.avformat.*;
+import org.bytedeco.ffmpeg.avutil.*;
+import org.bytedeco.ffmpeg.global.*;
+import static org.bytedeco.ffmpeg.global.avutil.*;
+import static org.bytedeco.ffmpeg.global.avformat.*;
+import static org.bytedeco.ffmpeg.global.avcodec.*;
+
+
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avutil;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
-import org.bytedeco.javacpp.avformat.Write_packet_Pointer_BytePointer_int;
-import org.bytedeco.javacpp.avutil.AVDictionary;
 import org.red5.io.flv.meta.MetaData;
 import org.red5.server.BaseConnection;
 import org.red5.server.api.event.IEvent;

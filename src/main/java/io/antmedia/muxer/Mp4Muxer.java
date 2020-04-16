@@ -3,11 +3,6 @@ package io.antmedia.muxer;
 import io.antmedia.storage.StorageClient;
 import io.antmedia.storage.StorageClient.FileType;
 import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.*;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.*;
-import org.bytedeco.javacpp.avutil.*;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
@@ -22,9 +17,19 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.*;
 
-import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avformat.*;
-import static org.bytedeco.javacpp.avutil.*;
+import org.bytedeco.ffmpeg.global.*;
+import org.bytedeco.ffmpeg.avcodec.*;
+import org.bytedeco.ffmpeg.avformat.*;
+import org.bytedeco.ffmpeg.avutil.*;
+import org.bytedeco.ffmpeg.swresample.*;
+import org.bytedeco.ffmpeg.swscale.*;
+
+import static org.bytedeco.ffmpeg.global.avutil.*;
+import static org.bytedeco.ffmpeg.global.avformat.*;
+import static org.bytedeco.ffmpeg.global.avcodec.*;
+import static org.bytedeco.ffmpeg.global.avdevice.*;
+import static org.bytedeco.ffmpeg.global.swresample.*;
+import static org.bytedeco.ffmpeg.global.swscale.*;
 
 public class Mp4Muxer extends Muxer {
 
