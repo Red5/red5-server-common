@@ -91,7 +91,10 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
 	private static final String SETTINGS_ENCODING_LEVEL = "settings.encoding.level";
 	private static final String SETTINGS_ENCODING_RC = "settings.encoding.rc";
+	private static final String SETTINGS_ENCODING_THREAD_COUNT = "settings.encoding.threadCount";
+	private static final String SETTINGS_ENCODING_THREAD_TYPE= "settings.encoding.threadType";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
+
 	
 	public static final String SETTINGS_GENERATE_PREVIEW = "settings.previewGenerate";
 
@@ -481,6 +484,22 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_ENCODING_SPECIFIC +":#{null}}")
 	private String encoderSpecific;
+	
+	/**
+	 * Encoder thread count.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_THREAD_COUNT +":0}")
+	private int encoderThreadCount;
+	
+	/**
+	 * Encoder thread type
+	 * 0: auto
+	 * 1: frame
+	 * 2: slice
+	 */
+	@Value( "${" + SETTINGS_ENCODING_THREAD_TYPE +":0}")
+	private int encoderThreadType;
+	
 	
 	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
 	private int previewHeight;
@@ -1480,6 +1499,22 @@ public class AppSettings {
 	
 	public void setDataChannelWebHookURL(String dataChannelWebHookURL) {
 		this.dataChannelWebHookURL = dataChannelWebHookURL;
+	}
+
+	public int getEncoderThreadCount() {
+		return encoderThreadCount;
+	}
+
+	public void setEncoderThreadCount(int encoderThreadCount) {
+		this.encoderThreadCount = encoderThreadCount;
+	}
+
+	public int getEncoderThreadType() {
+		return encoderThreadType;
+	}
+
+	public void setEncoderThreadType(int encoderThreadType) {
+		this.encoderThreadType = encoderThreadType;
 	}
 
 
