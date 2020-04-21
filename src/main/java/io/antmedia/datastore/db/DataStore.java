@@ -70,6 +70,7 @@ public abstract class DataStore {
 
 	public abstract List<Broadcast> filterBroadcastList(int offset, int size, String type);
 
+	@Deprecated
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint);
 	
 	public abstract boolean removeRTMPEndpoint(String id, Endpoint endpoint);
