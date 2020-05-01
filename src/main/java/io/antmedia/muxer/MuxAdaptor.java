@@ -192,6 +192,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private volatile long lastPacketTimeMsInQueue = 0;
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
+	protected long absoluteTotalIngestTime = 0;
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -647,7 +648,12 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 			long queueEntranceTime = packetTs.time;
 			totalIngestTime += (System.currentTimeMillis() - queueEntranceTime);
+			absoluteTotalIngestTime  += System.currentTimeMillis() - broadcastStream.getAbsoluteStartTimeMs() - pkt.pts();
 		}
+	}
+	
+	public long getAbsoluteTimeMs() {
+		return broadcastStream.getAbsoluteStartTimeMs();
 	}
 
 	public long getBufferedDurationMs() {

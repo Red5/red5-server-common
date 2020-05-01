@@ -18,11 +18,14 @@
 
 package org.red5.server.stream;
 
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.StreamCodecInfo;
+import org.red5.io.object.DataTypes;
+import org.red5.io.object.Input;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.IScopeHandler;
 import org.red5.server.api.stream.IStream;
@@ -72,6 +75,8 @@ public abstract class AbstractStream implements IStream {
      */
     protected final transient Semaphore lock = new Semaphore(1, true);
 
+	private long absoluteStartTimeMs;
+
     /**
      * Return stream name.
      * 
@@ -113,7 +118,27 @@ public abstract class AbstractStream implements IStream {
      */
     public void setMetaData(Notify metaData) {
         this.metaData.set(metaData);
+        Input input = new org.red5.io.amf.Input(metaData.getData());
+		byte object = input.readDataType();
+        if (object == DataTypes.CORE_SWITCH) {
+        
+          input = new org.red5.io.amf3.Input(metaData.getData());
+          ((org.red5.io.amf3.Input) input).enforceAMF3();
+           // re-read data type after switching decode
+           object = input.readDataType();
+        }
+        
+        String actionOnFI = input.readString();
+        input.readDataType();
+        Map<Object, Object> readMap =  (Map<Object, Object>) input.readMap();
+        
+        absoluteStartTimeMs =  Long.parseLong(readMap.get("timecode").toString());
     }
+    
+    public long getAbsoluteStartTimeMs() {
+		return absoluteStartTimeMs;
+	}
+    
 
     /**
      * Return scope.

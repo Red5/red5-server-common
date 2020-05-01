@@ -17,6 +17,9 @@ public class RTMPToWebRTCStats
 	
 	private long totalVideoDeliveryTime;
 	private long totalDeliveredVideoPacketCount;
+	private long absoluteTotalIngestTime;
+	private long absoluteTimeMs;
+	private long absouteTotalLatencyUntilRTPPacketizingTimeMs;
 	
 	public RTMPToWebRTCStats(String streamId) {
 		this.setStreamId(streamId);
@@ -86,6 +89,27 @@ public class RTMPToWebRTCStats
 	}
 	public void setTotalVideoEncodeQueueTime(long totalVideoEncodeQueueTime) {
 		this.totalVideoEncodeQueueTime = totalVideoEncodeQueueTime;
+	}
+	public void setAbsoluteIngestTime(long absoluteTotalIngestTime) {
+		this.absoluteTotalIngestTime = absoluteTotalIngestTime;
+	}
+	
+	public long getAbsoluteTotalIngestTime() {
+		return absoluteTotalIngestTime;
+	}
+	public void setAbsoluteTimeMs(long absoluteTimeMs) {
+		this.absoluteTimeMs = absoluteTimeMs;
+	}
+	
+	public long getAbsoluteTimeMs() {
+		return absoluteTimeMs;
+	}
+	public void setAbsouteTotalLatencyUntilRTPPacketizingTimeMs(long absouteTotalLatencyUntilRTPPacketizingTimeMs) {
+		this.absouteTotalLatencyUntilRTPPacketizingTimeMs = absouteTotalLatencyUntilRTPPacketizingTimeMs;
+	}
+	
+	public long getAbsouteTotalLatencyUntilRTPPacketizingTimeMs() {
+		return absouteTotalLatencyUntilRTPPacketizingTimeMs;
 	}
 	
 }
