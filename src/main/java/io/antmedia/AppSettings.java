@@ -128,6 +128,8 @@ public class AppSettings {
 	public static final String SETTINGS_DB_APP_NAME = "db.app.name";
 	
 	public static final String SETTINGS_ENCODING_TIMEOUT = "settings.encoding.timeout";
+	
+	public static final String SETTINGS_WEBRTC_CLIENT_START_TIMEOUT = "settings.webrtc.client.start.timeoutMs";
 
 	public static final String SETTINGS_DEFAULT_DECODERS_ENABLED = "settings.defaultDecodersEnabled";
 
@@ -197,24 +199,45 @@ public class AppSettings {
 	@Value("${"+SETTINGS_REMOTE_ALLOWED_CIDR+":127.0.0.1}")
     private String remoteAllowedCIDR;
 
+	/**
+	 * Enable/Disable mp4 recording
+	 */
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
 	
+	/**
+	 * Add date time to the name of mp4 recordings
+	 */
 	@Value( "${"+SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME+":false}" )
 	private boolean addDateTimeToMp4FileName;
 	
+	/**
+	 * Enable/disable hls recording
+	 */
 	@Value( "${"+SETTINGS_HLS_MUXING_ENABLED+":true}" )
 	private boolean hlsMuxingEnabled;
 	
+	/**
+	 * Encoder settings in comma separated format
+	 */
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
 	
+	/**
+	 * Number of segments(chunks) in m3u8 files
+	 */
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
 	
+	/**
+	 * Duration of segments in m3u8 files 
+	 */
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
 	
+	/**
+	 * Enable/disable webrtc 
+	 */
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
 	private boolean webRTCEnabled;
 	
@@ -227,7 +250,6 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED+":false}" )
 	private boolean useOriginalWebRTCEnabled;
-	
 
 	/**
 	 * If this value is true, hls files(m3u8 and ts files) are deleted after the broadcasting
@@ -617,6 +639,12 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_ENCODING_TIMEOUT +":5000}")
 	private int encodingTimeout;
+	
+	/**
+	 * If webrtc client is not started in this time, it'll close automatically
+	 */
+	@Value("${" + SETTINGS_WEBRTC_CLIENT_START_TIMEOUT +":5000}")
+	private int webRTCClientStartTimeoutMs;
 	
 	/**
 	 * Set true to enable WebRTC default decoders(such as VP8, VP9) 
@@ -1517,5 +1545,12 @@ public class AppSettings {
 		this.encoderThreadType = encoderThreadType;
 	}
 
+	public int getWebRTCClientStartTimeoutMs() {
+		return webRTCClientStartTimeoutMs;
+	}
+	
+	public void setWebRTCClientStartTimeoutMs(int webRTCClientStartTimeout) {
+		this.webRTCClientStartTimeoutMs = webRTCClientStartTimeout;
+	}
 
 }
