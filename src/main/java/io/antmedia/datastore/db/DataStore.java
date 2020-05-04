@@ -397,6 +397,18 @@ public abstract class DataStore {
 			broadcast.setMainTrackStreamId(newBroadcast.getMainTrackStreamId());
 		}
 		
+		if (newBroadcast.getStartTime() != 0) {
+			broadcast.setStartTime(newBroadcast.getStartTime());
+		}
+		
+		if (newBroadcast.getOriginAdress() != null) {
+			broadcast.setOriginAdress(newBroadcast.getOriginAdress());
+		}
+		
+		if (newBroadcast.getStatus() != null) {
+			broadcast.setStatus(newBroadcast.getStatus());
+		}
+		
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
