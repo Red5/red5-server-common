@@ -13,7 +13,8 @@ import io.antmedia.webrtc.VideoCodec;
 @Indexes({@Index(fields = @Field("streamId")),
 	@Index(fields = @Field("host")),
 	@Index(fields = @Field("videoPort")),
-	@Index(fields = @Field("audioPort"))})
+	@Index(fields = @Field("audioPort")),
+	@Index(fields = @Field("dataChannelPort"))})
 public class StreamInfo implements IStreamInfo {
 	
 	@Id
