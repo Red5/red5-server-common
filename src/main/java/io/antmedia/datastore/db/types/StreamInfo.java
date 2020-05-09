@@ -6,14 +6,15 @@ import org.mongodb.morphia.annotations.Field;
 import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Index;
 import org.mongodb.morphia.annotations.Indexes;
-
 import io.antmedia.cluster.IStreamInfo;
+import io.antmedia.webrtc.VideoCodec;
 
 @Entity("StreamInfo")
 @Indexes({@Index(fields = @Field("streamId")),
 	@Index(fields = @Field("host")),
 	@Index(fields = @Field("videoPort")),
-	@Index(fields = @Field("audioPort"))})
+	@Index(fields = @Field("audioPort")),
+	@Index(fields = @Field("dataChannelPort"))})
 public class StreamInfo implements IStreamInfo {
 	
 	@Id
@@ -32,8 +33,9 @@ public class StreamInfo implements IStreamInfo {
 	private boolean videoEnabled;
 	private boolean audioEnabled;
 	private boolean dataChannelEnabled;
+	private VideoCodec videoCodec;
 
-	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase) {
+	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase, VideoCodec codec) {
 		this.height = height;
 		this.width = width;
 		this.videoBitrate = videobitrate;
@@ -42,6 +44,7 @@ public class StreamInfo implements IStreamInfo {
 		this.audioRTimebase = audioRTimebase;
 		this.videoEnabled = true;
 		this.audioEnabled = true;
+		this.videoCodec = codec;
 	}
 	
 	public StreamInfo() {
@@ -162,6 +165,14 @@ public class StreamInfo implements IStreamInfo {
 
 	public boolean isDataChannelEnabled() {
 		return dataChannelEnabled;
+	}
+	
+	public void setVideoCodec(VideoCodec videoCodec) {
+		this.videoCodec = videoCodec;
+	}
+	
+	public VideoCodec getVideoCodec() {
+		return videoCodec;
 	}
 
 }

@@ -1,5 +1,7 @@
 package io.antmedia.cluster;
 
+import io.antmedia.webrtc.VideoCodec;
+
 public interface IStreamInfo {
 
 	/**
@@ -27,5 +29,10 @@ public interface IStreamInfo {
 	 * @return
 	 */
 	public int getAudioBitrate();
+	
+	/**
+	 * @return the video codec 
+	 */
+	public VideoCodec getVideoCodec();
 
 }
