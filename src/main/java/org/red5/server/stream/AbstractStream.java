@@ -131,8 +131,12 @@ public abstract class AbstractStream implements IStream {
         String actionOnFI = input.readString();
         input.readDataType();
         Map<Object, Object> readMap =  (Map<Object, Object>) input.readMap();
+        Object timeCode = readMap.get("timecode");
         
-        absoluteStartTimeMs =  Long.parseLong(readMap.get("timecode").toString());
+        if (timeCode != null) 
+        {
+        		absoluteStartTimeMs = Long.parseLong(timeCode.toString());
+        }
     }
     
     public long getAbsoluteStartTimeMs() {
