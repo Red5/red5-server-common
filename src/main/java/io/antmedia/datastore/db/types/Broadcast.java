@@ -245,6 +245,9 @@ public class Broadcast {
 	@ApiModelProperty(value = "If this broadcast is main track. This variable hold sub track ids.")
 	private List<String> subTrackStreamIds;
 
+	@ApiModelProperty(value = "Absolute start time in milliseconds - unix timestamp. It's used for measuring the absolute latency")
+	private long absoluteStartTimeMs;
+
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
 		this.setName(name);
@@ -279,7 +282,7 @@ public class Broadcast {
 
 	}
 
-	public void setStreamId(String id) throws Exception {
+	public void setStreamId(String id) throws Exception  {
 		if (id == null) {
 			throw new Exception("stream id cannot be null");
 		}
@@ -593,5 +596,13 @@ public class Broadcast {
 
 	public void setSubTrackStreamIds(List<String> subTrackStreamIds) {
 		this.subTrackStreamIds = subTrackStreamIds;
+	}
+
+	public void setAbsoluteStartTimeMs(long absoluteStartTimeMs) {
+		this.absoluteStartTimeMs = absoluteStartTimeMs;
+	}
+	
+	public long getAbsoluteStartTimeMs() {
+		return absoluteStartTimeMs;
 	}
 }
