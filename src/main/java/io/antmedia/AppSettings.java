@@ -765,6 +765,16 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
 	private String dataChannelWebHookURL;
+
+	private String h265EncoderPreset;
+
+	private String h265EncoderProfile;
+
+	private String h265EncoderRc;
+
+	private String h265EncoderSpecific;
+
+	private String h265EncoderLevel;
 	
 	
 	public boolean isWriteStatsToDatastore() {
@@ -1567,6 +1577,46 @@ public class AppSettings {
 	
 	public void setWebRTCClientStartTimeoutMs(int webRTCClientStartTimeout) {
 		this.webRTCClientStartTimeoutMs = webRTCClientStartTimeout;
+	}
+
+	public String getH265EncoderProfile() {
+		return this.h265EncoderProfile;
+	}
+
+	public String getH265EncoderPreset() {
+		return this.h265EncoderPreset;
+	}
+
+	public String getH265EncoderLevel() {
+		return this.h265EncoderLevel;
+	}
+
+	public String getH265EncoderSpecific() {
+		return this.h265EncoderSpecific;
+	}
+
+	public String getH265EncoderRc() {
+		return this.h265EncoderRc ;
+	}
+
+	public void setH265EncoderLevel(String encoderLevel) {
+		this.h265EncoderLevel = encoderLevel;
+	}
+
+	public void setH265EncoderPreset(String preset) {
+		this.h265EncoderPreset = preset;
+	}
+
+	public void setH265EncoderProfile(String profile) {
+		this.h265EncoderProfile = profile;
+	}
+
+	public void setH265EncoderRc(String encoderRc) {
+		this.h265EncoderRc = encoderRc;
+	}
+
+	public void setH265EncoderSpecific(String encoderSpecific) {
+		this.h265EncoderSpecific = encoderSpecific;
 	}
 
 }
