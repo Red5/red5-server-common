@@ -653,7 +653,10 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 	
 	public long getAbsoluteTimeMs() {
-		return broadcastStream.getAbsoluteStartTimeMs();
+		if (broadcastStream != null) {
+			return broadcastStream.getAbsoluteStartTimeMs();
+		}
+		return 0;
 	}
 
 	public long getBufferedDurationMs() {
