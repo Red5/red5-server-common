@@ -20,6 +20,15 @@ public class RTMPToWebRTCStats
 	private long absoluteTotalIngestTime;
 	private long absoluteTimeMs;
 	private long absouteTotalLatencyUntilRTPPacketizingTimeMs;
+	/**
+	 * RTP frame id which let us calculate the absolute latency
+	 */
+	private long frameId;
+	
+	/**
+	 * {@code #frameId}'s capture time in milliseconds
+	 */
+	private long captureTimeMs;
 	
 	public RTMPToWebRTCStats(String streamId) {
 		this.setStreamId(streamId);
@@ -104,12 +113,29 @@ public class RTMPToWebRTCStats
 	public long getAbsoluteTimeMs() {
 		return absoluteTimeMs;
 	}
+	
 	public void setAbsouteTotalLatencyUntilRTPPacketizingTimeMs(long absouteTotalLatencyUntilRTPPacketizingTimeMs) {
 		this.absouteTotalLatencyUntilRTPPacketizingTimeMs = absouteTotalLatencyUntilRTPPacketizingTimeMs;
 	}
 	
 	public long getAbsouteTotalLatencyUntilRTPPacketizingTimeMs() {
 		return absouteTotalLatencyUntilRTPPacketizingTimeMs;
+	}
+	
+	public void setFrameId(long frameId) {
+		this.frameId = frameId;
+	}
+	
+	public void setCaptureTimeMs(long captureTimeMs) {
+		this.captureTimeMs = captureTimeMs;
+	}
+	
+	public long getCaptureTimeMs() {
+		return captureTimeMs;
+	}
+	
+	public long getFrameId() {
+		return frameId;
 	}
 	
 }
