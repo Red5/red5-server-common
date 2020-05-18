@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
+import io.vertx.core.Vertx;
+
 /**
  * PLEASE READ HERE BEFORE YOU IMPLEMENT A MUXER THAT INHERITS THIS CLASS
  * 
@@ -63,7 +65,7 @@ public abstract class Muxer {
 
 	protected boolean isRecording;
 
-	protected QuartzSchedulingService scheduler;
+	protected Vertx vertx;
 
 	protected IScope scope;
 
@@ -76,8 +78,8 @@ public abstract class Muxer {
 	 */
 	protected String bsfName = null;
 
-	public Muxer(QuartzSchedulingService scheduler) {
-		this.scheduler = scheduler;
+	public Muxer(Vertx vertx) {
+		this.vertx = vertx;
 	}
 
 	public static File getPreviewFile(IScope scope, String name, String extension) {

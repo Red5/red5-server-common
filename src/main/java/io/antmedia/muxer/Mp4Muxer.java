@@ -2,6 +2,8 @@ package io.antmedia.muxer;
 
 import io.antmedia.storage.StorageClient;
 import io.antmedia.storage.StorageClient.FileType;
+import io.vertx.core.Vertx;
+
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.avcodec;
 import org.bytedeco.javacpp.avcodec.*;
@@ -63,8 +65,8 @@ public class Mp4Muxer extends Muxer {
 	private boolean dynamic = false;
 
 
-	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
-		super(scheduler);
+	public Mp4Muxer(StorageClient storageClient, Vertx vertx) {
+		super(vertx);
 		extension = ".mp4";
 		format = "mp4";
 		options.put("movflags", "faststart");
@@ -484,66 +486,36 @@ public class Mp4Muxer extends Muxer {
 
 		isRecording = false;
 		
-		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
+		vertx.setTimer(0, l ->{
 
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				try {
-					
-					String absolutePath = fileTmp.getAbsolutePath();
+			try {
 
-					String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
-					
-					final File f = new File(origFileName);
-					
-					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
-					if (isAVCConversionRequired ) {
-						logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
-						remux(fileTmp.getAbsolutePath(),f.getAbsolutePath(), rotation);
-						Files.delete(fileTmp.toPath());
-					}
-					else {
-						Files.move(fileTmp.toPath(),f.toPath());
-					}
+				String absolutePath = fileTmp.getAbsolutePath();
 
-					logger.info("MP4 {} is ready", f.getName());
+				String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 
-					IContext context = Mp4Muxer.this.scope.getContext();
-					ApplicationContext appCtx = context.getApplicationContext();
-					Object bean = appCtx.getBean("web.handler");
-					if (bean instanceof IAntMediaStreamHandler) {
-						((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
-					}
+				final File f = new File(origFileName);
 
-					if (storageClient != null) {
-						logger.info("Storage client is available saving {} to storage", f.getName());
-						scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
-
-							@Override
-							public void execute(ISchedulingService service) throws CloneNotSupportedException {
-								
-								// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
-								
-								String fileName = streamId + ".mp4";
-								if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
-									
-									String tmpName =  fileName;
-									
-									int i = 0;
-									do {
-										i++;
-										fileName = tmpName.replace(".", "_"+ i +".");
-									} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
-								}
-								
-								storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, f);
-							}
-						});
-
-					}
-				} catch (Exception e) {
-					logger.error(e.getMessage());
+				logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
+				if (isAVCConversionRequired ) {
+					logger.info("AVC conversion needed for MP4 {}", fileTmp.getName());
+					remux(fileTmp.getAbsolutePath(),f.getAbsolutePath(), rotation);
+					Files.delete(fileTmp.toPath());
 				}
+				else {
+					Files.move(fileTmp.toPath(),f.toPath());
+				}
+
+				logger.info("MP4 {} is ready", f.getName());
+
+				IContext context = Mp4Muxer.this.scope.getContext();
+				ApplicationContext appCtx = context.getApplicationContext();
+				Object bean = appCtx.getBean("web.handler");
+				if (bean instanceof IAntMediaStreamHandler) {
+					((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
+				}
+			} catch (Exception e) {
+				logger.error(e.getMessage());
 			}
 		});
 
