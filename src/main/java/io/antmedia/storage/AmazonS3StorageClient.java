@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import com.amazonaws.client.builder.AwsClientBuilder;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,12 @@ public class AmazonS3StorageClient extends StorageClient {
 	private AmazonS3 getAmazonS3() {
 		if (amazonS3 == null) {
 			AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+
+			// Inject endpoint if provided in the configuration file
+			if (getEndpoint() != null && getRegion() != null) {
+				builder = builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(getEndpoint(), getRegion()));
+			}
+
 			// Inject credentials if provided in the configuration file
 			if (getAccessKey() != null) {
 				BasicAWSCredentials awsCredentials = new BasicAWSCredentials(getAccessKey(), getSecretKey());
@@ -48,8 +55,6 @@ public class AmazonS3StorageClient extends StorageClient {
 	                .withConnectionTimeout(120 * 1000)
 	                .withMaxErrorRetry(15));
 			
-			//.withConnectionTimeout(120 * 1000)
-            //.withMaxErrorRetry(15))
 			amazonS3 = builder.build();
 		}
 		return amazonS3; 
