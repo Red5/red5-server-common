@@ -649,7 +649,10 @@ public class AppSettings {
 	/**
 	 * Set true to enable WebRTC default decoders(such as VP8, VP9) 
 	 * Set false to only enable h264 decoder
+	 * 
+	 * Deprecated: Use {@code vp8Enabled} and {@code h264enabled}
 	 */
+	@Deprecated
 	@Value("${" + SETTINGS_DEFAULT_DECODERS_ENABLED+ ":false}")
 	private boolean defaultDecodersEnabled;
 
