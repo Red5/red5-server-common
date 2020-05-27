@@ -209,7 +209,7 @@ public class AppSettings {
 	/**
 	 * Enable/Disable WebM recording
 	 */
-	@Value( "${"+SETTINGS_WEBM_MUXING_ENABLED+":true}" )
+	@Value( "${"+SETTINGS_WEBM_MUXING_ENABLED+":false}" )
 	private boolean webMMuxingEnabled;
 	
 	/**
