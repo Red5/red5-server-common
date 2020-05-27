@@ -1,18 +1,25 @@
 package io.antmedia;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
 
+import org.apache.tika.utils.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static java.lang.management.ManagementFactory.getThreadMXBean;
 import com.sun.management.HotSpotDiagnosticMXBean;
-
 /**
  * This utility is designed for accessing server's
  * system information more easier.
@@ -58,7 +65,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
  *  -------------------------------
  *  
  */
-public final class SystemUtils {
+public class SystemUtils {
 
 	public static final String HEAPDUMP_HPROF = "heapdump.hprof";
 
@@ -94,7 +101,36 @@ public final class SystemUtils {
 	private static final String HOTSPOT_BEAN_NAME =
 			"com.sun.management:type=HotSpotDiagnostic";
 
+	private static final String LINUX_MEMINFO = "/proc/meminfo";
+
 	private static HotSpotDiagnosticMXBean hotspotMBean;
+
+	private static String memoryFile = LINUX_MEMINFO;
+	
+	public static final Pattern whitespaces = Pattern.compile("\\s+");
+	
+	protected static final Logger logger = LoggerFactory.getLogger(SystemUtils.class);
+	
+	public static final int MAC_OS_X = 0;
+	public static final int LINUX = 1;
+	public static final int WINDOWS = 2;
+	
+	public static final int OS_TYPE;
+	
+	static {
+		String osName = SystemUtils.osName.toLowerCase();
+		if (osName.startsWith("mac os x") || osName.startsWith("darwin")) {
+			OS_TYPE = MAC_OS_X;
+		} else if (osName.startsWith("windows")) {
+			OS_TYPE = WINDOWS;
+		} else if (osName.startsWith("linux")) {
+			OS_TYPE = LINUX;
+		}
+		else {
+			OS_TYPE = -1;
+		}
+	}
+
 
 	/**
 	 * These functions below are used for Java Virtual Machine (JVM)
@@ -589,6 +625,92 @@ public final class SystemUtils {
 			return -1;
 		}
 	}
+	
+	public static long osLinuxAvailableMemory() {
+		long memFree = 0L;
+        long activeFile = 0L;
+        long inactiveFile = 0L;
+        long sReclaimable = 0L;
+
+        long memTotal = 0L;
+        long memAvailable;
+        FileReader fr;
+		try {
+			fr = new FileReader(getLinuxMemoryFile());
+		
+	        BufferedReader br = new BufferedReader(fr);  
+	        String line;  
+	        while ((line = br.readLine()) != null) {
+	        	String[] memorySplit = whitespaces.split(line, 2);
+	        	if (memorySplit.length > 1) {
+	        		  switch (memorySplit[0]) {
+	                  case "MemTotal:":
+	                      memTotal = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      break;
+	                  case "MemAvailable:":
+	                      memAvailable = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      // We're done!
+	                      return memAvailable;
+	                  case "MemFree:":
+	                      memFree = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      break;
+	                  case "Active(file):":
+	                      activeFile = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      break;
+	                  case "Inactive(file):":
+	                      inactiveFile = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      break;
+	                  case "SReclaimable:":
+	                      sReclaimable = parseDecimalMemorySizeToBinary(memorySplit[1]);
+	                      break;
+	                  default:
+	                      // do nothing with other lines
+	                      break;
+	                  }
+	        	}
+	        }
+	        fr.close();
+		} catch (FileNotFoundException e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
+		} catch (IOException e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
+		} 
+       
+        return memFree + activeFile + inactiveFile + sReclaimable;
+	}
+	
+	public static long parseDecimalMemorySizeToBinary(String size) {
+        String[] mem = whitespaces.split(size);
+        long capacity = parseLongOrDefault(mem[0], 0L);
+        if (mem.length == 2 && mem[1].length() > 1) {
+            switch (mem[1].charAt(0)) {
+            case 'T':
+                capacity <<= 40;
+                break;
+            case 'G':
+                capacity <<= 30;
+                break;
+            case 'M':
+                capacity <<= 20;
+                break;
+            case 'K':
+            case 'k':
+                capacity <<= 10;
+                break;
+            default:
+                break;
+            }
+        }
+        return capacity;
+    }
+	
+	 public static long parseLongOrDefault(String s, long defaultLong) {
+	        try {
+	            return Long.parseLong(s);
+	        } catch (NumberFormatException e) {
+	            return defaultLong;
+	        }
+	 }
 
 	/**
 	 * Returns the "% recent cpu usage" for the Java Virtual Machine process. 
@@ -649,5 +771,14 @@ public final class SystemUtils {
 			throw new RuntimeException(exp);
 		}
 		return hotspotMBean;
+	}
+	
+	public static String getLinuxMemoryFile() {
+		return memoryFile;
+	}
+
+	public static void setLinuxMemoryFile(String filepath) {
+		memoryFile = filepath;
+		
 	}
 }
