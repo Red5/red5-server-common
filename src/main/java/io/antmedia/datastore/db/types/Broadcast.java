@@ -71,10 +71,16 @@ public class Broadcast {
 	private Long date;
 
 	/**
-	 * Planned start date
+	 * Planned start date in milliseconds
 	 */
 	@ApiModelProperty(value = "the planned start date")
 	private Long plannedStartDate;
+	
+	/**
+	 * Planned end date in milliseconds
+	 */
+	@ApiModelProperty(value = "the planned end date")
+	private Long plannedEndDate;
 
 	/**
 	 * duration of the stream in milliseconds
@@ -356,6 +362,14 @@ public class Broadcast {
 
 	public void setPlannedStartDate(Long plannedStartDate) {
 		this.plannedStartDate = plannedStartDate;
+	}
+	
+	public Long getPlannedEndDate() {
+		return plannedEndDate;
+	}
+
+	public void setPlannedEndDate(Long plannedEndDate) {
+		this.plannedEndDate = plannedEndDate;
 	}
 
 	public Long getDuration() {
