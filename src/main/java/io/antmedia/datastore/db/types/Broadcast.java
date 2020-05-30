@@ -166,6 +166,13 @@ public class Broadcast {
 	@ApiModelProperty(value = "MP4 muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
 	private int mp4Enabled = 0;
 	
+	/**
+	 * WebM muxing is enabled or not for the stream
+	 * 1 means enabled, -1 means disabled, 0 means no settings for the stream
+	 */
+	@ApiModelProperty(value = "WebM muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
+	private int webMEnabled = 0;
+	
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -593,5 +600,13 @@ public class Broadcast {
 
 	public void setSubTrackStreamIds(List<String> subTrackStreamIds) {
 		this.subTrackStreamIds = subTrackStreamIds;
+	}
+
+	public int getWebMEnabled() {
+		return webMEnabled;
+	}
+
+	public void setWebMEnabled(int webMEnabled) {
+		this.webMEnabled = webMEnabled;
 	}
 }
