@@ -517,28 +517,7 @@ public class Mp4Muxer extends Muxer {
 
 					if (storageClient != null) {
 						logger.info("Storage client is available saving {} to storage", f.getName());
-						scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
-
-							@Override
-							public void execute(ISchedulingService service) throws CloneNotSupportedException {
-								
-								// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
-								
-								String fileName = streamId + ".mp4";
-								if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
-									
-									String tmpName =  fileName;
-									
-									int i = 0;
-									do {
-										i++;
-										fileName = tmpName.replace(".", "_"+ i +".");
-									} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
-								}
-								
-								storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, f);
-							}
-						});
+						saveToStorage(f);
 
 					}
 				} catch (Exception e) {
@@ -547,6 +526,31 @@ public class Mp4Muxer extends Muxer {
 			}
 		});
 
+	}
+	
+	public void saveToStorage(File fileToUpload) {
+		scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
+
+			@Override
+			public void execute(ISchedulingService service) throws CloneNotSupportedException {
+				
+				// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
+				
+				String fileName = getFile().getName();
+				if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
+					
+					String tmpName =  fileName;
+					
+					int i = 0;
+					do {
+						i++;
+						fileName = tmpName.replace(".", "_"+ i +".");
+					} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
+				}
+				
+				storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, fileToUpload);
+			}
+		});
 	}
 
 	public long getDuration(File f) {
