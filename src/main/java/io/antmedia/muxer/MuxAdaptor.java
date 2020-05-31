@@ -41,6 +41,7 @@ import org.bytedeco.javacpp.avcodec.AVPacket;
 import org.bytedeco.javacpp.avformat;
 import org.bytedeco.javacpp.avformat.AVFormatContext;
 import org.bytedeco.javacpp.avformat.AVIOContext;
+import org.bytedeco.javacpp.avformat.AVInputFormat;
 import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
 import org.bytedeco.javacpp.avutil;
@@ -459,7 +460,8 @@ public class MuxAdaptor implements IRecordingListener {
 			return false;
 		}
 
-		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
+		Pointer pointer = avutil.av_malloc(BUFFER_SIZE);
+		avio_alloc_context = avio_alloc_context(new BytePointer(pointer), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
 		inputFormatContext.pb(avio_alloc_context);
@@ -468,9 +470,12 @@ public class MuxAdaptor implements IRecordingListener {
 
 		logger.info("before avformat_open_input for stream {}", streamId);
 
-		if (avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
+		AVInputFormat findInputFormat = avformat.av_find_input_format("flv");
+		if (avformat_open_input(inputFormatContext, (String) null, findInputFormat,
 				(AVDictionary) null) < 0) {
 			logger.error("cannot open input context for stream: {}", streamId);
+			findInputFormat.close();
+			pointer.close();
 			return false;
 		}
 
@@ -480,6 +485,8 @@ public class MuxAdaptor implements IRecordingListener {
 		int ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
+			findInputFormat.close();
+			pointer.close();
 			return false;
 		}
 
