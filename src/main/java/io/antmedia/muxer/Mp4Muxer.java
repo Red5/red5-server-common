@@ -266,12 +266,15 @@ public class Mp4Muxer extends RecordMuxer {
 		}
 	}
 	
+
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	protected void clearResource() {
 		super.clearResource();
+
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 			bsfContext = null;
