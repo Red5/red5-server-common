@@ -74,6 +74,7 @@ public class AppSettings {
 	public static final String SETTINGS_OBJECT_DETECTION_ENABLED = "settings.objectDetectionEnabled";
 	private static final String SETTINGS_CREATE_PREVIEW_PERIOD = "settings.createPreviewPeriod";
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
+	public static final String SETTINGS_WEBM_MUXING_ENABLED = "settings.webMMuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
 	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
@@ -206,6 +207,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
+	
+	/**
+	 * Enable/Disable WebM recording
+	 */
+	@Value( "${"+SETTINGS_WEBM_MUXING_ENABLED+":false}" )
+	private boolean webMMuxingEnabled;
 	
 	/**
 	 * Add date time to the name of mp4 recordings
@@ -651,7 +658,10 @@ public class AppSettings {
 	/**
 	 * Set true to enable WebRTC default decoders(such as VP8, VP9) 
 	 * Set false to only enable h264 decoder
+	 * 
+	 * Deprecated: Use {@code vp8Enabled} and {@code h264enabled}
 	 */
+	@Deprecated
 	@Value("${" + SETTINGS_DEFAULT_DECODERS_ENABLED+ ":false}")
 	private boolean defaultDecodersEnabled;
 
@@ -1564,6 +1574,14 @@ public class AppSettings {
 	
 	public void setWebRTCClientStartTimeoutMs(int webRTCClientStartTimeout) {
 		this.webRTCClientStartTimeoutMs = webRTCClientStartTimeout;
+	}
+
+	public boolean isWebMMuxingEnabled() {
+		return webMMuxingEnabled;
+	}
+
+	public void setWebMMuxingEnabled(boolean webMMuxingEnabled) {
+		this.webMMuxingEnabled = webMMuxingEnabled;
 	}
 
 }
