@@ -154,6 +154,14 @@ public abstract class DataStore {
 	 * @return- true if set, false if not
 	 */
 	public abstract boolean setMp4Muxing(String streamId, int enabled);
+	
+	/**
+	 * enables or disables WebM muxing for the stream
+	 * @param streamId- id of the stream
+	 * @param enabled 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @return- true if set, false if not
+	 */
+	public abstract boolean setWebMMuxing(String streamId, int enabled);
 
 
 	/**
