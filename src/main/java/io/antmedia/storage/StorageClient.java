@@ -23,7 +23,8 @@ public abstract class StorageClient {
 			return value;
 		}
 	}
-	
+
+	private String endpoint;
 	private String accessKey;
 	private String secretKey;
 	private String region;
@@ -72,6 +73,14 @@ public abstract class StorageClient {
 	 * @return
 	 */
 	public abstract boolean fileExist(String key);
+
+	public String getEndpoint() {
+		return endpoint;
+	}
+
+	public void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
+	}
 
 	public String getAccessKey() {
 		return accessKey;
