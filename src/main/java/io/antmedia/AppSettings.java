@@ -56,7 +56,7 @@ public class AppSettings {
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
-	private static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
+	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
@@ -95,6 +95,10 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_THREAD_COUNT = "settings.encoding.threadCount";
 	private static final String SETTINGS_ENCODING_THREAD_TYPE= "settings.encoding.threadType";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
+
+	private static final String SETTINGS_ENCODING_VP8_THREAD_COUNT = "settings.encoding.vp8.threadCount";
+	private static final String SETTINGS_ENCODING_VP8_SPEED = "settings.encoding.vp8.speed";
+	private static final String SETTINGS_ENCODING_VP8_DEADLINE = "settings.encoding.vp8.deadline";
 
 	
 	public static final String SETTINGS_GENERATE_PREVIEW = "settings.previewGenerate";
@@ -529,6 +533,27 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_ENCODING_THREAD_TYPE +":0}")
 	private int encoderThreadType;
 	
+	/**
+	 * Set quality/speed ratio modifier. Higher values speed up the encode at the cost of quality.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_SPEED +":4}")
+	private int vp8EncoderSpeed;
+	
+	/**
+	 * VP8 Encoder deadline:
+	 *  best
+	 * 	good 
+	 *  realtime
+	 */ 
+	@Value( "${" + SETTINGS_ENCODING_VP8_DEADLINE +":realtime}")
+	private String vp8EncoderDeadline;
+	
+	/**
+	 * VP8 Encoder thread count.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_THREAD_COUNT +":1}")
+	private int vp8EncoderThreadCount;
+	
 	
 	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
 	private int previewHeight;
@@ -767,8 +792,7 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
 	private String dataChannelWebHookURL;
-	
-	
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -1569,6 +1593,30 @@ public class AppSettings {
 
 	public void setWebMMuxingEnabled(boolean webMMuxingEnabled) {
 		this.webMMuxingEnabled = webMMuxingEnabled;
+	}
+
+	public int getVp8EncoderSpeed() {
+		return vp8EncoderSpeed;
+	}
+
+	public void setVp8EncoderSpeed(int vp8EncoderSpeed) {
+		this.vp8EncoderSpeed = vp8EncoderSpeed;
+	}
+
+	public String getVp8EncoderDeadline() {
+		return vp8EncoderDeadline;
+	}
+
+	public void setVp8EncoderDeadline(String vp8EncoderDeadline) {
+		this.vp8EncoderDeadline = vp8EncoderDeadline;
+	}
+
+	public int getVp8EncoderThreadCount() {
+		return vp8EncoderThreadCount;
+	}
+
+	public void setVp8EncoderThreadCount(int vp8EncoderThreadCount) {
+		this.vp8EncoderThreadCount = vp8EncoderThreadCount;
 	}
 
 }
