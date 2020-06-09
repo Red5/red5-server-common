@@ -96,6 +96,10 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_THREAD_TYPE= "settings.encoding.threadType";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
 
+	private static final String SETTINGS_ENCODING_VP8_THREAD_COUNT = "settings.encoding.vp8.threadCount";
+	private static final String SETTINGS_ENCODING_VP8_SPEED = "settings.encoding.vp8.speed";
+	private static final String SETTINGS_ENCODING_VP8_DEADLINE = "settings.encoding.vp8.deadline";
+
 	
 	public static final String SETTINGS_GENERATE_PREVIEW = "settings.previewGenerate";
 
@@ -528,6 +532,27 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_ENCODING_THREAD_TYPE +":0}")
 	private int encoderThreadType;
+	
+	/**
+	 * Set quality/speed ratio modifier. Higher values speed up the encode at the cost of quality.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_SPEED +":4}")
+	private int vp8EncoderSpeed;
+	
+	/**
+	 * VP8 Encoder deadline:
+	 *  best
+	 * 	good 
+	 *  realtime
+	 */ 
+	@Value( "${" + SETTINGS_ENCODING_VP8_DEADLINE +":realtime}")
+	private String vp8EncoderDeadline;
+	
+	/**
+	 * VP8 Encoder thread count.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_THREAD_COUNT +":1}")
+	private int vp8EncoderThreadCount;
 	
 	
 	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
@@ -1568,6 +1593,30 @@ public class AppSettings {
 
 	public void setWebMMuxingEnabled(boolean webMMuxingEnabled) {
 		this.webMMuxingEnabled = webMMuxingEnabled;
+	}
+
+	public int getVp8EncoderSpeed() {
+		return vp8EncoderSpeed;
+	}
+
+	public void setVp8EncoderSpeed(int vp8EncoderSpeed) {
+		this.vp8EncoderSpeed = vp8EncoderSpeed;
+	}
+
+	public String getVp8EncoderDeadline() {
+		return vp8EncoderDeadline;
+	}
+
+	public void setVp8EncoderDeadline(String vp8EncoderDeadline) {
+		this.vp8EncoderDeadline = vp8EncoderDeadline;
+	}
+
+	public int getVp8EncoderThreadCount() {
+		return vp8EncoderThreadCount;
+	}
+
+	public void setVp8EncoderThreadCount(int vp8EncoderThreadCount) {
+		this.vp8EncoderThreadCount = vp8EncoderThreadCount;
 	}
 
 }
