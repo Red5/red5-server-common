@@ -164,8 +164,6 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
-	public static final String SHUTDOWN_STATUS = "settings.shutdownProperly";
-	
 	/**
 	 * In data channel, player messages are delivered to nobody. 
 	 * In order words, player cannot send messages
@@ -794,18 +792,6 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
 	private String dataChannelWebHookURL;
-	
-	@Value( "${" + SHUTDOWN_STATUS+ ":true}")
-	private String shutdownProperly;
-	
-	
-	public String getShutdownProperly() {
-		return shutdownProperly;
-	}
-
-	public void setShutdownProperly(String shutdownProperly) {
-		this.shutdownProperly = shutdownProperly;
-	}
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
