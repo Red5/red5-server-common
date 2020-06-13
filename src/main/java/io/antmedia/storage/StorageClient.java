@@ -29,6 +29,12 @@ public abstract class StorageClient {
 	private String secretKey;
 	private String region;
 	private String storageName;
+	
+	/**
+	 * Permission of the file that is uploaded to the Storage. 
+	 * It may differ according to the implemenation. Default value is public-read
+	 */
+	private String permission = "public-read";
 
 	
 	/**
@@ -114,4 +120,11 @@ public abstract class StorageClient {
 		this.storageName = storageName;
 	}
 
+	public void setPermission(String permission) {
+		this.permission = permission;
+	}
+	
+	public String getPermission() {
+		return permission;
+	}
 }
