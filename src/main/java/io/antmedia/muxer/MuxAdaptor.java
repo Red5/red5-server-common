@@ -122,7 +122,7 @@ public class MuxAdaptor implements IRecordingListener {
 	public static final int RECORDING_DISABLED_FOR_STREAM = -1;
 	public static final int RECORDING_NO_SET_FOR_STREAM = 0;
 	protected static final long WAIT_TIME_MILLISECONDS = 5;
-	protected boolean isRecording = false;
+	protected volatile boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
 	protected boolean webMMuxingEnabled;
@@ -1256,6 +1256,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 	public boolean startRecording(RecordType recordType) {
+		
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {
 			Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1270,15 +1271,21 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		muxer.init(scope, streamId, 0);
 		
-		boolean prepared = muxer.prepare(inputFormatContext);
-		if (prepared) {
-			addMuxer(muxer);
+		if (isRecording) {
+			boolean prepared = muxer.prepare(inputFormatContext);
+			if (prepared) {
+				addMuxer(muxer);
+			}
+			else {
+				logger.error("{} prepare method returned false. Recording is not started for {}", recordType.toString(), streamId);
+			}
+			return prepared;
 		}
 		else {
-			logger.error(recordType.toString()+" prepare method returned false. Recording is not started for {}", streamId);
+			logger.warn("Start recording is called before preparation is done for type:{} and stream id:{}. So recording muxer is initialized and added to muxer list ", recordType, streamId);
+			addMuxer(muxer);
+			return true;
 		}
-		return prepared;
-
 	}
 
 	public AVPacket getAVPacket() {
@@ -1327,14 +1334,26 @@ public class MuxAdaptor implements IRecordingListener {
 	{
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
 		rtmpMuxer.init(scope, streamId, 0);
-		boolean prepared = rtmpMuxer.prepare(inputFormatContext);
-		if (prepared) {
-			addMuxer(rtmpMuxer);
+		
+		if (isRecording) {
+			
+			boolean prepared = rtmpMuxer.prepare(inputFormatContext);
+			if (prepared) {
+				addMuxer(rtmpMuxer);
+			}
+			else {
+				logger.error("RTMP prepare returned false so that rtmp pushing to {} for {} didn't started ", rtmpUrl, streamId);
+			}
+			return prepared;
 		}
 		else {
-			logger.error("RTMP prepare returned false so that rtmp pushing to {} for {} didn't started ", rtmpUrl, streamId);
+			//it means that streaming is in preparing state
+			//It has initialized the muxers but it's not prepared them
+			logger.warn("Start rtmp streaming is called before preparation is done for url:{} and stream id:{}. So rtmp muxer is initialized and added to muxer list ", rtmpUrl, streamId);
+			addMuxer(rtmpMuxer);
+			return true;
 		}
-		return prepared;
+		
 	}
 
 
