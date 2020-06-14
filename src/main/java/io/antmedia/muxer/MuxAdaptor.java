@@ -727,7 +727,7 @@ public class MuxAdaptor implements IRecordingListener {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
-				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt, streamId)) {
 					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					closeRtmpConnection();
 					return;
