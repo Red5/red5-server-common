@@ -72,12 +72,20 @@ public class Broadcast {
 
 	/**
 	 * Planned start date in milliseconds
+	 * This parameter is not mandatory, default parameter is null
+	 * 
+	 * This feature is enabled in RTMP and WebRTC streams
+	 * Streams are accepting when plannedStartDate is lower than now(Unix Timestamp)
 	 */
 	@ApiModelProperty(value = "the planned start date")
 	private Long plannedStartDate;
 	
 	/**
 	 * Planned end date in milliseconds
+	 * This parameter is not mandatory, default parameter is null
+	 * 
+	 * This feature is enabled in RTMP and WebRTC streams
+	 * Streams are accepting when plannedEndDate is higher than now(Unix Timestamp)
 	 */
 	@ApiModelProperty(value = "the planned end date")
 	private Long plannedEndDate;
