@@ -56,7 +56,7 @@ public class AppSettings {
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
-	private static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
+	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
@@ -163,8 +163,6 @@ public class AppSettings {
 	public static final String SETTINGS_MAX_RESOLUTION_ACCEPT = "settings.maxResolutionAccept";
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
-	
-	public static final String SHUTDOWN_STATUS = "settings.shutdownProperly";
 	
 	/**
 	 * In data channel, player messages are delivered to nobody. 
@@ -794,18 +792,6 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
 	private String dataChannelWebHookURL;
-	
-	@Value( "${" + SHUTDOWN_STATUS+ ":true}")
-	private String shutdownProperly;
-	
-	
-	public String getShutdownProperly() {
-		return shutdownProperly;
-	}
-
-	public void setShutdownProperly(String shutdownProperly) {
-		this.shutdownProperly = shutdownProperly;
-	}
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;

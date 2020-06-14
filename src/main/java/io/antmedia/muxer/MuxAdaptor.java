@@ -122,7 +122,7 @@ public class MuxAdaptor implements IRecordingListener {
 	public static final int RECORDING_DISABLED_FOR_STREAM = -1;
 	public static final int RECORDING_NO_SET_FOR_STREAM = 0;
 	protected static final long WAIT_TIME_MILLISECONDS = 5;
-	protected boolean isRecording = false;
+	protected volatile boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
 	protected boolean webMMuxingEnabled;
@@ -1256,6 +1256,11 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 	public boolean startRecording(RecordType recordType) {
+		
+		if (!isRecording) {
+			logger.warn("Starting recording return false for stream:{} because stream is being prepared", streamId);
+			return false;
+		}
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {
 			Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1275,10 +1280,9 @@ public class MuxAdaptor implements IRecordingListener {
 			addMuxer(muxer);
 		}
 		else {
-			logger.error(recordType.toString()+" prepare method returned false. Recording is not started for {}", streamId);
+				logger.error("{} prepare method returned false. Recording is not started for {}", recordType.toString(), streamId);
 		}
 		return prepared;
-
 	}
 
 	public AVPacket getAVPacket() {
@@ -1325,8 +1329,14 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean startRtmpStreaming(String rtmpUrl) 
 	{
+		if (!isRecording) {
+			logger.warn("Start rtmp streaming return false for stream:{} because stream is being prepared", streamId);
+			return false;
+		}
+		
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
 		rtmpMuxer.init(scope, streamId, 0);
+			
 		boolean prepared = rtmpMuxer.prepare(inputFormatContext);
 		if (prepared) {
 			addMuxer(rtmpMuxer);
