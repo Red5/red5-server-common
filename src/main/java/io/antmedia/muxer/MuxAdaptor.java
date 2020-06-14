@@ -597,17 +597,44 @@ public class MuxAdaptor implements IRecordingListener {
 						av_packet_unref(pkt);
 						bufferQueue.add(packet);
 
+						
 						AVPacket pktHead = bufferQueue.peek();
+						lastPacketTimeMsInQueue = av_rescale_q(packet.pts(), inputFormatContext.streams(packet.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						if (getBufferedDurationMs() > bufferTimeMs*5) 
+						{
+							//set buffering true to not let writeBufferedPacket method work
+							
+							buffering = true;
+							//if buffer duration somehow is more than 5 times bufferTimeMs
+							logger.warn("Buffer is increased({}) too much for stream: {}", getBufferedDurationMs() ,streamId);
+							AVPacket pkt;
+							int i = 0;
+							while ((pkt = bufferQueue.poll()) != null) 
+							{
+								pkt.close();
+								if (i % 10 == 0) 
+								{
+									i = 0;
+									if (getBufferedDurationMs() < bufferTimeMs*2) {
+										break;
+									}
+								}
+								i++;
+							}
+							
+							logger.warn("Buffer duration is decreased to {} for stream: {}", getBufferedDurationMs(), streamId);
+							pktHead = bufferQueue.peek();
+						}
 
 						/**
 						 * BufferQueue is polled in writer thread. 
 						 * It's a very rare case to happen so that check if it's null
 						 */
 						if (pktHead != null) {
-							lastPacketTimeMsInQueue = av_rescale_q(packet.pts(), inputFormatContext.streams(packet.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long bufferDuration = (lastPacketTimeMsInQueue - firstPacketTimeMsInQueue);
-
+							
+							
 							if (bufferDuration > bufferTimeMs) 
 							{ 
 								if (buffering) 
@@ -623,6 +650,7 @@ public class MuxAdaptor implements IRecordingListener {
 								buffering = false;
 
 							}
+							
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
 								logger.info("ReadPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
@@ -752,6 +780,8 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
+		
+		pkt.close();
 	}
 
 
@@ -1029,7 +1059,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 	private void writeAllBufferedPackets() 
 	{
-		logger.info("write all buffered packets for stream: {}", streamId);
+		logger.info("write all buffered packets for stream: {} buffered queue size: {} available buffer size:{}", streamId, bufferQueue.size(), availableBufferQueue.size());
 		while (!bufferQueue.isEmpty()) {
 
 			AVPacket tempPacket = bufferQueue.poll();
@@ -1041,6 +1071,11 @@ public class MuxAdaptor implements IRecordingListener {
 		while ((pkt = bufferQueue.poll()) != null) {
 			pkt.close();
 		}
+		
+		while ((pkt = availableBufferQueue.poll()) != null) {
+			pkt.close();
+		}
+		
 	}
 
 	int packetCount = 0;
