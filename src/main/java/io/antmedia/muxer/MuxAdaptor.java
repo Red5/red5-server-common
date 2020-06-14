@@ -2,8 +2,8 @@ package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
 import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_ref;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avcodec.av_packet_move_ref;
+import static org.bytedeco.javacpp.avcodec.*;
 import static org.bytedeco.javacpp.avformat.av_dump_format;
 import static org.bytedeco.javacpp.avformat.av_read_frame;
 import static org.bytedeco.javacpp.avformat.avformat_close_input;
@@ -27,9 +27,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -597,6 +594,7 @@ public class MuxAdaptor implements IRecordingListener {
 					{
 						AVPacket packet = getAVPacket();
 						av_packet_ref(packet, pkt);
+						av_packet_unref(pkt);
 						bufferQueue.add(packet);
 
 						AVPacket pktHead = bufferQueue.peek();
@@ -606,7 +604,7 @@ public class MuxAdaptor implements IRecordingListener {
 						 * It's a very rare case to happen so that check if it's null
 						 */
 						if (pktHead != null) {
-							lastPacketTimeMsInQueue = av_rescale_q(pkt.pts(), inputFormatContext.streams(pkt.stream_index()).time_base(), TIME_BASE_FOR_MS);
+							lastPacketTimeMsInQueue = av_rescale_q(packet.pts(), inputFormatContext.streams(packet.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long bufferDuration = (lastPacketTimeMsInQueue - firstPacketTimeMsInQueue);
 
