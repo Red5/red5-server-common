@@ -7,7 +7,7 @@ public interface IStreamAcceptFilter {
 	
 	public static final String BEAN_NAME = "streamAcceptFilter";
 	
-	public boolean isValidStreamParameters(AVFormatContext inputFormatContext,AVPacket pkt);
+	public boolean isValidStreamParameters(AVFormatContext inputFormatContext,AVPacket pkt, String streamId);
 	
 	
 	
