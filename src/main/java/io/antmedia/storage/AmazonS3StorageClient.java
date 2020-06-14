@@ -90,9 +90,9 @@ public class AmazonS3StorageClient extends StorageClient {
 		
 		PutObjectRequest putRequest = new PutObjectRequest(getStorageName(), key, file);
 		
-		putRequest.setCannedAcl(CannedAccessControlList.PublicRead);
-	
 		
+		putRequest.setCannedAcl(getCannedAcl());
+	
 		
 		Upload upload = tm.upload(putRequest);
         // TransferManager processes all transfers asynchronously,
@@ -128,6 +128,31 @@ public class AmazonS3StorageClient extends StorageClient {
 			Thread.currentThread().interrupt();
 		}
         
+	}
+
+
+	public CannedAccessControlList getCannedAcl() 
+	{
+		switch (getPermission()) 
+		{
+		case "public-read":
+			return CannedAccessControlList.PublicRead;
+		case "private":
+			return CannedAccessControlList.Private;
+		case "public-read-write":
+			return CannedAccessControlList.PublicReadWrite;
+		case "authenticated-read":
+			return CannedAccessControlList.AuthenticatedRead;
+		case "log-delivery-write":
+			return CannedAccessControlList.LogDeliveryWrite;
+		case "bucket-owner-read":
+			return CannedAccessControlList.BucketOwnerRead;
+		case "bucket-owner-full-control":
+			return CannedAccessControlList.BucketOwnerFullControl;
+		case "aws-exec-read":
+			return CannedAccessControlList.AwsExecRead;
+		}
+		return CannedAccessControlList.PublicRead;
 	}
 
 }
