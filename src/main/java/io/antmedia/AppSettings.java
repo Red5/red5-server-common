@@ -86,7 +86,8 @@ public class AppSettings {
 	public static final String SETTINGS_WEBRTC_PORT_RANGE_MAX = "settings.webrtc.portRangeMax";
 	public static final String SETTINGS_WEBRTC_STUN_SERVER_URI = "settings.webrtc.stunServerURI";
 	public static final String SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED = "settings.webrtc.tcpCandidateEnabled"; 
-	
+	public static final String SETTINGS_WEBRTC_SDP_SEMANTICS = "settings.webrtc.sdpSemantics"; 
+
 	private static final String SETTINGS_ENCODING_ENCODER_NAME = "settings.encoding.encoderName";
 	private static final String SETTINGS_ENCODING_PRESET = "settings.encoding.preset";
 	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
@@ -187,6 +188,16 @@ public class AppSettings {
 	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
 	
 	public static final String SETTINGS_DATA_CHANNEL_WEBHOOK_URL = "settings.dataChannelWebHook";
+	
+	/**
+	 * WebRTC SDP Semantics:PLAN B
+	 */
+	public static final String SDP_SEMANTICS_PLAN_B = "planB";
+	
+	/**
+	 * WebRTC SDP Semantics:UNIFIED PLAN
+	 */
+	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
 	@JsonIgnore
 	@NotSaved
@@ -460,6 +471,14 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
 	private boolean webRTCTcpCandidatesEnabled;
+	
+	/**
+	 * WebRTC SDP Semantics
+	 * Plan B or Unified Plan
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_SDP_SEMANTICS +":" + SDP_SEMANTICS_PLAN_B + "}")
+	private String webRTCSdpSemantics;
+	
 	
 	/**
 	 * Port Allocator Flags for WebRTC
@@ -1617,6 +1636,14 @@ public class AppSettings {
 
 	public void setVp8EncoderThreadCount(int vp8EncoderThreadCount) {
 		this.vp8EncoderThreadCount = vp8EncoderThreadCount;
+	}
+
+	public String getWebRTCSdpSemantics() {
+		return webRTCSdpSemantics;
+	}
+
+	public void setWebRTCSdpSemantics(String webRTCSdpSemantics) {
+		this.webRTCSdpSemantics = webRTCSdpSemantics;
 	}
 
 }
