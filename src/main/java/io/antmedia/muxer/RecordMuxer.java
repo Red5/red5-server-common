@@ -372,7 +372,7 @@ public abstract class RecordMuxer extends Muxer {
 			return;
 		}
 
-		logger.info("Mp4Muxer writing trailer for stream: {}", streamId);
+		logger.info("Record Muxer writing trailer for stream: {}", streamId);
 		isRunning.set(false);
 
 		av_write_trailer(outputFormatContext);
@@ -381,7 +381,7 @@ public abstract class RecordMuxer extends Muxer {
 
 		isRecording = false;
 		
-		vertx.setTimer(1, l->{
+		vertx.executeBlocking(l->{
 			try {
 
 				String absolutePath = fileTmp.getAbsolutePath();
@@ -424,7 +424,7 @@ public abstract class RecordMuxer extends Muxer {
 			} catch (Exception e) {
 				logger.error(e.getMessage());
 			}
-		});
+		}, r->{});
 
 	}
 
