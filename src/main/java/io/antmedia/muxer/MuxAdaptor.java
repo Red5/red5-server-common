@@ -2,8 +2,8 @@ package io.antmedia.muxer;
 
 import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
 import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_ref;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
+import static org.bytedeco.javacpp.avcodec.av_packet_move_ref;
+import static org.bytedeco.javacpp.avcodec.*;
 import static org.bytedeco.javacpp.avformat.av_dump_format;
 import static org.bytedeco.javacpp.avformat.av_read_frame;
 import static org.bytedeco.javacpp.avformat.avformat_close_input;
@@ -27,9 +27,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -597,19 +594,47 @@ public class MuxAdaptor implements IRecordingListener {
 					{
 						AVPacket packet = getAVPacket();
 						av_packet_ref(packet, pkt);
+						av_packet_unref(pkt);
 						bufferQueue.add(packet);
 
+						
 						AVPacket pktHead = bufferQueue.peek();
+						lastPacketTimeMsInQueue = av_rescale_q(packet.pts(), inputFormatContext.streams(packet.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						if (getBufferedDurationMs() > bufferTimeMs*5) 
+						{
+							//set buffering true to not let writeBufferedPacket method work
+							
+							buffering = true;
+							//if buffer duration somehow is more than 5 times bufferTimeMs
+							logger.warn("Buffer is increased({}) too much for stream: {}", getBufferedDurationMs() ,streamId);
+							AVPacket pkt;
+							int i = 0;
+							while ((pkt = bufferQueue.poll()) != null) 
+							{
+								pkt.close();
+								if (i % 10 == 0) 
+								{
+									i = 0;
+									if (getBufferedDurationMs() < bufferTimeMs*2) {
+										break;
+									}
+								}
+								i++;
+							}
+							
+							logger.warn("Buffer duration is decreased to {} for stream: {}", getBufferedDurationMs(), streamId);
+							pktHead = bufferQueue.peek();
+						}
 
 						/**
 						 * BufferQueue is polled in writer thread. 
 						 * It's a very rare case to happen so that check if it's null
 						 */
 						if (pktHead != null) {
-							lastPacketTimeMsInQueue = av_rescale_q(pkt.pts(), inputFormatContext.streams(pkt.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long bufferDuration = (lastPacketTimeMsInQueue - firstPacketTimeMsInQueue);
-
+							
+							
 							if (bufferDuration > bufferTimeMs) 
 							{ 
 								if (buffering) 
@@ -625,6 +650,7 @@ public class MuxAdaptor implements IRecordingListener {
 								buffering = false;
 
 							}
+							
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
 								logger.info("ReadPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
@@ -754,6 +780,8 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
+		
+		pkt.close();
 	}
 
 
@@ -992,57 +1020,67 @@ public class MuxAdaptor implements IRecordingListener {
 	 */
 	public void writeBufferedPacket() 
 	{
-		if (isBufferedWriterRunning.compareAndSet(false, true)) {
-			if (!buffering) 
-			{
-				while(!bufferQueue.isEmpty()) 
+		synchronized (this) {
+			
+			if (isBufferedWriterRunning.compareAndSet(false, true)) {
+				if (!buffering) 
 				{
-					AVPacket tempPacket = bufferQueue.peek(); 
-					long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
-					long now = System.currentTimeMillis();
-					long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
-					long passedTime = now - bufferingFinishTimeMs;
-					if (pktTimeDifferenceMs < passedTime) 
+					while(!bufferQueue.isEmpty()) 
 					{
-						writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-						av_packet_unref(tempPacket);
-						bufferQueue.remove(); //remove the packet from the queue
-						availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						AVPacket tempPacket = bufferQueue.peek(); 
+						long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						long now = System.currentTimeMillis();
+						long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
+						long passedTime = now - bufferingFinishTimeMs;
+						if (pktTimeDifferenceMs < passedTime) 
+						{
+							writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+							av_packet_unref(tempPacket);
+							bufferQueue.remove(); //remove the packet from the queue
+							availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						}
+						else {
+							//break the loop and don't block the thread because it's not correct time to send the packet
+							break;
+						}
+	
 					}
-					else {
-						//break the loop and don't block the thread because it's not correct time to send the packet
-						break;
-					}
-
+	
+					//update buffering. If bufferQueue is empty, it should start buffering
+					buffering = bufferQueue.isEmpty();
+	
 				}
-
-				//update buffering. If bufferQueue is empty, it should start buffering
-				buffering = bufferQueue.isEmpty();
-
+				bufferLogCounter++; //we use this parameter in execute method as well 
+				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+					bufferLogCounter = 0;
+				}
+				isBufferedWriterRunning.compareAndSet(true, false);
 			}
-			bufferLogCounter++; //we use this parameter in execute method as well 
-			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-				bufferLogCounter = 0;
-			}
-			isBufferedWriterRunning.compareAndSet(true, false);
 		}
 	}
 
 	private void writeAllBufferedPackets() 
 	{
-		logger.info("write all buffered packets for stream: {}", streamId);
-		while (!bufferQueue.isEmpty()) {
-
-			AVPacket tempPacket = bufferQueue.poll();
-			writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-			av_packet_unref(tempPacket);
+		synchronized (this) {
+			logger.info("write all buffered packets for stream: {} buffered queue size: {} available buffer size:{}", streamId, bufferQueue.size(), availableBufferQueue.size());
+			while (!bufferQueue.isEmpty()) {
+	
+				AVPacket tempPacket = bufferQueue.poll();
+				writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+				av_packet_unref(tempPacket);
+			}
+	
+			AVPacket pkt;
+			while ((pkt = bufferQueue.poll()) != null) {
+				pkt.close();
+			}
+			
+			while ((pkt = availableBufferQueue.poll()) != null) {
+				pkt.close();
+			}
 		}
-
-		AVPacket pkt;
-		while ((pkt = bufferQueue.poll()) != null) {
-			pkt.close();
-		}
+		
 	}
 
 	int packetCount = 0;
