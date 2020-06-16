@@ -250,6 +250,7 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		avformat_free_context(outputFormatContext);
+		outputFormatContext.close();
 		outputFormatContext = null;
 	}
 
@@ -281,12 +282,17 @@ public class RtmpMuxer extends Muxer {
 			int ret = av_bsf_alloc(h264bsfc, bsfExtractdataContext);
 			if (ret < 0) {
 				logger.info("cannot allocate bsf context for {}", file.getName());
+				outStream.close();
+				timeBase.close();
 				return false;
 			}
 
 			ret = avcodec_parameters_copy(bsfExtractdataContext.par_in(), outStream.codecpar());
 			if (ret < 0) {
 				logger.info("cannot copy input codec parameters for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 			bsfExtractdataContext.time_base_in(timeBase);
@@ -294,12 +300,18 @@ public class RtmpMuxer extends Muxer {
 			ret = av_bsf_init(bsfExtractdataContext);
 			if (ret < 0) {
 				logger.info("cannot init bit stream filter context for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 
 			ret = avcodec_parameters_copy(outStream.codecpar(), bsfExtractdataContext.par_out());
 			if (ret < 0) {
 				logger.info("cannot copy codec parameters to output for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 			outStream.time_base(bsfExtractdataContext.time_base_out());

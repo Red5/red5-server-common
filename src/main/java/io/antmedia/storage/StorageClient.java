@@ -23,11 +23,18 @@ public abstract class StorageClient {
 			return value;
 		}
 	}
-	
+
+	private String endpoint;
 	private String accessKey;
 	private String secretKey;
 	private String region;
 	private String storageName;
+	
+	/**
+	 * Permission of the file that is uploaded to the Storage. 
+	 * It may differ according to the implemenation. Default value is public-read
+	 */
+	private String permission = "public-read";
 
 	
 	/**
@@ -73,6 +80,14 @@ public abstract class StorageClient {
 	 */
 	public abstract boolean fileExist(String key);
 
+	public String getEndpoint() {
+		return endpoint;
+	}
+
+	public void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
+	}
+
 	public String getAccessKey() {
 		return accessKey;
 	}
@@ -105,4 +120,11 @@ public abstract class StorageClient {
 		this.storageName = storageName;
 	}
 
+	public void setPermission(String permission) {
+		this.permission = permission;
+	}
+	
+	public String getPermission() {
+		return permission;
+	}
 }

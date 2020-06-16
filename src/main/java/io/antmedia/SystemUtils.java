@@ -625,12 +625,14 @@ public class SystemUtils {
 			return -1;
 		}
 	}
-	
+	/**
+	 * @return the number of available memory in bytes by reading /proc/meminfo file
+	 */
 	public static long osLinuxAvailableMemory() {
-		long memFree = 0L;
-        long activeFile = 0L;
-        long inactiveFile = 0L;
-        long sReclaimable = 0L;
+		long memFree = -1L;
+        long activeFile = -1L;
+        long inactiveFile = -1L;
+        long sReclaimable = -1L;
 
         long memTotal = 0L;
         long memAvailable;

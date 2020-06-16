@@ -402,24 +402,7 @@ public abstract class RecordMuxer extends Muxer {
 
 				if (storageClient != null) {
 					logger.info("Storage client is available saving {} to storage", f.getName());
-					vertx.setTimer(1000, l2 -> {
-						// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
-
-						String fileName = streamId + extension;
-						if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
-
-							String tmpName =  fileName;
-
-							int i = 0;
-							do {
-								i++;
-								fileName = tmpName.replace(".", "_"+ i +".");
-							} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
-						}
-
-						storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, f);
-					});
-
+					saveToStorage(f);
 				}
 			} catch (Exception e) {
 				logger.error(e.getMessage());
@@ -427,6 +410,27 @@ public abstract class RecordMuxer extends Muxer {
 		}, r->{});
 
 	}
+
+	public void saveToStorage(File fileToUpload) {
+		vertx.setTimer(1000, l2 -> {
+			// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
+
+			String fileName = getFile().getName();
+			if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
+
+				String tmpName =  fileName;
+
+				int i = 0;
+				do {
+					i++;
+					fileName = tmpName.replace(".", "_"+ i +".");
+				} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
+			}
+
+			storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, fileToUpload);
+		});
+	}
+
 
 	protected void finalizeRecordFile(final File file) throws IOException {
 		Files.move(fileTmp.toPath(),file.toPath());
