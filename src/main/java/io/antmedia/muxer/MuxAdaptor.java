@@ -1020,60 +1020,65 @@ public class MuxAdaptor implements IRecordingListener {
 	 */
 	public void writeBufferedPacket() 
 	{
-		if (isBufferedWriterRunning.compareAndSet(false, true)) {
-			if (!buffering) 
-			{
-				while(!bufferQueue.isEmpty()) 
+		synchronized (this) {
+			
+			if (isBufferedWriterRunning.compareAndSet(false, true)) {
+				if (!buffering) 
 				{
-					AVPacket tempPacket = bufferQueue.peek(); 
-					long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
-					long now = System.currentTimeMillis();
-					long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
-					long passedTime = now - bufferingFinishTimeMs;
-					if (pktTimeDifferenceMs < passedTime) 
+					while(!bufferQueue.isEmpty()) 
 					{
-						writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-						av_packet_unref(tempPacket);
-						bufferQueue.remove(); //remove the packet from the queue
-						availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						AVPacket tempPacket = bufferQueue.peek(); 
+						long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						long now = System.currentTimeMillis();
+						long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
+						long passedTime = now - bufferingFinishTimeMs;
+						if (pktTimeDifferenceMs < passedTime) 
+						{
+							writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+							av_packet_unref(tempPacket);
+							bufferQueue.remove(); //remove the packet from the queue
+							availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						}
+						else {
+							//break the loop and don't block the thread because it's not correct time to send the packet
+							break;
+						}
+	
 					}
-					else {
-						//break the loop and don't block the thread because it's not correct time to send the packet
-						break;
-					}
-
+	
+					//update buffering. If bufferQueue is empty, it should start buffering
+					buffering = bufferQueue.isEmpty();
+	
 				}
-
-				//update buffering. If bufferQueue is empty, it should start buffering
-				buffering = bufferQueue.isEmpty();
-
+				bufferLogCounter++; //we use this parameter in execute method as well 
+				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+					bufferLogCounter = 0;
+				}
+				isBufferedWriterRunning.compareAndSet(true, false);
 			}
-			bufferLogCounter++; //we use this parameter in execute method as well 
-			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-				bufferLogCounter = 0;
-			}
-			isBufferedWriterRunning.compareAndSet(true, false);
 		}
 	}
 
 	private void writeAllBufferedPackets() 
 	{
-		logger.info("write all buffered packets for stream: {} buffered queue size: {} available buffer size:{}", streamId, bufferQueue.size(), availableBufferQueue.size());
-		while (!bufferQueue.isEmpty()) {
-
-			AVPacket tempPacket = bufferQueue.poll();
-			writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-			av_packet_unref(tempPacket);
-		}
-
-		AVPacket pkt;
-		while ((pkt = bufferQueue.poll()) != null) {
-			pkt.close();
-		}
-		
-		while ((pkt = availableBufferQueue.poll()) != null) {
-			pkt.close();
+		synchronized (this) {
+			logger.info("write all buffered packets for stream: {} buffered queue size: {} available buffer size:{}", streamId, bufferQueue.size(), availableBufferQueue.size());
+			while (!bufferQueue.isEmpty()) {
+	
+				AVPacket tempPacket = bufferQueue.poll();
+				writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+				av_packet_unref(tempPacket);
+			}
+	
+			AVPacket pkt;
+			while ((pkt = bufferQueue.poll()) != null) {
+				pkt.close();
+			}
+			
+			while ((pkt = availableBufferQueue.poll()) != null) {
+				pkt.close();
+			}
 		}
 		
 	}
