@@ -67,11 +67,11 @@ import org.bytedeco.javacpp.avformat.AVIOContext;
 import org.bytedeco.javacpp.avformat.AVStream;
 import org.bytedeco.javacpp.avutil.AVDictionary;
 import org.bytedeco.javacpp.avutil.AVRational;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.antmedia.storage.StorageClient;
+import io.vertx.core.Vertx;
 
 public class Mp4Muxer extends RecordMuxer {
 
@@ -118,8 +118,8 @@ public class Mp4Muxer extends RecordMuxer {
 			AV_CODEC_ID_NONE
 	};
 
-	public Mp4Muxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
-		super(storageClient, scheduler);
+	public Mp4Muxer(StorageClient storageClient, Vertx vertx) {
+		super(storageClient, vertx);
 		extension = ".mp4";
 		format = "mp4";
 		SUPPORTED_CODECS = MP4_SUPPORTED_CODECS;
