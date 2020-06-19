@@ -57,13 +57,13 @@ import org.red5.server.api.IContext;
 import org.red5.server.api.scheduling.IScheduledJob;
 import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import io.antmedia.storage.StorageClient;
 import io.antmedia.storage.StorageClient.FileType;
+import io.vertx.core.Vertx;
 
 public abstract class RecordMuxer extends Muxer {
 
@@ -99,8 +99,8 @@ public abstract class RecordMuxer extends Muxer {
 	protected boolean dynamic = false;
 
 
-	public RecordMuxer(StorageClient storageClient, QuartzSchedulingService scheduler) {
-		super(scheduler);
+	public RecordMuxer(StorageClient storageClient, Vertx vertx) {
+		super(vertx);
 		options.put("movflags", "faststart");
 		this.storageClient = storageClient;
 	}
@@ -372,7 +372,7 @@ public abstract class RecordMuxer extends Muxer {
 			return;
 		}
 
-		logger.info("Mp4Muxer writing trailer for stream: {}", streamId);
+		logger.info("Record Muxer writing trailer for stream: {}", streamId);
 		isRunning.set(false);
 
 		av_write_trailer(outputFormatContext);
@@ -381,65 +381,56 @@ public abstract class RecordMuxer extends Muxer {
 
 		isRecording = false;
 		
-		scheduler.addScheduledOnceJob(0, new IScheduledJob() {
+		vertx.executeBlocking(l->{
+			try {
 
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				try {
-					
-					String absolutePath = fileTmp.getAbsolutePath();
+				String absolutePath = fileTmp.getAbsolutePath();
 
-					String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
-					
-					final File f = new File(origFileName);
-					
-					logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
-					finalizeRecordFile(f);
+				String origFileName = absolutePath.replace(TEMP_EXTENSION, "");
 
-					IContext context = RecordMuxer.this.scope.getContext();
-					ApplicationContext appCtx = context.getApplicationContext();
-					Object bean = appCtx.getBean("web.handler");
-					if (bean instanceof IAntMediaStreamHandler) {
-						((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
-					}
+				final File f = new File(origFileName);
 
-					if (storageClient != null) {
-						logger.info("Storage client is available saving {} to storage", f.getName());
-						saveToStorage(f);
-					}
-				} catch (Exception e) {
-					logger.error(e.getMessage());
+				logger.info("File: {} exist: {}", fileTmp.getAbsolutePath(), fileTmp.exists());
+				finalizeRecordFile(f);
+
+				IContext context = RecordMuxer.this.scope.getContext();
+				ApplicationContext appCtx = context.getApplicationContext();
+				Object bean = appCtx.getBean("web.handler");
+				if (bean instanceof IAntMediaStreamHandler) {
+					((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
 				}
+
+				if (storageClient != null) {
+					logger.info("Storage client is available saving {} to storage", f.getName());
+					saveToStorage(f);
+				}
+			} catch (Exception e) {
+				logger.error(e.getMessage());
 			}
-		});
+		}, r->{});
 
 	}
-	
+
 	public void saveToStorage(File fileToUpload) {
-		scheduler.addScheduledOnceJob(1000, new IScheduledJob() {
+		vertx.setTimer(1000, l2 -> {
+			// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
 
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				
-				// Check file exist in S3 and change file names. In this way, new file is created after the file name changed.
-				
-				String fileName = getFile().getName();
-				if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
-					
-					String tmpName =  fileName;
-					
-					int i = 0;
-					do {
-						i++;
-						fileName = tmpName.replace(".", "_"+ i +".");
-					} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
-				}
-				
-				storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, fileToUpload);
+			String fileName = getFile().getName();
+			if (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName)) {
+
+				String tmpName =  fileName;
+
+				int i = 0;
+				do {
+					i++;
+					fileName = tmpName.replace(".", "_"+ i +".");
+				} while (storageClient.fileExist(FileType.TYPE_STREAM.getValue() + "/" + fileName));
 			}
+
+			storageClient.save(FileType.TYPE_STREAM.getValue() + "/" + fileName, fileToUpload);
 		});
 	}
-	
+
 
 	protected void finalizeRecordFile(final File file) throws IOException {
 		Files.move(fileTmp.toPath(),file.toPath());

@@ -269,6 +269,11 @@
             <artifactId>vertx-core</artifactId>
             <version>${vertx-core.version}</version>
         </dependency>
+        <dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-dropwizard-metrics</artifactId>
+			<version>${vertx-core.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.bytedeco.javacpp-presets</groupId>
 			<artifactId>ffmpeg-platform</artifactId>

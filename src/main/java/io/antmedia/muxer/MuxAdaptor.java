@@ -76,7 +76,6 @@ public class MuxAdaptor implements IRecordingListener {
 	private static final int HEADER_LENGTH = 9;
 	private static final int TAG_HEADER_LENGTH = 11;
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
-	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
@@ -358,21 +357,11 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 	}
 
-	protected void initScheduler() {
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-
-	}
-
 	@Override
 	public boolean init(IScope scope, String streamId, boolean isAppend) {
 
 		this.streamId = streamId;
 		this.scope = scope;
-		initScheduler();
-		if (scheduler == null) {
-			logger.warn("scheduler is not available in beans for {}", streamId);
-			return false;
-		}
 
 		initializeDataStore();
 		enableSettings();
@@ -387,7 +376,7 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
+			HLSMuxer hlsMuxer = new HLSMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer for {}", streamId);
@@ -1281,7 +1270,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 	private Mp4Muxer createMp4Muxer() {
-		Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
+		Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, vertx);
 		mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 		mp4Muxer.setBitstreamFilter(mp4Filtername);
 		return mp4Muxer;
@@ -1306,7 +1295,7 @@ public class MuxAdaptor implements IRecordingListener {
 			muxer = mp4Muxer;
 		} 
 		else if(recordType == RecordType.WEBM) {
-			WebMMuxer webMMuxer = new WebMMuxer(storageClient, scheduler);
+			WebMMuxer webMMuxer = new WebMMuxer(storageClient, vertx);
 			webMMuxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			webMMuxer.setDynamic(true);
 			muxer = webMMuxer;
