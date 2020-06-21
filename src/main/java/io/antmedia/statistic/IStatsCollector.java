@@ -1,10 +1,5 @@
 package io.antmedia.statistic;
 
-import io.antmedia.statistic.type.WebRTCAudioReceiveStats;
-import io.antmedia.statistic.type.WebRTCAudioSendStats;
-import io.antmedia.statistic.type.WebRTCVideoReceiveStats;
-import io.antmedia.statistic.type.WebRTCVideoSendStats;
-
 public interface IStatsCollector {
 	public static final String BEAN_NAME = "statsCollector";
 

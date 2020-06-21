@@ -1,18 +1,20 @@
 package io.antmedia.muxer;
 
-import org.bytedeco.ffmpeg.global.*;
-import org.bytedeco.ffmpeg.avcodec.*;
-import org.bytedeco.ffmpeg.avformat.*;
-import org.bytedeco.ffmpeg.avutil.*;
-import org.bytedeco.ffmpeg.swresample.*;
-import org.bytedeco.ffmpeg.swscale.*;
-
-import static org.bytedeco.ffmpeg.global.avutil.*;
-import static org.bytedeco.ffmpeg.global.avformat.*;
-import static org.bytedeco.ffmpeg.global.avcodec.*;
-import static org.bytedeco.ffmpeg.global.avdevice.*;
-import static org.bytedeco.ffmpeg.global.swresample.*;
-import static org.bytedeco.ffmpeg.global.swscale.*;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avformat.av_dump_format;
+import static org.bytedeco.ffmpeg.global.avformat.av_read_frame;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
+import static org.bytedeco.ffmpeg.global.avformat.avio_alloc_context;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_LOG_INFO;
+import static org.bytedeco.ffmpeg.global.avutil.av_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_log_get_level;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,13 +27,21 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVInputFormat;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avformat.Read_packet_Pointer_BytePointer_int;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
+import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 import org.red5.io.utils.IOUtils;
@@ -42,7 +52,6 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamCapableConnection;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.message.Constants;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
@@ -52,11 +61,13 @@ import org.springframework.context.ApplicationContext;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
+import io.antmedia.RecordType;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
 import io.vertx.core.Vertx;
+
 
 public class MuxAdaptor implements IRecordingListener {
 
@@ -65,7 +76,6 @@ public class MuxAdaptor implements IRecordingListener {
 	private static final int HEADER_LENGTH = 9;
 	private static final int TAG_HEADER_LENGTH = 11;
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
-	protected QuartzSchedulingService scheduler;
 	private static Logger logger = LoggerFactory.getLogger(MuxAdaptor.class);
 	protected ConcurrentLinkedQueue<byte[]> inputQueue = new ConcurrentLinkedQueue<>();
 	protected AtomicBoolean isPipeReaderJobRunning = new AtomicBoolean(false);
@@ -104,13 +114,14 @@ public class MuxAdaptor implements IRecordingListener {
 
 	private static Map<Pointer, InputContext> queueReferences = new ConcurrentHashMap<>();
 	protected static final int BUFFER_SIZE = 4096;
-	public static final int MP4_ENABLED_FOR_STREAM = 1;
-	public static final int MP4_DISABLED_FOR_STREAM = -1;
-	public static final int MP4_NO_SET_FOR_STREAM = 0;
+	public static final int RECORDING_ENABLED_FOR_STREAM = 1;
+	public static final int RECORDING_DISABLED_FOR_STREAM = -1;
+	public static final int RECORDING_NO_SET_FOR_STREAM = 0;
 	protected static final long WAIT_TIME_MILLISECONDS = 5;
-	protected boolean isRecording = false;
+	protected volatile boolean isRecording = false;
 	protected ClientBroadcastStream broadcastStream;
 	protected boolean mp4MuxingEnabled;
+	protected boolean webMMuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
 	protected boolean objectDetectionEnabled;
@@ -320,6 +331,7 @@ public class MuxAdaptor implements IRecordingListener {
 		AppSettings appSettingsLocal = getAppSettings();
 		hlsMuxingEnabled = appSettingsLocal.isHlsMuxingEnabled();
 		mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
+		webMMuxingEnabled = appSettingsLocal.isWebMMuxingEnabled();
 		objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
 
 		addDateTimeToMp4FileName = appSettingsLocal.isAddDateTimeToMp4FileName();
@@ -345,26 +357,17 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 	}
 
-	protected void initScheduler() {
-		scheduler = (QuartzSchedulingService) scope.getParent().getContext().getBean(QuartzSchedulingService.BEAN_NAME);
-
-	}
-
 	@Override
 	public boolean init(IScope scope, String streamId, boolean isAppend) {
 
 		this.streamId = streamId;
 		this.scope = scope;
-		initScheduler();
-		if (scheduler == null) {
-			logger.warn("scheduler is not available in beans for {}", streamId);
-			return false;
-		}
 
 		initializeDataStore();
 		enableSettings();
 		initStorageClient();
 		enableMp4Setting();
+		//TODO enableWebMSetting();
 		initVertx();
 
 		if (mp4MuxingEnabled) {
@@ -373,7 +376,7 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 
 		if (hlsMuxingEnabled) {
-			HLSMuxer hlsMuxer = new HLSMuxer(scheduler, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
+			HLSMuxer hlsMuxer = new HLSMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer for {}", streamId);
@@ -402,15 +405,33 @@ public class MuxAdaptor implements IRecordingListener {
 
 		if (broadcast != null) 
 		{
-			if (broadcast.getMp4Enabled() == MP4_DISABLED_FOR_STREAM) 
+			if (broadcast.getMp4Enabled() == RECORDING_DISABLED_FOR_STREAM) 
 			{
 				// if stream specific mp4 setting is disabled
 				mp4MuxingEnabled = false;
 			} 
-			else if (broadcast.getMp4Enabled() == MP4_ENABLED_FOR_STREAM) 
+			else if (broadcast.getMp4Enabled() == RECORDING_ENABLED_FOR_STREAM) 
 			{
 				// if stream specific mp4 setting is enabled
 				mp4MuxingEnabled = true;
+			}
+		}
+	}
+	
+	protected void enableWebMSetting() {
+		broadcast = getBroadcast();
+
+		if (broadcast != null) 
+		{
+			if (broadcast.getWebMEnabled() == RECORDING_DISABLED_FOR_STREAM) 
+			{
+				// if stream specific WebM setting is disabled
+				webMMuxingEnabled = false;
+			} 
+			else if (broadcast.getWebMEnabled() == RECORDING_ENABLED_FOR_STREAM) 
+			{
+				// if stream specific WebM setting is enabled
+				webMMuxingEnabled = true;
 			}
 		}
 	}
@@ -425,7 +446,8 @@ public class MuxAdaptor implements IRecordingListener {
 			return false;
 		}
 
-		avio_alloc_context = avio_alloc_context(new BytePointer(avutil.av_malloc(BUFFER_SIZE)), BUFFER_SIZE, 0,
+		Pointer pointer = avutil.av_malloc(BUFFER_SIZE);
+		avio_alloc_context = avio_alloc_context(new BytePointer(pointer), BUFFER_SIZE, 0,
 				inputFormatContext, getReadCallback(), null, null);
 
 		inputFormatContext.pb(avio_alloc_context);
@@ -434,9 +456,12 @@ public class MuxAdaptor implements IRecordingListener {
 
 		logger.info("before avformat_open_input for stream {}", streamId);
 
-		if (avformat_open_input(inputFormatContext, (String) null, avformat.av_find_input_format("flv"),
+		AVInputFormat findInputFormat = avformat.av_find_input_format("flv");
+		if (avformat_open_input(inputFormatContext, (String) null, findInputFormat,
 				(AVDictionary) null) < 0) {
 			logger.error("cannot open input context for stream: {}", streamId);
+			findInputFormat.close();
+			pointer.close();
 			return false;
 		}
 
@@ -446,6 +471,8 @@ public class MuxAdaptor implements IRecordingListener {
 		int ret = avformat_find_stream_info(inputFormatContext, (AVDictionary) null);
 		if (ret < 0) {
 			logger.info("Could not find stream information for stream {}", streamId);
+			findInputFormat.close();
+			pointer.close();
 			return false;
 		}
 
@@ -556,19 +583,47 @@ public class MuxAdaptor implements IRecordingListener {
 					{
 						AVPacket packet = getAVPacket();
 						av_packet_ref(packet, pkt);
+						av_packet_unref(pkt);
 						bufferQueue.add(packet);
 
+						
 						AVPacket pktHead = bufferQueue.peek();
+						lastPacketTimeMsInQueue = av_rescale_q(packet.pts(), inputFormatContext.streams(packet.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						if (getBufferedDurationMs() > bufferTimeMs*5) 
+						{
+							//set buffering true to not let writeBufferedPacket method work
+							
+							buffering = true;
+							//if buffer duration somehow is more than 5 times bufferTimeMs
+							logger.warn("Buffer is increased({}) too much for stream: {}", getBufferedDurationMs() ,streamId);
+							AVPacket pkt;
+							int i = 0;
+							while ((pkt = bufferQueue.poll()) != null) 
+							{
+								pkt.close();
+								if (i % 10 == 0) 
+								{
+									i = 0;
+									if (getBufferedDurationMs() < bufferTimeMs*2) {
+										break;
+									}
+								}
+								i++;
+							}
+							
+							logger.warn("Buffer duration is decreased to {} for stream: {}", getBufferedDurationMs(), streamId);
+							pktHead = bufferQueue.peek();
+						}
 
 						/**
 						 * BufferQueue is polled in writer thread. 
 						 * It's a very rare case to happen so that check if it's null
 						 */
 						if (pktHead != null) {
-							lastPacketTimeMsInQueue = av_rescale_q(pkt.pts(), inputFormatContext.streams(pkt.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long firstPacketTimeMsInQueue = av_rescale_q(pktHead.pts(), inputFormatContext.streams(pktHead.stream_index()).time_base(), TIME_BASE_FOR_MS);
 							long bufferDuration = (lastPacketTimeMsInQueue - firstPacketTimeMsInQueue);
-
+							
+							
 							if (bufferDuration > bufferTimeMs) 
 							{ 
 								if (buffering) 
@@ -584,6 +639,7 @@ public class MuxAdaptor implements IRecordingListener {
 								buffering = false;
 
 							}
+							
 							bufferLogCounter++;
 							if (bufferLogCounter % COUNT_TO_LOG_BUFFER == 0) {
 								logger.info("ReadPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {} bufferQueue size: {}", buffering, bufferDuration, bufferTimeMs, streamId, bufferQueue.size());
@@ -713,6 +769,8 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		//This is allocated and needs to free for every case
 		av_packet_free(pkt);
+		
+		pkt.close();
 	}
 
 
@@ -951,57 +1009,67 @@ public class MuxAdaptor implements IRecordingListener {
 	 */
 	public void writeBufferedPacket() 
 	{
-		if (isBufferedWriterRunning.compareAndSet(false, true)) {
-			if (!buffering) 
-			{
-				while(!bufferQueue.isEmpty()) 
+		synchronized (this) {
+			
+			if (isBufferedWriterRunning.compareAndSet(false, true)) {
+				if (!buffering) 
 				{
-					AVPacket tempPacket = bufferQueue.peek(); 
-					long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
-					long now = System.currentTimeMillis();
-					long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
-					long passedTime = now - bufferingFinishTimeMs;
-					if (pktTimeDifferenceMs < passedTime) 
+					while(!bufferQueue.isEmpty()) 
 					{
-						writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-						av_packet_unref(tempPacket);
-						bufferQueue.remove(); //remove the packet from the queue
-						availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						AVPacket tempPacket = bufferQueue.peek(); 
+						long pktTime = av_rescale_q(tempPacket.pts(), inputFormatContext.streams(tempPacket.stream_index()).time_base(), TIME_BASE_FOR_MS);
+						long now = System.currentTimeMillis();
+						long pktTimeDifferenceMs = pktTime - firstPacketReadyToSentTimeMs; 
+						long passedTime = now - bufferingFinishTimeMs;
+						if (pktTimeDifferenceMs < passedTime) 
+						{
+							writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+							av_packet_unref(tempPacket);
+							bufferQueue.remove(); //remove the packet from the queue
+							availableBufferQueue.offer(tempPacket); //make packet available for new incoming packets
+						}
+						else {
+							//break the loop and don't block the thread because it's not correct time to send the packet
+							break;
+						}
+	
 					}
-					else {
-						//break the loop and don't block the thread because it's not correct time to send the packet
-						break;
-					}
-
+	
+					//update buffering. If bufferQueue is empty, it should start buffering
+					buffering = bufferQueue.isEmpty();
+	
 				}
-
-				//update buffering. If bufferQueue is empty, it should start buffering
-				buffering = bufferQueue.isEmpty();
-
+				bufferLogCounter++; //we use this parameter in execute method as well 
+				if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
+					logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
+					bufferLogCounter = 0;
+				}
+				isBufferedWriterRunning.compareAndSet(true, false);
 			}
-			bufferLogCounter++; //we use this parameter in execute method as well 
-			if (bufferLogCounter % COUNT_TO_LOG_BUFFER  == 0) {
-				logger.info("WriteBufferedPacket -> Buffering status {}, buffer duration {}ms buffer time {}ms stream: {}", buffering, getBufferedDurationMs(), bufferTimeMs, streamId);
-				bufferLogCounter = 0;
-			}
-			isBufferedWriterRunning.compareAndSet(true, false);
 		}
 	}
 
 	private void writeAllBufferedPackets() 
 	{
-		logger.info("write all buffered packets for stream: {}", streamId);
-		while (!bufferQueue.isEmpty()) {
-
-			AVPacket tempPacket = bufferQueue.poll();
-			writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
-			av_packet_unref(tempPacket);
+		synchronized (this) {
+			logger.info("write all buffered packets for stream: {} buffered queue size: {} available buffer size:{}", streamId, bufferQueue.size(), availableBufferQueue.size());
+			while (!bufferQueue.isEmpty()) {
+	
+				AVPacket tempPacket = bufferQueue.poll();
+				writePacket(inputFormatContext.streams(tempPacket.stream_index()), tempPacket);
+				av_packet_unref(tempPacket);
+			}
+	
+			AVPacket pkt;
+			while ((pkt = bufferQueue.poll()) != null) {
+				pkt.close();
+			}
+			
+			while ((pkt = availableBufferQueue.poll()) != null) {
+				pkt.close();
+			}
 		}
-
-		AVPacket pkt;
-		while ((pkt = bufferQueue.poll()) != null) {
-			pkt.close();
-		}
+		
 	}
 
 	int packetCount = 0;
@@ -1201,6 +1269,12 @@ public class MuxAdaptor implements IRecordingListener {
 		this.previewHeight = previewHeight;
 	}
 
+	private Mp4Muxer createMp4Muxer() {
+		Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, vertx);
+		mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
+		mp4Muxer.setBitstreamFilter(mp4Filtername);
+		return mp4Muxer;
+	}
 
 	private Muxer addMp4Muxer() {
 		Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1208,26 +1282,34 @@ public class MuxAdaptor implements IRecordingListener {
 		return mp4Muxer;
 	}
 
-	private Mp4Muxer createMp4Muxer() {
-		Mp4Muxer mp4Muxer = new Mp4Muxer(storageClient, scheduler);
-		mp4Muxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
-		mp4Muxer.setBitstreamFilter(mp4Filtername);
-		return mp4Muxer;
-	}
-
-	public boolean startRecording() {
-		Mp4Muxer muxer = createMp4Muxer();
+	public boolean startRecording(RecordType recordType) {
+		
+		if (!isRecording) {
+			logger.warn("Starting recording return false for stream:{} because stream is being prepared", streamId);
+			return false;
+		}
+		Muxer muxer = null;
+		if(recordType == RecordType.MP4) {
+			Mp4Muxer mp4Muxer = createMp4Muxer();
+			mp4Muxer.setDynamic(true);
+			muxer = mp4Muxer;
+		} 
+		else if(recordType == RecordType.WEBM) {
+			WebMMuxer webMMuxer = new WebMMuxer(storageClient, vertx);
+			webMMuxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
+			webMMuxer.setDynamic(true);
+			muxer = webMMuxer;
+		}
 		muxer.init(scope, streamId, 0);
-		muxer.setDynamic(true);
+		
 		boolean prepared = muxer.prepare(inputFormatContext);
 		if (prepared) {
 			addMuxer(muxer);
 		}
 		else {
-			logger.error("Mp4 prepare method returned false. Recording is not started for {}", streamId);
+				logger.error("{} prepare method returned false. Recording is not started for {}", recordType.toString(), streamId);
 		}
 		return prepared;
-
 	}
 
 	public AVPacket getAVPacket() {
@@ -1238,14 +1320,15 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	public Muxer findDynamicMp4Muxer() {
+	public Muxer findDynamicRecordMuxer(RecordType recordType) {
 		synchronized (muxerList) 
 		{
 			Iterator<Muxer> iterator = muxerList.iterator();
 			while (iterator.hasNext()) 
 			{
 				Muxer muxer = iterator.next();
-				if (muxer instanceof Mp4Muxer && ((Mp4Muxer) muxer).isDynamic()) {
+				if ((recordType == RecordType.MP4 && muxer instanceof Mp4Muxer && ((Mp4Muxer) muxer).isDynamic())
+						|| (recordType == RecordType.WEBM && muxer instanceof WebMMuxer && ((WebMMuxer) muxer).isDynamic())) {
 					return muxer;
 				}
 			}
@@ -1253,10 +1336,10 @@ public class MuxAdaptor implements IRecordingListener {
 		return null;
 	}
 
-	public boolean stopRecording() 
+	public boolean stopRecording(RecordType recordType) 
 	{
 		boolean result = false;
-		Muxer muxer = findDynamicMp4Muxer();
+		Muxer muxer = findDynamicRecordMuxer(recordType);
 		if (muxer != null) 
 		{
 			muxerList.remove(muxer);
@@ -1273,8 +1356,14 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean startRtmpStreaming(String rtmpUrl) 
 	{
+		if (!isRecording) {
+			logger.warn("Start rtmp streaming return false for stream:{} because stream is being prepared", streamId);
+			return false;
+		}
+		
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
 		rtmpMuxer.init(scope, streamId, 0);
+			
 		boolean prepared = rtmpMuxer.prepare(inputFormatContext);
 		if (prepared) {
 			addMuxer(rtmpMuxer);

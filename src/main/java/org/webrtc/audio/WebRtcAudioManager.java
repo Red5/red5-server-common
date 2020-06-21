@@ -10,9 +10,6 @@
 
 package org.webrtc.audio;
 
-import org.webrtc.Logging;
-import org.webrtc.CalledByNative;
-
 /**
  * This class contains static functions to query sample rate and input/output audio buffer sizes.
  */

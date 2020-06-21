@@ -3,37 +3,29 @@ package io.antmedia.muxer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.bytedeco.ffmpeg.global.*;
-import org.bytedeco.ffmpeg.avcodec.*;
-import org.bytedeco.ffmpeg.avformat.*;
-import org.bytedeco.ffmpeg.avutil.*;
-import org.bytedeco.ffmpeg.swresample.*;
-import org.bytedeco.ffmpeg.swscale.*;
-
-import static org.bytedeco.ffmpeg.global.avutil.*;
-import static org.bytedeco.ffmpeg.global.avformat.*;
-import static org.bytedeco.ffmpeg.global.avcodec.*;
-import static org.bytedeco.ffmpeg.global.avdevice.*;
-import static org.bytedeco.ffmpeg.global.swresample.*;
-import static org.bytedeco.ffmpeg.global.swscale.*;
-
+import org.bytedeco.ffmpeg.avcodec.AVCodec;
+import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avutil.AVRational;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IStreamFilenameGenerator;
 import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.DefaultStreamFilenameGenerator;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+
+import io.vertx.core.Vertx;
 
 /**
  * PLEASE READ HERE BEFORE YOU IMPLEMENT A MUXER THAT INHERITS THIS CLASS
@@ -70,7 +62,7 @@ public abstract class Muxer {
 
 	protected boolean isRecording;
 
-	protected QuartzSchedulingService scheduler;
+	protected Vertx vertx;
 
 	protected IScope scope;
 
@@ -83,8 +75,8 @@ public abstract class Muxer {
 	 */
 	protected String bsfName = null;
 
-	public Muxer(QuartzSchedulingService scheduler) {
-		this.scheduler = scheduler;
+	public Muxer(Vertx vertx) {
+		this.vertx = vertx;
 	}
 
 	public static File getPreviewFile(IScope scope, String name, String extension) {
@@ -266,16 +258,8 @@ public abstract class Muxer {
 			if (addDateTimeToResourceName) {
 
 				LocalDateTime ldt =  LocalDateTime.now();
-				if (ldt.getSecond() > 50) {
-					/*
-					 * There are some cases where synch of date time values differ in minute resolution
-					 * so that we convert to ceiling if second is more than 50seconds
-					 */
-					logger.info("Adding 1 minute for having the same minute value. Current second value: {}", ldt.getSecond());
-					ldt = ldt.plusMinutes(1);
-				}
 
-				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
+				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
 				if (logger.isInfoEnabled()) {
 					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
 				}

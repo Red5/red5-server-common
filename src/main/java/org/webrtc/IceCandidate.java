@@ -10,8 +10,6 @@
 
 package org.webrtc;
 
-import org.webrtc.PeerConnection;
-
 /**
  * Representation of a single ICE Candidate, mirroring
  * {@code IceCandidateInterface} in the C++ API.

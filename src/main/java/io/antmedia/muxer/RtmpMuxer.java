@@ -1,5 +1,39 @@
 package io.antmedia.muxer;
 
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_alloc;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_get_by_name;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_init;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_send_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
+import static org.bytedeco.ffmpeg.global.avformat.AVFMT_GLOBALHEADER;
+import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
+import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_free_context;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_write_header;
+import static org.bytedeco.ffmpeg.global.avformat.avio_closep;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_NEAR_INF;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_PASS_MINMAX;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_set;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q_rnd;
+import static org.bytedeco.ffmpeg.global.avutil.av_strerror;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,20 +41,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.bytedeco.ffmpeg.global.*;
-import org.bytedeco.ffmpeg.avcodec.*;
-import org.bytedeco.ffmpeg.avformat.*;
-import org.bytedeco.ffmpeg.avutil.*;
-import org.bytedeco.ffmpeg.swresample.*;
-import org.bytedeco.ffmpeg.swscale.*;
+import org.bytedeco.ffmpeg.avcodec.AVBSFContext;
+import org.bytedeco.ffmpeg.avcodec.AVBitStreamFilter;
+import org.bytedeco.ffmpeg.avcodec.AVCodec;
+import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.javacpp.BytePointer;
-
-import static org.bytedeco.ffmpeg.global.avutil.*;
-import static org.bytedeco.ffmpeg.global.avformat.*;
-import static org.bytedeco.ffmpeg.global.avcodec.*;
-import static org.bytedeco.ffmpeg.global.avdevice.*;
-import static org.bytedeco.ffmpeg.global.swresample.*;
-import static org.bytedeco.ffmpeg.global.swscale.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -215,6 +249,7 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		avformat_free_context(outputFormatContext);
+		outputFormatContext.close();
 		outputFormatContext = null;
 	}
 
@@ -246,12 +281,17 @@ public class RtmpMuxer extends Muxer {
 			int ret = av_bsf_alloc(h264bsfc, bsfExtractdataContext);
 			if (ret < 0) {
 				logger.info("cannot allocate bsf context for {}", file.getName());
+				outStream.close();
+				timeBase.close();
 				return false;
 			}
 
 			ret = avcodec_parameters_copy(bsfExtractdataContext.par_in(), outStream.codecpar());
 			if (ret < 0) {
 				logger.info("cannot copy input codec parameters for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 			bsfExtractdataContext.time_base_in(timeBase);
@@ -259,12 +299,18 @@ public class RtmpMuxer extends Muxer {
 			ret = av_bsf_init(bsfExtractdataContext);
 			if (ret < 0) {
 				logger.info("cannot init bit stream filter context for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 
 			ret = avcodec_parameters_copy(outStream.codecpar(), bsfExtractdataContext.par_out());
 			if (ret < 0) {
 				logger.info("cannot copy codec parameters to output for {}", file.getName());
+				outStream.close();
+				timeBase.close();
+				h264bsfc.close();
 				return false;
 			}
 			outStream.time_base(bsfExtractdataContext.time_base_out());

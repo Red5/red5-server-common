@@ -68,19 +68,33 @@ public class Broadcast {
 	 * date when record is created in milliseconds
 	 */
 	@ApiModelProperty(value = "the date when record is created in milliseconds")
-	private Long date;
+	private long date;
 
 	/**
-	 * Planned start date
+	 * Planned start date in milliseconds
+	 * This parameter is not mandatory, default parameter is null
+	 * 
+	 * This feature is enabled in RTMP and WebRTC streams
+	 * Streams are accepting when plannedStartDate is lower than now(Unix Timestamp)
 	 */
 	@ApiModelProperty(value = "the planned start date")
-	private Long plannedStartDate;
+	private long plannedStartDate;
+	
+	/**
+	 * Planned end date in milliseconds
+	 * This parameter is not mandatory, default parameter is null
+	 * 
+	 * This feature is enabled in RTMP and WebRTC streams
+	 * Streams are accepting when plannedEndDate is higher than now(Unix Timestamp)
+	 */
+	@ApiModelProperty(value = "the planned end date")
+	private long plannedEndDate;
 
 	/**
 	 * duration of the stream in milliseconds
 	 */
 	@ApiModelProperty(value = "the duration of the stream in milliseconds")
-	private Long duration;
+	private long duration;
 
 	@ApiModelProperty(value = "the list of endpoints such as Facebook, Twitter or custom RTMP endpoints  ")
 	@Embedded
@@ -166,6 +180,13 @@ public class Broadcast {
 	@ApiModelProperty(value = "MP4 muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
 	private int mp4Enabled = 0;
 	
+	/**
+	 * WebM muxing is enabled or not for the stream
+	 * 1 means enabled, -1 means disabled, 0 means no settings for the stream
+	 */
+	@ApiModelProperty(value = "WebM muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
+	private int webMEnabled = 0;
+	
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -177,8 +198,6 @@ public class Broadcast {
 	 * 
 	 * If expire duration is 0, then stream will never expire
 	 */
-	
-	
 	@ApiModelProperty(value = "the expire time in milliseconds For instance if this value is 10000 then broadcast should be started in 10 seconds after it is created.If expire duration is 0, then stream will never expire")
 	private int expireDurationMS;
 
@@ -335,23 +354,31 @@ public class Broadcast {
 		this.publish = publish;
 	}
 
-	public Long getDate() {
+	public long getDate() {
 		return date;
 	}
 
-	public void setDate(Long date) {
+	public void setDate(long date) {
 		this.date = date;
 	}
 
-	public Long getPlannedStartDate() {
+	public long getPlannedStartDate() {
 		return plannedStartDate;
 	}
 
-	public void setPlannedStartDate(Long plannedStartDate) {
+	public void setPlannedStartDate(long plannedStartDate) {
 		this.plannedStartDate = plannedStartDate;
 	}
+	
+	public long getPlannedEndDate() {
+		return plannedEndDate;
+	}
 
-	public Long getDuration() {
+	public void setPlannedEndDate(long plannedEndDate) {
+		this.plannedEndDate = plannedEndDate;
+	}
+
+	public long getDuration() {
 		return duration;
 	}
 
@@ -593,5 +620,13 @@ public class Broadcast {
 
 	public void setSubTrackStreamIds(List<String> subTrackStreamIds) {
 		this.subTrackStreamIds = subTrackStreamIds;
+	}
+
+	public int getWebMEnabled() {
+		return webMEnabled;
+	}
+
+	public void setWebMEnabled(int webMEnabled) {
+		this.webMEnabled = webMEnabled;
 	}
 }

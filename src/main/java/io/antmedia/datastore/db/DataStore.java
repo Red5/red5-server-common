@@ -5,12 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import io.antmedia.datastore.db.types.Playlist;
-
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
+import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -70,8 +69,8 @@ public abstract class DataStore {
 
 	public abstract List<Broadcast> filterBroadcastList(int offset, int size, String type);
 
-	public abstract boolean removeEndpoint(String id, Endpoint endpoint);
-
+	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
+	
 	public abstract List<Broadcast> getExternalStreamsList();
 
 	public abstract void close();
@@ -154,6 +153,14 @@ public abstract class DataStore {
 	 * @return- true if set, false if not
 	 */
 	public abstract boolean setMp4Muxing(String streamId, int enabled);
+	
+	/**
+	 * enables or disables WebM muxing for the stream
+	 * @param streamId- id of the stream
+	 * @param enabled 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @return- true if set, false if not
+	 */
+	public abstract boolean setWebMMuxing(String streamId, int enabled);
 
 
 	/**
@@ -395,6 +402,18 @@ public abstract class DataStore {
 		
 		if (newBroadcast.getMainTrackStreamId() != null) {
 			broadcast.setMainTrackStreamId(newBroadcast.getMainTrackStreamId());
+		}
+		
+		if (newBroadcast.getStartTime() != 0) {
+			broadcast.setStartTime(newBroadcast.getStartTime());
+		}
+		
+		if (newBroadcast.getOriginAdress() != null) {
+			broadcast.setOriginAdress(newBroadcast.getOriginAdress());
+		}
+		
+		if (newBroadcast.getStatus() != null) {
+			broadcast.setStatus(newBroadcast.getStatus());
 		}
 		
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());

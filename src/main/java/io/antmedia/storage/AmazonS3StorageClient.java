@@ -8,14 +8,13 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.event.ProgressEventType;
 import com.amazonaws.event.ProgressListener;
-import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -34,6 +33,12 @@ public class AmazonS3StorageClient extends StorageClient {
 	private AmazonS3 getAmazonS3() {
 		if (amazonS3 == null) {
 			AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
+
+			// Inject endpoint if provided in the configuration file
+			if (getEndpoint() != null && getRegion() != null) {
+				builder = builder.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(getEndpoint(), getRegion()));
+			}
+
 			// Inject credentials if provided in the configuration file
 			if (getAccessKey() != null) {
 				BasicAWSCredentials awsCredentials = new BasicAWSCredentials(getAccessKey(), getSecretKey());
@@ -48,8 +53,6 @@ public class AmazonS3StorageClient extends StorageClient {
 	                .withConnectionTimeout(120 * 1000)
 	                .withMaxErrorRetry(15));
 			
-			//.withConnectionTimeout(120 * 1000)
-            //.withMaxErrorRetry(15))
 			amazonS3 = builder.build();
 		}
 		return amazonS3; 
@@ -85,9 +88,9 @@ public class AmazonS3StorageClient extends StorageClient {
 		
 		PutObjectRequest putRequest = new PutObjectRequest(getStorageName(), key, file);
 		
-		putRequest.setCannedAcl(CannedAccessControlList.PublicRead);
-	
 		
+		putRequest.setCannedAcl(getCannedAcl());
+	
 		
 		Upload upload = tm.upload(putRequest);
         // TransferManager processes all transfers asynchronously,
@@ -123,6 +126,31 @@ public class AmazonS3StorageClient extends StorageClient {
 			Thread.currentThread().interrupt();
 		}
         
+	}
+
+
+	public CannedAccessControlList getCannedAcl() 
+	{
+		switch (getPermission()) 
+		{
+		case "public-read":
+			return CannedAccessControlList.PublicRead;
+		case "private":
+			return CannedAccessControlList.Private;
+		case "public-read-write":
+			return CannedAccessControlList.PublicReadWrite;
+		case "authenticated-read":
+			return CannedAccessControlList.AuthenticatedRead;
+		case "log-delivery-write":
+			return CannedAccessControlList.LogDeliveryWrite;
+		case "bucket-owner-read":
+			return CannedAccessControlList.BucketOwnerRead;
+		case "bucket-owner-full-control":
+			return CannedAccessControlList.BucketOwnerFullControl;
+		case "aws-exec-read":
+			return CannedAccessControlList.AwsExecRead;
+		}
+		return CannedAccessControlList.PublicRead;
 	}
 
 }
