@@ -524,7 +524,13 @@ public abstract class DataStore {
 	 * @return true if successfully edited, false if not	
 	 */	
 	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
-	
+
+	/**
+	 * Get the Vod id by StreamId
+	 * @param streamID - Stream id for Vod id search
+	 * @return Vod id list if exists, null if not
+	 */
+	public abstract List<String> getVoDIdByStreamId(String streamID);
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
