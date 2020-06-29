@@ -234,8 +234,15 @@ public class MuxAdaptor implements IRecordingListener {
 							Thread.sleep(WAIT_TIME_MILLISECONDS);
 							waitCount++;
 							if (waitCount % 50 == 0) {
-								logger.warn("Stream: {} does not get packet for {} ms",inputContextLocal.muxAdaptor.getStreamId(), waitCount * WAIT_TIME_MILLISECONDS);
+								long totalWaitTime = waitCount * WAIT_TIME_MILLISECONDS;
+								logger.warn("Stream: {} does not get packet for {} ms",inputContextLocal.muxAdaptor.getStreamId(), totalWaitTime);
+								long maxWaitTime = 10*inputContextLocal.muxAdaptor.maxAnalyzeDurationMS;
+								if (totalWaitTime > maxWaitTime) {
+									logger.warn("Total wait time:{} for receiving packet exceeds maxWaitTime(10* max analyze duration):{} breaking the loop for stream:{}", totalWaitTime, maxWaitTime, inputContextLocal.muxAdaptor.getStreamId());
+									break;
+								}
 							}
+							
 						}
 						inputContextLocal.queueSize.decrementAndGet();
 
@@ -253,13 +260,20 @@ public class MuxAdaptor implements IRecordingListener {
 				} 
 				else {
 
-					logger.info("Checking streams for stream: {}", inputContextLocal.muxAdaptor.streamId);
-					if (inputContextLocal.muxAdaptor.checkStreams()) {
-						inputContextLocal.isHeaderWritten = true;
-						byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
-						length = flvHeader.length;
-
-						buf.put(flvHeader, 0, length);
+					
+					if (inputContextLocal.stopRequestExist) 
+					{
+						logger.warn("Stop request is received for stream:{} before it checks streams", inputContextLocal.muxAdaptor.streamId);
+					}
+					else {
+						logger.info("Checking streams for stream: {}", inputContextLocal.muxAdaptor.streamId);
+						if (inputContextLocal.muxAdaptor.checkStreams()) {
+							inputContextLocal.isHeaderWritten = true;
+							byte[] flvHeader = getFLVHeader(inputContextLocal.muxAdaptor);
+							length = flvHeader.length;
+	
+							buf.put(flvHeader, 0, length);
+						}
 					}
 				}
 
@@ -475,6 +489,7 @@ public class MuxAdaptor implements IRecordingListener {
 			pointer.close();
 			return false;
 		}
+		
 
 		logger.info("avformat_find_stream_info takes {}ms for stream:{}", System.currentTimeMillis() - startFindStreamInfoTime, streamId);
 
@@ -654,7 +669,14 @@ public class MuxAdaptor implements IRecordingListener {
 
 				} 
 				else {
+					if (broadcastStream != null) {
+						broadcastStream.removeStreamListener(MuxAdaptor.this);
+					}
+					logger.warn("closing adaptor for {}", streamId);
 					closeResources();
+					logger.warn("closed adaptor for {}", streamId);
+					closeRtmpConnection();
+					
 				}
 				// if there is not element in the qeueue,
 				// break the loop
@@ -763,18 +785,20 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 	}
 
-	public void writeTrailer() {
+	public synchronized void writeTrailer() {
 		for (Muxer muxer : muxerList) {
 			muxer.writeTrailer();
 		}
 		//This is allocated and needs to free for every case
-		av_packet_free(pkt);
-		
-		pkt.close();
+		if (pkt != null) {
+			av_packet_free(pkt);
+			pkt.close();
+			pkt = null;
+		}
 	}
 
 
-	public void closeResources() {
+	public synchronized void closeResources() {
 		logger.info("close resources for streamId -> {}", streamId);
 
 
