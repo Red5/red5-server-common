@@ -1486,6 +1486,10 @@ public class AppSettings {
 	public int getMaxAnalyzeDurationMS() {
 		return maxAnalyzeDurationMS;
 	}
+	
+	public void setMaxAnalyzeDurationMS(int maxAnalyzeDurationMS) {
+		this.maxAnalyzeDurationMS = maxAnalyzeDurationMS;
+	}
 
 	public boolean isGeneratePreview() {
 		return generatePreview;
