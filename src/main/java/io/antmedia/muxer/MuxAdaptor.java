@@ -239,6 +239,7 @@ public class MuxAdaptor implements IRecordingListener {
 								long maxWaitTime = 10*inputContextLocal.muxAdaptor.maxAnalyzeDurationMS;
 								if (totalWaitTime > maxWaitTime) {
 									logger.warn("Total wait time:{} for receiving packet exceeds maxWaitTime(10* max analyze duration):{} breaking the loop for stream:{}", totalWaitTime, maxWaitTime, inputContextLocal.muxAdaptor.getStreamId());
+									inputContextLocal.stopRequestExist = true;
 									break;
 								}
 							}

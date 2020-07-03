@@ -76,7 +76,7 @@ public class AppSettings {
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
 	public static final String SETTINGS_WEBM_MUXING_ENABLED = "settings.webMMuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
-	static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	public static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_STREAM_FETCHER_AUTO_START = "settings.streamFetcherAutoStart";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
