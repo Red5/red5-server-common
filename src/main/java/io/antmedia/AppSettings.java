@@ -76,7 +76,7 @@ public class AppSettings {
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
 	public static final String SETTINGS_WEBM_MUXING_ENABLED = "settings.webMMuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
-	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	public static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
 	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
@@ -406,7 +406,8 @@ public class AppSettings {
 	private int createPreviewPeriod;
 
 	/**
-	 * Restart stream fetcher period in seconds
+	 * Set stream fetcher restart period in seconds, this value is used in periodically stopping and starting
+	 * stream fetchers. If this value is zero it will not restart stream fetchers
 	 */
 	@Value( "${"+SETTINGS_STREAM_FETCHER_RESTART_PERIOD+":0}" )
 	private int restartStreamFetcherPeriod;
@@ -415,7 +416,7 @@ public class AppSettings {
 	 * Stream fetcher buffer time in milliseconds. 
 	 * Stream is buffered for this duration and after that it will be started.
 	 */
-	//@Value( "${"+SETTINGS_STREAM_FETCHER_BUFFER_TIME+"}" )
+	@Value( "${"+SETTINGS_STREAM_FETCHER_BUFFER_TIME+":0}" )
 	private int streamFetcherBufferTime = 0;
 
 
