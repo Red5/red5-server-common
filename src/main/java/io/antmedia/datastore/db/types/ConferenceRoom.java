@@ -1,5 +1,8 @@
 package io.antmedia.datastore.db.types;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Field;
@@ -31,9 +34,10 @@ public class ConferenceRoom {
 	
 	@ApiModelProperty(value = "the end date of the Conference Room")
 	private long endDate;
+	
+	@ApiModelProperty(value = "the list of streams in the Conference Room")
+	private List<String> roomStreamList = new ArrayList<>();
 
-	
-	
 	public String getRoomId() {
 		return roomId;
 	}
@@ -56,6 +60,14 @@ public class ConferenceRoom {
 
 	public void setEndDate(long endDate) {
 		this.endDate = endDate;
+	}
+	
+	public List<String> getRoomStreamList() {
+		return roomStreamList;
+	}
+
+	public void setRoomStreamList(List<String> roomStreamList) {
+		this.roomStreamList = roomStreamList;
 	}
 
 }
