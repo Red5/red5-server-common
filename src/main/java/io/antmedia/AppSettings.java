@@ -416,7 +416,7 @@ public class AppSettings {
 	 * Stream fetcher buffer time in milliseconds. 
 	 * Stream is buffered for this duration and after that it will be started.
 	 */
-	//@Value( "${"+SETTINGS_STREAM_FETCHER_BUFFER_TIME+"}" )
+	@Value( "${"+SETTINGS_STREAM_FETCHER_BUFFER_TIME+":0}" )
 	private int streamFetcherBufferTime = 0;
 
 
