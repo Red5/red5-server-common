@@ -313,14 +313,6 @@ public abstract class DataStore {
 	public void setWriteStatsToDatastore(boolean writeStatsToDatastore) {
 		this.writeStatsToDatastore = writeStatsToDatastore;
 	}
-	
-	/**
-	 * This method is called at startup
-	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
-	 */
-	public void clearStreamsOnThisServer(String hostAddress) {
-		//no default implementation
-	}
 
 	/**
 	 * Creates a conference room with the parameters. 
@@ -523,6 +515,15 @@ public abstract class DataStore {
 	 * @return true if successfully edited, false if not	
 	 */	
 	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
+
+	/**
+	 * Resets the broadcasts in the database. 
+	 * It sets number of viewers to zero. 
+	 * It also delete the stream if it's zombi stream
+	 * 
+	 * @returns total number of operation in the db
+	 */
+	public abstract int resetBroadcasts(String hostAddress);
 	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
