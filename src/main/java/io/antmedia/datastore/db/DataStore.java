@@ -83,9 +83,10 @@ public abstract class DataStore {
 	 * @param size: batch size
 	 * @param sortBy can get "name" or "date" values
 	 * @param orderBy can get "desc" or "asc"
+	 * @param filterStreamId is used for filtering the vod by stream id. If it's null or empty, it's not used
 	 * @return
 	 */
-	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy);
+	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId);
 
 	public abstract boolean removeAllEndpoints(String id);
 
@@ -525,7 +526,7 @@ public abstract class DataStore {
 	 * @returns total number of operation in the db
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
-	
+  
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
