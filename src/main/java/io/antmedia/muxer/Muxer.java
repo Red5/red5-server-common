@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 
+import io.vertx.core.Vertx;
+
 /**
  * PLEASE READ HERE BEFORE YOU IMPLEMENT A MUXER THAT INHERITS THIS CLASS
  * 
@@ -63,7 +65,7 @@ public abstract class Muxer {
 
 	protected boolean isRecording;
 
-	protected QuartzSchedulingService scheduler;
+	protected Vertx vertx;
 
 	protected IScope scope;
 
@@ -76,8 +78,8 @@ public abstract class Muxer {
 	 */
 	protected String bsfName = null;
 
-	public Muxer(QuartzSchedulingService scheduler) {
-		this.scheduler = scheduler;
+	public Muxer(Vertx vertx) {
+		this.vertx = vertx;
 	}
 
 	public static File getPreviewFile(IScope scope, String name, String extension) {
@@ -259,16 +261,8 @@ public abstract class Muxer {
 			if (addDateTimeToResourceName) {
 
 				LocalDateTime ldt =  LocalDateTime.now();
-				if (ldt.getSecond() > 50) {
-					/*
-					 * There are some cases where synch of date time values differ in minute resolution
-					 * so that we convert to ceiling if second is more than 50seconds
-					 */
-					logger.info("Adding 1 minute for having the same minute value. Current second value: {}", ldt.getSecond());
-					ldt = ldt.plusMinutes(1);
-				}
 
-				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"));
+				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
 				if (logger.isInfoEnabled()) {
 					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
 				}

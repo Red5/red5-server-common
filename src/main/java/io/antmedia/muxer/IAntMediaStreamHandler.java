@@ -57,7 +57,7 @@ public interface IAntMediaStreamHandler {
     /***
      * Checks a Stream parameters is valid.
      *
-     * @param inputFormatContext, pkt
+     * @param inputFormatContext, pkt, streamId
      */
 	public boolean isValidStreamParameters(AVFormatContext inputFormatContext, AVPacket pkt);
 }

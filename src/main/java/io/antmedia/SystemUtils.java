@@ -4,15 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 
 import javax.management.MBeanServer;
 
-import static java.lang.management.ManagementFactory.getThreadMXBean;
-import com.sun.management.HotSpotDiagnosticMXBean;
+import org.bytedeco.javacpp.Pointer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.sun.management.HotSpotDiagnosticMXBean;
 /**
  * This utility is designed for accessing server's
  * system information more easier.
@@ -58,7 +58,7 @@ import com.sun.management.HotSpotDiagnosticMXBean;
  *  -------------------------------
  *  
  */
-public final class SystemUtils {
+public class SystemUtils {
 
 	public static final String HEAPDUMP_HPROF = "heapdump.hprof";
 
@@ -95,6 +95,29 @@ public final class SystemUtils {
 			"com.sun.management:type=HotSpotDiagnostic";
 
 	private static HotSpotDiagnosticMXBean hotspotMBean;
+
+	protected static final Logger logger = LoggerFactory.getLogger(SystemUtils.class);
+	
+	public static final int MAC_OS_X = 0;
+	public static final int LINUX = 1;
+	public static final int WINDOWS = 2;
+	
+	public static final int OS_TYPE;
+	
+	static {
+		String osName = SystemUtils.osName.toLowerCase();
+		if (osName.startsWith("mac os x") || osName.startsWith("darwin")) {
+			OS_TYPE = MAC_OS_X;
+		} else if (osName.startsWith("windows")) {
+			OS_TYPE = WINDOWS;
+		} else if (osName.startsWith("linux")) {
+			OS_TYPE = LINUX;
+		}
+		else {
+			OS_TYPE = -1;
+		}
+	}
+
 
 	/**
 	 * These functions below are used for Java Virtual Machine (JVM)
@@ -231,6 +254,14 @@ public final class SystemUtils {
 			error(e);
 			return -1L;
 		}
+	}
+
+	/**
+	 * 
+	 * @return the amount of available physical memory
+	 */
+	public static long osAvailableMemory() {
+		return Pointer.availablePhysicalBytes();
 	}
 
 	/**
@@ -590,6 +621,7 @@ public final class SystemUtils {
 		}
 	}
 
+
 	/**
 	 * Returns the "% recent cpu usage" for the Java Virtual Machine process. 
 	 *  the method returns a negative value.
@@ -650,4 +682,5 @@ public final class SystemUtils {
 		}
 		return hotspotMBean;
 	}
+	
 }

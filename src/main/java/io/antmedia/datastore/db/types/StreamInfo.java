@@ -42,8 +42,8 @@ public class StreamInfo implements IStreamInfo {
 		this.audioBitrate = audiobitrate;
 		this.videoRTimebase = videoRTimebase;
 		this.audioRTimebase = audioRTimebase;
-		this.videoEnabled = true;
-		this.audioEnabled = true;
+		this.videoEnabled = videoEnabled;
+		this.audioEnabled = audioEnabled;
 		this.videoCodec = codec;
 	}
 	

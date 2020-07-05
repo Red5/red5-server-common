@@ -70,6 +70,8 @@ import org.red5.server.scheduling.QuartzSchedulingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.core.Vertx;
+
 
 public class HLSMuxer extends Muxer  {
 
@@ -104,8 +106,8 @@ public class HLSMuxer extends Muxer  {
 	private AVPacket videoPkt;
 
 
-	public HLSMuxer(QuartzSchedulingService scheduler, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
-		super(scheduler);
+	public HLSMuxer(Vertx vertx, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
+		super(vertx);
 		extension = ".m3u8";
 		format = "hls";
 
@@ -411,51 +413,44 @@ public class HLSMuxer extends Muxer  {
 
 		outputFormatContext = null;
 
-		logger.info("Delete File onexit:{} scheduler:{}", deleteFileOnExit, scheduler);
-		if (scheduler != null && deleteFileOnExit ) {
+		logger.info("Delete File onexit:{}", deleteFileOnExit);
+		if (vertx != null && deleteFileOnExit ) {
 
 			logger.info("Scheduling the task to delete. HLS time: {}, hlsListSize:{}", hlsTime, hlsListSize);
-			scheduler.addScheduledOnceJob(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, 
-					new IScheduledJob() {
+			vertx.setTimer(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, l -> {
+				logger.info("Delete HLS files on exit");
 
-				@Override
-				public void execute(ISchedulingService service) throws CloneNotSupportedException {
-					
-					logger.info("Delete HLS files on exit");
+				final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 
-					final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
-
-					File[] files = file.getParentFile().listFiles(new FilenameFilter() {
-						@Override
-						public boolean accept(File dir, String name) {
-							return name.contains(filenameWithoutExtension) && name.endsWith(".ts");
-						}
-					});
-
-					if (files != null) 
-					{
-
-						for (int i = 0; i < files.length; i++) {
-							try {
-								if (!files[i].exists()) {
-									continue;
-								}
-								Files.delete(files[i].toPath());
-							} catch (IOException e) {
-								logger.error(e.getMessage());
-							}
-						}
+				File[] files = file.getParentFile().listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						return name.contains(filenameWithoutExtension) && name.endsWith(".ts");
 					}
-					if (file.exists()) {
+				});
+
+				if (files != null) 
+				{
+
+					for (int i = 0; i < files.length; i++) {
 						try {
-							Files.delete(file.toPath());
+							if (!files[i].exists()) {
+								continue;
+							}
+							Files.delete(files[i].toPath());
 						} catch (IOException e) {
 							logger.error(e.getMessage());
 						}
 					}
 				}
+				if (file.exists()) {
+					try {
+						Files.delete(file.toPath());
+					} catch (IOException e) {
+						logger.error(e.getMessage());
+					}
+				}
 			});
-
 		}
 
 		isRecording = false;	

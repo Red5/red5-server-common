@@ -70,8 +70,8 @@ public abstract class DataStore {
 
 	public abstract List<Broadcast> filterBroadcastList(int offset, int size, String type);
 
-	public abstract boolean removeEndpoint(String id, Endpoint endpoint);
-
+	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
+	
 	public abstract List<Broadcast> getExternalStreamsList();
 
 	public abstract void close();
@@ -154,6 +154,14 @@ public abstract class DataStore {
 	 * @return- true if set, false if not
 	 */
 	public abstract boolean setMp4Muxing(String streamId, int enabled);
+	
+	/**
+	 * enables or disables WebM muxing for the stream
+	 * @param streamId- id of the stream
+	 * @param enabled 1 means enabled, -1 means disabled, 0 means no setting for the stream
+	 * @return- true if set, false if not
+	 */
+	public abstract boolean setWebMMuxing(String streamId, int enabled);
 
 
 	/**
@@ -305,14 +313,6 @@ public abstract class DataStore {
 
 	public void setWriteStatsToDatastore(boolean writeStatsToDatastore) {
 		this.writeStatsToDatastore = writeStatsToDatastore;
-	}
-	
-	/**
-	 * This method is called at startup
-	 * It checks any hanging Broadcast and StreamInfo entry in datastore in case of unexpected restart
-	 */
-	public void clearStreamsOnThisServer(String hostAddress) {
-		//no default implementation
 	}
 
 	/**
@@ -520,6 +520,15 @@ public abstract class DataStore {
 	 * @return true if successfully edited, false if not	
 	 */	
 	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
+
+	/**
+	 * Resets the broadcasts in the database. 
+	 * It sets number of viewers to zero. 
+	 * It also delete the stream if it's zombi stream
+	 * 
+	 * @returns total number of operation in the db
+	 */
+	public abstract int resetBroadcasts(String hostAddress);
 	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions

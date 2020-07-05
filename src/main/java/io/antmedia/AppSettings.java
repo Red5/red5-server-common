@@ -56,7 +56,7 @@ public class AppSettings {
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
-	private static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
+	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
@@ -74,8 +74,10 @@ public class AppSettings {
 	public static final String SETTINGS_OBJECT_DETECTION_ENABLED = "settings.objectDetectionEnabled";
 	private static final String SETTINGS_CREATE_PREVIEW_PERIOD = "settings.createPreviewPeriod";
 	public static final String SETTINGS_MP4_MUXING_ENABLED = "settings.mp4MuxingEnabled";
+	public static final String SETTINGS_WEBM_MUXING_ENABLED = "settings.webMMuxingEnabled";
 	private static final String SETTINGS_STREAM_FETCHER_BUFFER_TIME = "settings.streamFetcherBufferTime";
-	private static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	public static final String SETTINGS_STREAM_FETCHER_RESTART_PERIOD = "settings.streamFetcherRestartPeriod";
+	private static final String SETTINGS_STREAM_FETCHER_AUTO_START = "settings.streamFetcherAutoStart";
 	private static final String SETTINGS_MUXER_FINISH_SCRIPT = "settings.muxerFinishScript";
 	public static final String SETTINGS_WEBRTC_FRAME_RATE = "settings.webRTCFrameRate";
 	public static final String SETTINGS_HASH_CONTROL_PUBLISH_ENABLED = "settings.hashControlPublishEnabled";
@@ -85,7 +87,8 @@ public class AppSettings {
 	public static final String SETTINGS_WEBRTC_PORT_RANGE_MAX = "settings.webrtc.portRangeMax";
 	public static final String SETTINGS_WEBRTC_STUN_SERVER_URI = "settings.webrtc.stunServerURI";
 	public static final String SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED = "settings.webrtc.tcpCandidateEnabled"; 
-	
+	public static final String SETTINGS_WEBRTC_SDP_SEMANTICS = "settings.webrtc.sdpSemantics"; 
+
 	private static final String SETTINGS_ENCODING_ENCODER_NAME = "settings.encoding.encoderName";
 	private static final String SETTINGS_ENCODING_PRESET = "settings.encoding.preset";
 	private static final String SETTINGS_ENCODING_PROFILE = "settings.encoding.profile";
@@ -94,6 +97,10 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_THREAD_COUNT = "settings.encoding.threadCount";
 	private static final String SETTINGS_ENCODING_THREAD_TYPE= "settings.encoding.threadType";
 	private static final String SETTINGS_PREVIEW_HEIGHT = "settings.previewHeight";
+
+	private static final String SETTINGS_ENCODING_VP8_THREAD_COUNT = "settings.encoding.vp8.threadCount";
+	private static final String SETTINGS_ENCODING_VP8_SPEED = "settings.encoding.vp8.speed";
+	private static final String SETTINGS_ENCODING_VP8_DEADLINE = "settings.encoding.vp8.deadline";
 
 	
 	public static final String SETTINGS_GENERATE_PREVIEW = "settings.previewGenerate";
@@ -184,6 +191,16 @@ public class AppSettings {
 	public static final String SETTINGS_ACCEPT_ONLY_ROOMS_IN_DATA_STORE = "settings.acceptOnlyRoomsInDataStore";
 	
 	public static final String SETTINGS_DATA_CHANNEL_WEBHOOK_URL = "settings.dataChannelWebHook";
+	
+	/**
+	 * WebRTC SDP Semantics:PLAN B
+	 */
+	public static final String SDP_SEMANTICS_PLAN_B = "planB";
+	
+	/**
+	 * WebRTC SDP Semantics:UNIFIED PLAN
+	 */
+	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
 	@JsonIgnore
 	@NotSaved
@@ -206,6 +223,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
+	
+	/**
+	 * Enable/Disable WebM recording
+	 */
+	@Value( "${"+SETTINGS_WEBM_MUXING_ENABLED+":false}" )
+	private boolean webMMuxingEnabled;
 	
 	/**
 	 * Add date time to the name of mp4 recordings
@@ -392,6 +415,12 @@ public class AppSettings {
 	private int restartStreamFetcherPeriod;
 
 	/**
+	 * Stream fetchers are started automatically if it is set true
+	 */
+	@Value( "${"+SETTINGS_STREAM_FETCHER_AUTO_START+":true}" )
+	private boolean startStreamFetcherAutomatically;
+	
+	/**
 	 * Stream fetcher buffer time in milliseconds. 
 	 * Stream is buffered for this duration and after that it will be started.
 	 */
@@ -451,6 +480,14 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
 	private boolean webRTCTcpCandidatesEnabled;
+	
+	/**
+	 * WebRTC SDP Semantics
+	 * Plan B or Unified Plan
+	 */
+	@Value( "${" + SETTINGS_WEBRTC_SDP_SEMANTICS +":" + SDP_SEMANTICS_PLAN_B + "}")
+	private String webRTCSdpSemantics;
+	
 	
 	/**
 	 * Port Allocator Flags for WebRTC
@@ -523,6 +560,27 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_ENCODING_THREAD_TYPE +":0}")
 	private int encoderThreadType;
+	
+	/**
+	 * Set quality/speed ratio modifier. Higher values speed up the encode at the cost of quality.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_SPEED +":4}")
+	private int vp8EncoderSpeed;
+	
+	/**
+	 * VP8 Encoder deadline:
+	 *  best
+	 * 	good 
+	 *  realtime
+	 */ 
+	@Value( "${" + SETTINGS_ENCODING_VP8_DEADLINE +":realtime}")
+	private String vp8EncoderDeadline;
+	
+	/**
+	 * VP8 Encoder thread count.
+	 */
+	@Value( "${" + SETTINGS_ENCODING_VP8_THREAD_COUNT +":1}")
+	private int vp8EncoderThreadCount;
 	
 	
 	@Value( "${" + SETTINGS_PREVIEW_HEIGHT +":480}")
@@ -651,7 +709,10 @@ public class AppSettings {
 	/**
 	 * Set true to enable WebRTC default decoders(such as VP8, VP9) 
 	 * Set false to only enable h264 decoder
+	 * 
+	 * Deprecated: Use {@code vp8Enabled} and {@code h264enabled}
 	 */
+	@Deprecated
 	@Value("${" + SETTINGS_DEFAULT_DECODERS_ENABLED+ ":false}")
 	private boolean defaultDecodersEnabled;
 
@@ -1450,6 +1511,10 @@ public class AppSettings {
 	public int getMaxAnalyzeDurationMS() {
 		return maxAnalyzeDurationMS;
 	}
+	
+	public void setMaxAnalyzeDurationMS(int maxAnalyzeDurationMS) {
+		this.maxAnalyzeDurationMS = maxAnalyzeDurationMS;
+	}
 
 	public boolean isGeneratePreview() {
 		return generatePreview;
@@ -1619,4 +1684,51 @@ public class AppSettings {
 		this.h265EncoderSpecific = encoderSpecific;
 	}
 
+	public boolean isWebMMuxingEnabled() {
+		return webMMuxingEnabled;
+	}
+
+	public void setWebMMuxingEnabled(boolean webMMuxingEnabled) {
+		this.webMMuxingEnabled = webMMuxingEnabled;
+	}
+
+	public int getVp8EncoderSpeed() {
+		return vp8EncoderSpeed;
+	}
+
+	public void setVp8EncoderSpeed(int vp8EncoderSpeed) {
+		this.vp8EncoderSpeed = vp8EncoderSpeed;
+	}
+
+	public String getVp8EncoderDeadline() {
+		return vp8EncoderDeadline;
+	}
+
+	public void setVp8EncoderDeadline(String vp8EncoderDeadline) {
+		this.vp8EncoderDeadline = vp8EncoderDeadline;
+	}
+
+	public int getVp8EncoderThreadCount() {
+		return vp8EncoderThreadCount;
+	}
+
+	public void setVp8EncoderThreadCount(int vp8EncoderThreadCount) {
+		this.vp8EncoderThreadCount = vp8EncoderThreadCount;
+	}
+
+	public String getWebRTCSdpSemantics() {
+		return webRTCSdpSemantics;
+	}
+
+	public void setWebRTCSdpSemantics(String webRTCSdpSemantics) {
+		this.webRTCSdpSemantics = webRTCSdpSemantics;
+	}
+
+	public boolean isStartStreamFetcherAutomatically() {
+		return startStreamFetcherAutomatically;
+	}
+
+	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
+		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
+	}
 }
