@@ -73,6 +73,8 @@ public abstract class Muxer {
 
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
 	
+	public static final String TEMP_EXTENSION = ".tmp_extension";
+
 	/**
 	 * Bitstream filter name that will be applied to packets
 	 */
@@ -273,6 +275,9 @@ public abstract class Muxer {
 				resourceName += "_" + resolution + "p";
 			}
 
+			
+			System.out.println("rn:"+resourceName+" e:"+extension);
+			
 			file = getResourceFile(scope, resourceName, extension);
 
 			File parentFile = file.getParentFile();
@@ -286,11 +291,13 @@ public abstract class Muxer {
 				if (!overrideIfExist && file.exists()) {
 					String tmpName = resourceName;
 					int i = 1;
+					File tempFile = null;
 					do {
+						tempFile = getResourceFile(scope, tmpName, extension+TEMP_EXTENSION);
 						file = getResourceFile(scope, tmpName, extension);
 						tmpName = resourceName + "_" + i;
 						i++;
-					} while (file.exists());
+					} while (file.exists() || tempFile.exists());
 				}
 			}
 
