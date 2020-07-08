@@ -275,23 +275,20 @@ public abstract class Muxer {
 				resourceName += "_" + resolution + "p";
 			}
 
-			
-			System.out.println("rn:"+resourceName+" e:"+extension);
-			
 			file = getResourceFile(scope, resourceName, extension);
 
 			File parentFile = file.getParentFile();
 
 			if (!parentFile.exists()) {
-				// check if parent file exist
+				// check if parent file does not exist
 				parentFile.mkdirs();
 			} else {
-				// if parent file does not exist,
+				// if parent file exists,
 				// check overrideIfExist and file.exists
-				if (!overrideIfExist && file.exists()) {
+				File tempFile = getResourceFile(scope, resourceName, extension+TEMP_EXTENSION);
+				if (!overrideIfExist && (file.exists() || tempFile.exists())) {
 					String tmpName = resourceName;
 					int i = 1;
-					File tempFile = null;
 					do {
 						tempFile = getResourceFile(scope, tmpName, extension+TEMP_EXTENSION);
 						file = getResourceFile(scope, tmpName, extension);
