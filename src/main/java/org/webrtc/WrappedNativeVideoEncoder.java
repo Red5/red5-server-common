@@ -47,9 +47,8 @@ abstract class WrappedNativeVideoEncoder implements VideoEncoder {
     throw new UnsupportedOperationException("Not implemented.");
   }
   
-  @Override
-	public void notifyFrameId(int frameid, long captureTimeNs) {
+  public void notifyFrameId(int frameid, long captureTimeNs) {
 	  throw new UnsupportedOperationException("Not implemented.");
-		
-	}
+  }
+
 }

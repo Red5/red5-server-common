@@ -33,4 +33,5 @@ public class VideoEncoderFallback extends WrappedNativeVideoEncoder {
   }
 
   private static native long nativeCreateEncoder(VideoEncoder fallback, VideoEncoder primary);
+  
 }

@@ -410,6 +410,10 @@ public abstract class DataStore {
 			broadcast.setStatus(newBroadcast.getStatus());
 		}
 		
+		if (newBroadcast.getAbsoluteStartTimeMs() != 0) {
+			broadcast.setAbsoluteStartTimeMs(newBroadcast.getAbsoluteStartTimeMs());
+		}
+		
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
