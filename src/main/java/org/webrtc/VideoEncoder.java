@@ -313,4 +313,6 @@ public interface VideoEncoder {
    * called from arbitrary thread.
    */
   @CalledByNative String getImplementationName();
+  
+  @CalledByNative void notifyFrameId(int frameid, long captureTimeNs);
 }
