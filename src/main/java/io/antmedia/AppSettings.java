@@ -437,7 +437,7 @@ public class AppSettings {
 	 * settings.hlsflags=+program_date_time+round_durations+append_list
 	 * 
 	 */
-	@Value( "${" + SETTINGS_HLS_FLAGS + ":#{null}}")
+	@Value( "${" + SETTINGS_HLS_FLAGS + ":delete_segments}")
 	private String hlsflags;
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
