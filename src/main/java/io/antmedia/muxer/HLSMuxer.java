@@ -156,7 +156,9 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			options.put("hls_flags", this.hlsFlags);
+			if (this.hlsFlags != null && !this.hlsFlags.isEmpty()) {
+				options.put("hls_flags", this.hlsFlags);
+			}
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
 			
