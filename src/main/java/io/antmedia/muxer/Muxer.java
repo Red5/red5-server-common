@@ -286,6 +286,18 @@ public abstract class Muxer {
 				// if parent file exists,
 				// check overrideIfExist and file.exists
 				File tempFile = getResourceFile(scope, resourceName, extension+TEMP_EXTENSION);
+				
+				
+				logger.info("files in parent:");
+				for (String fname : parentFile.list()) {
+					
+					logger.info(fname);
+				}
+				
+				logger.info("file.exists() :"+file.exists() );
+				logger.info("tempFile.exists() :"+tempFile.exists() );
+
+				
 				if (!overrideIfExist && (file.exists() || tempFile.exists())) {
 					String tmpName = resourceName;
 					int i = 1;
