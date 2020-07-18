@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.bytedeco.javacpp.avcodec.AVCodec;
 import org.bytedeco.javacpp.avcodec.AVCodecContext;
 import org.bytedeco.javacpp.avcodec.AVCodecParameters;
@@ -289,6 +290,9 @@ public abstract class Muxer {
 				
 				logger.info("****Class:"+this.getClass().getName());
 
+				logger.info(ExceptionUtils.getStackTrace(new Exception()));
+
+				
 				logger.info("files in parent:");
 				for (String fname : parentFile.list()) {
 					
