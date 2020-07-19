@@ -1313,6 +1313,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private Muxer addMp4Muxer() {
 		Mp4Muxer mp4Muxer = createMp4Muxer();
 		addMuxer(mp4Muxer);
+		broadcast.setMp4Enabled(RECORDING_ENABLED_FOR_STREAM);
 		return mp4Muxer;
 	}
 
