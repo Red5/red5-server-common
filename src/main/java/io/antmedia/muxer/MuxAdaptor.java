@@ -1322,6 +1322,13 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.warn("Starting recording return false for stream:{} because stream is being prepared", streamId);
 			return false;
 		}
+		
+		if(isAlreadyRecording(recordType)) {
+			logger.warn("Record is called while {} is already recording.", streamId);
+			return true;
+		}
+		
+		
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {
 			Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1345,6 +1352,17 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		return prepared;
 	}
+
+	private boolean isAlreadyRecording(RecordType recordType) {
+		for (Muxer muxer : muxerList) {
+			if((muxer instanceof Mp4Muxer && recordType == RecordType.MP4)
+					|| (muxer instanceof WebMMuxer && recordType == RecordType.WEBM)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	public AVPacket getAVPacket() {
 		if (!availableBufferQueue.isEmpty()) {
