@@ -379,7 +379,7 @@ public class MuxAdaptor implements IRecordingListener {
 		this.streamId = streamId;
 		this.scope = scope;
 
-		initializeDataStore();
+		getDataStore();
 		enableSettings();
 		initStorageClient();
 		enableMp4Setting();
@@ -567,7 +567,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	private DataStore initializeDataStore() {
+	private DataStore getDataStore() {
 		if (dataStore == null) {
 
 			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
@@ -1313,9 +1313,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private Muxer addMp4Muxer() {
 		Mp4Muxer mp4Muxer = createMp4Muxer();
 		addMuxer(mp4Muxer);
-		if(getBroadcast() != null) {
-			getBroadcast().setMp4Enabled(RECORDING_ENABLED_FOR_STREAM);
-		}
+		getDataStore().setMp4Muxing(streamId, RECORDING_ENABLED_FOR_STREAM);
 		return mp4Muxer;
 	}
 
@@ -1382,8 +1380,8 @@ public class MuxAdaptor implements IRecordingListener {
 			while (iterator.hasNext()) 
 			{
 				Muxer muxer = iterator.next();
-				if ((recordType == RecordType.MP4 && muxer instanceof Mp4Muxer && ((Mp4Muxer) muxer).isDynamic())
-						|| (recordType == RecordType.WEBM && muxer instanceof WebMMuxer && ((WebMMuxer) muxer).isDynamic())) {
+				if ((recordType == RecordType.MP4 && muxer instanceof Mp4Muxer)
+						|| (recordType == RecordType.WEBM && muxer instanceof WebMMuxer)) {
 					return muxer;
 				}
 			}
