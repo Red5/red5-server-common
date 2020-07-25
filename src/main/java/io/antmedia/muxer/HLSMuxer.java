@@ -153,9 +153,9 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			String hlsFlagsFull = "delete_segments" + this.hlsFlags;
-
-			options.put("hls_flags", hlsFlagsFull);
+			if (this.hlsFlags != null && !this.hlsFlags.isEmpty()) {
+				options.put("hls_flags", this.hlsFlags);
+			}
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
 			
@@ -288,7 +288,7 @@ public class HLSMuxer extends Muxer  {
 	private  void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
 
-		if (outputFormatContext == null || outputFormatContext.pb() == null)  {
+		if (outputFormatContext == null || !isRunning.get())  {
 			logger.error("OutputFormatContext is not initialized correctly for {}", file.getName());
 			return;
 		}
@@ -376,8 +376,8 @@ public class HLSMuxer extends Muxer  {
 	 */
 	@Override
 	public synchronized void writeTrailer() {
-		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
-			//return if it is already null or not running
+		if (!isRunning.get() || outputFormatContext == null) {
+			logger.warn("HLSMuxer trailer is returning because it's not correct state. Isrunning: {}, outputformatContext: {}", isRunning.get(), outputFormatContext);
 			return;
 		}
 		isRunning.set(false);
@@ -403,7 +403,7 @@ public class HLSMuxer extends Muxer  {
 		av_write_trailer(outputFormatContext);
 
 		/* close output */
-		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
+		if ((outputFormatContext.oformat().flags() & AVFMT_NOFILE) == 0)
 			avio_closep(outputFormatContext.pb());
 
 		avformat_free_context(outputFormatContext);
@@ -550,18 +550,23 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized boolean prepareIO() {
 		AVFormatContext context = getOutputFormatContext();
-		if (context.pb() != null) {
+		if (isRunning.get()) {
 			//return false if it is already prepared
 			return false;
 		}
-		AVIOContext pb = new AVIOContext(null);
-
-		int ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
-		if (ret < 0) {
-			logger.warn("Could not open output file: {} ", file.getAbsolutePath());
-			return false;
+		
+		int ret = 0;
+		
+		if ((context.oformat().flags() & AVFMT_NOFILE) == 0) {
+			AVIOContext pb = new AVIOContext(null);
+	
+			ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
+			if (ret < 0) {
+				logger.warn("Could not open output file: {} ", file.getAbsolutePath());
+				return false;
+			}
+			context.pb(pb);
 		}
-		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
 

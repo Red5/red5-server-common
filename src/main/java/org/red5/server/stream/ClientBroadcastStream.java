@@ -40,6 +40,8 @@ import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
 import org.red5.codec.StreamCodecInfo;
+import org.red5.io.object.DataTypes;
+import org.red5.io.object.Input;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
 import org.red5.server.api.Red5;
@@ -378,6 +380,29 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 							setMetaData(notifyEvent.duplicate());
 						} catch (Exception e) {
 							log.warn("Metadata could not be duplicated for this stream", e);
+						}
+					}
+					else if ("onFI".equals(action)) {
+						try {
+							Notify timeCodeNotify = notifyEvent.duplicate();
+							Input input = new org.red5.io.amf.Input(timeCodeNotify.getData());
+							byte object = input.readDataType();
+				            if (object == DataTypes.CORE_SWITCH) {
+					          log.trace("Switching decoding to AMF3");
+					          input = new org.red5.io.amf3.Input(timeCodeNotify.getData());
+					          ((org.red5.io.amf3.Input) input).enforceAMF3();
+					           // re-read data type after switching decode
+					           object = input.readDataType();
+				            }
+				            
+				            String actionOnFI = input.readString();
+				            input.readDataType();
+				            Map<Object, Object> readMap =  (Map<Object, Object>) input.readMap();
+				            
+				            log.info("map params: {}", readMap);
+				                
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
 					}
 					eventTime = rtmpEvent.getTimestamp();

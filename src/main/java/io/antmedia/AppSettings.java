@@ -153,6 +153,8 @@ public class AppSettings {
 	public static final String SETTINGS_H264_ENABLED = "settings.h264Enabled";
 
 	public static final String SETTINGS_VP8_ENABLED = "settings.vp8Enabled";
+	
+	public static final String SETTINGS_H265_ENABLED = "settings.h265Enabled";
   
 	public static final String SETTINGS_MAX_FPS_ACCEPT = "settings.maxFpsAccept";
 
@@ -433,7 +435,7 @@ public class AppSettings {
 	 * settings.hlsflags=+program_date_time+round_durations+append_list
 	 * 
 	 */
-	@Value( "${" + SETTINGS_HLS_FLAGS + ":#{null}}")
+	@Value( "${" + SETTINGS_HLS_FLAGS + ":delete_segments}")
 	private String hlsflags;
 
 	private String mySqlClientPath = "/usr/local/antmedia/mysql";
@@ -783,6 +785,12 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_VP8_ENABLED+ ":false}")
 	private boolean vp8Enabled;
+
+	/**
+	 * Enable/disable H265 Encoding. Disabled by default
+	 */
+	@Value("${" + SETTINGS_H265_ENABLED+ ":false}")
+	private boolean h265Enabled;
 	
 	
 	/**
@@ -817,6 +825,17 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_DATA_CHANNEL_WEBHOOK_URL+":#{null}}")
 	private String dataChannelWebHookURL;
 
+	private String h265EncoderPreset;
+
+	private String h265EncoderProfile;
+
+	private String h265EncoderRc;
+
+	private String h265EncoderSpecific;
+
+	private String h265EncoderLevel;
+	
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -1559,6 +1578,14 @@ public class AppSettings {
 		this.vp8Enabled = vp8Enabled;
 	}
 
+	public boolean isH265Enabled() {
+		return h265Enabled;
+	}
+	
+	public void setH265Enabled(boolean h265Enabled) {
+		this.h265Enabled = h265Enabled;
+	}
+	
 	public boolean isDataChannelEnabled() {
 		return dataChannelEnabled;
 	}
@@ -1613,6 +1640,46 @@ public class AppSettings {
 	
 	public void setWebRTCClientStartTimeoutMs(int webRTCClientStartTimeout) {
 		this.webRTCClientStartTimeoutMs = webRTCClientStartTimeout;
+	}
+
+	public String getH265EncoderProfile() {
+		return this.h265EncoderProfile;
+	}
+
+	public String getH265EncoderPreset() {
+		return this.h265EncoderPreset;
+	}
+
+	public String getH265EncoderLevel() {
+		return this.h265EncoderLevel;
+	}
+
+	public String getH265EncoderSpecific() {
+		return this.h265EncoderSpecific;
+	}
+
+	public String getH265EncoderRc() {
+		return this.h265EncoderRc ;
+	}
+
+	public void setH265EncoderLevel(String encoderLevel) {
+		this.h265EncoderLevel = encoderLevel;
+	}
+
+	public void setH265EncoderPreset(String preset) {
+		this.h265EncoderPreset = preset;
+	}
+
+	public void setH265EncoderProfile(String profile) {
+		this.h265EncoderProfile = profile;
+	}
+
+	public void setH265EncoderRc(String encoderRc) {
+		this.h265EncoderRc = encoderRc;
+	}
+
+	public void setH265EncoderSpecific(String encoderSpecific) {
+		this.h265EncoderSpecific = encoderSpecific;
 	}
 
 	public boolean isWebMMuxingEnabled() {
