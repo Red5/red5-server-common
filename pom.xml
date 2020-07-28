@@ -275,7 +275,7 @@
 			<version>${vertx-core.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<groupId>org.bytedeco</groupId>
 			<artifactId>ffmpeg-platform</artifactId>
 			<version>${javacpp.ffmpeg.version}</version>
 			<scope>provided</scope>

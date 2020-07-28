@@ -10,8 +10,6 @@
 
 package org.webrtc;
 
-import java.util.List;
-
 // Base interface for all VideoCapturers to implement.
 public interface VideoCapturer {
   /**

@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.catalina.util.NetMask;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
