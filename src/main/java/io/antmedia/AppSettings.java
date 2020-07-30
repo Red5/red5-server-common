@@ -474,9 +474,9 @@ public class AppSettings {
 
 	/**
 	 * TCP candidates are enabled/disabled.It's effective when user publishes stream
-	 * It's enabled by default
+	 * It's disabled by default
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
+	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":false}")
 	private boolean webRTCTcpCandidatesEnabled;
 	
 	/**
