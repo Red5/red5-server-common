@@ -47,6 +47,7 @@ import static org.bytedeco.javacpp.avformat.avformat_write_header;
 import static org.bytedeco.javacpp.avformat.avio_closep;
 import static org.bytedeco.javacpp.avformat.avio_open;
 import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
 import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
 import static org.bytedeco.javacpp.avutil.av_dict_set;
@@ -77,7 +78,7 @@ public class Mp4Muxer extends RecordMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private AVBSFContext bsfContext;
-	private AVBSFContext bsfExtractdataContext = null;
+	
 	private boolean isAVCConversionRequired = false;
 	
 	private static int[] MP4_SUPPORTED_CODECS = {
@@ -120,6 +121,7 @@ public class Mp4Muxer extends RecordMuxer {
 
 	public Mp4Muxer(StorageClient storageClient, Vertx vertx) {
 		super(storageClient, vertx);
+		options.put("movflags", "faststart");
 		extension = ".mp4";
 		format = "mp4";
 		SUPPORTED_CODECS = MP4_SUPPORTED_CODECS;
@@ -278,33 +280,6 @@ public class Mp4Muxer extends RecordMuxer {
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 			bsfContext = null;
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void writeVideoFrame(AVPacket pkt, AVFormatContext context) {
-		int ret;
-		if (bsfExtractdataContext != null) {
-			ret = av_bsf_send_packet(bsfExtractdataContext, tmpPacket);
-			if (ret < 0)
-				return;
-
-			while (av_bsf_receive_packet(bsfExtractdataContext, tmpPacket) == 0) 
-			{
-				ret = av_write_frame(context, tmpPacket);
-				if (ret < 0 && logger.isWarnEnabled()) {
-					byte[] data = new byte[2048];
-					av_strerror(ret, data, data.length);
-					logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
-				}
-
-			}
-		}
-		else {
-			super.writeVideoFrame(pkt, context);
 		}
 	}
 

@@ -257,6 +257,9 @@ public class HLSMuxer extends Muxer  {
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
+			else {
+				logger.warn("Codec({}) is not supported for stream: {}", inStream.codecpar().codec_id(), file.getName());
+			}
 		}
 
 		prepareIO();
@@ -418,7 +421,7 @@ public class HLSMuxer extends Muxer  {
 
 			logger.info("Scheduling the task to delete. HLS time: {}, hlsListSize:{}", hlsTime, hlsListSize);
 			vertx.setTimer(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, l -> {
-				logger.info("Delete HLS files on exit");
+				logger.info("Deleting HLS files on exit");
 
 				final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 
