@@ -492,20 +492,20 @@ public abstract class DataStore {
 					Comparable c1 = null;
 					Comparable c2 = null;
 					
-					if(sortBy.contentEquals("name")) {
+					if(sortBy.equals("name")) {
 						c1 = broadcast1.getName().toLowerCase();
 						c2 = broadcast2.getName().toLowerCase();
 					}
-					else if(sortBy.contentEquals("date")) {
+					else if(sortBy.equals("date")) {
 						c1 = new Long(broadcast1.getDate());
 						c2 = new Long(broadcast2.getDate());
 					}
-					else if(sortBy.contentEquals("status")) {
+					else if(sortBy.equals("status")) {
 						c1 = broadcast1.getStatus();
 						c2 = broadcast2.getStatus();
 					}
 				
-					if(orderBy.contentEquals("desc")) {
+					if(orderBy.equals("desc")) {
 						return c2.compareTo(c1);
 					}
 					return c1.compareTo(c2);
