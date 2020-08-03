@@ -483,8 +483,7 @@ public abstract class DataStore {
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		
-		if(!broadcastList.isEmpty()) {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
 			Collections.sort(broadcastList, new Comparator<Broadcast>() {
 				@Override
 				public int compare(Broadcast broadcast1, Broadcast broadcast2) {
