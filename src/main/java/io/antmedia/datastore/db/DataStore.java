@@ -483,12 +483,14 @@ public abstract class DataStore {
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
+		
+		if(!broadcastList.isEmpty()) {
 			Collections.sort(broadcastList, new Comparator<Broadcast>() {
 				@Override
 				public int compare(Broadcast broadcast1, Broadcast broadcast2) {
 					Comparable c1 = null;
 					Comparable c2 = null;
+					
 					if(sortBy.contentEquals("name")) {
 						c1 = broadcast1.getName().toLowerCase();
 						c2 = broadcast2.getName().toLowerCase();
@@ -501,7 +503,7 @@ public abstract class DataStore {
 						c1 = broadcast1.getStatus();
 						c2 = broadcast2.getStatus();
 					}
-					
+				
 					if(orderBy.contentEquals("desc")) {
 						return c2.compareTo(c1);
 					}
@@ -513,7 +515,7 @@ public abstract class DataStore {
 		if (size > MAX_ITEM_IN_ONE_LIST) {
 			size = MAX_ITEM_IN_ONE_LIST;
 		}
-		if (offset < 0 || size <= offset) {
+		if (offset < 0 ) {
 			offset = 0;
 		}
 		
