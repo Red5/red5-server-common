@@ -12,9 +12,6 @@ package org.webrtc;
 
 import javax.annotation.Nullable;
 
-import org.webrtc.VideoFrame;
-import org.webrtc.VideoProcessor;
-
 /**
  * This class is meant to be a simple layer that only handles the JNI wrapping of a C++
  * AndroidVideoTrackSource, that can easily be mocked out in Java unit tests. Refrain from adding

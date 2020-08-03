@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.catalina.util.NetMask;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
@@ -476,9 +474,9 @@ public class AppSettings {
 
 	/**
 	 * TCP candidates are enabled/disabled.It's effective when user publishes stream
-	 * It's enabled by default
+	 * It's disabled by default
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":true}")
+	@Value( "${" + SETTINGS_WEBRTC_TCP_CANDIDATE_ENABLED +":false}")
 	private boolean webRTCTcpCandidatesEnabled;
 	
 	/**

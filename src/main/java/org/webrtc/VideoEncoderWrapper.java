@@ -10,13 +10,9 @@
 
 package org.webrtc;
 
-// Explicit imports necessary for JNI generation.
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import org.webrtc.VideoEncoder;
 
 /**
  * This class contains the Java glue code for JNI generation of VideoEncoder.

@@ -10,7 +10,6 @@
 
 package org.webrtc;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

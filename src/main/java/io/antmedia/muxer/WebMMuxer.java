@@ -1,10 +1,10 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AV1;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_OPUS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VORBIS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VP8;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VP9;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AV1;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_OPUS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VORBIS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VP8;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VP9;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

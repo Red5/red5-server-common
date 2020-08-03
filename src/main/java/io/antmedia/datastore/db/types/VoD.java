@@ -2,7 +2,6 @@ package io.antmedia.datastore.db.types;
 
 import java.io.Serializable;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.Entity;
 import org.mongodb.morphia.annotations.Field;

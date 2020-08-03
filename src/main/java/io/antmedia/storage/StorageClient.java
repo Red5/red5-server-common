@@ -2,8 +2,6 @@ package io.antmedia.storage;
 
 import java.io.File;
 
-import io.antmedia.storage.StorageClient.FileType;
-
 public abstract class StorageClient {
 	
 	
