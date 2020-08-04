@@ -1,6 +1,10 @@
 package io.antmedia.muxer;
 
+
 import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_send_packet;
 import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
 import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
 import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
@@ -41,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bytedeco.ffmpeg.avcodec.AVBSFContext;
 import org.bytedeco.ffmpeg.avcodec.AVCodec;
 import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
@@ -73,6 +78,7 @@ public abstract class RecordMuxer extends Muxer {
 	protected int videoIndex;
 	protected int audioIndex;
 	protected int resolution; 
+	protected AVBSFContext bsfExtractdataContext = null;
 
 	protected AVPacket tmpPacket;
 	protected Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
@@ -99,7 +105,6 @@ public abstract class RecordMuxer extends Muxer {
 
 	public RecordMuxer(StorageClient storageClient, Vertx vertx) {
 		super(vertx);
-		options.put("movflags", "faststart");
 		this.storageClient = storageClient;
 	}
 
@@ -154,6 +159,7 @@ public abstract class RecordMuxer extends Muxer {
 			outStream.codecpar().codec_type(AVMEDIA_TYPE_VIDEO);
 			outStream.codecpar().format(AV_PIX_FMT_YUV420P);
 			outStream.codecpar().codec_tag(0);
+			
 			AVRational timeBase = new AVRational();
 			timeBase.num(1).den(1000);
 			codecTimeBaseMap.put(streamIndex, timeBase);
@@ -326,7 +332,7 @@ public abstract class RecordMuxer extends Muxer {
 
 
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
+	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
 		/*
 		 * this control is necessary to prevent server from a native crash 
 		 * in case of initiation and preparation takes long.
@@ -469,6 +475,11 @@ public abstract class RecordMuxer extends Muxer {
 			av_packet_free(videoPkt);
 			videoPkt = null;
 		}
+		
+		if (bsfExtractdataContext != null) {
+			av_bsf_free(bsfExtractdataContext);
+			bsfExtractdataContext = null;
+		}
 
 		/* close output */
 		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
@@ -608,7 +619,7 @@ public abstract class RecordMuxer extends Muxer {
 				logger.error("Cannot copy audio packet for {}", streamId);
 				return;
 			}
-			writeAudioFrame(pkt, inputTimebase, outputTimebase, context, dts);
+			writeAudioFrame(tmpPacket, inputTimebase, outputTimebase, context, dts);
 
 			av_packet_unref(tmpPacket);
 		}
@@ -626,7 +637,7 @@ public abstract class RecordMuxer extends Muxer {
 				return;
 			}
 
-			writeVideoFrame(pkt, context);
+			writeVideoFrame(tmpPacket, context);
 			
 			av_packet_unref(tmpPacket);
 
@@ -649,13 +660,35 @@ public abstract class RecordMuxer extends Muxer {
 
 	}
 
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	protected void writeVideoFrame(AVPacket pkt, AVFormatContext context) {
 		int ret;
-		ret = av_write_frame(context, pkt);
-		if (ret < 0 && logger.isWarnEnabled()) {
-			byte[] data = new byte[2048];
-			av_strerror(ret, data, data.length);
-			logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
+		if (bsfExtractdataContext != null) {
+			ret = av_bsf_send_packet(bsfExtractdataContext, tmpPacket);
+			if (ret < 0)
+				return;
+
+			while (av_bsf_receive_packet(bsfExtractdataContext, tmpPacket) == 0) 
+			{
+				ret = av_write_frame(context, tmpPacket);
+				if (ret < 0 && logger.isWarnEnabled()) {
+					byte[] data = new byte[2048];
+					av_strerror(ret, data, data.length);
+					logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
+				}
+
+			}
+		}
+		else {
+			ret = av_write_frame(context, pkt);
+			if (ret < 0 && logger.isWarnEnabled()) {
+				byte[] data = new byte[2048];
+				av_strerror(ret, data, data.length);
+				logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
+			}
 		}
 	}
 

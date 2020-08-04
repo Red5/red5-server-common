@@ -1,6 +1,9 @@
 package io.antmedia.muxer;
 
+
 import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_INPUT_BUFFER_PADDING_SIZE;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_DATA_NEW_EXTRADATA;
 import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
 import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_alloc;
 import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
@@ -24,6 +27,7 @@ import static org.bytedeco.ffmpeg.global.avformat.avformat_free_context;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_write_header;
 import static org.bytedeco.ffmpeg.global.avformat.avio_closep;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
 import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
 import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
 import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_NEAR_INF;
@@ -54,7 +58,9 @@ import org.bytedeco.ffmpeg.avutil.AVDictionary;
 import org.bytedeco.ffmpeg.avutil.AVRational;
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avformat;
+import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.IntPointer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +73,8 @@ public class RtmpMuxer extends Muxer {
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 	private AVBSFContext bsfExtractdataContext = null;
 	private AVPacket tmpPacket;
+	private volatile boolean headerWritten = false;
+	private BytePointer allocatedExtraDataPointer = null;
 
 	public RtmpMuxer(String url) {
 		super(null);
@@ -162,7 +170,11 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public  boolean prepareIO() {
+	public  boolean prepareIO() 
+	{
+		/*
+		 * extradata context is created if addVideoStream is called from WebRTC Forwarder 
+		 */
 		AVFormatContext context = getOutputFormatContext();
 		if (context != null && context.pb() != null) {
 			//return false if it is already prepared
@@ -171,6 +183,7 @@ public class RtmpMuxer extends Muxer {
 
 		AVIOContext pb = new AVIOContext(null);
 
+		long startTime = System.currentTimeMillis();
 		logger.info("rtmp muxer opening: {} time:{}" , url, System.currentTimeMillis());
 		int ret = avformat.avio_open(pb,  url, AVIO_FLAG_WRITE);
 		if (ret < 0) {
@@ -178,8 +191,20 @@ public class RtmpMuxer extends Muxer {
 			return false;
 		}
 		context.pb(pb);
-
-
+		long diff = System.currentTimeMillis() - startTime;
+		logger.info("avio open takes {}", diff);
+		
+		
+		if (bsfExtractdataContext == null)  
+		{	
+			return writeHeader(); 
+		}
+		isRunning.set(true);
+		return true;
+	}
+	
+	private boolean writeHeader() {
+		long startTime = System.currentTimeMillis();
 		AVDictionary optionsDictionary = null;
 
 		if (!options.isEmpty()) {
@@ -191,7 +216,7 @@ public class RtmpMuxer extends Muxer {
 		}
 
 		logger.info("before writing rtmp muxer header to {}", url);
-		ret = avformat_write_header(context, optionsDictionary);		
+		int ret = avformat_write_header(getOutputFormatContext(), optionsDictionary);		
 		if (ret < 0) {
 			logger.warn("could not write header to rtmp url {}", url);
 
@@ -200,9 +225,13 @@ public class RtmpMuxer extends Muxer {
 		}
 		if (optionsDictionary != null) {
 			av_dict_free(optionsDictionary);
+			optionsDictionary = null;
 		}
+		long diff = System.currentTimeMillis() - startTime;
+		logger.info("write header takes {}", diff);
+		headerWritten = true;
 		isRunning.set(true);
-
+		
 		return true;
 	}
 
@@ -247,6 +276,10 @@ public class RtmpMuxer extends Muxer {
 			av_bsf_free(bsfExtractdataContext);
 			bsfExtractdataContext = null;
 		}
+		
+		//allocatedExtraDataPointer is freed when the context is closing
+		
+		
 
 		avformat_free_context(outputFormatContext);
 		outputFormatContext.close();
@@ -270,6 +303,7 @@ public class RtmpMuxer extends Muxer {
 			outStream.codecpar().codec_type(AVMEDIA_TYPE_VIDEO);
 			outStream.codecpar().format(AV_PIX_FMT_YUV420P);
 			outStream.codecpar().codec_tag(0);
+			outStream.codec().codec_tag(0);
 			
 			AVRational timeBase = new AVRational();
 			timeBase.num(1).den(1000);
@@ -350,19 +384,18 @@ public class RtmpMuxer extends Muxer {
 			logger.info("Not writing to muxer because it's not started for {}", url);
 			return;
 		}
+		
 		final AVFormatContext context = getOutputFormatContext();
-
-		if (context == null || context.pb() == null) {
-			//return if it is already null
-			logger.warn("output context or .pb field is null for {}", url);
+		if (context.streams(pkt.stream_index()).codecpar().codec_type() ==  AVMEDIA_TYPE_AUDIO && !headerWritten) {
+			//Opening the RTMP muxer may take some time and don't make audio queue increase
+			logger.info("Not writing audio packet to muxer because header is not written yet for {}", url);
 			return;
 		}
-
+		
 		writeFrameInternal(pkt, inputTimebase, outputTimebase, context, codecType);
-
 	}
 
-	public void writeFrameInternal(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase,
+	private synchronized void writeFrameInternal(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase,
 			AVFormatContext context, int codecType) {
 		
 		long pts = pkt.pts();
@@ -383,7 +416,6 @@ public class RtmpMuxer extends Muxer {
 				logger.error("Cannot copy packet for {}", file.getName());
 				return;
 			}
-
 			if (bsfExtractdataContext != null) {
 
 				ret = av_bsf_send_packet(bsfExtractdataContext, tmpPacket);
@@ -394,12 +426,34 @@ public class RtmpMuxer extends Muxer {
 
 				while (av_bsf_receive_packet(bsfExtractdataContext, tmpPacket) == 0) 
 				{
-					ret = av_write_frame(context, tmpPacket);
-					if (ret < 0 && logger.isInfoEnabled()) {
-						byte[] data = new byte[128];
-						av_strerror(ret, data, data.length);
-						logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
-					}	
+					if (!headerWritten) 
+					{
+						IntPointer size = new IntPointer(1);
+						BytePointer extradataBytePointer = avcodec.av_packet_get_side_data(tmpPacket, AV_PKT_DATA_NEW_EXTRADATA,  size);
+						if (size.get() != 0) 
+						{
+							allocatedExtraDataPointer = new BytePointer(avutil.av_malloc(size.get() + AV_INPUT_BUFFER_PADDING_SIZE)).capacity(size.get() + AV_INPUT_BUFFER_PADDING_SIZE);
+							byte[] extraDataArray = new byte[size.get()];
+							extradataBytePointer.get(extraDataArray, 0, extraDataArray.length);
+							allocatedExtraDataPointer.put(extraDataArray, 0, extraDataArray.length);
+							logger.info("extradata size:{} extradata: {} allocated pointer: {}", size.get(), extradataBytePointer, allocatedExtraDataPointer);
+							context.streams(pkt.stream_index()).codecpar().extradata(allocatedExtraDataPointer);
+							context.streams(pkt.stream_index()).codecpar().extradata_size(size.get());
+							writeHeader();
+						}
+					}
+					
+					if (headerWritten) {
+						ret = av_write_frame(context, tmpPacket);
+						if (ret < 0 && logger.isInfoEnabled()) {
+							byte[] data = new byte[128];
+							av_strerror(ret, data, data.length);
+							logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file != null ? file.getName() : " no name");
+						}
+					}
+					else {
+						logger.info("Header is not written yet for writing video packet for stream: {}", file.getName());
+					}
 				}
 			}
 			else 
@@ -408,18 +462,21 @@ public class RtmpMuxer extends Muxer {
 				if (ret < 0 && logger.isInfoEnabled()) {
 					byte[] data = new byte[128];
 					av_strerror(ret, data, data.length);
-					logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file.getName());
+					logger.info("cannot write video frame to muxer. Error: {} stream: {}", new String(data, 0, data.length), file != null ? file.getName() : "no name");
 				}
 			}
-
 			av_packet_unref(tmpPacket);
 		}
-		else {
-			ret = av_write_frame(context, pkt);
-			if (ret < 0 && logger.isInfoEnabled()) {
-				byte[] data = new byte[128];
-				av_strerror(ret, data, data.length);
-				logger.info("cannot write frame(not video) to muxer. Error is {} ", new String(data, 0, data.length));
+		else 
+		{
+			if (headerWritten) 
+			{
+				ret = av_write_frame(context, pkt);
+				if (ret < 0 && logger.isInfoEnabled()) {
+					byte[] data = new byte[128];
+					av_strerror(ret, data, data.length);
+					logger.info("cannot write frame(not video) to muxer. Error is {} ", new String(data, 0, data.length));
+				}
 			}
 		}
 
@@ -445,9 +502,7 @@ public class RtmpMuxer extends Muxer {
 			
 			if (isKeyFrame) {
 				keyFrameReceived = true;
-			}
-			else {
-				logger.info("Frame is not key frame to start");
+				logger.info("Key frame is received to start");
 			}
 		}
 		
