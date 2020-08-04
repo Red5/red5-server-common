@@ -71,7 +71,7 @@ public class Broadcast {
 	private long date;
 
 	/**
-	 * Planned start date in milliseconds
+	 * Planned start date unix timestamp in seconds
 	 * This parameter is not mandatory, default parameter is null
 	 * 
 	 * This feature is enabled in RTMP and WebRTC streams
@@ -81,7 +81,7 @@ public class Broadcast {
 	private long plannedStartDate;
 	
 	/**
-	 * Planned end date in milliseconds
+	 * Planned end date unix timestamp in seconds
 	 * This parameter is not mandatory, default parameter is null
 	 * 
 	 * This feature is enabled in RTMP and WebRTC streams
