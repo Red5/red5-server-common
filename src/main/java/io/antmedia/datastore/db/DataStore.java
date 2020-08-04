@@ -77,19 +77,6 @@ public abstract class DataStore {
 	 */
 	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy);
 	
-	/**
-	 * Returns the Broadcast List in order
-	 * 
-	 * @param offset the number of items to skip
-	 * @param size batch size
-	 * @param type can get "liveStream" or "ipCamera" or "streamSource" or "VoD" values
-	 * @param sortBy can get "name" or "date" or "status" values
-	 * @param orderBy can get "desc" or "asc"
-	 * @return
-	 */
-	@Deprecated
-	public abstract List<Broadcast> filterBroadcastList(int offset, int size, String type, String sortBy, String orderBy);
-
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
 	
 	public abstract List<Broadcast> getExternalStreamsList();
