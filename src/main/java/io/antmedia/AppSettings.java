@@ -56,7 +56,8 @@ public class AppSettings {
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
-	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
+	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
+	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
 	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
 	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
@@ -320,9 +321,15 @@ public class AppSettings {
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
-	private boolean tokenControlEnabled ;
+	@Value( "${"+SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED+":false}" )
+	private boolean publishTokenControlEnabled ;
 
+	/**
+	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 */
+	@Value( "${"+SETTINGS_PLAY_TOKEN_CONTROL_ENABLED+":false}" )
+	private boolean playTokenControlEnabled ;
+	
 	/**
 	 * event or vod
 	 */
@@ -1125,14 +1132,22 @@ public class AppSettings {
 	}
 
 
-	public boolean isTokenControlEnabled() {
-		return tokenControlEnabled;
+	public boolean isPublishTokenControlEnabled() {
+		return publishTokenControlEnabled;
 	}
 
-	public void setTokenControlEnabled(boolean tokenControlEnabled) {
-		this.tokenControlEnabled = tokenControlEnabled;
+	public void setPublishTokenControlEnabled(boolean publishTokenControlEnabled) {
+		this.publishTokenControlEnabled = publishTokenControlEnabled;
+	}
+	
+	public boolean isPlayTokenControlEnabled() {
+		return playTokenControlEnabled;
 	}
 
+	public void setPlayTokenControlEnabled(boolean playTokenControlEnabled) {
+		this.playTokenControlEnabled = playTokenControlEnabled;
+	}
+	
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
@@ -1192,7 +1207,8 @@ public class AppSettings {
 		webRTCEnabled = false;
 		deleteHLSFilesOnEnded = true;
 		acceptOnlyStreamsInDataStore = false;
-		tokenControlEnabled = false;
+		publishTokenControlEnabled = false;
+		playTokenControlEnabled = false;
 		hlsPlayListType = null;
 		previewOverwrite = false;
 		objectDetectionEnabled = false;
