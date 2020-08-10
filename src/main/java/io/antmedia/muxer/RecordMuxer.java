@@ -1,35 +1,39 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.javacpp.avcodec.av_init_packet;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_ref;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_copy;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
-import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
-import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.javacpp.avformat.av_write_frame;
-import static org.bytedeco.javacpp.avformat.av_write_trailer;
-import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_free_context;
-import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.avio_closep;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_AUDIO;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_NOPTS_VALUE;
-import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
-import static org.bytedeco.javacpp.avutil.av_dict_free;
-import static org.bytedeco.javacpp.avutil.av_dict_set;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
-import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
-import static org.bytedeco.javacpp.avutil.av_strerror;
+
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_send_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
+import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
+import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_free_context;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_write_header;
+import static org.bytedeco.ffmpeg.global.avformat.avio_closep;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_NOPTS_VALUE;
+import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_NEAR_INF;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_PASS_MINMAX;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_set;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q_rnd;
+import static org.bytedeco.ffmpeg.global.avutil.av_strerror;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,21 +45,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bytedeco.ffmpeg.avcodec.AVBSFContext;
+import org.bytedeco.ffmpeg.avcodec.AVCodec;
+import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVCodec;
-import org.bytedeco.javacpp.avcodec.AVCodecContext;
-import org.bytedeco.javacpp.avcodec.AVCodecParameters;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.server.api.IContext;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +78,7 @@ public abstract class RecordMuxer extends Muxer {
 	protected int videoIndex;
 	protected int audioIndex;
 	protected int resolution; 
+	protected AVBSFContext bsfExtractdataContext = null;
 
 	protected AVPacket tmpPacket;
 	protected Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
@@ -101,7 +105,6 @@ public abstract class RecordMuxer extends Muxer {
 
 	public RecordMuxer(StorageClient storageClient, Vertx vertx) {
 		super(vertx);
-		options.put("movflags", "faststart");
 		this.storageClient = storageClient;
 	}
 
@@ -156,6 +159,7 @@ public abstract class RecordMuxer extends Muxer {
 			outStream.codecpar().codec_type(AVMEDIA_TYPE_VIDEO);
 			outStream.codecpar().format(AV_PIX_FMT_YUV420P);
 			outStream.codecpar().codec_tag(0);
+			
 			AVRational timeBase = new AVRational();
 			timeBase.num(1).den(1000);
 			codecTimeBaseMap.put(streamIndex, timeBase);
@@ -328,7 +332,7 @@ public abstract class RecordMuxer extends Muxer {
 
 
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
+	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
 		/*
 		 * this control is necessary to prevent server from a native crash 
 		 * in case of initiation and preparation takes long.
@@ -471,6 +475,11 @@ public abstract class RecordMuxer extends Muxer {
 			av_packet_free(videoPkt);
 			videoPkt = null;
 		}
+		
+		if (bsfExtractdataContext != null) {
+			av_bsf_free(bsfExtractdataContext);
+			bsfExtractdataContext = null;
+		}
 
 		/* close output */
 		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
@@ -610,7 +619,7 @@ public abstract class RecordMuxer extends Muxer {
 				logger.error("Cannot copy audio packet for {}", streamId);
 				return;
 			}
-			writeAudioFrame(pkt, inputTimebase, outputTimebase, context, dts);
+			writeAudioFrame(tmpPacket, inputTimebase, outputTimebase, context, dts);
 
 			av_packet_unref(tmpPacket);
 		}
@@ -628,7 +637,7 @@ public abstract class RecordMuxer extends Muxer {
 				return;
 			}
 
-			writeVideoFrame(pkt, context);
+			writeVideoFrame(tmpPacket, context);
 			
 			av_packet_unref(tmpPacket);
 
@@ -651,13 +660,35 @@ public abstract class RecordMuxer extends Muxer {
 
 	}
 
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	protected void writeVideoFrame(AVPacket pkt, AVFormatContext context) {
 		int ret;
-		ret = av_write_frame(context, pkt);
-		if (ret < 0 && logger.isWarnEnabled()) {
-			byte[] data = new byte[2048];
-			av_strerror(ret, data, data.length);
-			logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
+		if (bsfExtractdataContext != null) {
+			ret = av_bsf_send_packet(bsfExtractdataContext, tmpPacket);
+			if (ret < 0)
+				return;
+
+			while (av_bsf_receive_packet(bsfExtractdataContext, tmpPacket) == 0) 
+			{
+				ret = av_write_frame(context, tmpPacket);
+				if (ret < 0 && logger.isWarnEnabled()) {
+					byte[] data = new byte[2048];
+					av_strerror(ret, data, data.length);
+					logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
+				}
+
+			}
+		}
+		else {
+			ret = av_write_frame(context, pkt);
+			if (ret < 0 && logger.isWarnEnabled()) {
+				byte[] data = new byte[2048];
+				av_strerror(ret, data, data.length);
+				logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
+			}
 		}
 	}
 

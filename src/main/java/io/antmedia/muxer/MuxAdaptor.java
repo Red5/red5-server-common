@@ -1,20 +1,20 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_move_ref;
-import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avformat.av_dump_format;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
-import static org.bytedeco.javacpp.avutil.av_free;
-import static org.bytedeco.javacpp.avutil.av_log_get_level;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avformat.av_dump_format;
+import static org.bytedeco.ffmpeg.global.avformat.av_read_frame;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
+import static org.bytedeco.ffmpeg.global.avformat.avio_alloc_context;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_LOG_INFO;
+import static org.bytedeco.ffmpeg.global.avutil.av_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_log_get_level;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,19 +31,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVInputFormat;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avformat.Read_packet_Pointer_BytePointer_int;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
+import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVInputFormat;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
-import org.bytedeco.javacpp.avutil;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -52,7 +52,6 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamCapableConnection;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.message.Constants;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
@@ -68,6 +67,7 @@ import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
 import io.vertx.core.Vertx;
+
 
 public class MuxAdaptor implements IRecordingListener {
 
@@ -191,6 +191,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private volatile long lastPacketTimeMsInQueue = 0;
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
+	protected long absoluteTotalIngestTime = 0;
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -714,7 +715,15 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 			long queueEntranceTime = packetTs.time;
 			totalIngestTime += (System.currentTimeMillis() - queueEntranceTime);
+			absoluteTotalIngestTime  += System.currentTimeMillis() - broadcastStream.getAbsoluteStartTimeMs() - pkt.pts();
 		}
+	}
+	
+	public long getAbsoluteTimeMs() {
+		if (broadcastStream != null) {
+			return broadcastStream.getAbsoluteStartTimeMs();
+		}
+		return 0;
 	}
 
 	public long getBufferedDurationMs() {

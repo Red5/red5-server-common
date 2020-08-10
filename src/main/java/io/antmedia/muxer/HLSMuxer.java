@@ -1,42 +1,42 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AAC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_H264;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP3;
-import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
-import static org.bytedeco.javacpp.avcodec.av_bsf_free;
-import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;
-import static org.bytedeco.javacpp.avcodec.av_bsf_init;
-import static org.bytedeco.javacpp.avcodec.av_bsf_receive_packet;
-import static org.bytedeco.javacpp.avcodec.av_bsf_send_packet;
-import static org.bytedeco.javacpp.avcodec.av_init_packet;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_ref;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_copy;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_from_context;
-import static org.bytedeco.javacpp.avformat.AVFMT_GLOBALHEADER;
-import static org.bytedeco.javacpp.avformat.AVFMT_NOFILE;
-import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.javacpp.avformat.av_write_frame;
-import static org.bytedeco.javacpp.avformat.av_write_trailer;
-import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_free_context;
-import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.avio_closep;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_AUDIO;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_PIX_FMT_YUV420P;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
-import static org.bytedeco.javacpp.avutil.av_dict_free;
-import static org.bytedeco.javacpp.avutil.av_dict_set;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
-import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
-import static org.bytedeco.javacpp.avutil.av_strerror;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_FLAG_GLOBAL_HEADER;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AAC;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_H264;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MP3;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_alloc;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_get_by_name;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_init;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_send_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
+import static org.bytedeco.ffmpeg.global.avformat.AVFMT_GLOBALHEADER;
+import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
+import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_free_context;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_write_header;
+import static org.bytedeco.ffmpeg.global.avformat.avio_closep;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_NEAR_INF;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_PASS_MINMAX;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_set;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q_rnd;
+import static org.bytedeco.ffmpeg.global.avutil.av_strerror;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -49,24 +49,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bytedeco.ffmpeg.avcodec.AVBSFContext;
+import org.bytedeco.ffmpeg.avcodec.AVBitStreamFilter;
+import org.bytedeco.ffmpeg.avcodec.AVCodec;
+import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
 import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVBSFContext;
-import org.bytedeco.javacpp.avcodec.AVBitStreamFilter;
-import org.bytedeco.javacpp.avcodec.AVCodec;
-import org.bytedeco.javacpp.avcodec.AVCodecContext;
-import org.bytedeco.javacpp.avcodec.AVCodecParameters;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IScope;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,9 +153,9 @@ public class HLSMuxer extends Muxer  {
 				options.put("hls_playlist_type", hlsPlayListType);
 			}
 
-			String hlsFlagsFull = "delete_segments" + this.hlsFlags;
-
-			options.put("hls_flags", hlsFlagsFull);
+			if (this.hlsFlags != null && !this.hlsFlags.isEmpty()) {
+				options.put("hls_flags", this.hlsFlags);
+			}
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
 			
@@ -257,6 +254,9 @@ public class HLSMuxer extends Muxer  {
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
 					outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
 			}
+			else {
+				logger.warn("Codec({}) is not supported for stream: {}", inStream.codecpar().codec_id(), file.getName());
+			}
 		}
 
 		prepareIO();
@@ -291,7 +291,7 @@ public class HLSMuxer extends Muxer  {
 	private  void writePacket(AVPacket pkt, AVRational inputTimebase, AVRational outputTimebase, int codecType) 
 	{
 
-		if (outputFormatContext == null || outputFormatContext.pb() == null)  {
+		if (outputFormatContext == null || !isRunning.get())  {
 			logger.error("OutputFormatContext is not initialized correctly for {}", file.getName());
 			return;
 		}
@@ -379,8 +379,8 @@ public class HLSMuxer extends Muxer  {
 	 */
 	@Override
 	public synchronized void writeTrailer() {
-		if (!isRunning.get() || outputFormatContext == null || outputFormatContext.pb() == null) {
-			//return if it is already null or not running
+		if (!isRunning.get() || outputFormatContext == null) {
+			logger.warn("HLSMuxer trailer is returning because it's not correct state. Isrunning: {}, outputformatContext: {}", isRunning.get(), outputFormatContext);
 			return;
 		}
 		isRunning.set(false);
@@ -406,7 +406,7 @@ public class HLSMuxer extends Muxer  {
 		av_write_trailer(outputFormatContext);
 
 		/* close output */
-		if ((outputFormatContext.flags() & AVFMT_NOFILE) == 0)
+		if ((outputFormatContext.oformat().flags() & AVFMT_NOFILE) == 0)
 			avio_closep(outputFormatContext.pb());
 
 		avformat_free_context(outputFormatContext);
@@ -418,7 +418,7 @@ public class HLSMuxer extends Muxer  {
 
 			logger.info("Scheduling the task to delete. HLS time: {}, hlsListSize:{}", hlsTime, hlsListSize);
 			vertx.setTimer(Integer.parseInt(hlsTime) * Integer.parseInt(hlsListSize) * 1000, l -> {
-				logger.info("Delete HLS files on exit");
+				logger.info("Deleting HLS files on exit");
 
 				final String filenameWithoutExtension = file.getName().substring(0, file.getName().lastIndexOf(extension));
 
@@ -553,18 +553,23 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized boolean prepareIO() {
 		AVFormatContext context = getOutputFormatContext();
-		if (context.pb() != null) {
+		if (isRunning.get()) {
 			//return false if it is already prepared
 			return false;
 		}
-		AVIOContext pb = new AVIOContext(null);
-
-		int ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
-		if (ret < 0) {
-			logger.warn("Could not open output file: {} ", file.getAbsolutePath());
-			return false;
+		
+		int ret = 0;
+		
+		if ((context.oformat().flags() & AVFMT_NOFILE) == 0) {
+			AVIOContext pb = new AVIOContext(null);
+	
+			ret = avformat.avio_open(pb,  file.getAbsolutePath(), AVIO_FLAG_WRITE);
+			if (ret < 0) {
+				logger.warn("Could not open output file: {} ", file.getAbsolutePath());
+				return false;
+			}
+			context.pb(pb);
 		}
-		context.pb(pb);
 
 		AVDictionary optionsDictionary = null;
 

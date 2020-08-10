@@ -19,11 +19,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import org.webrtc.CandidatePairChangeEvent;
-import org.webrtc.DataChannel;
-import org.webrtc.MediaStreamTrack;
-import org.webrtc.RtpTransceiver;
-
 /**
  * Java-land version of the PeerConnection APIs; wraps the C++ API
  * http://www.webrtc.org/reference/native-apis, which in turn is inspired by the

@@ -10,12 +10,9 @@
 
 package org.webrtc;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Nullable;
-
-import org.webrtc.EncodedImage;
 
 /**
  * Interface for a video encoder that can be used with WebRTC. All calls will be made on the
@@ -316,4 +313,6 @@ public interface VideoEncoder {
    * called from arbitrary thread.
    */
   @CalledByNative String getImplementationName();
+  
+  @CalledByNative void notifyFrameId(int frameid, long captureTimeNs);
 }
