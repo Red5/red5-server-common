@@ -116,7 +116,7 @@
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.7</version>
+				<version>${nexus-staging-maven-plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
 					<serverId>ossrh</serverId>
@@ -131,7 +131,7 @@
 			<dependency>
 				<groupId>com.amazonaws</groupId>
 				<artifactId>aws-java-sdk-bom</artifactId>
-				<version>1.11.268</version>
+				<version>1.11.837</version>
 				<type>pom</type>
 				<scope>import</scope>
 				<exclusions>
@@ -299,7 +299,7 @@
 		<dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>1.5.21</version>
+            <version>1.6.2</version>
             <exclusions>
                 <exclusion>
                     <artifactId>jersey-container-servlet-core</artifactId>
