@@ -425,6 +425,8 @@ public abstract class DataStore {
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
 		broadcast.setUserAgent(newBroadcast.getUserAgent());
+		broadcast.setWebRTCViewerLimit(newBroadcast.getWebRTCViewerLimit());
+		broadcast.setHlsViewerLimit(newBroadcast.getHlsViewerLimit());
 	}
 
 	/**
