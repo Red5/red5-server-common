@@ -268,10 +268,10 @@ public class Broadcast {
 	private long absoluteStartTimeMs;
 	
 	@ApiModelProperty(value = "Number of the allowed maximum WebRTC viewers for the broadcast")
-	private int webRTCViewerLimit = 9999999;
+	private int webRTCViewerLimit = -1;
 	
 	@ApiModelProperty(value = "Number of the allowed maximum HLS viewers for the broadcast")
-	private int hlsViewerLimit = 9999999;
+	private int hlsViewerLimit = -1;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
