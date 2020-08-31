@@ -124,6 +124,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected boolean webMMuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected boolean dashMuxingEnabled;
 	protected boolean objectDetectionEnabled;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
@@ -346,6 +347,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected void enableSettings() {
 		AppSettings appSettingsLocal = getAppSettings();
 		hlsMuxingEnabled = appSettingsLocal.isHlsMuxingEnabled();
+		dashMuxingEnabled = appSettingsLocal.isDashMuxingEnabled();
 		mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
 		webMMuxingEnabled = appSettingsLocal.isWebMMuxingEnabled();
 		objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
@@ -396,6 +398,13 @@ public class MuxAdaptor implements IRecordingListener {
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer for {}", streamId);
+		}
+		
+		if (dashMuxingEnabled) {
+			DASHMuxer dashMuxer = new DASHMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
+			dashMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
+			addMuxer(dashMuxer);
+			logger.info("adding DASH Muxer for {}", streamId);
 		}
 
 		for (Muxer muxer : muxerList) {

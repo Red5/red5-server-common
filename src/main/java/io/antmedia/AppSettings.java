@@ -48,6 +48,7 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
+	public static final String SETTINGS_DASH_MUXING_ENABLED = "settings.dashMuxingEnabled";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
@@ -198,7 +199,7 @@ public class AppSettings {
 	/**
 	 * WebRTC SDP Semantics:UNIFIED PLAN
 	 */
-	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
+	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";	
 
 	@JsonIgnore
 	@NotSaved
@@ -835,6 +836,14 @@ public class AppSettings {
 
 	private String h265EncoderLevel;
 	
+	/**
+	 * Enable/disable dash recording
+	 */
+	@Value( "${"+SETTINGS_DASH_MUXING_ENABLED+":true}" )
+	private boolean dashMuxingEnabled;
+	
+	
+	
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -866,6 +875,14 @@ public class AppSettings {
 
 	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
+	}
+	
+	public boolean isDashMuxingEnabled() {
+		return dashMuxingEnabled;
+	}
+
+	public void setDashMuxingEnabled(boolean dashMuxingEnabled) {
+		this.dashMuxingEnabled = dashMuxingEnabled;
 	}
 
 	public String getHlsPlayListType() {
