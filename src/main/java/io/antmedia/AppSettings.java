@@ -166,6 +166,9 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	public static final String SETTINGS_OPUS_BITRATE = "settings.opus.bitrate";
+
+	
 	/**
 	 * In data channel, player messages are delivered to nobody. 
 	 * In order words, player cannot send messages
@@ -835,6 +838,9 @@ public class AppSettings {
 
 	private String h265EncoderLevel;
 	
+	
+	@Value("${" + SETTINGS_OPUS_BITRATE+":96000}")
+	private int opusBitrate;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1728,5 +1734,13 @@ public class AppSettings {
 
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
+	}
+
+	public int getOpusBitrate() {
+		return opusBitrate;
+	}
+
+	public void setOpusBitrate(int opusBitrate) {
+		this.opusBitrate = opusBitrate;
 	}
 }
