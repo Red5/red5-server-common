@@ -103,17 +103,17 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Total number of bytes received.
      */
-    protected long bytesReceived;
+    protected volatile long bytesReceived;
 
     /**
      * Is there need to check video codec?
      */
-    protected boolean checkVideoCodec;
+    protected volatile boolean checkVideoCodec;
 
     /**
      * Is there need to check audio codec?
      */
-    protected boolean checkAudioCodec;
+    protected volatile boolean checkAudioCodec;
 
     /**
      * Data is sent by chunks, each of them has size
@@ -170,7 +170,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      */
     protected transient WeakReference<IRecordingListener> recordingListener;
 
-    protected long latestTimeStamp = -1;
+    protected volatile long latestTimeStamp = -1;
 
     /**
      * Whether or not to register with JMX.
