@@ -52,9 +52,13 @@ public class AppSettings {
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
+	public static final String SETTINGS_DASH_TIME = "settings.dashTime";
+	public static final String SETTINGS_FRAGMENT_TIME = "settings.fragmentTime";
+	public static final String SETTINGS_TARGET_LATENCY = "settings.targetLatency";	
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
+	public static final String SETTINGS_DELETE_DASH_FILES_ON_ENDED = "settings.deleteDASHFilesOnEnded";
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
@@ -260,6 +264,25 @@ public class AppSettings {
 	private String hlsTime;
 	
 	/**
+	 * Duration of segments in mpd files 
+	 */
+	@Value( "${"+SETTINGS_DASH_TIME+":#{null}}" )
+	private String dashTime;
+	
+	/**
+	 * Duration of segments in m4s files 
+	 */
+	@Value( "${"+SETTINGS_FRAGMENT_TIME+":#{null}}" )
+	private String fragmentTime;
+	
+	
+	/**
+	 * Latency of the DASH streaming. 
+	 */
+	@Value( "${"+SETTINGS_TARGET_LATENCY+":#{null}}" )
+	private String targetLatency;
+
+	/**
 	 * Enable/disable webrtc 
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
@@ -281,6 +304,13 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
+	
+	/**
+	 * If this value is true, dash files(mpd and m4s files) are deleted after the broadcasting
+	 * has finished.
+	 */
+	@Value( "${"+SETTINGS_DELETE_DASH_FILES_ON_ENDED+":true}" )
+	private boolean deleteDASHFilesOnEnded = true;
 
 	/**
 	 * The secret string used for creating hash based tokens
@@ -1208,6 +1238,7 @@ public class AppSettings {
 		hlsTime = null;
 		webRTCEnabled = false;
 		deleteHLSFilesOnEnded = true;
+		deleteDASHFilesOnEnded = true;
 		acceptOnlyStreamsInDataStore = false;
 		tokenControlEnabled = false;
 		hlsPlayListType = null;
@@ -1745,5 +1776,37 @@ public class AppSettings {
 
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
+	}
+	
+	public String getDashTime() {
+		return dashTime;
+	}
+
+	public void setDashTime(String dashTime) {
+		this.dashTime = dashTime;
+	}
+	
+	public boolean isDeleteDASHFilesOnEnded() {
+		return deleteDASHFilesOnEnded;
+	}
+
+	public void setDeleteDASHFilesOnEnded(boolean deleteDASHFilesOnEnded) {
+		this.deleteDASHFilesOnEnded = deleteDASHFilesOnEnded;
+	}
+	
+	public String getFragmentTime() {
+		return fragmentTime;
+	}
+
+	public void setFragmentTime(String fragmentTime) {
+		this.fragmentTime = fragmentTime;
+	}
+	
+	public String getTargetLatency() {
+		return targetLatency;
+	}
+
+	public void setTargetLatency(String targetLatency) {
+		this.targetLatency = targetLatency;
 	}
 }

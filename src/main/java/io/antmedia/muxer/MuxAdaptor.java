@@ -85,6 +85,9 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected List<Muxer> muxerList =  Collections.synchronizedList(new ArrayList<Muxer>());
 	protected boolean deleteHLSFilesOnExit = true;
+	protected boolean deleteDASHFilesOnExit = true;
+
+
 
 	protected boolean previewOverwrite = false;
 
@@ -131,6 +134,9 @@ public class MuxAdaptor implements IRecordingListener {
 	protected String hlsTime;
 	protected String hlsListSize;
 	protected String hlsPlayListType;
+	protected String dashTime;
+	protected String fragmentTime;
+	protected String targetLatency;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
@@ -356,9 +362,14 @@ public class MuxAdaptor implements IRecordingListener {
 		mp4Filtername = null;
 		webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
 		deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnEnded();
+		deleteDASHFilesOnExit = appSettingsLocal.isDeleteDASHFilesOnEnded();
 		hlsListSize = appSettingsLocal.getHlsListSize();
 		hlsTime = appSettingsLocal.getHlsTime();
 		hlsPlayListType = appSettingsLocal.getHlsPlayListType();
+		dashTime = appSettingsLocal.getDashTime();
+		fragmentTime = appSettingsLocal.getFragmentTime();
+		targetLatency = appSettingsLocal.getTargetLatency();
+
 		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
 		encoderSettingsList = appSettingsLocal.getEncoderSettings();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
@@ -401,8 +412,8 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		
 		if (dashMuxingEnabled) {
-			DASHMuxer dashMuxer = new DASHMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
-			dashMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
+			DASHMuxer dashMuxer = new DASHMuxer(vertx, fragmentTime, dashTime, targetLatency);
+			dashMuxer.setDeleteFileOnExit(deleteDASHFilesOnExit);
 			addMuxer(dashMuxer);
 			logger.info("adding DASH Muxer for {}", streamId);
 		}
@@ -1525,6 +1536,16 @@ public class MuxAdaptor implements IRecordingListener {
 	public String getDataChannelWebHookURL() {
 		return dataChannelWebHookURL;
 	}
+	
+	public boolean isDeleteDASHFilesOnExit() {
+		return deleteDASHFilesOnExit;
+	}
+
+
+	public void setDeleteDASHFilesOnExit(boolean deleteDASHFilesOnExit) {
+		this.deleteDASHFilesOnExit = deleteDASHFilesOnExit;
+	}
+	
 }
 
 

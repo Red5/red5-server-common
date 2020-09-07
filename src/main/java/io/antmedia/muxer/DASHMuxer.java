@@ -78,9 +78,8 @@ public class DASHMuxer extends Muxer {
 	private List<Integer> registeredStreamIndexList = new ArrayList<>();
 
 	protected static Logger logger = LoggerFactory.getLogger(DASHMuxer.class);
-	private String  hlsListSize = "20";
-	private String hlsTime = "5";
-	private String hlsPlayListType = null; 
+	private String fragmentTime = "0.5";
+	private String dashTime = "2";
 
 	private AVRational avRationalTimeBase;
 	private long totalSize;
@@ -96,34 +95,28 @@ public class DASHMuxer extends Muxer {
 	private boolean deleteFileOnExit = true;
 	private int audioIndex;
 	private int videoIndex;
-	private String hlsFlags;
+	private String targetLatency;
+	
 	
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 	private AVPacket videoPkt;
 
 
-	public DASHMuxer(Vertx vertx, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
+	public DASHMuxer(Vertx vertx, String fragmentTime, String dashTime, String targetLatency) {
 		super(vertx);
 		extension = ".mpd";
 		format = "dash";
 
-		if (hlsListSize != null) {
-			this.hlsListSize = hlsListSize;
+		if (fragmentTime != null) {
+			this.fragmentTime = fragmentTime;
 		}
 
-		if (hlsTime != null) {
-			this.hlsTime = hlsTime;
-		}
-
-		if (hlsPlayListType != null) {
-			this.hlsPlayListType = hlsPlayListType;
+		if (dashTime != null) {
+			this.dashTime = dashTime;
 		}
 		
-		if (hlsFlags != null) {
-			this.hlsFlags = hlsFlags;
-		}
-		else {
-			this.hlsFlags = "";
+		if (targetLatency != null) {
+			this.targetLatency = targetLatency;
 		}
 
 		avRationalTimeBase = new AVRational();
@@ -138,27 +131,28 @@ public class DASHMuxer extends Muxer {
 	public void init(IScope scope, String name, int resolutionHeight) {
 		if (!isInitialized) {
 			super.init(scope, name, resolutionHeight);
-
-			/*
-			//options.put("adaptation_sets", "id=0, seg_duration=2, frag_duration=0.5, streams=v id=1,  frag_type=none, seg_duration=1, streams=a"); bozuldu
 			
+			options.put("frag_duration", fragmentTime);
+			options.put("seg_duration", dashTime);
 			
-
+			logger.info("segment duration: {}, fragment duration: {}", dashTime, fragmentTime);
 			
+			if (this.targetLatency != null && !this.targetLatency.isEmpty()) {
+				options.put("target_latency", this.targetLatency);
+			}
 			
-			logger.info("hls time: {}, hls list size: {}", hlsTime, hlsListSize);
-
-			String segmentFilename = file.getParentFile() + "/" + name +"_" + resolutionHeight +"p"+ "%04d.ts";
-			options.put("hls_segment_filename", segmentFilename);
-
-			if (hlsPlayListType != null && (hlsPlayListType.equals("event") || hlsPlayListType.equals("vod"))) {
-				options.put("hls_playlist_type", hlsPlayListType);
+			if (isDeleteFileOnExit()) {
+				options.put("remove_at_exit", "1");
 			}
 
-			if (this.hlsFlags != null && !this.hlsFlags.isEmpty()) {
-				options.put("hls_flags", this.hlsFlags);
-			}
-			*/
+			//init stream syntax
+			String initStreamFilename = name +"_" + "$RepresentationID$" + "_" + resolutionHeight +"p"+ ".$ext$";
+			
+			//chunk stream syntax
+			String chunkStreamFilename = name +"_" + "$RepresentationID$" + "_" + resolutionHeight +"p"+ "$Number%05d$" + ".$ext$";
+			
+			options.put("init_seg_name", initStreamFilename);
+			options.put("media_seg_name", chunkStreamFilename);
 			
 			options.put("use_timeline", "1");
 			options.put("utc_timing_url", "https://time.akamai.com/?iso");
@@ -166,19 +160,16 @@ public class DASHMuxer extends Muxer {
 			options.put("export_side_data", "1");
 			
 			options.put("write_prft", "1");
-			options.put("remove_at_exit", "1");	
 			
 			options.put("format_options", "movflags=cmaf");
-			
 			options.put("frag_type", "duration");
 			
 			options.put("strict", "experimental");
 			
 			options.put("ldash", "1");
+			
+			options.put("streaming", "1");
 
-			
-			
-			
 			tmpPacket = avcodec.av_packet_alloc();
 			av_init_packet(tmpPacket);
 			
@@ -650,28 +641,12 @@ public class DASHMuxer extends Muxer {
 		return videoHeight;
 	}
 
-	public String getHlsListSize() {
-		return hlsListSize;
+	public String getDashTime() {
+		return dashTime;
 	}
 
-	public void setHlsListSize(String hlsListSize) {
-		this.hlsListSize = hlsListSize;
-	}
-
-	public String getHlsTime() {
-		return hlsTime;
-	}
-
-	public void setHlsTime(String hlsTime) {
-		this.hlsTime = hlsTime;
-	}
-
-	public String getHlsPlayListType() {
-		return hlsPlayListType;
-	}
-
-	public void setHlsPlayListType(String hlsPlayListType) {
-		this.hlsPlayListType = hlsPlayListType;
+	public void setDashTime(String dashTime) {
+		this.dashTime = dashTime;
 	}
 
 	public boolean isDeleteFileOnExit() {
