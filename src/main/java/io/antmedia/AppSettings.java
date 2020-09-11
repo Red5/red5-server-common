@@ -200,6 +200,16 @@ public class AppSettings {
 	 */
 	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
+	/**
+	 * Width Property key for WebRTC to RTMP  forwarding
+	 */
+	private static final String SETTINGS_WIDTH_IN_RTMP_FORWARDING = "settings.widthRtmpForwarding";
+
+	/**
+	 * Height Property key for WebRTC to RTMP  forwarding
+	 */
+	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -481,7 +491,7 @@ public class AppSettings {
 	
 	/**
 	 * WebRTC SDP Semantics
-	 * Plan B or Unified Plan
+	 * It can "planB" or "unifiedPlan"
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_SDP_SEMANTICS +":" + SDP_SEMANTICS_PLAN_B + "}")
 	private String webRTCSdpSemantics;
@@ -834,6 +844,25 @@ public class AppSettings {
 	private String h265EncoderSpecific;
 
 	private String h265EncoderLevel;
+
+	/**
+	 * The width of the stream that is transcoded from incoming WebRTC stream to the RTMP
+	 * This settings is effective in community edition by default.
+	 * It's also effective WebRTC to RTMP direct forwarding by giving rtmpForward=true in WebSocket communication
+	 * in Enterprise Edition
+	 * 
+	 */
+	@Value( "${" + SETTINGS_WIDTH_IN_RTMP_FORWARDING+":480}")
+	private int widthRtmpForwarding;
+
+	/**
+	 * The height of the stream that is transcoded from incoming WebRTC stream to the RTMP
+	 * This settings is effective in community edition by default.
+	 * It's also effective WebRTC to RTMP direct forwarding by giving rtmpForward=true in WebSocket communication
+	 * in Enterprise Edition
+	 */
+	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
+	private int heightRtmpForwarding;
 	
 	
 	public boolean isWriteStatsToDatastore() {
@@ -1728,5 +1757,21 @@ public class AppSettings {
 
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
+	}
+
+	public int getWidthRtmpForwarding() {
+		return widthRtmpForwarding;
+	}
+
+	public int getHeightRtmpForwarding() {
+		return heightRtmpForwarding;
+	}
+
+	public void setWidthRtmpForwarding(int widthRtmpForwarding) {
+		this.widthRtmpForwarding = widthRtmpForwarding;
+	}
+
+	public void setHeightRtmpForwarding(int heightRtmpForwarding) {
+		this.heightRtmpForwarding = heightRtmpForwarding;
 	}
 }
