@@ -674,9 +674,9 @@ public class MuxAdaptor implements IRecordingListener {
 					if (broadcastStream != null) {
 						broadcastStream.removeStreamListener(MuxAdaptor.this);
 					}
-					logger.warn("closing adaptor for {}", streamId);
+					logger.warn("closing adaptor for {} ", streamId);
 					closeResources();
-					logger.warn("closed adaptor for {}", streamId);
+					logger.warn("closed adaptor for {} input queue size:{} and queue reference size:{}", streamId, getInputQueueSize(), queueReferences.size());
 					closeRtmpConnection();
 					
 				}
@@ -1027,7 +1027,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 	@Override
 	public void stop() {
-		logger.info("Calling stop for {}", streamId);
+		logger.info("Calling stop for {} input queue size:{}", streamId, getInputQueueSize());
 		if (inputFormatContext == null) {
 			logger.warn("Mux adaptor stopped returning for {}", streamId);
 			return;
