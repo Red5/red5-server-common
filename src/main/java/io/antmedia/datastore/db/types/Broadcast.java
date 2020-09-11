@@ -266,6 +266,12 @@ public class Broadcast {
 
 	@ApiModelProperty(value = "Absolute start time in milliseconds - unix timestamp. It's used for measuring the absolute latency")
 	private long absoluteStartTimeMs;
+	
+	@ApiModelProperty(value = "Number of the allowed maximum WebRTC viewers for the broadcast")
+	private int webRTCViewerLimit = -1;
+	
+	@ApiModelProperty(value = "Number of the allowed maximum HLS viewers for the broadcast")
+	private int hlsViewerLimit = -1;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -639,5 +645,21 @@ public class Broadcast {
 
 	public void setWebMEnabled(int webMEnabled) {
 		this.webMEnabled = webMEnabled;
+	}
+
+	public int getWebRTCViewerLimit() {
+		return webRTCViewerLimit;
+	}
+
+	public void setWebRTCViewerLimit(int webRTCViewerLimit) {
+		this.webRTCViewerLimit = webRTCViewerLimit;
+	}
+
+	public int getHlsViewerLimit() {
+		return hlsViewerLimit;
+	}
+
+	public void setHlsViewerLimit(int hlsViewerLimit) {
+		this.hlsViewerLimit = hlsViewerLimit;
 	}
 }
