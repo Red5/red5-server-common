@@ -332,6 +332,7 @@ public class AppSettings {
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
+	
 	@Value("#{'${"+ SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}") 
 	private boolean publishTokenControlEnabled ;
 	// check old SETTINGS_TOKEN_CONTROL_ENABLED for backward compatibility
@@ -341,6 +342,7 @@ public class AppSettings {
 	 */
 	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
 	private boolean playTokenControlEnabled ;
+
 	/**
 	 * event or vod
 	 */
