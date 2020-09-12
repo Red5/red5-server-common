@@ -60,17 +60,32 @@ public class VideoCodecFactory {
         int codecId = data.get() & 0x0f;
         try {
             switch (codecId) {
-                case 2: //sorenson 
+                case 2: // sorenson 
                     result = (IVideoStreamCodec) Class.forName("org.red5.codec.SorensonVideo").getDeclaredConstructor().newInstance();
                     break;
-                case 3: //screen video
+                case 3: // screen video
                     result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo").getDeclaredConstructor().newInstance();
                     break;
-                case 6: //screen video 2
+                case 6: // screen video 2
                     result = (IVideoStreamCodec) Class.forName("org.red5.codec.ScreenVideo2").getDeclaredConstructor().newInstance();
                     break;
-                case 7: //avc/h.264 video
+                case 7: // avc/h.264 video
                     result = (IVideoStreamCodec) Class.forName("org.red5.codec.AVCVideo").getDeclaredConstructor().newInstance();
+                    break;
+                case 8: // vp8
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.VP8Video").getDeclaredConstructor().newInstance();
+                    break;
+                case 9: // vp9
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.VP9Video").getDeclaredConstructor().newInstance();
+                    break;
+                case 10: // av1
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.AV1Video").getDeclaredConstructor().newInstance();
+                    break;
+                case 11: // mpeg1video
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.MPEG1Video").getDeclaredConstructor().newInstance();
+                    break;
+                case 12: // hevc
+                    result = (IVideoStreamCodec) Class.forName("org.red5.codec.HEVCVideo").getDeclaredConstructor().newInstance();
                     break;
             }
         } catch (Exception ex) {

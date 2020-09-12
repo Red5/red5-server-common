@@ -52,9 +52,9 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
     protected FrameType frameType = FrameType.UNKNOWN;
 
     /**
-     * The codec id
+     * Video codec
      */
-    protected int codecId = -1;
+    protected VideoCodec codec;
 
     /**
      * True if this is configuration data and false otherwise
@@ -123,8 +123,9 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
         if (data != null && data.limit() > 0) {
             data.mark();
             int firstByte = data.get(0) & 0xff;
-            codecId = firstByte & ITag.MASK_VIDEO_CODEC;
-            if (codecId == VideoCodec.AVC.getId()) {
+            codec = VideoCodec.valueOfById(firstByte & ITag.MASK_VIDEO_CODEC);
+            // determine by codec whether or not frame / sequence types are included
+            if (VideoCodec.getConfigured().contains(codec)) {
                 int secondByte = data.get(1) & 0xff;
                 config = (secondByte == 0);
                 endOfSequence = (secondByte == 2);
@@ -145,8 +146,6 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
 
     public void setData(byte[] data) {
         setData(IoBuffer.wrap(data));
-        //this.data = IoBuffer.allocate(data.length);
-        //this.data.put(data).flip();
     }
 
     /**
@@ -159,7 +158,7 @@ public class VideoData extends BaseEvent implements IoConstants, IStreamData<Vid
     }
 
     public int getCodecId() {
-        return codecId;
+        return codec.getId();
     }
 
     public boolean isConfig() {

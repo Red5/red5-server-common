@@ -66,6 +66,9 @@ public class AudioCodecFactory {
                 case 11:
                     result = (IAudioStreamCodec) Class.forName("org.red5.codec.SpeexAudio").getDeclaredConstructor().newInstance();
                     break;
+                case 13:
+                    result = (IAudioStreamCodec) Class.forName("org.red5.codec.OpusAudio").getDeclaredConstructor().newInstance();
+                    break;
                 case 2:
                 case 14:
                     result = (IAudioStreamCodec) Class.forName("org.red5.codec.MP3Audio").getDeclaredConstructor().newInstance();

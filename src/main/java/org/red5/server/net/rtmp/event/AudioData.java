@@ -33,9 +33,9 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     private byte dataType = TYPE_AUDIO_DATA;
 
     /**
-     * The codec id
+     * Audio codec
      */
-    protected int codecId = -1;
+    protected AudioCodec codec;
 
     /**
      * True if this is configuration data and false otherwise
@@ -91,8 +91,9 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
     public void setData(IoBuffer data) {
         if (data != null && data.limit() > 0) {
             data.mark();
-            codecId = ((data.get(0) & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4;
-            if (codecId == AudioCodec.AAC.getId()) {
+            codec = AudioCodec.valueOfById(((data.get(0) & 0xff) & ITag.MASK_SOUND_FORMAT) >> 4);
+            // determine by codec whether or not config data is included
+            if (AudioCodec.getConfigured().contains(codec)) {
                 config = (data.get() == 0);
             }
             data.reset();
@@ -102,12 +103,10 @@ public class AudioData extends BaseEvent implements IStreamData<AudioData>, IStr
 
     public void setData(byte[] data) {
         setData(IoBuffer.wrap(data));
-        //this.data = IoBuffer.allocate(data.length);
-        //this.data.put(data).flip();
     }
 
     public int getCodecId() {
-        return codecId;
+        return codec.getId();
     }
 
     public boolean isConfig() {
