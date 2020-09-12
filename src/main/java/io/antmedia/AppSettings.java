@@ -56,6 +56,7 @@ public class AppSettings {
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
+	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
 	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
@@ -331,15 +332,15 @@ public class AppSettings {
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	@Value( "${"+SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED+":false}" )
+	@Value("#{'${"+ SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}") 
 	private boolean publishTokenControlEnabled ;
-
+	// check old SETTINGS_TOKEN_CONTROL_ENABLED for backward compatibility
+	// https://stackoverflow.com/questions/49653241/can-multiple-property-names-be-specified-in-springs-value-annotation
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	@Value( "${"+SETTINGS_PLAY_TOKEN_CONTROL_ENABLED+":false}" )
+	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
 	private boolean playTokenControlEnabled ;
-	
 	/**
 	 * event or vod
 	 */
