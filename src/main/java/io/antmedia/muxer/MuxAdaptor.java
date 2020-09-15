@@ -989,7 +989,7 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.info("before prepare for {}", streamId);
 			try {
 				//Prepare and check if stream is stopped while it's preparing
-				if (prepare() && !queueReferences.get(inputFormatContext).stopRequestExist) {
+				if (prepare()) {
 
 					logger.info("after prepare for {}", streamId);
 					isRecording = true;
