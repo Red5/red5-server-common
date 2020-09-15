@@ -11,6 +11,7 @@ import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
 import static org.bytedeco.ffmpeg.global.avformat.avio_alloc_context;
 import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
 import static org.bytedeco.ffmpeg.global.avutil.AV_LOG_INFO;
 import static org.bytedeco.ffmpeg.global.avutil.av_free;
 import static org.bytedeco.ffmpeg.global.avutil.av_log_get_level;
@@ -31,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
 import org.bytedeco.ffmpeg.avcodec.AVPacket;
 import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 import org.bytedeco.ffmpeg.avformat.AVIOContext;
@@ -506,9 +508,21 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
 
-		if (av_log_get_level() >= AV_LOG_INFO) {
+		if (logger.isInfoEnabled()) 
+		{
 			// Dump information about file onto standard error
-			av_dump_format(inputFormatContext, 0, streamId, 0);
+			int streamCount = inputFormatContext.nb_streams();
+			for (int i=0; i < streamCount; i++) 
+			{
+				AVStream stream = inputFormatContext.streams(i);
+				AVCodecParameters codecpar = stream.codecpar();
+				if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
+					logger.info("Video format width:{} height:{}", codecpar.width(), codecpar.height());
+				}
+				else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
+					logger.info("Audio format sample rate:{} bitrate:{}",codecpar.sample_rate(), codecpar.bit_rate());
+				}
+			}
 		}
 
 		Iterator<Muxer> iterator = muxerList.iterator();
@@ -774,7 +788,7 @@ public class MuxAdaptor implements IRecordingListener {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
-				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt, streamId)) {
 					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					closeRtmpConnection();
 					return;
@@ -974,7 +988,8 @@ public class MuxAdaptor implements IRecordingListener {
 		vertx.setTimer(1, h -> {
 			logger.info("before prepare for {}", streamId);
 			try {
-				if (prepare()) {
+				//Prepare and check if stream is stopped while it's preparing
+				if (prepare() && !queueReferences.get(inputFormatContext).stopRequestExist) {
 
 					logger.info("after prepare for {}", streamId);
 					isRecording = true;
@@ -1035,6 +1050,9 @@ public class MuxAdaptor implements IRecordingListener {
 		InputContext inputContextRef = queueReferences.get(inputFormatContext);
 		if (inputContextRef != null) {
 			inputContextRef.stopRequestExist = true;
+		}
+		else {
+			logger.warn("Cannot receive the stop request because inputContextRef is not created");
 		}
 	}
 

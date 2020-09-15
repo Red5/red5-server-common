@@ -203,11 +203,6 @@ public class AppSettings {
 	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
 	/**
-	 * Width Property key for WebRTC to RTMP  forwarding
-	 */
-	private static final String SETTINGS_WIDTH_IN_RTMP_FORWARDING = "settings.widthRtmpForwarding";
-
-	/**
 	 * Height Property key for WebRTC to RTMP  forwarding
 	 */
 	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
@@ -755,7 +750,7 @@ public class AppSettings {
 	/**
 	 * Max analyze duration in for determining video and audio existence in RTMP streams
 	 */
-	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":1000}")
 	private int maxAnalyzeDurationMS;
 	
 	/**
@@ -854,16 +849,6 @@ public class AppSettings {
 	private String h265EncoderSpecific;
 
 	private String h265EncoderLevel;
-
-	/**
-	 * The width of the stream that is transcoded from incoming WebRTC stream to the RTMP
-	 * This settings is effective in community edition by default.
-	 * It's also effective WebRTC to RTMP direct forwarding by giving rtmpForward=true in WebSocket communication
-	 * in Enterprise Edition
-	 * 
-	 */
-	@Value( "${" + SETTINGS_WIDTH_IN_RTMP_FORWARDING+":480}")
-	private int widthRtmpForwarding;
 
 	/**
 	 * The height of the stream that is transcoded from incoming WebRTC stream to the RTMP
@@ -1778,16 +1763,8 @@ public class AppSettings {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
 	}
 
-	public int getWidthRtmpForwarding() {
-		return widthRtmpForwarding;
-	}
-
 	public int getHeightRtmpForwarding() {
 		return heightRtmpForwarding;
-	}
-
-	public void setWidthRtmpForwarding(int widthRtmpForwarding) {
-		this.widthRtmpForwarding = widthRtmpForwarding;
 	}
 
 	public void setHeightRtmpForwarding(int heightRtmpForwarding) {
