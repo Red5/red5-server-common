@@ -869,6 +869,7 @@ public class AppSettings {
 	 * This is useful when mp4MuxingEnabled,hlsMuxingEnabled and getAppSettings().isMp4MuxingEnabled() are false
 	 * It helps to enable recording of individually streams because if the settings above are false, aac will not be generated.
 	 * This makes it return true.
+	 * So if aacEncodingEnabled is true, isAACEncodingRequired will also be true.
 	 */
 
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
