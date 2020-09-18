@@ -207,6 +207,12 @@ public class AppSettings {
 	 */
 	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
 
+	/**
+	 *
+	 */
+	private static final String SETTINGS_AAC_ENCODING_ENABLED="settings.aacEncodingEnabled";
+
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -858,8 +864,16 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
 	private int heightRtmpForwarding;
-	
-	
+
+	/** If AacEncodingEnabled is true, isAACEncodingRequired will return true
+	 * This is useful when mp4MuxingEnabled,hlsMuxingEnabled and getAppSettings().isMp4MuxingEnabled() are false
+	 * It helps to enable recording of individually streams because if the settings above are false, aac will not be generated.
+	 * This makes it return true.
+	 */
+
+	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
+	private boolean aacEncodingEnabled;
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -1237,6 +1251,7 @@ public class AppSettings {
 		tokenHashSecret = "";
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
+		aacEncodingEnabled=true;
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -1770,4 +1785,8 @@ public class AppSettings {
 	public void setHeightRtmpForwarding(int heightRtmpForwarding) {
 		this.heightRtmpForwarding = heightRtmpForwarding;
 	}
+
+	public void setAacEncodingEnabled(boolean aacEncodingEnabled){this.aacEncodingEnabled=aacEncodingEnabled;}
+
+	public boolean isAacEncodingEnabled(){return aacEncodingEnabled;}
 }
