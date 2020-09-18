@@ -870,6 +870,7 @@ public class AppSettings {
 	 * It helps to enable recording of individually streams because if the settings above are false, aac will not be generated.
 	 * This makes it return true.
 	 * So if aacEncodingEnabled is true, isAACEncodingRequired will also be true.
+	 * If aacEncodingEnabled is false but other parameters are true such mp4muxing or hlsmuxing, isAacEncodingRequired will return true.
 	 */
 
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
