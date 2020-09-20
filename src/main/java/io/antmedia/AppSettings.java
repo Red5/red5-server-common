@@ -57,6 +57,8 @@ public class AppSettings {
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
+	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
+	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
 	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
 	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
@@ -203,6 +205,11 @@ public class AppSettings {
 	 */
 	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
+	/**
+	 * Height Property key for WebRTC to RTMP  forwarding
+	 */
+	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -323,8 +330,16 @@ public class AppSettings {
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
-	private boolean tokenControlEnabled ;
+	
+	@Value("#{'${"+ SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}") 
+	private boolean publishTokenControlEnabled ;
+	// check old SETTINGS_TOKEN_CONTROL_ENABLED for backward compatibility
+	// https://stackoverflow.com/questions/49653241/can-multiple-property-names-be-specified-in-springs-value-annotation
+	/**
+	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 */
+	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
+	private boolean playTokenControlEnabled ;
 
 	/**
 	 * event or vod
@@ -484,7 +499,7 @@ public class AppSettings {
 	
 	/**
 	 * WebRTC SDP Semantics
-	 * Plan B or Unified Plan
+	 * It can "planB" or "unifiedPlan"
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_SDP_SEMANTICS +":" + SDP_SEMANTICS_PLAN_B + "}")
 	private String webRTCSdpSemantics;
@@ -738,7 +753,7 @@ public class AppSettings {
 	/**
 	 * Max analyze duration in for determining video and audio existence in RTMP streams
 	 */
-	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":1000}")
 	private int maxAnalyzeDurationMS;
 	
 	/**
@@ -837,6 +852,15 @@ public class AppSettings {
 	private String h265EncoderSpecific;
 
 	private String h265EncoderLevel;
+
+	/**
+	 * The height of the stream that is transcoded from incoming WebRTC stream to the RTMP
+	 * This settings is effective in community edition by default.
+	 * It's also effective WebRTC to RTMP direct forwarding by giving rtmpForward=true in WebSocket communication
+	 * in Enterprise Edition
+	 */
+	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
+	private int heightRtmpForwarding;
 	
 	
 	@Value("${" + SETTINGS_OPUS_BITRATE+":96000}")
@@ -1131,14 +1155,22 @@ public class AppSettings {
 	}
 
 
-	public boolean isTokenControlEnabled() {
-		return tokenControlEnabled;
+	public boolean isPublishTokenControlEnabled() {
+		return publishTokenControlEnabled;
 	}
 
-	public void setTokenControlEnabled(boolean tokenControlEnabled) {
-		this.tokenControlEnabled = tokenControlEnabled;
+	public void setPublishTokenControlEnabled(boolean publishTokenControlEnabled) {
+		this.publishTokenControlEnabled = publishTokenControlEnabled;
+	}
+	
+	public boolean isPlayTokenControlEnabled() {
+		return playTokenControlEnabled;
 	}
 
+	public void setPlayTokenControlEnabled(boolean playTokenControlEnabled) {
+		this.playTokenControlEnabled = playTokenControlEnabled;
+	}
+	
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
@@ -1198,7 +1230,8 @@ public class AppSettings {
 		webRTCEnabled = false;
 		deleteHLSFilesOnEnded = true;
 		acceptOnlyStreamsInDataStore = false;
-		tokenControlEnabled = false;
+		publishTokenControlEnabled = false;
+		playTokenControlEnabled = false;
 		hlsPlayListType = null;
 		previewOverwrite = false;
 		objectDetectionEnabled = false;
@@ -1734,6 +1767,14 @@ public class AppSettings {
 
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
+	}
+	
+	public int getHeightRtmpForwarding() {
+		return heightRtmpForwarding;
+	}
+
+	public void setHeightRtmpForwarding(int heightRtmpForwarding) {
+		this.heightRtmpForwarding = heightRtmpForwarding;
 	}
 
 	public int getOpusBitrate() {
