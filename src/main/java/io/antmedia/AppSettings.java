@@ -168,7 +168,7 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
-	public static final String SETTINGS_OPUS_BITRATE = "settings.opus.bitrate";
+	public static final String SETTINGS_AUDIO_BITRATE_SFU = "settings.audioBitrateSFU";
 
 	
 	/**
@@ -862,9 +862,12 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
 	private int heightRtmpForwarding;
 	
-	
-	@Value("${" + SETTINGS_OPUS_BITRATE+":96000}")
-	private int opusBitrate;
+	/**
+	 * In SFU mode we still transcode the audio to opus and aac
+	 * This settings determines the audio bitrate for opus and aac
+	 */
+	@Value("${" + SETTINGS_AUDIO_BITRATE_SFU+":96000}")
+	private int audioBitrateSFU;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1777,11 +1780,11 @@ public class AppSettings {
 		this.heightRtmpForwarding = heightRtmpForwarding;
 	}
 
-	public int getOpusBitrate() {
-		return opusBitrate;
+	public int getAudioBitrateSFU() {
+		return audioBitrateSFU;
 	}
 
-	public void setOpusBitrate(int opusBitrate) {
-		this.opusBitrate = opusBitrate;
+	public void setAudioBitrateSFU(int audioBitrateSFU) {
+		this.audioBitrateSFU = audioBitrateSFU;
 	}
 }
