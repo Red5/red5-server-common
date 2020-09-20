@@ -168,6 +168,9 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	public static final String SETTINGS_AUDIO_BITRATE_SFU = "settings.audioBitrateSFU";
+
+	
 	/**
 	 * In data channel, player messages are delivered to nobody. 
 	 * In order words, player cannot send messages
@@ -864,16 +867,23 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
 	private int heightRtmpForwarding;
-
+  
+	/**
+	 * In SFU mode we still transcode the audio to opus and aac
+	 * This settings determines the audio bitrate for opus and aac
+	 */
+	@Value("${" + SETTINGS_AUDIO_BITRATE_SFU+":96000}")
+	private int audioBitrateSFU;
+	
 	/** 
 	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
 	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
-         *
+   *
 	 * This value should be true if you're sending stream to RTMP endpoints or enable/disable mp4 recording on the fly
 	 */
-
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
 	private boolean aacEncodingEnabled;
+
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1778,7 +1788,7 @@ public class AppSettings {
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
 	}
-
+	
 	public int getHeightRtmpForwarding() {
 		return heightRtmpForwarding;
 	}
@@ -1787,7 +1797,19 @@ public class AppSettings {
 		this.heightRtmpForwarding = heightRtmpForwarding;
 	}
 
-	public void setAacEncodingEnabled(boolean aacEncodingEnabled){this.aacEncodingEnabled=aacEncodingEnabled;}
+	public int getAudioBitrateSFU() {
+		return audioBitrateSFU;
+	}
 
-	public boolean isAacEncodingEnabled(){return aacEncodingEnabled;}
+	public void setAudioBitrateSFU(int audioBitrateSFU) {
+		this.audioBitrateSFU = audioBitrateSFU;
+	}
+  
+	public void setAacEncodingEnabled(boolean aacEncodingEnabled){
+     this.aacEncodingEnabled=aacEncodingEnabled;
+  }
+
+	public boolean isAacEncodingEnabled() {
+    return aacEncodingEnabled;
+  }
 }
