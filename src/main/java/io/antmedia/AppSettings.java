@@ -210,6 +210,12 @@ public class AppSettings {
 	 */
 	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
 
+	/**
+	 *
+	 */
+	private static final String SETTINGS_AAC_ENCODING_ENABLED="settings.aacEncodingEnabled";
+
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -861,7 +867,7 @@ public class AppSettings {
 	 */
 	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
 	private int heightRtmpForwarding;
-	
+  
 	/**
 	 * In SFU mode we still transcode the audio to opus and aac
 	 * This settings determines the audio bitrate for opus and aac
@@ -869,6 +875,16 @@ public class AppSettings {
 	@Value("${" + SETTINGS_AUDIO_BITRATE_SFU+":96000}")
 	private int audioBitrateSFU;
 	
+	/** 
+	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
+	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
+   *
+	 * This value should be true if you're sending stream to RTMP endpoints or enable/disable mp4 recording on the fly
+	 */
+	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
+	private boolean aacEncodingEnabled;
+
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -1246,6 +1262,7 @@ public class AppSettings {
 		tokenHashSecret = "";
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
+		aacEncodingEnabled=true;
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -1787,4 +1804,12 @@ public class AppSettings {
 	public void setAudioBitrateSFU(int audioBitrateSFU) {
 		this.audioBitrateSFU = audioBitrateSFU;
 	}
+  
+	public void setAacEncodingEnabled(boolean aacEncodingEnabled){
+     this.aacEncodingEnabled=aacEncodingEnabled;
+  }
+
+	public boolean isAacEncodingEnabled() {
+    return aacEncodingEnabled;
+  }
 }
