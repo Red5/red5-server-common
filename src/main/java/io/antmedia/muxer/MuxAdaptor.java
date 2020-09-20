@@ -1,20 +1,21 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.javacpp.avcodec.av_packet_free;
-import static org.bytedeco.javacpp.avcodec.av_packet_move_ref;
-import static org.bytedeco.javacpp.avcodec.*;
-import static org.bytedeco.javacpp.avformat.av_dump_format;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avio_alloc_context;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_LOG_INFO;
-import static org.bytedeco.javacpp.avutil.av_free;
-import static org.bytedeco.javacpp.avutil.av_log_get_level;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avformat.av_dump_format;
+import static org.bytedeco.ffmpeg.global.avformat.av_read_frame;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
+import static org.bytedeco.ffmpeg.global.avformat.avio_alloc_context;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_LOG_INFO;
+import static org.bytedeco.ffmpeg.global.avutil.av_free;
+import static org.bytedeco.ffmpeg.global.avutil.av_log_get_level;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,19 +32,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVInputFormat;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avformat.Read_packet_Pointer_BytePointer_int;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
+import org.bytedeco.ffmpeg.global.avformat;
+import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.avcodec;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVInputFormat;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avformat.Read_packet_Pointer_BytePointer_int;
-import org.bytedeco.javacpp.avutil;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
 import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
@@ -52,7 +54,6 @@ import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamCapableConnection;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.net.rtmp.message.Constants;
-import org.red5.server.scheduling.QuartzSchedulingService;
 import org.red5.server.stream.ClientBroadcastStream;
 import org.red5.server.stream.IRecordingListener;
 import org.red5.server.stream.consumer.FileConsumer;
@@ -68,6 +69,7 @@ import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.storage.StorageClient;
 import io.vertx.core.Vertx;
+
 
 public class MuxAdaptor implements IRecordingListener {
 
@@ -391,11 +393,6 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
 		}
 		
-		if (webMMuxingEnabled) {
-			addWebMMuxer();
-			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
-		}
-
 		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
@@ -511,9 +508,21 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
 
-		if (av_log_get_level() >= AV_LOG_INFO) {
+		if (logger.isInfoEnabled()) 
+		{
 			// Dump information about file onto standard error
-			av_dump_format(inputFormatContext, 0, streamId, 0);
+			int streamCount = inputFormatContext.nb_streams();
+			for (int i=0; i < streamCount; i++) 
+			{
+				AVStream stream = inputFormatContext.streams(i);
+				AVCodecParameters codecpar = stream.codecpar();
+				if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
+					logger.info("Video format width:{} height:{}", codecpar.width(), codecpar.height());
+				}
+				else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
+					logger.info("Audio format sample rate:{} bitrate:{}",codecpar.sample_rate(), codecpar.bit_rate());
+				}
+			}
 		}
 
 		Iterator<Muxer> iterator = muxerList.iterator();
@@ -679,9 +688,9 @@ public class MuxAdaptor implements IRecordingListener {
 					if (broadcastStream != null) {
 						broadcastStream.removeStreamListener(MuxAdaptor.this);
 					}
-					logger.warn("closing adaptor for {}", streamId);
+					logger.warn("closing adaptor for {} ", streamId);
 					closeResources();
-					logger.warn("closed adaptor for {}", streamId);
+					logger.warn("closed adaptor for {} input queue size:{} and queue reference size:{}", streamId, getInputQueueSize(), queueReferences.size());
 					closeRtmpConnection();
 					
 				}
@@ -779,7 +788,7 @@ public class MuxAdaptor implements IRecordingListener {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
-				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt)) {
+				if(!appAdapter.isValidStreamParameters(inputFormatContext, pkt, streamId)) {
 					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					closeRtmpConnection();
 					return;
@@ -979,6 +988,7 @@ public class MuxAdaptor implements IRecordingListener {
 		vertx.setTimer(1, h -> {
 			logger.info("before prepare for {}", streamId);
 			try {
+				//Prepare and check if stream is stopped while it's preparing
 				if (prepare()) {
 
 					logger.info("after prepare for {}", streamId);
@@ -1032,7 +1042,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 	@Override
 	public void stop() {
-		logger.info("Calling stop for {}", streamId);
+		logger.info("Calling stop for {} input queue size:{}", streamId, getInputQueueSize());
 		if (inputFormatContext == null) {
 			logger.warn("Mux adaptor stopped returning for {}", streamId);
 			return;
@@ -1040,6 +1050,9 @@ public class MuxAdaptor implements IRecordingListener {
 		InputContext inputContextRef = queueReferences.get(inputFormatContext);
 		if (inputContextRef != null) {
 			inputContextRef.stopRequestExist = true;
+		}
+		else {
+			logger.warn("Cannot receive the stop request because inputContextRef is not created");
 		}
 	}
 
@@ -1328,13 +1341,6 @@ public class MuxAdaptor implements IRecordingListener {
 		return mp4Muxer;
 	}
 	
-	private Muxer addWebMMuxer() {
-		WebMMuxer webMMuxer = createWebMMuxer();
-		addMuxer(webMMuxer);
-		getDataStore().setWebMMuxing(streamId, RECORDING_ENABLED_FOR_STREAM);
-		return webMMuxer;
-	}
-
 	public boolean startRecording(RecordType recordType) {
 		
 		if (!isRecording) {
@@ -1346,7 +1352,6 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.warn("Record is called while {} is already recording.", streamId);
 			return true;
 		}
-		
 		
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {

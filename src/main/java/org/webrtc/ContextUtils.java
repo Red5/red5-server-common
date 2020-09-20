@@ -10,8 +10,6 @@
 
 package org.webrtc;
 
-import org.webrtc.Logging;
-
 /**
  * Class for storing the application context and retrieving it in a static context. Similar to
  * org.chromium.base.ContextUtils.

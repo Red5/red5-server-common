@@ -23,19 +23,19 @@ public class ConferenceRoom {
 	
 	@JsonIgnore
 	@Id
-	@ApiModelProperty(value = "the db id of the Conference Room")
+	@ApiModelProperty(value = "The db id of the Conference Room")
 	private ObjectId dbId;
 	
-	@ApiModelProperty(value = "the id of the Conference Room")
+	@ApiModelProperty(value = "The id of the Conference Room")
 	private String roomId; 
 	
-	@ApiModelProperty(value = "the start date of the Conference Room")
+	@ApiModelProperty(value = "The start date of the Conference Room. It's unix timestamp in seconds.")
 	private long startDate;
 	
-	@ApiModelProperty(value = "the end date of the Conference Room")
+	@ApiModelProperty(value = "The end date of the Conference Room. It's unix timestamp in seconds")
 	private long endDate;
 	
-	@ApiModelProperty(value = "the list of streams in the Conference Room")
+	@ApiModelProperty(value = "The list of streams in the Conference Room")
 	private List<String> roomStreamList = new ArrayList<>();
 
 	public String getRoomId() {

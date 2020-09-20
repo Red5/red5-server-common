@@ -2,8 +2,8 @@ package io.antmedia.muxer;
 
 import java.io.File;
 
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 
 public interface IAntMediaStreamHandler {
 	
@@ -59,5 +59,5 @@ public interface IAntMediaStreamHandler {
      *
      * @param inputFormatContext, pkt, streamId
      */
-	public boolean isValidStreamParameters(AVFormatContext inputFormatContext, AVPacket pkt);
+	public boolean isValidStreamParameters(AVFormatContext inputFormatContext, AVPacket pkt, String streamId);
 }

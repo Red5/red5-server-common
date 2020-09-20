@@ -5,12 +5,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import io.antmedia.datastore.db.types.Playlist;
-
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
+import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.TensorFlowObject;
@@ -66,10 +65,18 @@ public abstract class DataStore {
 
 	public abstract boolean deleteVod(String id);
 
-	public abstract List<Broadcast> getBroadcastList(int offset, int size);
-
-	public abstract List<Broadcast> filterBroadcastList(int offset, int size, String type);
-
+	/**
+	 * Returns the Broadcast List in order
+	 * 
+	 * @param offset the number of items to skip
+	 * @param size batch size
+	 * @param type can get "liveStream" or "ipCamera" or "streamSource" or "VoD" values. Default is getting all broadcast types.
+	 * @param sortBy can get "name" or "date" or "status" values
+	 * @param orderBy can get "desc" or "asc"
+	 * @return
+	 */
+	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy);
+	
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
 	
 	public abstract List<Broadcast> getExternalStreamsList();
@@ -418,6 +425,8 @@ public abstract class DataStore {
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
 		broadcast.setUserAgent(newBroadcast.getUserAgent());
+		broadcast.setWebRTCViewerLimit(newBroadcast.getWebRTCViewerLimit());
+		broadcast.setHlsViewerLimit(newBroadcast.getHlsViewerLimit());
 	}
 
 	/**
@@ -462,6 +471,45 @@ public abstract class DataStore {
 		}
 		
 		return vodList.subList(offset, Math.min(offset+size, vodList.size()));
+	}
+	
+	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
+			Collections.sort(broadcastList, new Comparator<Broadcast>() {
+				@Override
+				public int compare(Broadcast broadcast1, Broadcast broadcast2) {
+					Comparable c1 = null;
+					Comparable c2 = null;
+					
+					if(sortBy.equals("name")) {
+						c1 = broadcast1.getName().toLowerCase();
+						c2 = broadcast2.getName().toLowerCase();
+					}
+					else if(sortBy.equals("date")) {
+						c1 = new Long(broadcast1.getDate());
+						c2 = new Long(broadcast2.getDate());
+					}
+					else if(sortBy.equals("status")) {
+						c1 = broadcast1.getStatus();
+						c2 = broadcast2.getStatus();
+					}
+				
+					if(orderBy.equals("desc")) {
+						return c2.compareTo(c1);
+					}
+					return c1.compareTo(c2);
+				}
+			});
+		}
+		
+		if (size > MAX_ITEM_IN_ONE_LIST) {
+			size = MAX_ITEM_IN_ONE_LIST;
+		}
+		if (offset < 0 ) {
+			offset = 0;
+		}
+		
+		return broadcastList.subList(offset, Math.min(offset+size, broadcastList.size()));
 	}
 
 	/**

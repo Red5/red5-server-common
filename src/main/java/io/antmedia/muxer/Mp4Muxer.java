@@ -1,72 +1,72 @@
 package io.antmedia.muxer;
 
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AAC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_AC3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DIRAC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DTS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_DVD_SUBTITLE;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_EAC3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_H264;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_HEVC;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_JPEG2000;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MJPEG;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MOV_TEXT;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP2;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP3;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MP4ALS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG1VIDEO;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG2VIDEO;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG4;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_MPEG4SYSTEMS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_NONE;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_PNG;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_QCELP;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_TSCC2;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VC1;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VORBIS;
-import static org.bytedeco.javacpp.avcodec.AV_CODEC_ID_VP9;
-import static org.bytedeco.javacpp.avcodec.av_bsf_alloc;
-import static org.bytedeco.javacpp.avcodec.av_bsf_free;
-import static org.bytedeco.javacpp.avcodec.av_bsf_get_by_name;
-import static org.bytedeco.javacpp.avcodec.av_bsf_init;
-import static org.bytedeco.javacpp.avcodec.av_bsf_receive_packet;
-import static org.bytedeco.javacpp.avcodec.av_bsf_send_packet;
-import static org.bytedeco.javacpp.avcodec.av_packet_unref;
-import static org.bytedeco.javacpp.avcodec.avcodec_parameters_copy;
-import static org.bytedeco.javacpp.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.javacpp.avformat.av_read_frame;
-import static org.bytedeco.javacpp.avformat.av_write_frame;
-import static org.bytedeco.javacpp.avformat.av_write_trailer;
-import static org.bytedeco.javacpp.avformat.avformat_alloc_output_context2;
-import static org.bytedeco.javacpp.avformat.avformat_close_input;
-import static org.bytedeco.javacpp.avformat.avformat_find_stream_info;
-import static org.bytedeco.javacpp.avformat.avformat_free_context;
-import static org.bytedeco.javacpp.avformat.avformat_new_stream;
-import static org.bytedeco.javacpp.avformat.avformat_open_input;
-import static org.bytedeco.javacpp.avformat.avformat_write_header;
-import static org.bytedeco.javacpp.avformat.avio_closep;
-import static org.bytedeco.javacpp.avformat.avio_open;
-import static org.bytedeco.javacpp.avutil.AVMEDIA_TYPE_VIDEO;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_NEAR_INF;
-import static org.bytedeco.javacpp.avutil.AV_ROUND_PASS_MINMAX;
-import static org.bytedeco.javacpp.avutil.av_dict_set;
-import static org.bytedeco.javacpp.avutil.av_rescale_q;
-import static org.bytedeco.javacpp.avutil.av_rescale_q_rnd;
-import static org.bytedeco.javacpp.avutil.av_strerror;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AAC;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AC3;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_DIRAC;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_DTS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_DVD_SUBTITLE;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_EAC3;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_H264;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_HEVC;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_JPEG2000;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MJPEG;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MOV_TEXT;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MP2;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MP3;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MP4ALS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MPEG1VIDEO;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MPEG2VIDEO;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MPEG4;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_MPEG4SYSTEMS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_NONE;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_PNG;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_QCELP;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_TSCC2;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VC1;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VORBIS;
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_VP9;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_alloc;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_get_by_name;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_init;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_send_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
+import static org.bytedeco.ffmpeg.global.avformat.av_read_frame;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_find_stream_info;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_free_context;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_open_input;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_write_header;
+import static org.bytedeco.ffmpeg.global.avformat.avio_closep;
+import static org.bytedeco.ffmpeg.global.avformat.avio_open;
+import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_NEAR_INF;
+import static org.bytedeco.ffmpeg.global.avutil.AV_ROUND_PASS_MINMAX;
+import static org.bytedeco.ffmpeg.global.avutil.av_dict_set;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
+import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q_rnd;
+import static org.bytedeco.ffmpeg.global.avutil.av_strerror;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import org.bytedeco.javacpp.avcodec.AVBSFContext;
-import org.bytedeco.javacpp.avcodec.AVBitStreamFilter;
-import org.bytedeco.javacpp.avcodec.AVCodecParameters;
-import org.bytedeco.javacpp.avcodec.AVPacket;
-import org.bytedeco.javacpp.avformat.AVFormatContext;
-import org.bytedeco.javacpp.avformat.AVIOContext;
-import org.bytedeco.javacpp.avformat.AVStream;
-import org.bytedeco.javacpp.avutil.AVDictionary;
-import org.bytedeco.javacpp.avutil.AVRational;
+import org.bytedeco.ffmpeg.avcodec.AVBSFContext;
+import org.bytedeco.ffmpeg.avcodec.AVBitStreamFilter;
+import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
+import org.bytedeco.ffmpeg.avcodec.AVPacket;
+import org.bytedeco.ffmpeg.avformat.AVFormatContext;
+import org.bytedeco.ffmpeg.avformat.AVIOContext;
+import org.bytedeco.ffmpeg.avformat.AVStream;
+import org.bytedeco.ffmpeg.avutil.AVDictionary;
+import org.bytedeco.ffmpeg.avutil.AVRational;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class Mp4Muxer extends RecordMuxer {
 
 	protected static Logger logger = LoggerFactory.getLogger(Mp4Muxer.class);
 	private AVBSFContext bsfContext;
-	private AVBSFContext bsfExtractdataContext = null;
+	
 	private boolean isAVCConversionRequired = false;
 	
 	private static int[] MP4_SUPPORTED_CODECS = {
@@ -120,6 +120,7 @@ public class Mp4Muxer extends RecordMuxer {
 
 	public Mp4Muxer(StorageClient storageClient, Vertx vertx) {
 		super(storageClient, vertx);
+		options.put("movflags", "faststart");
 		extension = ".mp4";
 		format = "mp4";
 		SUPPORTED_CODECS = MP4_SUPPORTED_CODECS;
@@ -278,33 +279,6 @@ public class Mp4Muxer extends RecordMuxer {
 		if (bsfContext != null) {
 			av_bsf_free(bsfContext);
 			bsfContext = null;
-		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void writeVideoFrame(AVPacket pkt, AVFormatContext context) {
-		int ret;
-		if (bsfExtractdataContext != null) {
-			ret = av_bsf_send_packet(bsfExtractdataContext, tmpPacket);
-			if (ret < 0)
-				return;
-
-			while (av_bsf_receive_packet(bsfExtractdataContext, tmpPacket) == 0) 
-			{
-				ret = av_write_frame(context, tmpPacket);
-				if (ret < 0 && logger.isWarnEnabled()) {
-					byte[] data = new byte[2048];
-					av_strerror(ret, data, data.length);
-					logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
-				}
-
-			}
-		}
-		else {
-			super.writeVideoFrame(pkt, context);
 		}
 	}
 

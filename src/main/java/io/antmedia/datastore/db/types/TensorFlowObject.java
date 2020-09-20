@@ -45,6 +45,19 @@ public class TensorFlowObject {
 	@ApiModelProperty(value = "the id of the detected image")
 	private String imageId;
 	
+	@ApiModelProperty(value = "the x coordinate of upper-left corner of detected object frame")
+	private double minX;
+	
+	@ApiModelProperty(value = "the y coordinate of upper-left corner of detected object frame")
+	private double minY;
+	
+	@ApiModelProperty(value = "the x coordinate of lower-right corner of detected object frame")
+	private double maxX;
+	
+	@ApiModelProperty(value = "the y coordinate of lower-right corner of detected object frame")
+	private double maxY;
+	
+	
 	public TensorFlowObject(String name, float probability, String imageId) {
 		this.objectName = name;
 		this.probability = probability;
@@ -101,5 +114,37 @@ public class TensorFlowObject {
 
 	public void setImageId(String imageId) {
 		this.imageId = imageId;
+	}
+
+	public double getMinX() {
+		return minX;
+	}
+
+	public void setMinX(double minX) {
+		this.minX = minX;
+	}
+
+	public double getMinY() {
+		return minY;
+	}
+
+	public void setMinY(double minY) {
+		this.minY = minY;
+	}
+
+	public double getMaxX() {
+		return maxX;
+	}
+
+	public void setMaxX(double maxX) {
+		this.maxX = maxX;
+	}
+
+	public double getMaxY() {
+		return maxY;
+	}
+
+	public void setMaxY(double maxY) {
+		this.maxY = maxY;
 	}
 }
