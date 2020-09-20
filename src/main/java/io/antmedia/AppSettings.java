@@ -865,12 +865,11 @@ public class AppSettings {
 	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
 	private int heightRtmpForwarding;
 
-	/** If AacEncodingEnabled is true, isAACEncodingRequired will return true
-	 * This is useful when mp4MuxingEnabled,hlsMuxingEnabled and getAppSettings().isMp4MuxingEnabled() are false
-	 * It helps to enable recording of individually streams because if the settings above are false, aac will not be generated.
-	 * This makes it return true.
-	 * So if aacEncodingEnabled is true, isAACEncodingRequired will also be true.
-	 * If aacEncodingEnabled is false but other parameters are true such mp4muxing or hlsmuxing, isAacEncodingRequired will return true.
+	/** 
+	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
+	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
+         *
+	 * This value should be true if you're sending stream to RTMP endpoints or enable/disable mp4 recording on the fly
 	 */
 
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
