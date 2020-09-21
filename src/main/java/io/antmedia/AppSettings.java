@@ -493,7 +493,7 @@ public class AppSettings {
 	/**
 	 * Stun Server URI
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun1.l.google.com:19302}")
 	private String stunServerURI;
 
 	/**
