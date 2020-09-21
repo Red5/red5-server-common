@@ -215,6 +215,10 @@ public class AppSettings {
 	 */
 	private static final String SETTINGS_AAC_ENCODING_ENABLED="settings.aacEncodingEnabled";
 
+	private static final String SETTINGS_GOP_SIZE = "settings.gopSize";
+
+	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
+
 
 	@JsonIgnore
 	@NotSaved
@@ -493,7 +497,7 @@ public class AppSettings {
 	/**
 	 * Stun Server URI
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun1.l.google.com:19302}")
 	private String stunServerURI;
 
 	/**
@@ -878,12 +882,33 @@ public class AppSettings {
 	/** 
 	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
 	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
-   *
+     *
 	 * This value should be true if you're sending stream to RTMP endpoints or enable/disable mp4 recording on the fly
 	 */
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
 	private boolean aacEncodingEnabled;
+	
+	/**
+	 * GOP size. AKA key frame interval. 
+	 * GOP size is group of pictures that encoder sends key frame for each group.
+	 * The unit is not the seconds. Please don't confuse the seconds that are used in key frame intervals 
+	 *  
+	 * If GOP size is 50 and your frame rate is 25, it means that encoder will send key frame 
+	 * for every 2 seconds. 
+	 * 
+	 * Default value is 0 so it uses incoming gop size by default.
+	 * 
+	 */
+	@Value( "${"+SETTINGS_GOP_SIZE+":0}" )
+	private int gopSize;
 
+	/**
+	 * Constant Rate Factor used by x264, x265, VP8.
+	 * Use values between 4-51
+	 * 
+	 */
+	@Value( "${"+SETTINGS_CONSTANT_RATE_FACTOR+":23}" )
+	private String constantRateFactor;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1806,10 +1831,28 @@ public class AppSettings {
 	}
   
 	public void setAacEncodingEnabled(boolean aacEncodingEnabled){
-     this.aacEncodingEnabled=aacEncodingEnabled;
-  }
+		this.aacEncodingEnabled=aacEncodingEnabled;
+	}
 
 	public boolean isAacEncodingEnabled() {
-    return aacEncodingEnabled;
-  }
+		return aacEncodingEnabled;
+	}
+
+	public int getGopSize() {
+		return gopSize;
+	}
+
+	public void setGopSize(int gopSize) {
+		this.gopSize = gopSize;
+	}
+
+	public String getConstantRateFactor() {
+		return constantRateFactor;
+	}
+	
+	public void setConstantRateFactor(String constantRateFactor) {
+		this.constantRateFactor = constantRateFactor;
+	}
+
+
 }
