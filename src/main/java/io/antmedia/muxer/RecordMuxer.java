@@ -83,6 +83,7 @@ public abstract class RecordMuxer extends Muxer {
 	protected AVPacket tmpPacket;
 	protected Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
+	public static final String TEMP_EXTENSION = ".tmp_extension";
 	protected AVPacket videoPkt;
 	protected int rotation;
 	protected long startTimeInVideoTimebase = 0;
