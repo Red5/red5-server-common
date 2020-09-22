@@ -381,18 +381,18 @@ public class MuxAdaptor implements IRecordingListener {
 		this.streamId = streamId;
 		this.scope = scope;
 
-		getDataStore();
+		initializeDataStore();
 		enableSettings();
 		initStorageClient();
 		enableMp4Setting();
-		enableWebMSetting();
+		//TODO enableWebMSetting();
 		initVertx();
 
 		if (mp4MuxingEnabled) {
 			addMp4Muxer();
 			logger.info("adding MP4 Muxer, add datetime to file name {}", addDateTimeToMp4FileName);
 		}
-		
+
 		if (hlsMuxingEnabled) {
 			HLSMuxer hlsMuxer = new HLSMuxer(vertx, hlsListSize, hlsTime, hlsPlayListType, getAppSettings().getHlsFlags());
 			hlsMuxer.setDeleteFileOnExit(deleteHLSFilesOnExit);
@@ -581,7 +581,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	private DataStore getDataStore() {
+	private DataStore initializeDataStore() {
 		if (dataStore == null) {
 
 			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
@@ -1327,32 +1327,19 @@ public class MuxAdaptor implements IRecordingListener {
 		mp4Muxer.setBitstreamFilter(mp4Filtername);
 		return mp4Muxer;
 	}
-	
-	private WebMMuxer createWebMMuxer() {
-		WebMMuxer webMMuxer = new WebMMuxer(storageClient, vertx);
-		webMMuxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
-		return webMMuxer;
-	}
-		
+
 	private Muxer addMp4Muxer() {
 		Mp4Muxer mp4Muxer = createMp4Muxer();
 		addMuxer(mp4Muxer);
-		getDataStore().setMp4Muxing(streamId, RECORDING_ENABLED_FOR_STREAM);
 		return mp4Muxer;
 	}
-	
+
 	public boolean startRecording(RecordType recordType) {
 		
 		if (!isRecording) {
 			logger.warn("Starting recording return false for stream:{} because stream is being prepared", streamId);
 			return false;
 		}
-		
-		if(isAlreadyRecording(recordType)) {
-			logger.warn("Record is called while {} is already recording.", streamId);
-			return true;
-		}
-		
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {
 			Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1360,7 +1347,8 @@ public class MuxAdaptor implements IRecordingListener {
 			muxer = mp4Muxer;
 		} 
 		else if(recordType == RecordType.WEBM) {
-			WebMMuxer webMMuxer = createWebMMuxer();
+			WebMMuxer webMMuxer = new WebMMuxer(storageClient, vertx);
+			webMMuxer.setAddDateTimeToSourceName(addDateTimeToMp4FileName);
 			webMMuxer.setDynamic(true);
 			muxer = webMMuxer;
 		}
@@ -1375,17 +1363,6 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		return prepared;
 	}
-
-	private boolean isAlreadyRecording(RecordType recordType) {
-		for (Muxer muxer : muxerList) {
-			if((muxer instanceof Mp4Muxer && recordType == RecordType.MP4)
-					|| (muxer instanceof WebMMuxer && recordType == RecordType.WEBM)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 
 	public AVPacket getAVPacket() {
 		if (!availableBufferQueue.isEmpty()) {
@@ -1402,8 +1379,8 @@ public class MuxAdaptor implements IRecordingListener {
 			while (iterator.hasNext()) 
 			{
 				Muxer muxer = iterator.next();
-				if ((recordType == RecordType.MP4 && muxer instanceof Mp4Muxer)
-						|| (recordType == RecordType.WEBM && muxer instanceof WebMMuxer)) {
+				if ((recordType == RecordType.MP4 && muxer instanceof Mp4Muxer && ((Mp4Muxer) muxer).isDynamic())
+						|| (recordType == RecordType.WEBM && muxer instanceof WebMMuxer && ((WebMMuxer) muxer).isDynamic())) {
 					return muxer;
 				}
 			}
