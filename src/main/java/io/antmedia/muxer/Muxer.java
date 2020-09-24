@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.bytedeco.ffmpeg.avcodec.AVCodec;
 import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
@@ -70,6 +71,8 @@ public abstract class Muxer {
 
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
 	
+	public static final String TEMP_EXTENSION = ".tmp_extension";
+
 	/**
 	 * Bitstream filter name that will be applied to packets
 	 */
@@ -275,19 +278,22 @@ public abstract class Muxer {
 			File parentFile = file.getParentFile();
 
 			if (!parentFile.exists()) {
-				// check if parent file exist
+				// check if parent file does not exist
 				parentFile.mkdirs();
 			} else {
-				// if parent file does not exist,
+				// if parent file exists,
 				// check overrideIfExist and file.exists
-				if (!overrideIfExist && file.exists()) {
+				File tempFile = getResourceFile(scope, resourceName, extension+TEMP_EXTENSION);
+				
+				if (!overrideIfExist && (file.exists() || tempFile.exists())) {
 					String tmpName = resourceName;
 					int i = 1;
 					do {
+						tempFile = getResourceFile(scope, tmpName, extension+TEMP_EXTENSION);
 						file = getResourceFile(scope, tmpName, extension);
 						tmpName = resourceName + "_" + i;
 						i++;
-					} while (file.exists());
+					} while (file.exists() || tempFile.exists());
 				}
 			}
 
