@@ -579,6 +579,15 @@ public abstract class DataStore {
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
   
+	
+	/**
+	 * This is used to get total number of WebRTC viewers 
+	 * 
+	 * @returns total number of WebRTC viewers
+	 */
+	public abstract int getTotalWebRTCViewersCount();
+  
+	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
