@@ -581,7 +581,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	private DataStore getDataStore() {
+	public DataStore getDataStore() {
 		if (dataStore == null) {
 
 			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
