@@ -145,7 +145,7 @@ public class Broadcast {
 	@ApiModelProperty(value = "the category of the stream")
 	private String category;
 	
-	@ApiModelProperty(value = "the IP Address of the IP Cameraor publisher")
+	@ApiModelProperty(value = "the IP Address of the IP Camera or publisher")
 	private String ipAddr;
 	
 	@ApiModelProperty(value = "the user name of the IP Camera")
