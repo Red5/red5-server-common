@@ -135,7 +135,7 @@ public class DASHMuxer extends Muxer {
 			options.put("frag_duration", fragmentTime);
 			options.put("seg_duration", dashTime);
 			
-			logger.info("segment duration: {}, fragment duration: {}", dashTime, fragmentTime);
+			logger.info("DASH Segment Duration: {}, Fragment Duration: {}", dashTime, fragmentTime);
 			
 			if (this.targetLatency != null && !this.targetLatency.isEmpty()) {
 				options.put("target_latency", this.targetLatency);
@@ -248,6 +248,7 @@ public class DASHMuxer extends Muxer {
 					outStream.time_base(bsfContext.time_base_out());
 				}
 				else {
+					
 					audioIndex = streamIndex;
 					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
 					if (ret < 0) {
@@ -263,6 +264,8 @@ public class DASHMuxer extends Muxer {
 				}
 				outStream.codecpar().codec_tag(0);
 
+				
+				
 				streamIndex++;
 
 				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
