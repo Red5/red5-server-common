@@ -62,6 +62,8 @@ public class AppSettings {
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
+	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
+	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
 	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
 	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
@@ -171,6 +173,9 @@ public class AppSettings {
 	
 	public static final String SETTINGS_MAX_BITRATE_ACCEPT = "settings.maxBitrateAccept";
 	
+	public static final String SETTINGS_AUDIO_BITRATE_SFU = "settings.audioBitrateSFU";
+
+	
 	/**
 	 * In data channel, player messages are delivered to nobody. 
 	 * In order words, player cannot send messages
@@ -204,6 +209,21 @@ public class AppSettings {
 	 * WebRTC SDP Semantics:UNIFIED PLAN
 	 */
 	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";	
+
+	/**
+	 * Height Property key for WebRTC to RTMP  forwarding
+	 */
+	private static final String SETTINGS_HEIGHT_RTMP_FORWARDING = "settings.heightRtmpForwarding";
+
+	/**
+	 *
+	 */
+	private static final String SETTINGS_AAC_ENCODING_ENABLED="settings.aacEncodingEnabled";
+
+	private static final String SETTINGS_GOP_SIZE = "settings.gopSize";
+
+	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
+
 
 	@JsonIgnore
 	@NotSaved
@@ -351,8 +371,16 @@ public class AppSettings {
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
 	 */
-	@Value( "${"+SETTINGS_TOKEN_CONTROL_ENABLED+":false}" )
-	private boolean tokenControlEnabled ;
+	
+	@Value("#{'${"+ SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}") 
+	private boolean publishTokenControlEnabled ;
+	// check old SETTINGS_TOKEN_CONTROL_ENABLED for backward compatibility
+	// https://stackoverflow.com/questions/49653241/can-multiple-property-names-be-specified-in-springs-value-annotation
+	/**
+	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 */
+	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
+	private boolean playTokenControlEnabled ;
 
 	/**
 	 * event or vod
@@ -500,7 +528,7 @@ public class AppSettings {
 	/**
 	 * Stun Server URI
 	 */
-	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun.l.google.com:19302}")
+	@Value( "${" + SETTINGS_WEBRTC_STUN_SERVER_URI +":stun:stun1.l.google.com:19302}")
 	private String stunServerURI;
 
 	/**
@@ -512,7 +540,7 @@ public class AppSettings {
 	
 	/**
 	 * WebRTC SDP Semantics
-	 * Plan B or Unified Plan
+	 * It can "planB" or "unifiedPlan"
 	 */
 	@Value( "${" + SETTINGS_WEBRTC_SDP_SEMANTICS +":" + SDP_SEMANTICS_PLAN_B + "}")
 	private String webRTCSdpSemantics;
@@ -766,7 +794,7 @@ public class AppSettings {
 	/**
 	 * Max analyze duration in for determining video and audio existence in RTMP streams
 	 */
-	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":500}")
+	@Value("${" + SETTINGS_RTMP_MAX_ANALYZE_DURATION_MS+ ":1000}")
 	private int maxAnalyzeDurationMS;
 	
 	/**
@@ -865,16 +893,61 @@ public class AppSettings {
 	private String h265EncoderSpecific;
 
 	private String h265EncoderLevel;
-	
+
+	/**
+	 * The height of the stream that is transcoded from incoming WebRTC stream to the RTMP
+	 * This settings is effective in community edition by default.
+	 * It's also effective WebRTC to RTMP direct forwarding by giving rtmpForward=true in WebSocket communication
+	 * in Enterprise Edition
+	 */
+	@Value( "${" + SETTINGS_HEIGHT_RTMP_FORWARDING+":360}")
+	private int heightRtmpForwarding;
+  
+	/**
+	 * In SFU mode we still transcode the audio to opus and aac
+	 * This settings determines the audio bitrate for opus and aac
+	 */
+	@Value("${" + SETTINGS_AUDIO_BITRATE_SFU+":96000}")
+	private int audioBitrateSFU;
+
 	/**
 	 * Enable/disable dash recording
 	 */
 	@Value( "${"+SETTINGS_DASH_MUXING_ENABLED+":true}" )
 	private boolean dashMuxingEnabled;
+
+	/** 
+	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
+	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
+     *
+	 * This value should be true if you're sending stream to RTMP endpoints or enable/disable mp4 recording on the fly
+	 */
+	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
+	private boolean aacEncodingEnabled;
+
 	
-	
-	
-	
+	/**
+	 * GOP size. AKA key frame interval. 
+	 * GOP size is group of pictures that encoder sends key frame for each group.
+	 * The unit is not the seconds. Please don't confuse the seconds that are used in key frame intervals 
+	 *  
+	 * If GOP size is 50 and your frame rate is 25, it means that encoder will send key frame 
+	 * for every 2 seconds. 
+	 * 
+	 * Default value is 0 so it uses incoming gop size by default.
+	 * 
+	 */
+	@Value( "${"+SETTINGS_GOP_SIZE+":0}" )
+	private int gopSize;
+
+	/**
+	 * Constant Rate Factor used by x264, x265, VP8.
+	 * Use values between 4-51
+	 * 
+	 */
+	@Value( "${"+SETTINGS_CONSTANT_RATE_FACTOR+":23}" )
+	private String constantRateFactor;
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -1172,14 +1245,22 @@ public class AppSettings {
 	}
 
 
-	public boolean isTokenControlEnabled() {
-		return tokenControlEnabled;
+	public boolean isPublishTokenControlEnabled() {
+		return publishTokenControlEnabled;
 	}
 
-	public void setTokenControlEnabled(boolean tokenControlEnabled) {
-		this.tokenControlEnabled = tokenControlEnabled;
+	public void setPublishTokenControlEnabled(boolean publishTokenControlEnabled) {
+		this.publishTokenControlEnabled = publishTokenControlEnabled;
+	}
+	
+	public boolean isPlayTokenControlEnabled() {
+		return playTokenControlEnabled;
 	}
 
+	public void setPlayTokenControlEnabled(boolean playTokenControlEnabled) {
+		this.playTokenControlEnabled = playTokenControlEnabled;
+	}
+	
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
@@ -1240,7 +1321,8 @@ public class AppSettings {
 		deleteHLSFilesOnEnded = true;
 		deleteDASHFilesOnEnded = true;
 		acceptOnlyStreamsInDataStore = false;
-		tokenControlEnabled = false;
+		publishTokenControlEnabled = false;
+		playTokenControlEnabled = false;
 		hlsPlayListType = null;
 		previewOverwrite = false;
 		objectDetectionEnabled = false;
@@ -1252,6 +1334,7 @@ public class AppSettings {
 		tokenHashSecret = "";
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
+		aacEncodingEnabled=true;
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -1777,7 +1860,7 @@ public class AppSettings {
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
 	}
-	
+
 	public String getDashTime() {
 		return dashTime;
 	}
@@ -1809,4 +1892,45 @@ public class AppSettings {
 	public void setTargetLatency(String targetLatency) {
 		this.targetLatency = targetLatency;
 	}
+
+	public int getHeightRtmpForwarding() {
+		return heightRtmpForwarding;
+	}
+
+	public void setHeightRtmpForwarding(int heightRtmpForwarding) {
+		this.heightRtmpForwarding = heightRtmpForwarding;
+	}
+
+	public int getAudioBitrateSFU() {
+		return audioBitrateSFU;
+	}
+
+	public void setAudioBitrateSFU(int audioBitrateSFU) {
+		this.audioBitrateSFU = audioBitrateSFU;
+	}
+  
+	public void setAacEncodingEnabled(boolean aacEncodingEnabled){
+		this.aacEncodingEnabled=aacEncodingEnabled;
+	}
+
+	public boolean isAacEncodingEnabled() {
+		return aacEncodingEnabled;
+	}
+
+	public int getGopSize() {
+		return gopSize;
+	}
+
+	public void setGopSize(int gopSize) {
+		this.gopSize = gopSize;
+	}
+
+	public String getConstantRateFactor() {
+		return constantRateFactor;
+	}
+	
+	public void setConstantRateFactor(String constantRateFactor) {
+		this.constantRateFactor = constantRateFactor;
+	}
+
 }
