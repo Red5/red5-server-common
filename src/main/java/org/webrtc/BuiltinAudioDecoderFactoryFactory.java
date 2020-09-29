@@ -14,10 +14,11 @@ package org.webrtc;
  * Creates a native {@code webrtc::AudioDecoderFactory} with the builtin audio decoders.
  */
 public class BuiltinAudioDecoderFactoryFactory implements AudioDecoderFactoryFactory {
+	public boolean antMedia = false;
   @Override
   public long createNativeAudioDecoderFactory() {
-    return nativeCreateBuiltinAudioDecoderFactory();
+    return nativeCreateBuiltinAudioDecoderFactory(antMedia);
   }
 
-  private static native long nativeCreateBuiltinAudioDecoderFactory();
+  private static native long nativeCreateBuiltinAudioDecoderFactory(boolean ant);
 }
