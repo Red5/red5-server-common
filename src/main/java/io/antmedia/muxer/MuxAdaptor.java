@@ -188,6 +188,13 @@ public class MuxAdaptor implements IRecordingListener {
 	 * The time when buffering has been finished. It's volatile because it's accessed from multiple threads
 	 */
 	private volatile long bufferingFinishTimeMs = 0;
+	
+	
+	/**
+	 * Mux adaptor is generally used in RTMP. 
+	 * However it can be also used to stream RTSP Pull so that isAVC can be false
+	 */
+	private boolean avc = true;
 
 	private long bufferedPacketWriterId = -1;
 	private volatile long lastPacketTimeMsInQueue = 0;
@@ -581,7 +588,7 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	private DataStore getDataStore() {
+	public DataStore getDataStore() {
 		if (dataStore == null) {
 
 			IDataStoreFactory dsf = (IDataStoreFactory) scope.getContext().getBean(IDataStoreFactory.BEAN_NAME);
@@ -1557,6 +1564,16 @@ public class MuxAdaptor implements IRecordingListener {
 	public String getDataChannelWebHookURL() {
 		return dataChannelWebHookURL;
 	}
+	
+	public boolean isAvc() {
+		return avc;
+	}
+	
+	public void setAvc(boolean avc) {
+		this.avc = avc;
+	}
+	
+	
 }
 
 

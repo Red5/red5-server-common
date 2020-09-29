@@ -101,6 +101,7 @@ public class HLSMuxer extends Muxer  {
 	
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 	private AVPacket videoPkt;
+	private int time2log = 0;
 
 
 	public HLSMuxer(Vertx vertx, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
@@ -463,7 +464,11 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index()))  {
-			logger.trace("not registered stream index {}", file.getName());
+			if (time2log % 100 == 0) {
+				logger.warn("not registered stream index {}", file.getName());
+				time2log++;
+			}
+			time2log++;
 			return;
 		}
 		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
@@ -601,7 +606,11 @@ public class HLSMuxer extends Muxer  {
 	@Override
 	public synchronized void writePacket(AVPacket avpacket, AVStream inStream) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(avpacket.stream_index()))  {
-			logger.trace("not registered stream index {}", file.getName());
+			if (time2log % 100 == 0) {
+				logger.warn("not registered stream index {}", file.getName());
+				time2log = 0;
+			}
+			time2log++;
 			return;
 		}
 		int streamIndex;
@@ -633,7 +642,11 @@ public class HLSMuxer extends Muxer  {
 		 * because native objects like videoPkt can not be initiated yet
 		 */
 		if (!isRunning.get()) {
-			logger.warn("Not writing to VideoBuffer for {} because Is running:{}", file.getName(), isRunning.get());
+			if (time2log % 100 == 0) {
+				logger.warn("Not writing to VideoBuffer for {} because Is running:{}", file.getName(), isRunning.get());
+				time2log = 0;
+			}
+			time2log++;
 			return;
 		}
 		
