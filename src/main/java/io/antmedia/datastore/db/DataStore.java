@@ -12,6 +12,8 @@ import io.antmedia.datastore.db.types.P2PConnection;
 import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
+import io.antmedia.datastore.db.types.Subscriber;
+import io.antmedia.datastore.db.types.SubscriberStats;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;
@@ -155,6 +157,48 @@ public abstract class DataStore {
 
 	public abstract Token getToken (String tokenId);
 
+	/**
+	 * Lists all subscribers of requested stream
+	 * @param streamId
+	 * @param offset
+	 * @param size
+	 * @return lists of subscribers
+	 */	
+	public abstract List<Subscriber> listAllSubscribers(String streamId, int offset, int size);
+	
+	
+	/**
+	 * Lists all subscriber statistics of requested stream
+	 * @param streamId
+	 * @param offset
+	 * @param size
+	 * @return lists of subscriber statistics
+	 */	
+	public abstract List<SubscriberStats> listAllSubscriberStats(String streamId, int offset, int size);
+	
+	/**
+	 * adds subscriber to the datastore for this stream
+	 * @param streamId
+	 * @param subscriber - subscriber to be added
+	 * @return- true if set, false if not
+	 */	
+	public abstract boolean addSubscriber(String streamId, Subscriber subscriber);
+	
+	/**
+	 * deletes subscriber from the datastore for this stream
+	 * @param streamId
+	 * @param subscriberId - id of the subsciber to be deleted
+	 * @return- true if set, false if not
+	 */		
+	public abstract boolean deleteSubscriber(String streamId, String subscriberId);
+	
+	/**
+	 * deletes all subscriber from the datastore for this stream
+	 * @param streamId
+	 * @return- true if set, false if not
+	 */		
+	public abstract boolean revokeSubscribers(String streamId);
+	
 	/**
 	 * enables or disables mp4 muxing for the stream
 	 * @param streamId- id of the stream
@@ -578,6 +622,10 @@ public abstract class DataStore {
 	 * @returns total number of operation in the db
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
+
+
+
+
   
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions

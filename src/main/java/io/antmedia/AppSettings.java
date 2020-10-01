@@ -59,6 +59,7 @@ public class AppSettings {
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
 	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
 	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
+	public static final String SETTINGS_TIME_TOKEN_SUBSCRIBER_ONLY = "settings.timeTokenSubscriberOnly";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
 	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
 	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
@@ -351,6 +352,12 @@ public class AppSettings {
 	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
 	private boolean playTokenControlEnabled ;
 
+	/**
+	 * the settings for accepting only time based token subscribers as connections to the streams 
+	 */
+	@Value( "${"+SETTINGS_TIME_TOKEN_SUBSCRIBER_ONLY+":false}" )
+	private boolean timeTokenSubscriberOnly;	
+	
 	/**
 	 * event or vod
 	 */
@@ -1215,6 +1222,14 @@ public class AppSettings {
 		this.playTokenControlEnabled = playTokenControlEnabled;
 	}
 	
+	public boolean isTimeTokenSubscriberOnly() {
+		return timeTokenSubscriberOnly;
+	}
+	
+	public void setTimeTokenSubscriberOnly(boolean timeTokenSubscriberOnly) {
+		this.timeTokenSubscriberOnly = timeTokenSubscriberOnly;
+	}	
+	
 	public String getMuxerFinishScript() {
 		return muxerFinishScript;
 	}
@@ -1276,6 +1291,7 @@ public class AppSettings {
 		acceptOnlyStreamsInDataStore = false;
 		publishTokenControlEnabled = false;
 		playTokenControlEnabled = false;
+		timeTokenSubscriberOnly = false;
 		hlsPlayListType = null;
 		previewOverwrite = false;
 		objectDetectionEnabled = false;
