@@ -15,7 +15,7 @@ import io.swagger.annotations.ApiModelProperty;
 @Entity("subscriber")
 @Indexes({ @Index(fields = @Field("subscriberId")), @Index(fields = @Field("streamId")) })
 @ApiModel(value="Subscriber", description="The time based token subscriber class")
-public class Subscriber extends SubscriberInfo {
+public class Subscriber {
 
 
 	@JsonIgnore
