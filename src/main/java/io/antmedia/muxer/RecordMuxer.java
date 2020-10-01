@@ -83,7 +83,6 @@ public abstract class RecordMuxer extends Muxer {
 	protected AVPacket tmpPacket;
 	protected Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
-	public static final String TEMP_EXTENSION = ".tmp_extension";
 	protected AVPacket videoPkt;
 	protected int rotation;
 	protected long startTimeInVideoTimebase = 0;
@@ -101,6 +100,7 @@ public abstract class RecordMuxer extends Muxer {
 	 * It means it's started after broadcasting is started and it can be stopped before brodcasting has finished
 	 */
 	protected boolean dynamic = false;
+	private int time2log = 0;
 
 
 	public RecordMuxer(StorageClient storageClient, Vertx vertx) {
@@ -339,7 +339,11 @@ public abstract class RecordMuxer extends Muxer {
 		 * because native objects like videoPkt can not be initiated yet
 		 */
 		if (!isRunning.get()) {
-			logger.warn("Not writing to VideoBuffer for {} because Is running:{}", streamId, isRunning.get());
+			if (time2log  % 100 == 0) {
+				logger.warn("Not writing to VideoBuffer for {} because Is running:{}", streamId, isRunning.get());
+				time2log = 0;
+			}
+			time2log++;
 			return;
 		}
 		
@@ -512,7 +516,11 @@ public abstract class RecordMuxer extends Muxer {
 		}
 
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.warn("Not writing packet1 for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
+			if (time2log  % 100 == 0) {
+				logger.warn("Not writing packet1 for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
+				time2log = 0;
+			}
+			time2log++;
 			return;
 		}
 		int streamIndex;
@@ -548,7 +556,12 @@ public abstract class RecordMuxer extends Muxer {
 	@Override
 	public synchronized void writePacket(AVPacket pkt) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
-			logger.warn("Not writing packet for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
+			if (time2log  % 100 == 0) 
+			{
+				logger.warn("Not writing packet for {} - Is running:{} or stream index({}) is registered: {}", streamId, isRunning.get(), pkt.stream_index(), registeredStreamIndexList.contains(pkt.stream_index()));
+				time2log = 0;
+			}
+			time2log++;
 			return;
 		}
 
