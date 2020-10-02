@@ -46,7 +46,13 @@ public class Subscriber {
 	 * secret code of the Subscriber
 	 */
 	@ApiModelProperty(value = "secret code of the subscriber")
-	private String b32Secret;	
+	private String b32Secret;
+	
+	/**
+	 * is subscriber connected
+	 */
+	@ApiModelProperty(value = "is subscriber connected")
+	private boolean connected;
 	
 	public String getSubscriberId() {
 		return subscriberId;
@@ -92,6 +98,14 @@ public class Subscriber {
 	
 	public static String getDBKey(String streamId, String subscriberId) {
 		return streamId + "-" +subscriberId;
+	}
+
+	public boolean isConnected() {
+		return connected;
+	}
+
+	public void setConnected(boolean connected) {
+		this.connected = connected;
 	}
 	
 }

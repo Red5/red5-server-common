@@ -206,6 +206,30 @@ public abstract class DataStore {
 	 * @return- Subscriber
 	 */	
 	public abstract Subscriber getSubscriber (String streamId, String subscriberId);
+		
+	/**
+	 * gets the connection status of the subscriber from the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @return- true if connected else false
+	 */	
+	public abstract boolean isSubscriberConnected (String streamId, String subscriberId);
+	
+	/**
+	 * sets the connection status of the subscriber in the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @param connected - true if connected else false
+	 * @return- true if successful else false
+	 */	
+	public abstract boolean setSubscriberConnected (String streamId, String subscriberId, boolean connected);
+
+	/**
+	 * sets the connection status of all the subscribers false in the datastore
+	 * called after an ungraceful shutdown
+	 * @return- true if successful else false
+	 */	
+	public abstract boolean resetSubscribersConnectedStatus ();	
 	
 	/**
 	 * enables or disables mp4 muxing for the stream
