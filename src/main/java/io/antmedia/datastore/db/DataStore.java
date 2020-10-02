@@ -200,6 +200,14 @@ public abstract class DataStore {
 	public abstract boolean revokeSubscribers(String streamId);
 	
 	/**
+	 * gets subscriber from the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subsciber to be deleted
+	 * @return- Subscriber
+	 */	
+	public abstract Subscriber getSubscriber (String streamId, String subscriberId);
+	
+	/**
 	 * enables or disables mp4 muxing for the stream
 	 * @param streamId- id of the stream
 	 * @param enabled 1 means enabled, -1 means disabled, 0 means no setting for the stream
