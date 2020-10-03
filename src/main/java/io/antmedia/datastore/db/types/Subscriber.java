@@ -43,7 +43,7 @@ public class Subscriber {
 	 */
 	@ApiModelProperty(value = "stats for this subscriber")
 	@Embedded
-	private SubscriberStats stats;
+	private SubscriberStats stats = new SubscriberStats();
 	
 	/**
 	 * secret code of the Subscriber
@@ -91,6 +91,7 @@ public class Subscriber {
 		return stats;
 	}
 
+	@JsonIgnore
 	public void setStats(SubscriberStats stats) {
 		if(stats != null)  {
 			stats.setStreamId(streamId);

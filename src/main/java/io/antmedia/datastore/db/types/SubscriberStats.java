@@ -1,25 +1,16 @@
 package io.antmedia.datastore.db.types;
 
-import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.mongodb.morphia.annotations.Embedded;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@Entity("subscriberStats")
-@Indexes({ @Index(fields = @Field("subscriberId")) })
 @ApiModel(value="SubscriberStats", description="Statistics for each subsciber to the stream")
 public class SubscriberStats {
-	@JsonIgnore
-	@Id
-	@ApiModelProperty(value = "the db id of the subscriber stats")
-	private ObjectId dbId;
 	
 	/**
 	 * subscriber id to which this statistic belongs to
@@ -27,12 +18,18 @@ public class SubscriberStats {
 	@ApiModelProperty(value = "the subscriber id of the subscriber")
 	private String subscriberId;
 	
-	
 	/**
 	 * related streamId with subscriber
 	 */
 	@ApiModelProperty(value = "the stream id of the token")
 	private String streamId;
+	
+	/**
+	 * connection events happened for this subscriber
+	 */
+	@ApiModelProperty(value = "list of connection events")
+	@Embedded
+	private List<ConnectionEvent> connectionEvents = new ArrayList<>(); 
 	
 	public String getSubscriberId() {
 		return subscriberId;
@@ -48,6 +45,19 @@ public class SubscriberStats {
 
 	public void setStreamId(String streamId) {
 		this.streamId = streamId;
-	}	
+	}
+
+	public List<ConnectionEvent> getConnectionEvents() {
+		return connectionEvents;
+	}
+
+	public void setConnectionEvents(List<ConnectionEvent> connectionEvents) {
+		this.connectionEvents = connectionEvents;
+	}
+	
+	public void addConnectionEvent(ConnectionEvent connectionEvent) {
+		connectionEvents.add(connectionEvent);
+	}
+	
 	
 }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
+import io.antmedia.datastore.db.types.ConnectionEvent;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
 import io.antmedia.datastore.db.types.Playlist;
@@ -219,10 +220,10 @@ public abstract class DataStore {
 	 * sets the connection status of the subscriber in the datastore
 	 * @param streamId
 	 * @param subscriberId - id of the subscriber 
-	 * @param connected - true if connected else false
+	 * @param event - connection event which occured for this subscriber
 	 * @return- true if successful else false
 	 */	
-	public abstract boolean setSubscriberConnected (String streamId, String subscriberId, boolean connected);
+	public abstract boolean addSubscriberConnectionEvent (String streamId, String subscriberId, ConnectionEvent event);
 
 	/**
 	 * sets the connection status of all the subscribers false in the datastore
