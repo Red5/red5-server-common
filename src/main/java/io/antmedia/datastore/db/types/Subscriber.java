@@ -16,7 +16,10 @@ import io.swagger.annotations.ApiModelProperty;
 @Indexes({ @Index(fields = @Field("subscriberId")), @Index(fields = @Field("streamId")) })
 @ApiModel(value="Subscriber", description="The time based token subscriber class")
 public class Subscriber {
-
+	@JsonIgnore
+	public static final String PLAY_TYPE = "play";
+	@JsonIgnore
+	public static final String PUBLISH_TYPE = "publish";
 
 	@JsonIgnore
 	@Id
@@ -53,6 +56,12 @@ public class Subscriber {
 	 */
 	@ApiModelProperty(value = "is subscriber connected")
 	private boolean connected;
+	
+	/**
+	 * type of the subscriber (default is play)
+	 */
+	@ApiModelProperty(value = " type of subscriber (play or publish)")
+	private String type = PLAY_TYPE;
 	
 	public String getSubscriberId() {
 		return subscriberId;
@@ -91,6 +100,7 @@ public class Subscriber {
 	}
 	
 	// database key of a subscriber consists both the stream id and subscriber id
+	@JsonIgnore
 	public String getSubscriberKey() {
 		return getDBKey(streamId, subscriberId);
 		
@@ -107,5 +117,15 @@ public class Subscriber {
 	public void setConnected(boolean connected) {
 		this.connected = connected;
 	}
-	
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		// the type can be only play or publish
+		if(PLAY_TYPE.equals(type) || PUBLISH_TYPE.equals(type)) {
+			this.type = type;
+		}
+	}
 }
