@@ -1,6 +1,7 @@
 package io.antmedia.datastore.db;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -175,7 +176,16 @@ public abstract class DataStore {
 	 * @param size
 	 * @return lists of subscriber statistics
 	 */	
-	public abstract List<SubscriberStats> listAllSubscriberStats(String streamId, int offset, int size);
+	public List<SubscriberStats> listAllSubscriberStats(String streamId, int offset, int size) {
+		List<Subscriber> subscribers= listAllSubscribers(streamId, offset, size);
+		List<SubscriberStats> subscriberStats = new ArrayList<>();
+		
+		for(Subscriber subscriber : subscribers) {
+			subscriberStats.add(subscriber.getStats());
+		}
+		
+		return subscriberStats;
+	}
 	
 	/**
 	 * adds subscriber to the datastore for this stream
@@ -225,6 +235,16 @@ public abstract class DataStore {
 	 */	
 	public abstract boolean addSubscriberConnectionEvent (String streamId, String subscriberId, ConnectionEvent event);
 
+	// helper method used by all datastores
+	protected void handleConnectionEvent(Subscriber subscriber, ConnectionEvent event) {
+		if(ConnectionEvent.CONNECTED_EVENT.equals(event.getEventType())) {
+			subscriber.setConnected(true);
+		} else if(ConnectionEvent.DISCONNECTED_EVENT.equals(event.getEventType())) {
+			subscriber.setConnected(false);
+		}
+		subscriber.getStats().addConnectionEvent(event);
+	}	
+	
 	/**
 	 * sets the connection status of all the subscribers false in the datastore
 	 * called after an ungraceful shutdown
