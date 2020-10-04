@@ -224,7 +224,14 @@ public abstract class DataStore {
 	 * @param subscriberId - id of the subscriber 
 	 * @return- true if connected else false
 	 */	
-	public abstract boolean isSubscriberConnected (String streamId, String subscriberId);
+	public boolean isSubscriberConnected(String streamId, String subscriberId) {
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+	
+		if(subscriber != null) {
+			 return subscriber.isConnected();
+		}
+		return false;
+	}
 	
 	/**
 	 * sets the connection status of the subscriber in the datastore
@@ -233,7 +240,17 @@ public abstract class DataStore {
 	 * @param event - connection event which occured for this subscriber
 	 * @return- true if successful else false
 	 */	
-	public abstract boolean addSubscriberConnectionEvent (String streamId, String subscriberId, ConnectionEvent event);
+	public boolean addSubscriberConnectionEvent(String streamId, String subscriberId, ConnectionEvent event) {
+		boolean result = false;
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+		if (subscriber != null) {
+			handleConnectionEvent(subscriber, event);
+			
+			addSubscriber(streamId, subscriber);
+		}
+
+		return result;
+	}
 
 	// helper method used by all datastores
 	protected void handleConnectionEvent(Subscriber subscriber, ConnectionEvent event) {
