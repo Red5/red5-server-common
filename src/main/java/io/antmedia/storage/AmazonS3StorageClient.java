@@ -46,7 +46,7 @@ public class AmazonS3StorageClient extends StorageClient {
 			}
 			
 			// Inject region if provided in the configuration file
-			if (getRegion() != null) {
+			if (getEndpoint() == null && getRegion() != null) {
 				builder = builder.withRegion(Regions.fromName(getRegion()));
 			}
 			builder.withClientConfiguration(new ClientConfiguration().withMaxConnections(100)
