@@ -43,6 +43,10 @@ public abstract class DataStore {
 	public abstract VoD getVoD(String id);
 
 	public abstract boolean updateStatus(String id, String status);
+	
+	public static final long TOTAL_WEBRTC_VIEWER_COUNT_CACHE_TIME = 5000;
+	protected int totalWebRTCViewerCount = 0;
+	protected long totalWebRTCViewerCountLastUpdateTime = 0;
 
 	public boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue) {
 		if(writeStatsToDatastore) {
