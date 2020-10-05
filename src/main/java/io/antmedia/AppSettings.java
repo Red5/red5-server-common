@@ -916,7 +916,7 @@ public class AppSettings {
 	 * Application level WebRTC viewer limit
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
-	private int webRTCViewerLimit;
+	private int webRTCViewerLimit = -1;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
