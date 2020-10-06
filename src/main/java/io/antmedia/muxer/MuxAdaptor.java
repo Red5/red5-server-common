@@ -992,9 +992,11 @@ public class MuxAdaptor implements IRecordingListener {
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 
 
-		vertx.setTimer(1, h -> {
+		vertx.executeBlocking(b -> {
 			logger.info("before prepare for {}", streamId);
+			Boolean successful = false;
 			try {
+				
 				//Prepare and check if stream is stopped while it's preparing
 				if (prepare()) {
 
@@ -1030,6 +1032,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 					logger.info("Number of items in the queue while starting: {} for stream: {}", 
 							getInputQueueSize(), streamId);
+					
+					successful = true;
 
 				} else {
 					logger.warn("input format context cannot be created for stream -> {}", streamId);
@@ -1044,7 +1048,12 @@ public class MuxAdaptor implements IRecordingListener {
 			} catch (Exception e) {
 				logger.error(ExceptionUtils.getStackTrace(e));
 			}
-		});
+			b.complete(successful);
+		}, 
+		false,  // run unordered
+		r -> 
+			logger.info("muxadaptor start has finished with {} for stream: {}", r.result(), streamId)
+		);
 	}
 
 	@Override

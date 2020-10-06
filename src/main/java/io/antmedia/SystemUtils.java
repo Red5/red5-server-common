@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
+import com.sun.management.UnixOperatingSystemMXBean;
 /**
  * This utility is designed for accessing server's
  * system information more easier.
@@ -206,14 +207,18 @@ public class SystemUtils {
 	 * 
 	 */
 	public static long osCommittedVirtualMemory() {
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getCommittedVirtualMemorySize");
-			m.setAccessible(true);
-			return (Long) m.invoke(osBean);
-		} catch (Exception e) {
-			error(e);
-			return -1L;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return (((UnixOperatingSystemMXBean) osBean).getCommittedVirtualMemorySize());
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getCommittedVirtualMemorySize");
+				m.setAccessible(true);
+				return (long) m.invoke(osBean);
+			} catch (Exception e) {
+				error(e);
+				return -1L;
+			}
 		}
 	}
 
@@ -222,16 +227,19 @@ public class SystemUtils {
 	 * @return bytes size
 	 */
 	public static long osTotalPhysicalMemory() {
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-			m.setAccessible(true);
-			return (Long) m.invoke(osBean);
-		} catch (Exception e) {
-			error(e);
-			return -1L;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return (((UnixOperatingSystemMXBean) osBean).getTotalPhysicalMemorySize());
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+				m.setAccessible(true);
+				return  (long) m.invoke(osBean);
+			} catch (Exception e) {
+				error(e);
+				return -1L;
+			}
 		}
-
 	}
 
 	/**
@@ -245,14 +253,18 @@ public class SystemUtils {
 	 * 
 	 */
 	public static long osFreePhysicalMemory() {
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getFreePhysicalMemorySize");
-			m.setAccessible(true);
-			return (Long) m.invoke(osBean);
-		} catch (Exception e) {
-			error(e);
-			return -1L;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return ((UnixOperatingSystemMXBean) osBean).getFreePhysicalMemorySize();
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getFreePhysicalMemorySize");
+				m.setAccessible(true);
+				return (long) m.invoke(osBean);
+			} catch (Exception e) {
+				error(e);
+				return -1L;
+			}
 		}
 	}
 
@@ -289,14 +301,18 @@ public class SystemUtils {
 	 * 
 	 */
 	public static long osTotalSwapSpace() {
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getTotalSwapSpaceSize");
-			m.setAccessible(true);
-			return (Long) m.invoke(osBean);
-		} catch (Exception e) {
-			error(e);
-			return -1L;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return ((UnixOperatingSystemMXBean) osBean).getTotalSwapSpaceSize();
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getTotalSwapSpaceSize");
+				m.setAccessible(true);
+				return (long) m.invoke(osBean);
+			} catch (Exception e) {
+				error(e);
+				return -1L;
+			}
 		}
 	}
 
@@ -311,15 +327,18 @@ public class SystemUtils {
 	 * 
 	 */
 	public static long osFreeSwapSpace() {
-
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getFreeSwapSpaceSize");
-			m.setAccessible(true);
-			return (Long) m.invoke(osBean);
-		} catch (Exception e) {
-			error(e);
-			return -1L;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return ((UnixOperatingSystemMXBean) osBean).getFreeSwapSpaceSize();
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getFreeSwapSpaceSize");
+				m.setAccessible(true);
+				return (long) m.invoke(osBean);
+			} catch (Exception e) {
+				error(e);
+				return -1L;
+			}
 		}
 	}
 
@@ -609,15 +628,18 @@ public class SystemUtils {
 	 * @return
 	 */
 	public static Integer getSystemCpuLoad() {
-
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getSystemCpuLoad");
-			m.setAccessible(true);
-			return (int)(((Double)m.invoke(osBean))*100);
-		} catch (Exception e) {
-			error(e);
-			return -1;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return (int) (((UnixOperatingSystemMXBean) osBean).getSystemCpuLoad() * 100.0);
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getSystemCpuLoad");
+				m.setAccessible(true);
+				return (int) (((Double) m.invoke(osBean)) * 100);
+			} catch (Exception e) {
+				error(e);
+				return -1;
+			}
 		}
 	}
 
@@ -628,15 +650,18 @@ public class SystemUtils {
 	 * @return
 	 */
 	public static Integer getProcessCpuLoad() {
-
-		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-			Method m = osBean.getClass().getDeclaredMethod("getProcessCpuLoad");
-			m.setAccessible(true);
-			return (int)(((Double) m.invoke(osBean)) * 100);
-		} catch (Exception e) {
-			error(e);
-			return -1;
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return (int) (((UnixOperatingSystemMXBean) osBean).getProcessCpuLoad() * 100.0);
+		} else {
+			try {
+				Method m = osBean.getClass().getDeclaredMethod("getProcessCpuLoad");
+				m.setAccessible(true);
+				return (int) (((Double) m.invoke(osBean)) * 100);
+			} catch (Exception e) {
+				error(e);
+				return -1;
+			}
 		}
 	}
 
@@ -646,14 +671,18 @@ public class SystemUtils {
 	 * @return
 	 */
 	public static Long getProcessCpuTime() {
+		final OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
+		if (osBean instanceof UnixOperatingSystemMXBean) {
+			return  (Long) (((UnixOperatingSystemMXBean) osBean).getProcessCpuTime() / 1000);
+		} else {
 		try {
-			OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 			Method m = osBean.getClass().getDeclaredMethod("getProcessCpuTime");
 			m.setAccessible(true);
 			return (Long) m.invoke(osBean)/1000;
 		} catch (Exception e) {
 			error(e);
 			return -1l;
+		}
 		}
 	}	
 	
