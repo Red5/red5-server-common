@@ -25,6 +25,8 @@ public abstract class DataStore {
 	
 	private boolean writeStatsToDatastore = true;
 	
+	protected volatile boolean available = false;
+	
 	
 	public abstract String save(Broadcast broadcast);
 
@@ -578,6 +580,15 @@ public abstract class DataStore {
 	 * @returns total number of operation in the db
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
+	
+	/**
+	 * Return if data store is available. DataStore is available if it's initialized and not closed. 
+	 * It's not available if it's closed. 
+	 * @return availability of the datastore
+	 */
+	public boolean isAvailable() {
+		return available;
+	}
   
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
