@@ -913,7 +913,7 @@ public class AppSettings {
 	/**
 	 * Enable/disable dash recording
 	 */
-	@Value( "${"+SETTINGS_DASH_MUXING_ENABLED+":true}" )
+	@Value( "${"+SETTINGS_DASH_MUXING_ENABLED+":false}" )
 	private boolean dashMuxingEnabled;
 
 	/** 
