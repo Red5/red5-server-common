@@ -219,6 +219,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
 
+	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
+
 
 	@JsonIgnore
 	@NotSaved
@@ -909,6 +911,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_CONSTANT_RATE_FACTOR+":23}" )
 	private String constantRateFactor;
+	
+	/**
+	 * Application level WebRTC viewer limit
+	 */
+	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
+	private int webRTCViewerLimit = -1;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1852,6 +1860,14 @@ public class AppSettings {
 	
 	public void setConstantRateFactor(String constantRateFactor) {
 		this.constantRateFactor = constantRateFactor;
+	}
+
+	public int getWebRTCViewerLimit() {
+		return webRTCViewerLimit;
+	}
+
+	public void setWebRTCViewerLimit(int webRTCViewerLimit) {
+		this.webRTCViewerLimit = webRTCViewerLimit;
 	}
 
 
