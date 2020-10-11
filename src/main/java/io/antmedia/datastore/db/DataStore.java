@@ -1,6 +1,7 @@
 package io.antmedia.datastore.db;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -476,14 +477,25 @@ public abstract class DataStore {
 			offset = 0;
 		}
 		
-		return vodList.subList(offset, Math.min(offset+size, vodList.size()));
+		int toIndex =  Math.min(offset+size, vodList.size());
+		if (offset >= toIndex) 
+		{
+			return new ArrayList<>();
+		}
+		else {
+			return vodList.subList(offset, Math.min(offset+size, vodList.size()));
+		}
+		
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
-			Collections.sort(broadcastList, new Comparator<Broadcast>() {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) 
+		{
+			Collections.sort(broadcastList, new Comparator<Broadcast>() 
+			{
 				@Override
-				public int compare(Broadcast broadcast1, Broadcast broadcast2) {
+				public int compare(Broadcast broadcast1, Broadcast broadcast2) 
+				{
 					Comparable c1 = null;
 					Comparable c2 = null;
 					
@@ -515,7 +527,14 @@ public abstract class DataStore {
 			offset = 0;
 		}
 		
-		return broadcastList.subList(offset, Math.min(offset+size, broadcastList.size()));
+		int toIndex =  Math.min(offset+size, broadcastList.size());
+		if (offset >= toIndex) 
+		{
+			return new ArrayList<>();
+		}
+		else {
+			return broadcastList.subList(offset,toIndex);
+		}
 	}
 
 	/**

@@ -510,28 +510,35 @@ public class MuxAdaptor implements IRecordingListener {
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
 		//StreamFetcher Worker Thread only calls prepareInternal so that inputFormatContext is set here
 		this.inputFormatContext = inputFormatContext;
+		// Dump information about file onto standard error
+		int streamCount = inputFormatContext.nb_streams();
+		int width = -1;
+		int height = -1;
+		for (int i=0; i < streamCount; i++) 
+		{
+			AVStream stream = inputFormatContext.streams(i);
+			AVCodecParameters codecpar = stream.codecpar();
+			if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
+				logger.info("Video format width:{} height:{} for stream: {}", codecpar.width(), codecpar.height(), streamId);
+				width = codecpar.width();
+				height = codecpar.height();
+			}
+			else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
+				logger.info("Audio format sample rate:{} bitrate:{} for stream: {}",codecpar.sample_rate(), codecpar.bit_rate(), streamId);
+			}
+		}
+		
+		if (width == 0 || height == 0) {
+			logger.info("Width or height is zero so returning for stream: {}", streamId);
+			return false;
+		}
+	
 		return prepareMuxers(inputFormatContext);
 	}
 
 	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
 
-		if (logger.isInfoEnabled()) 
-		{
-			// Dump information about file onto standard error
-			int streamCount = inputFormatContext.nb_streams();
-			for (int i=0; i < streamCount; i++) 
-			{
-				AVStream stream = inputFormatContext.streams(i);
-				AVCodecParameters codecpar = stream.codecpar();
-				if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
-					logger.info("Video format width:{} height:{}", codecpar.width(), codecpar.height());
-				}
-				else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
-					logger.info("Audio format sample rate:{} bitrate:{}",codecpar.sample_rate(), codecpar.bit_rate());
-				}
-			}
-		}
-
+		
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
 			Muxer muxer = iterator.next();
