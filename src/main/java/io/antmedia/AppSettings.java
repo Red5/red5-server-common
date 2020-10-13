@@ -7,17 +7,19 @@ import java.util.List;
 
 import org.apache.catalina.util.NetMask;
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
-import org.mongodb.morphia.annotations.NotSaved;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Field;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Index;
+import dev.morphia.annotations.Indexes;
+import dev.morphia.annotations.NotSaved;
 
 /**
  * Application Settings for each application running in Ant Media Server.
@@ -223,6 +225,8 @@ public class AppSettings {
 	private static final String SETTINGS_GOP_SIZE = "settings.gopSize";
 
 	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
+
+	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
 
 
 	@JsonIgnore
@@ -947,6 +951,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_CONSTANT_RATE_FACTOR+":23}" )
 	private String constantRateFactor;
+	
+	/**
+	 * Application level WebRTC viewer limit
+	 */
+	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
+	private int webRTCViewerLimit = -1;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1931,6 +1941,15 @@ public class AppSettings {
 	
 	public void setConstantRateFactor(String constantRateFactor) {
 		this.constantRateFactor = constantRateFactor;
+	}
+
+
+	public int getWebRTCViewerLimit() {
+		return webRTCViewerLimit;
+	}
+
+	public void setWebRTCViewerLimit(int webRTCViewerLimit) {
+		this.webRTCViewerLimit = webRTCViewerLimit;
 	}
 
 }

@@ -281,9 +281,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.mongodb.morphia</groupId>
-			<artifactId>morphia</artifactId>
-			<version>1.3.2</version>
+		    <groupId>dev.morphia.morphia</groupId>
+		    <artifactId>core</artifactId>
+		    <version>1.6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
