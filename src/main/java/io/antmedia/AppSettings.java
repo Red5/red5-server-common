@@ -210,7 +210,7 @@ public class AppSettings {
 	/**
 	 * WebRTC SDP Semantics:UNIFIED PLAN
 	 */
-	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";	
+	public static final String SDP_SEMANTICS_UNIFIED_PLAN = "unifiedPlan";
 
 	/**
 	 * Height Property key for WebRTC to RTMP  forwarding
@@ -928,7 +928,6 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_AAC_ENCODING_ENABLED+":true}" )
 	private boolean aacEncodingEnabled;
-
 	
 	/**
 	 * GOP size. AKA key frame interval. 
@@ -1942,7 +1941,6 @@ public class AppSettings {
 	public void setConstantRateFactor(String constantRateFactor) {
 		this.constantRateFactor = constantRateFactor;
 	}
-
 
 	public int getWebRTCViewerLimit() {
 		return webRTCViewerLimit;
