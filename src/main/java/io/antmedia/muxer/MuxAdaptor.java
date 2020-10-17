@@ -421,10 +421,24 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		
 		if (dashMuxingEnabled) {
-			DASHMuxer dashMuxer = new DASHMuxer(vertx, fragmentTime, dashTime, targetLatency);
-			dashMuxer.setDeleteFileOnExit(deleteDASHFilesOnExit);
-			addMuxer(dashMuxer);
-			logger.info("adding DASH Muxer for {}", streamId);
+			
+			try {
+				Class dashMuxerClass = Class.forName("io.antmedia.enterprise.muxer.DASHMuxer");
+				
+				
+				
+				logger.info("adding DASH Muxer for {}", streamId);
+
+				Muxer dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
+						.newInstance(vertx, fragmentTime, dashTime, targetLatency, deleteDASHFilesOnExit);
+				
+				addMuxer(dashMuxer);
+
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+			}
+			
+		
 		}
 
 		for (Muxer muxer : muxerList) {
