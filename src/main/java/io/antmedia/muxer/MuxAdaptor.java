@@ -136,8 +136,8 @@ public class MuxAdaptor implements IRecordingListener {
 	protected String hlsTime;
 	protected String hlsListSize;
 	protected String hlsPlayListType;
-	protected String dashTime;
-	protected String fragmentTime;
+	protected String dashSegDuration;
+	protected String dashFragmentDuration;
 	protected String targetLatency;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
@@ -375,8 +375,8 @@ public class MuxAdaptor implements IRecordingListener {
 		hlsListSize = appSettingsLocal.getHlsListSize();
 		hlsTime = appSettingsLocal.getHlsTime();
 		hlsPlayListType = appSettingsLocal.getHlsPlayListType();
-		dashTime = appSettingsLocal.getDashTime();
-		fragmentTime = appSettingsLocal.getFragmentTime();
+		dashSegDuration = appSettingsLocal.getDashSegDuration();
+		dashFragmentDuration = appSettingsLocal.getDashFragmentDuration();
 		targetLatency = appSettingsLocal.getTargetLatency();
 
 		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
@@ -425,12 +425,10 @@ public class MuxAdaptor implements IRecordingListener {
 			try {
 				Class dashMuxerClass = Class.forName("io.antmedia.enterprise.muxer.DASHMuxer");
 				
-				
-				
 				logger.info("adding DASH Muxer for {}", streamId);
 
 				Muxer dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
-						.newInstance(vertx, fragmentTime, dashTime, targetLatency, deleteDASHFilesOnExit);
+						.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit);
 				
 				addMuxer(dashMuxer);
 

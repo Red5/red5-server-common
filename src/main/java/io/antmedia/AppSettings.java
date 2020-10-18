@@ -54,9 +54,9 @@ public class AppSettings {
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
-	public static final String SETTINGS_DASH_TIME = "settings.dashTime";
-	public static final String SETTINGS_FRAGMENT_TIME = "settings.fragmentTime";
-	public static final String SETTINGS_TARGET_LATENCY = "settings.targetLatency";	
+	public static final String SETTINGS_DASH_SEG_DURATION = "settings.dashSegDuration";
+	public static final String SETTINGS_DASH_FRAGMENT_DURATION = "settings.dashFragmentDuration";
+	public static final String SETTINGS_DASH_TARGET_LATENCY = "settings.dashTargetLatency";	
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
@@ -288,22 +288,25 @@ public class AppSettings {
 	private String hlsTime;
 	
 	/**
-	 * Duration of segments in mpd files 
+	 * Duration of segments in mpd files.
+	 * Segments are a property of DASH. A segment is the minimal download unit.
+	 *  
 	 */
-	@Value( "${"+SETTINGS_DASH_TIME+":#{null}}" )
-	private String dashTime;
+	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":2}" )
+	private String dashSegDuration;
 	
 	/**
-	 * Duration of segments in m4s files 
+	 * Fragments are a property of fragmented MP4 files. Typically a fragment consists of moof + mdat.
+	 *
 	 */
-	@Value( "${"+SETTINGS_FRAGMENT_TIME+":#{null}}" )
-	private String fragmentTime;
+	@Value( "${"+SETTINGS_DASH_FRAGMENT_DURATION+":0.5}" )
+	private String dashFragmentDuration;
 	
 	
 	/**
 	 * Latency of the DASH streaming. 
 	 */
-	@Value( "${"+SETTINGS_TARGET_LATENCY+":#{null}}" )
+	@Value( "${"+SETTINGS_DASH_TARGET_LATENCY+":3}" )
 	private String targetLatency;
 
 	/**
@@ -1869,14 +1872,6 @@ public class AppSettings {
 	public void setStartStreamFetcherAutomatically(boolean startStreamFetcherAutomatically) {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
 	}
-
-	public String getDashTime() {
-		return dashTime;
-	}
-
-	public void setDashTime(String dashTime) {
-		this.dashTime = dashTime;
-	}
 	
 	public boolean isDeleteDASHFilesOnEnded() {
 		return deleteDASHFilesOnEnded;
@@ -1884,14 +1879,6 @@ public class AppSettings {
 
 	public void setDeleteDASHFilesOnEnded(boolean deleteDASHFilesOnEnded) {
 		this.deleteDASHFilesOnEnded = deleteDASHFilesOnEnded;
-	}
-	
-	public String getFragmentTime() {
-		return fragmentTime;
-	}
-
-	public void setFragmentTime(String fragmentTime) {
-		this.fragmentTime = fragmentTime;
 	}
 	
 	public String getTargetLatency() {
@@ -1948,6 +1935,22 @@ public class AppSettings {
 
 	public void setWebRTCViewerLimit(int webRTCViewerLimit) {
 		this.webRTCViewerLimit = webRTCViewerLimit;
+	}
+
+	public String getDashFragmentDuration() {
+		return dashFragmentDuration;
+	}
+
+	public void setDashFragmentDuration(String dashFragmentDuration) {
+		this.dashFragmentDuration = dashFragmentDuration;
+	}
+
+	public String getDashSegDuration() {
+		return dashSegDuration;
+	}
+
+	public void setDashSegDuration(String dashSegDuration) {
+		this.dashSegDuration = dashSegDuration;
 	}
 
 }
