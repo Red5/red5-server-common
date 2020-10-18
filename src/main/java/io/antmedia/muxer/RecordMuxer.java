@@ -363,7 +363,7 @@ public abstract class RecordMuxer extends Muxer {
 		videoPkt.data(new BytePointer(encodedVideoFrame));
 		videoPkt.size(encodedVideoFrame.limit());
 		videoPkt.position(0);
-		writePacket(videoPkt);
+		writePacket(videoPkt, (AVCodecContext)null);
 
 		av_packet_unref(videoPkt);
 	}
@@ -554,7 +554,7 @@ public abstract class RecordMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt, AVCodecContext codecContext) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index())) {
 			if (time2log  % 100 == 0) 
 			{

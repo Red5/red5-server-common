@@ -208,6 +208,12 @@ public class MuxAdaptor implements IRecordingListener {
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
 	protected long absoluteTotalIngestTime = 0;
+	
+	/**
+	 * It's defined here because EncoderAdaptor should access it directly to add new streams
+	 */
+	private Muxer dashMuxer = null;
+	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -420,23 +426,9 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.info("adding HLS Muxer for {}", streamId);
 		}
 		
-		if (dashMuxingEnabled) {
-			
-			try {
-				Class dashMuxerClass = Class.forName("io.antmedia.enterprise.muxer.DASHMuxer");
-				
-				logger.info("adding DASH Muxer for {}", streamId);
-
-				Muxer dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
-						.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit);
-				
-				addMuxer(dashMuxer);
-
-			} catch (Exception e) {
-				logger.error(e.getMessage());
-			}
-			
-		
+		getDashMuxer();
+		if (dashMuxer != null) {
+			addMuxer(dashMuxer);
 		}
 
 		for (Muxer muxer : muxerList) {
@@ -446,6 +438,28 @@ public class MuxAdaptor implements IRecordingListener {
 		return true;
 	}
 
+	public Muxer getDashMuxer() 
+	{
+		if (dashMuxingEnabled && dashMuxer == null) {
+			try {
+				Class dashMuxerClass = Class.forName("io.antmedia.enterprise.muxer.DASHMuxer");
+			
+				logger.info("adding DASH Muxer for {}", streamId);
+
+				dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
+					.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit, !appSettings.getEncoderSettings().isEmpty(),
+							appSettings.getDashWindowSize(), appSettings.getDashExtraWindowSize());
+			}
+			catch (ClassNotFoundException e) {
+				logger.info("DashMuxer class not found for stream:{}", streamId);
+			}
+			catch (Exception e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
+			}
+			
+		}
+		return dashMuxer;
+	}
 
 	private void initVertx() {
 		if (scope.getContext().getApplicationContext().containsBean(IAntMediaStreamHandler.VERTX_BEAN_NAME)) {

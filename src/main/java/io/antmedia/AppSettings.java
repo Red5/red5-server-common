@@ -51,6 +51,8 @@ public class AppSettings {
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
 	public static final String SETTINGS_DASH_MUXING_ENABLED = "settings.dashMuxingEnabled";
+	public static final String SETTINGS_DASH_WINDOW_SIZE = "settings.dashWindowSize";
+	public static final String SETTINGS_DASH_EXTRA_WINDOW_SIZE = "settings.dashExtraWindowSize";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
@@ -306,9 +308,21 @@ public class AppSettings {
 	/**
 	 * Latency of the DASH streaming. 
 	 */
-	@Value( "${"+SETTINGS_DASH_TARGET_LATENCY+":3}" )
+	@Value( "${"+SETTINGS_DASH_TARGET_LATENCY+":3.5}" )
 	private String targetLatency;
+	
+	/**
+	 * DASH window size. Number of files in manifest
+	 */
+	@Value( "${"+SETTINGS_DASH_WINDOW_SIZE+":5}" )
+	private String dashWindowSize;
 
+	/**
+	 * DASH extra window size. Number of segments kept outside of the manifest before removing from disk
+	 */
+	@Value( "${"+SETTINGS_DASH_EXTRA_WINDOW_SIZE+":5}" )
+	private String dashExtraWindowSize;
+	
 	/**
 	 * Enable/disable webrtc 
 	 */
@@ -1951,6 +1965,22 @@ public class AppSettings {
 
 	public void setDashSegDuration(String dashSegDuration) {
 		this.dashSegDuration = dashSegDuration;
+	}
+
+	public String getDashWindowSize() {
+		return dashWindowSize;
+	}
+
+	public void setDashWindowSize(String dashWindowSize) {
+		this.dashWindowSize = dashWindowSize;
+	}
+
+	public String getDashExtraWindowSize() {
+		return dashExtraWindowSize;
+	}
+
+	public void setDashExtraWindowSize(String dashExtraWindowSize) {
+		this.dashExtraWindowSize = dashExtraWindowSize;
 	}
 
 }
