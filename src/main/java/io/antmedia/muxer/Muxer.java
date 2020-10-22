@@ -185,19 +185,15 @@ public abstract class Muxer {
 	 *            The content of the data as a AVPacket object
 	 */
 	public abstract void writePacket(AVPacket avpacket, AVStream inStream);
-
+	
+	
 	/**
-	 * Write packets to the output. This function is used by EncoderAdaptor in
-	 * enterprise edition
-	 *
-	 * Check if outputContext.pb is not null for the ffmpeg base Muxers
-	 *
-	 * Implement this function with synchronized keyword as the subclass
-	 *
-	 * @param pkt
-	 *            The content of the data as a AVPacket object
+	 * Write packets to the output. This function is used in transcoding.
+	 * Previously, It's the replacement of {link {@link #writePacket(AVPacket)}
+	 * @param avpacket
+	 * @param codecContext
 	 */
-	public abstract void writePacket(AVPacket pkt);
+	public abstract void writePacket(AVPacket avpacket, AVCodecContext codecContext);
 
 
 	public void setBitstreamFilter(String bsfName) {

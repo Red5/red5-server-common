@@ -29,6 +29,8 @@ public abstract class DataStore {
 	
 	private boolean writeStatsToDatastore = true;
 	
+	protected volatile boolean available = false;
+	
 	
 	public abstract String save(Broadcast broadcast);
 
@@ -47,6 +49,10 @@ public abstract class DataStore {
 	public abstract VoD getVoD(String id);
 
 	public abstract boolean updateStatus(String id, String status);
+	
+	public static final long TOTAL_WEBRTC_VIEWER_COUNT_CACHE_TIME = 5000;
+	protected int totalWebRTCViewerCount = 0;
+	protected long totalWebRTCViewerCountLastUpdateTime = 0;
 
 	public boolean updateSourceQualityParameters(String id, String quality, double speed,  int pendingPacketQueue) {
 		if(writeStatsToDatastore) {
@@ -584,14 +590,25 @@ public abstract class DataStore {
 			offset = 0;
 		}
 		
-		return vodList.subList(offset, Math.min(offset+size, vodList.size()));
+		int toIndex =  Math.min(offset+size, vodList.size());
+		if (offset >= toIndex) 
+		{
+			return new ArrayList<>();
+		}
+		else {
+			return vodList.subList(offset, Math.min(offset+size, vodList.size()));
+		}
+		
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
-			Collections.sort(broadcastList, new Comparator<Broadcast>() {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) 
+		{
+			Collections.sort(broadcastList, new Comparator<Broadcast>() 
+			{
 				@Override
-				public int compare(Broadcast broadcast1, Broadcast broadcast2) {
+				public int compare(Broadcast broadcast1, Broadcast broadcast2) 
+				{
 					Comparable c1 = null;
 					Comparable c2 = null;
 					
@@ -623,7 +640,14 @@ public abstract class DataStore {
 			offset = 0;
 		}
 		
-		return broadcastList.subList(offset, Math.min(offset+size, broadcastList.size()));
+		int toIndex =  Math.min(offset+size, broadcastList.size());
+		if (offset >= toIndex) 
+		{
+			return new ArrayList<>();
+		}
+		else {
+			return broadcastList.subList(offset,toIndex);
+		}
 	}
 
 	/**
@@ -693,10 +717,24 @@ public abstract class DataStore {
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
 
-
-
-
+	/**
+	 * Return if data store is available. DataStore is available if it's initialized and not closed. 
+	 * It's not available if it's closed. 
+	 * @return availability of the datastore
+	 */
+	public boolean isAvailable() {
+		return available;
+	}
   
+	
+	/**
+	 * This is used to get total number of WebRTC viewers 
+	 * 
+	 * @returns total number of WebRTC viewers
+	 */
+	public abstract int getTotalWebRTCViewersCount();
+  
+	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	

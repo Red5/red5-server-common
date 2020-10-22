@@ -87,6 +87,9 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected List<Muxer> muxerList =  Collections.synchronizedList(new ArrayList<Muxer>());
 	protected boolean deleteHLSFilesOnExit = true;
+	protected boolean deleteDASHFilesOnExit = true;
+
+
 
 	protected boolean previewOverwrite = false;
 
@@ -126,12 +129,16 @@ public class MuxAdaptor implements IRecordingListener {
 	protected boolean webMMuxingEnabled;
 	protected boolean addDateTimeToMp4FileName;
 	protected boolean hlsMuxingEnabled;
+	protected boolean dashMuxingEnabled;
 	protected boolean objectDetectionEnabled;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
 	protected String hlsListSize;
 	protected String hlsPlayListType;
+	protected String dashSegDuration;
+	protected String dashFragmentDuration;
+	protected String targetLatency;
 	List<EncoderSettings> adaptiveResolutionList = null;
 	protected AVPacket pkt = avcodec.av_packet_alloc();
 	protected DataStore dataStore;
@@ -201,6 +208,12 @@ public class MuxAdaptor implements IRecordingListener {
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
 	protected long absoluteTotalIngestTime = 0;
+	
+	/**
+	 * It's defined here because EncoderAdaptor should access it directly to add new streams
+	 */
+	private Muxer dashMuxer = null;
+	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
 	class PacketTs {
@@ -355,6 +368,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected void enableSettings() {
 		AppSettings appSettingsLocal = getAppSettings();
 		hlsMuxingEnabled = appSettingsLocal.isHlsMuxingEnabled();
+		dashMuxingEnabled = appSettingsLocal.isDashMuxingEnabled();
 		mp4MuxingEnabled = appSettingsLocal.isMp4MuxingEnabled();
 		webMMuxingEnabled = appSettingsLocal.isWebMMuxingEnabled();
 		objectDetectionEnabled = appSettingsLocal.isObjectDetectionEnabled();
@@ -363,9 +377,14 @@ public class MuxAdaptor implements IRecordingListener {
 		mp4Filtername = null;
 		webRTCEnabled = appSettingsLocal.isWebRTCEnabled();
 		deleteHLSFilesOnExit = appSettingsLocal.isDeleteHLSFilesOnEnded();
+		deleteDASHFilesOnExit = appSettingsLocal.isDeleteDASHFilesOnEnded();
 		hlsListSize = appSettingsLocal.getHlsListSize();
 		hlsTime = appSettingsLocal.getHlsTime();
 		hlsPlayListType = appSettingsLocal.getHlsPlayListType();
+		dashSegDuration = appSettingsLocal.getDashSegDuration();
+		dashFragmentDuration = appSettingsLocal.getDashFragmentDuration();
+		targetLatency = appSettingsLocal.getTargetLatency();
+
 		previewOverwrite = appSettingsLocal.isPreviewOverwrite();
 		encoderSettingsList = appSettingsLocal.getEncoderSettings();
 		previewCreatePeriod = appSettingsLocal.getCreatePreviewPeriod();
@@ -406,6 +425,11 @@ public class MuxAdaptor implements IRecordingListener {
 			addMuxer(hlsMuxer);
 			logger.info("adding HLS Muxer for {}", streamId);
 		}
+		
+		getDashMuxer();
+		if (dashMuxer != null) {
+			addMuxer(dashMuxer);
+		}
 
 		for (Muxer muxer : muxerList) {
 			muxer.init(scope, streamId, 0);
@@ -414,6 +438,28 @@ public class MuxAdaptor implements IRecordingListener {
 		return true;
 	}
 
+	public Muxer getDashMuxer() 
+	{
+		if (dashMuxingEnabled && dashMuxer == null) {
+			try {
+				Class dashMuxerClass = Class.forName("io.antmedia.enterprise.muxer.DASHMuxer");
+			
+				logger.info("adding DASH Muxer for {}", streamId);
+
+				dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
+					.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit, !appSettings.getEncoderSettings().isEmpty(),
+							appSettings.getDashWindowSize(), appSettings.getDashExtraWindowSize());
+			}
+			catch (ClassNotFoundException e) {
+				logger.info("DashMuxer class not found for stream:{}", streamId);
+			}
+			catch (Exception e) {
+				logger.error(ExceptionUtils.getStackTrace(e));
+			}
+			
+		}
+		return dashMuxer;
+	}
 
 	private void initVertx() {
 		if (scope.getContext().getApplicationContext().containsBean(IAntMediaStreamHandler.VERTX_BEAN_NAME)) {
@@ -510,28 +556,35 @@ public class MuxAdaptor implements IRecordingListener {
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
 		//StreamFetcher Worker Thread only calls prepareInternal so that inputFormatContext is set here
 		this.inputFormatContext = inputFormatContext;
+		// Dump information about file onto standard error
+		int streamCount = inputFormatContext.nb_streams();
+		int width = -1;
+		int height = -1;
+		for (int i=0; i < streamCount; i++) 
+		{
+			AVStream stream = inputFormatContext.streams(i);
+			AVCodecParameters codecpar = stream.codecpar();
+			if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
+				logger.info("Video format width:{} height:{} for stream: {}", codecpar.width(), codecpar.height(), streamId);
+				width = codecpar.width();
+				height = codecpar.height();
+			}
+			else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
+				logger.info("Audio format sample rate:{} bitrate:{} for stream: {}",codecpar.sample_rate(), codecpar.bit_rate(), streamId);
+			}
+		}
+		
+		if (width == 0 || height == 0) {
+			logger.info("Width or height is zero so returning for stream: {}", streamId);
+			return false;
+		}
+	
 		return prepareMuxers(inputFormatContext);
 	}
 
 	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
 
-		if (logger.isInfoEnabled()) 
-		{
-			// Dump information about file onto standard error
-			int streamCount = inputFormatContext.nb_streams();
-			for (int i=0; i < streamCount; i++) 
-			{
-				AVStream stream = inputFormatContext.streams(i);
-				AVCodecParameters codecpar = stream.codecpar();
-				if (codecpar.codec_type() == AVMEDIA_TYPE_VIDEO) {
-					logger.info("Video format width:{} height:{}", codecpar.width(), codecpar.height());
-				}
-				else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
-					logger.info("Audio format sample rate:{} bitrate:{}",codecpar.sample_rate(), codecpar.bit_rate());
-				}
-			}
-		}
-
+		
 		Iterator<Muxer> iterator = muxerList.iterator();
 		while (iterator.hasNext()) {
 			Muxer muxer = iterator.next();
@@ -992,9 +1045,11 @@ public class MuxAdaptor implements IRecordingListener {
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 
 
-		vertx.setTimer(1, h -> {
+		vertx.executeBlocking(b -> {
 			logger.info("before prepare for {}", streamId);
+			Boolean successful = false;
 			try {
+				
 				//Prepare and check if stream is stopped while it's preparing
 				if (prepare()) {
 
@@ -1030,6 +1085,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 					logger.info("Number of items in the queue while starting: {} for stream: {}", 
 							getInputQueueSize(), streamId);
+					
+					successful = true;
 
 				} else {
 					logger.warn("input format context cannot be created for stream -> {}", streamId);
@@ -1044,7 +1101,12 @@ public class MuxAdaptor implements IRecordingListener {
 			} catch (Exception e) {
 				logger.error(ExceptionUtils.getStackTrace(e));
 			}
-		});
+			b.complete(successful);
+		}, 
+		false,  // run unordered
+		r -> 
+			logger.info("muxadaptor start has finished with {} for stream: {}", r.result(), streamId)
+		);
 	}
 
 	@Override
@@ -1565,6 +1627,15 @@ public class MuxAdaptor implements IRecordingListener {
 		return dataChannelWebHookURL;
 	}
 	
+	public boolean isDeleteDASHFilesOnExit() {
+		return deleteDASHFilesOnExit;
+	}
+
+
+	public void setDeleteDASHFilesOnExit(boolean deleteDASHFilesOnExit) {
+		this.deleteDASHFilesOnExit = deleteDASHFilesOnExit;
+	}
+
 	public boolean isAvc() {
 		return avc;
 	}
@@ -1572,8 +1643,6 @@ public class MuxAdaptor implements IRecordingListener {
 	public void setAvc(boolean avc) {
 		this.avc = avc;
 	}
-	
-	
 }
 
 

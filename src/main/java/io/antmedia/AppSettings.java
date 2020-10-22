@@ -7,17 +7,19 @@ import java.util.List;
 
 import org.apache.catalina.util.NetMask;
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
-import org.mongodb.morphia.annotations.NotSaved;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Field;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Index;
+import dev.morphia.annotations.Indexes;
+import dev.morphia.annotations.NotSaved;
 
 /**
  * Application Settings for each application running in Ant Media Server.
@@ -48,12 +50,19 @@ public class AppSettings {
 	private static final String SETTINGS_ENCODING_SPECIFIC = "settings.encoding.specific";
 	public static final String SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME = "settings.addDateTimeToMp4FileName";
 	public static final String SETTINGS_HLS_MUXING_ENABLED = "settings.hlsMuxingEnabled";
+	public static final String SETTINGS_DASH_MUXING_ENABLED = "settings.dashMuxingEnabled";
+	public static final String SETTINGS_DASH_WINDOW_SIZE = "settings.dashWindowSize";
+	public static final String SETTINGS_DASH_EXTRA_WINDOW_SIZE = "settings.dashExtraWindowSize";
 	public static final String SETTINGS_ENCODER_SETTINGS_STRING = "settings.encoderSettingsString";
 	public static final String SETTINGS_HLS_LIST_SIZE = "settings.hlsListSize";
 	public static final String SETTINGS_HLS_TIME = "settings.hlsTime";
+	public static final String SETTINGS_DASH_SEG_DURATION = "settings.dashSegDuration";
+	public static final String SETTINGS_DASH_FRAGMENT_DURATION = "settings.dashFragmentDuration";
+	public static final String SETTINGS_DASH_TARGET_LATENCY = "settings.dashTargetLatency";	
 	public static final String SETTINGS_WEBRTC_ENABLED = "settings.webRTCEnabled";
 	public static final String SETTINGS_USE_ORIGINAL_WEBRTC_ENABLED = "settings.useOriginalWebRTCEnabled";
 	public static final String SETTINGS_DELETE_HLS_FILES_ON_ENDED = "settings.deleteHLSFilesOnEnded";
+	public static final String SETTINGS_DELETE_DASH_FILES_ON_ENDED = "settings.deleteDASHFilesOnEnded";
 	public static final String SETTINGS_LISTENER_HOOK_URL = "settings.listenerHookURL";
 	public static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 	public static final String SETTINGS_TOKEN_CONTROL_ENABLED = "settings.tokenControlEnabled";
@@ -220,6 +229,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
 
+	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
+
 
 	@JsonIgnore
 	@NotSaved
@@ -280,6 +291,40 @@ public class AppSettings {
 	private String hlsTime;
 	
 	/**
+	 * Duration of segments in mpd files.
+	 * Segments are a property of DASH. A segment is the minimal download unit.
+	 *  
+	 */
+	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":2}" )
+	private String dashSegDuration;
+	
+	/**
+	 * Fragments are a property of fragmented MP4 files. Typically a fragment consists of moof + mdat.
+	 *
+	 */
+	@Value( "${"+SETTINGS_DASH_FRAGMENT_DURATION+":0.5}" )
+	private String dashFragmentDuration;
+	
+	
+	/**
+	 * Latency of the DASH streaming. 
+	 */
+	@Value( "${"+SETTINGS_DASH_TARGET_LATENCY+":3.5}" )
+	private String targetLatency;
+	
+	/**
+	 * DASH window size. Number of files in manifest
+	 */
+	@Value( "${"+SETTINGS_DASH_WINDOW_SIZE+":5}" )
+	private String dashWindowSize;
+
+	/**
+	 * DASH extra window size. Number of segments kept outside of the manifest before removing from disk
+	 */
+	@Value( "${"+SETTINGS_DASH_EXTRA_WINDOW_SIZE+":5}" )
+	private String dashExtraWindowSize;
+	
+	/**
 	 * Enable/disable webrtc 
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
@@ -301,6 +346,13 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
+	
+	/**
+	 * If this value is true, dash files(mpd and m4s files) are deleted after the broadcasting
+	 * has finished.
+	 */
+	@Value( "${"+SETTINGS_DELETE_DASH_FILES_ON_ENDED+":true}" )
+	private boolean deleteDASHFilesOnEnded = true;
 
 	/**
 	 * The secret string used for creating hash based tokens
@@ -885,7 +937,13 @@ public class AppSettings {
 	 */
 	@Value("${" + SETTINGS_AUDIO_BITRATE_SFU+":96000}")
 	private int audioBitrateSFU;
-	
+
+	/**
+	 * Enable/disable dash recording
+	 */
+	@Value( "${"+SETTINGS_DASH_MUXING_ENABLED+":false}" )
+	private boolean dashMuxingEnabled;
+
 	/** 
 	 * If aacEncodingEnabled is true, aac encoding will be active even if mp4 or hls muxing is not enabled.
 	 * If aacEncodingEnabled is false, aac encoding is only activated if mp4 or hls muxing is enabled in the settings.
@@ -916,6 +974,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_CONSTANT_RATE_FACTOR+":23}" )
 	private String constantRateFactor;
+	
+	/**
+	 * Application level WebRTC viewer limit
+	 */
+	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
+	private int webRTCViewerLimit = -1;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -947,6 +1011,14 @@ public class AppSettings {
 
 	public void setHlsMuxingEnabled(boolean hlsMuxingEnabled) {
 		this.hlsMuxingEnabled = hlsMuxingEnabled;
+	}
+	
+	public boolean isDashMuxingEnabled() {
+		return dashMuxingEnabled;
+	}
+
+	public void setDashMuxingEnabled(boolean dashMuxingEnabled) {
+		this.dashMuxingEnabled = dashMuxingEnabled;
 	}
 
 	public String getHlsPlayListType() {
@@ -1288,6 +1360,7 @@ public class AppSettings {
 		hlsTime = null;
 		webRTCEnabled = false;
 		deleteHLSFilesOnEnded = true;
+		deleteDASHFilesOnEnded = true;
 		acceptOnlyStreamsInDataStore = false;
 		publishTokenControlEnabled = false;
 		playTokenControlEnabled = false;
@@ -1830,6 +1903,22 @@ public class AppSettings {
 		this.startStreamFetcherAutomatically = startStreamFetcherAutomatically;
 	}
 	
+	public boolean isDeleteDASHFilesOnEnded() {
+		return deleteDASHFilesOnEnded;
+	}
+
+	public void setDeleteDASHFilesOnEnded(boolean deleteDASHFilesOnEnded) {
+		this.deleteDASHFilesOnEnded = deleteDASHFilesOnEnded;
+	}
+	
+	public String getTargetLatency() {
+		return targetLatency;
+	}
+
+	public void setTargetLatency(String targetLatency) {
+		this.targetLatency = targetLatency;
+	}
+
 	public int getHeightRtmpForwarding() {
 		return heightRtmpForwarding;
 	}
@@ -1870,5 +1959,44 @@ public class AppSettings {
 		this.constantRateFactor = constantRateFactor;
 	}
 
+	public int getWebRTCViewerLimit() {
+		return webRTCViewerLimit;
+	}
+
+	public void setWebRTCViewerLimit(int webRTCViewerLimit) {
+		this.webRTCViewerLimit = webRTCViewerLimit;
+	}
+
+	public String getDashFragmentDuration() {
+		return dashFragmentDuration;
+	}
+
+	public void setDashFragmentDuration(String dashFragmentDuration) {
+		this.dashFragmentDuration = dashFragmentDuration;
+	}
+
+	public String getDashSegDuration() {
+		return dashSegDuration;
+	}
+
+	public void setDashSegDuration(String dashSegDuration) {
+		this.dashSegDuration = dashSegDuration;
+	}
+
+	public String getDashWindowSize() {
+		return dashWindowSize;
+	}
+
+	public void setDashWindowSize(String dashWindowSize) {
+		this.dashWindowSize = dashWindowSize;
+	}
+
+	public String getDashExtraWindowSize() {
+		return dashExtraWindowSize;
+	}
+
+	public void setDashExtraWindowSize(String dashExtraWindowSize) {
+		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
 
 }
