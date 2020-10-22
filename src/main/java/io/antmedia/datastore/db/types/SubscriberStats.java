@@ -3,8 +3,7 @@ package io.antmedia.datastore.db.types;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.mongodb.morphia.annotations.Embedded;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import dev.morphia.annotations.Embedded;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
