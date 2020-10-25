@@ -370,7 +370,7 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt, AVCodecContext codecContext) {
 		AVStream outStream = outputFormatContext.streams(pkt.stream_index());
 		AVRational codecTimebase = codecTimeBaseMap.get(pkt.stream_index());
 		writePacket(pkt, codecTimebase,  outStream.time_base(), outStream.codecpar().codec_type()); 
