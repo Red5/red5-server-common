@@ -973,6 +973,11 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
 	private int webRTCViewerLimit = -1;
+	
+	/*
+	 * Set to true when you want to delete an application 
+	 */
+	private boolean toBeDeleted = false;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1981,6 +1986,14 @@ public class AppSettings {
 
 	public void setDashExtraWindowSize(String dashExtraWindowSize) {
 		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
+
+	public boolean isToBeDeleted() {
+		return toBeDeleted;
+	}
+
+	public void setToBeDeleted(boolean toBeDeleted) {
+		this.toBeDeleted = toBeDeleted;
 	}
 
 }
