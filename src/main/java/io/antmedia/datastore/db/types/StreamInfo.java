@@ -36,7 +36,9 @@ public class StreamInfo implements IStreamInfo {
 	private boolean audioEnabled;
 	private boolean dataChannelEnabled;
 	private VideoCodec videoCodec;
+	private String nodeGroup;
 
+	
 	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase, VideoCodec codec) {
 		this.height = height;
 		this.width = width;
@@ -52,7 +54,7 @@ public class StreamInfo implements IStreamInfo {
 	public StreamInfo() {
 		
 	}
-
+	
 	@Override
 	public int getVideoHeight() {
 		return height;
@@ -175,6 +177,14 @@ public class StreamInfo implements IStreamInfo {
 	
 	public VideoCodec getVideoCodec() {
 		return videoCodec;
+	}
+
+	public String getNodeGroup() {
+		return nodeGroup;
+	}
+
+	public void setNodeGroup(String nodeGroup) {
+		this.nodeGroup = nodeGroup;
 	}
 
 }
