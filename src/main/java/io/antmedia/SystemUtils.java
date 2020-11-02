@@ -712,4 +712,30 @@ public class SystemUtils {
 		return hotspotMBean;
 	}
 	
+	public static boolean runCreateAppScript(String appName) {
+		String command = "/bin/sh create_app.sh -n "+appName+" -w";
+		
+		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+		try {
+			pb.start();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static boolean runDeleteAppScript(String appName) {
+		String command = "/bin/sh delete_app.sh -n "+appName;
+
+		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+		try {
+			pb.start();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
 }
