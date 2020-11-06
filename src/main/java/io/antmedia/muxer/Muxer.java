@@ -1,5 +1,8 @@
 package io.antmedia.muxer;
 
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -131,11 +134,14 @@ public abstract class Muxer {
 	 * 
 	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
 	 * 
+	 * @Deprecated Use {@link #addStream(AVCodecParameters, AVRational)}
+	 * 
 	 * @param inputFormatContext
 	 * @return true if it succeeds, return false if it fails
 	 */
+	@Deprecated
 	public abstract boolean prepare(AVFormatContext inputFormatContext);
-
+	
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index
 	 * parameters. After adding streams, need to call prepareIO()
@@ -334,6 +340,16 @@ public abstract class Muxer {
 	 */
 	public boolean addVideoStream(int width, int height, AVRational videoTimebase, int codecId, int streamIndex, boolean isAVC, AVCodecParameters codecpar) {
 		return false;
+	}
+
+	
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+		return false;
+	}
+
+	public void writeAudioBuffer(ByteBuffer byteBuffer, int i, int timestamp) {
+		
+		
 	}
 
 }

@@ -132,7 +132,7 @@ public class Mp4Muxer extends RecordMuxer {
 	@Override
 	public synchronized boolean addVideoStream(int width, int height, AVRational timebase, int codecId, int streamIndex,
 			boolean isAVC, AVCodecParameters codecpar) {
-		isAVCConversionRequired = true;
+		isAVCConversionRequired = !isAVC;
 
 		return super.addVideoStream(width, height, timebase, codecId, streamIndex, isAVC, codecpar);
 	}

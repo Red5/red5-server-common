@@ -101,6 +101,7 @@ public class HLSMuxer extends Muxer  {
 	
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 	private AVPacket videoPkt;
+	private AVPacket audioPkt;
 	private int time2log = 0;
 
 
@@ -163,6 +164,9 @@ public class HLSMuxer extends Muxer  {
 			
 			videoPkt = avcodec.av_packet_alloc();
 			av_init_packet(videoPkt);
+			
+			audioPkt = avcodec.av_packet_alloc();
+			av_init_packet(audioPkt);
 			
 			isInitialized = true;
 		}
@@ -403,7 +407,12 @@ public class HLSMuxer extends Muxer  {
 			av_packet_free(videoPkt);
 			videoPkt = null;
 		}
-
+		
+		if (audioPkt != null) {
+			av_packet_free(audioPkt);
+			audioPkt = null;
+		}
+		
 		av_write_trailer(outputFormatContext);
 
 		/* close output */
@@ -550,6 +559,25 @@ public class HLSMuxer extends Muxer  {
 		return true;
 	}
 	
+	
+	@Override
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null && isCodecSupported(codecParameters.codec_id())) 
+		{
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			
+			avcodec_parameters_copy(outStream.codecpar(), codecParameters);
+			outStream.time_base(timebase);
+			codecTimeBaseMap.put(outStream.index(), timebase);
+			registeredStreamIndexList.add(outStream.index());
+			result = true;
+		}
+		
+		return result;
+	}
+	
 
 
 	/**
@@ -621,7 +649,7 @@ public class HLSMuxer extends Muxer  {
 			streamIndex = audioIndex;
 		}
 		else {
-			logger.error("Undefined codec type for {}", file.getName());
+			logger.error("Undefined codec type for {} stream index: {}", file.getName(), inStream.index());
 			return;
 		}
 
@@ -631,6 +659,32 @@ public class HLSMuxer extends Muxer  {
 		writePacket(avpacket, inStream.time_base(),  outStream.time_base(), outStream.codecpar().codec_type()); 
 		avpacket.stream_index(index);
 
+	}
+	
+	@Override
+	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, int timestamp) {
+		if (!isRunning.get()) {
+			if (time2log  % 100 == 0) {
+				logger.warn("Not writing AudioBuffer for {} because Is running:{}", file.getName(), isRunning.get());
+				time2log = 0;
+			}
+			time2log++;
+			return;
+		}
+		
+		audioPkt.stream_index(streamIndex);
+		audioPkt.pts(timestamp);
+		audioPkt.dts(timestamp);
+		audioFrame.rewind();
+		audioPkt.flags(audioPkt.flags() | AV_PKT_FLAG_KEY);
+		audioPkt.data(new BytePointer(audioFrame));
+		audioPkt.size(audioFrame.limit());
+		audioPkt.position(0);
+		
+		writePacket(audioPkt, (AVCodecContext)null);
+		
+		av_packet_unref(audioPkt);
+		
 	}
 	
 	@Override
