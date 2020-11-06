@@ -134,12 +134,10 @@ public abstract class Muxer {
 	 * 
 	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
 	 * 
-	 * @Deprecated Use {@link #addStream(AVCodecParameters, AVRational)}
 	 * 
 	 * @param inputFormatContext
 	 * @return true if it succeeds, return false if it fails
 	 */
-	@Deprecated
 	public abstract boolean prepare(AVFormatContext inputFormatContext);
 	
 	/**
