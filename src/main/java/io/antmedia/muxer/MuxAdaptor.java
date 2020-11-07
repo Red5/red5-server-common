@@ -189,9 +189,9 @@ public class MuxAdaptor implements IRecordingListener {
 	private AtomicInteger queueSize = new AtomicInteger(0);
 	private long startTimeMs;
 	protected long totalIngestTime;
-	private AVCodecParameters videoCodecParameters;
-	private AVCodecParameters audioCodecParameters;
 	private int fps = 0;
+	private int width;
+	private int height;
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
@@ -438,7 +438,7 @@ public class MuxAdaptor implements IRecordingListener {
 		
 		AVCodecParameters parameters = getAudioCodecParameters();
 		if (parameters != null) {
-			addStream2Muxers(audioCodecParameters, TIME_BASE_FOR_MS);
+			addStream2Muxers(parameters, TIME_BASE_FOR_MS);
 			audioStreamIndex = streamIndex;
 		}
 		
@@ -450,7 +450,8 @@ public class MuxAdaptor implements IRecordingListener {
 
 	private AVCodecParameters getAudioCodecParameters() {
 		
-		if (audioCodecParameters == null && audioDataConf != null) 
+		AVCodecParameters audioCodecParameters = null;
+		if (audioDataConf != null) 
 		{
 			AACConfigParser aacParser = new AACConfigParser(audioDataConf, 0);
 			
@@ -491,12 +492,14 @@ public class MuxAdaptor implements IRecordingListener {
 
 	private AVCodecParameters getVideoCodecParameters() 
 	{
-		
-		if (videoCodecParameters == null && videoDataConf != null) {
+		AVCodecParameters videoCodecParameters = null;
+		if (videoDataConf != null) {
 			SpsParser spsParser = new SpsParser(getAnnexbExtradata(videoDataConf), 5);
 			
 			videoCodecParameters = new AVCodecParameters();
 			logger.info("Incoming video width: {} height:{}", spsParser.getWidth(), spsParser.getHeight());
+			width = spsParser.getWidth();
+			height = spsParser.getHeight();
 			videoCodecParameters.width(spsParser.getWidth());
 			videoCodecParameters.height(spsParser.getHeight());
 			videoCodecParameters.codec_id(AV_CODEC_ID_H264);
@@ -803,7 +806,7 @@ public class MuxAdaptor implements IRecordingListener {
 					
 					if ((frameType & 0xF0) == IVideoStreamCodec.FLV_FRAME_KEY) {
 						firstKeyFrameReceivedChecked = true;				
-						if(!appAdapter.isValidStreamParameters(videoCodecParameters.width(), videoCodecParameters.height(), fps, (int)videoCodecParameters.bit_rate(), streamId)) {
+						if(!appAdapter.isValidStreamParameters(width, height, fps, 0, streamId)) {
 							logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 							closeRtmpConnection();
 							return;
@@ -945,7 +948,7 @@ public class MuxAdaptor implements IRecordingListener {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;				
-				if(!appAdapter.isValidStreamParameters(videoCodecParameters.width(), videoCodecParameters.height(), fps, (int)videoCodecParameters.bit_rate(), streamId)) {
+				if(!appAdapter.isValidStreamParameters(width, height, fps, 0, streamId)) {
 					logger.info("Stream({}) has not passed specified validity checks so it's stopping", streamId);
 					closeRtmpConnection();
 					return;
