@@ -544,6 +544,9 @@ public class MuxAdaptor implements IRecordingListener {
 	public static byte[] getAnnexbExtradata(byte[] avcExtradata){
 		IoBuffer buffer = IoBuffer.wrap(avcExtradata);
 		
+		for (int i = 0; i < avcExtradata.length; i++) {
+			logger.info(" data[{}]: {}" ,i, avcExtradata[i]);
+		}
 		buffer.skip(6); //skip first 6 bytes for avc
 		short spsSize = buffer.getShort();
 		byte[] sps = new byte[spsSize];
