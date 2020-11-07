@@ -336,20 +336,18 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					} else if (codecInfo != null) {
 						audioStreamCodec = codecInfo.getAudioCodec();
 					}
-					if (audioStreamCodec != null) {
-						if (audioStreamCodec instanceof AACAudio) {
-							audioStreamCodec.addData(buf);
+					if (audioStreamCodec instanceof AACAudio) {
+						audioStreamCodec.addData(buf);
+					}
+					else {
+						//Dont's support codecs other than AACA
+						log.error("Audio codec is not AAC so stopping connection {}", getPublishedName());
+						stop();
+						IStreamCapableConnection connection = getConnection();
+						if (connection != null) {
+							connection.close();
 						}
-						else {
-							//Dont's support codecs other than AACA
-							log.error("Audio codec is not AAC so stopping connection {}", getPublishedName());
-							stop();
-							IStreamCapableConnection connection = getConnection();
-							if (connection != null) {
-								connection.close();
-							}
-							return;
-						}
+						return;
 					}
 					if (info != null) {
 						info.setHasAudio(true);
@@ -367,20 +365,18 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					} else if (codecInfo != null) {
 						videoStreamCodec = codecInfo.getVideoCodec();
 					}
-					if (videoStreamCodec != null) {
-						if (videoStreamCodec instanceof AVCVideo) {
-							videoStreamCodec.addData(buf);
+					if (videoStreamCodec instanceof AVCVideo) {
+						videoStreamCodec.addData(buf);
+					}
+					else {
+						//don't support codecs other than AVC(264)
+						log.error("Video codec is not AVC so stopping connection {}", getPublishedName());
+						stop();
+						IStreamCapableConnection connection = getConnection();
+						if (connection != null) {
+							connection.close();
 						}
-						else {
-							//don't support codecs other than AVC(264)
-							log.error("Video codec is not AVC so stopping connection {}", getPublishedName());
-							stop();
-							IStreamCapableConnection connection = getConnection();
-							if (connection != null) {
-								connection.close();
-							}
-							return;
-						}
+						return;
 					}
 					if (info != null) {
 						info.setHasVideo(true);
