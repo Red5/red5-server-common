@@ -560,14 +560,63 @@ public class HLSMuxer extends Muxer  {
 	
 	
 	@Override
-	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) 
+	{
 		boolean result = false;
 		AVFormatContext outputContext = getOutputFormatContext();
 		if (outputContext != null && isCodecSupported(codecParameters.codec_id())) 
 		{
 			AVStream outStream = avformat_new_stream(outputContext, null);
 			
-			avcodec_parameters_copy(outStream.codecpar(), codecParameters);
+			if (codecParameters.codec_type() == AVMEDIA_TYPE_VIDEO) 
+			{
+				videoIndex = outStream.index();
+				AVBitStreamFilter h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
+				bsfContext = new AVBSFContext(null);
+
+				int ret = av_bsf_alloc(h264bsfc, bsfContext);
+				if (ret < 0) {
+					logger.info("cannot allocate bsf context for {}", file.getName());
+					return false;
+				}
+
+				ret = avcodec_parameters_copy(bsfContext.par_in(), codecParameters);
+				if (ret < 0) {
+					logger.info("cannot copy input codec parameters for {}", file.getName());
+					return false;
+				}
+				bsfContext.time_base_in(timebase);
+
+				ret = av_bsf_init(bsfContext);
+				if (ret < 0) {
+					logger.info("cannot init bit stream filter context for {}", file.getName());
+					return false;
+				}
+
+				ret = avcodec_parameters_copy(outStream.codecpar(), bsfContext.par_out());
+				if (ret < 0) {
+					logger.info("cannot copy codec parameters to output for {}", file.getName());
+					return false;
+				}
+				videoWidth = outStream.codecpar().width();
+				videoHeight = outStream.codecpar().height();
+				outStream.time_base(bsfContext.time_base_out());
+			}
+			else {
+				audioIndex = outStream.index();
+				int ret = avcodec_parameters_copy(outStream.codecpar(), codecParameters);
+				if (ret < 0) {
+					logger.info("Cannot get codec parameters for {}", file.getName());
+					return false;
+				}
+
+				if (codecParameters.codec_type() != AVMEDIA_TYPE_AUDIO) {
+					logger.warn("codec type should be audio but it is {}" , codecParameters.codec_type());
+
+				}
+			}
+			
+			
 			outStream.time_base(timebase);
 			codecTimeBaseMap.put(outStream.index(), timebase);
 			registeredStreamIndexList.add(outStream.index());
