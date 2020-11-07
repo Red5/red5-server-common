@@ -462,7 +462,7 @@ public class HLSMuxer extends Muxer  {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public synchronized void writePacket(AVPacket pkt) {
+	public synchronized void writePacket(AVPacket pkt, AVCodecContext codecContext) {
 		if (!isRunning.get() || !registeredStreamIndexList.contains(pkt.stream_index()))  {
 			if (time2log % 100 == 0) {
 				logger.warn("not registered stream index {}", file.getName());
@@ -665,7 +665,7 @@ public class HLSMuxer extends Muxer  {
 		videoPkt.position(0);
 		
 	
-		writePacket(videoPkt);
+		writePacket(videoPkt, (AVCodecContext)null);
 		
 		av_packet_unref(videoPkt);
 	}

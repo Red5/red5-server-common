@@ -1,11 +1,12 @@
 package io.antmedia.datastore.db.types;
 
 import org.bson.types.ObjectId;
-import org.mongodb.morphia.annotations.Entity;
-import org.mongodb.morphia.annotations.Field;
-import org.mongodb.morphia.annotations.Id;
-import org.mongodb.morphia.annotations.Index;
-import org.mongodb.morphia.annotations.Indexes;
+import dev.morphia.annotations.Embedded;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Field;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Index;
+import dev.morphia.annotations.Indexes;
 
 import io.antmedia.cluster.IStreamInfo;
 import io.antmedia.webrtc.VideoCodec;
@@ -35,7 +36,9 @@ public class StreamInfo implements IStreamInfo {
 	private boolean audioEnabled;
 	private boolean dataChannelEnabled;
 	private VideoCodec videoCodec;
+	private String nodeGroup;
 
+	
 	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase, VideoCodec codec) {
 		this.height = height;
 		this.width = width;
@@ -51,7 +54,7 @@ public class StreamInfo implements IStreamInfo {
 	public StreamInfo() {
 		
 	}
-
+	
 	@Override
 	public int getVideoHeight() {
 		return height;
@@ -174,6 +177,14 @@ public class StreamInfo implements IStreamInfo {
 	
 	public VideoCodec getVideoCodec() {
 		return videoCodec;
+	}
+
+	public String getNodeGroup() {
+		return nodeGroup;
+	}
+
+	public void setNodeGroup(String nodeGroup) {
+		this.nodeGroup = nodeGroup;
 	}
 
 }
