@@ -36,6 +36,8 @@ import javax.management.StandardMBean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.codec.AACAudio;
+import org.red5.codec.AVCVideo;
 import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
@@ -335,7 +337,19 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 						audioStreamCodec = codecInfo.getAudioCodec();
 					}
 					if (audioStreamCodec != null) {
-						audioStreamCodec.addData(buf);
+						if (audioStreamCodec instanceof AACAudio) {
+							audioStreamCodec.addData(buf);
+						}
+						else {
+							//Dont's support codecs other than AACA
+							log.error("Audio codec is not AAC so stopping connection {}", getPublishedName());
+							stop();
+							IStreamCapableConnection connection = getConnection();
+							if (connection != null) {
+								connection.close();
+							}
+							return;
+						}
 					}
 					if (info != null) {
 						info.setHasAudio(true);
@@ -354,7 +368,19 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 						videoStreamCodec = codecInfo.getVideoCodec();
 					}
 					if (videoStreamCodec != null) {
-						videoStreamCodec.addData(buf);
+						if (videoStreamCodec instanceof AVCVideo) {
+							videoStreamCodec.addData(buf);
+						}
+						else {
+							//don't support codecs other than AVC(264)
+							log.error("Video codec is not AVC so stopping connection {}", getPublishedName());
+							stop();
+							IStreamCapableConnection connection = getConnection();
+							if (connection != null) {
+								connection.close();
+							}
+							return;
+						}
 					}
 					if (info != null) {
 						info.setHasVideo(true);

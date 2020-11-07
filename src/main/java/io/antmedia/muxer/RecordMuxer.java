@@ -84,7 +84,6 @@ public abstract class RecordMuxer extends Muxer {
 	protected Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 
 	protected AVPacket videoPkt;
-	protected AVPacket audioPkt;
 	protected int rotation;
 	protected long startTimeInVideoTimebase = 0;
 	protected long startTimeInAudioTimebase = 0;
@@ -101,7 +100,6 @@ public abstract class RecordMuxer extends Muxer {
 	 * It means it's started after broadcasting is started and it can be stopped before brodcasting has finished
 	 */
 	protected boolean dynamic = false;
-	private int time2log = 0;
 
 
 	public RecordMuxer(StorageClient storageClient, Vertx vertx) {
@@ -140,9 +138,6 @@ public abstract class RecordMuxer extends Muxer {
 
 		videoPkt = avcodec.av_packet_alloc();
 		av_init_packet(videoPkt);
-		
-		audioPkt = avcodec.av_packet_alloc();
-		av_init_packet(audioPkt);
 		
 	}
 

@@ -3,17 +3,14 @@ package io.antmedia.muxer;
 import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_AAC;
 import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_H264;
 import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
-import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
 import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
 import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
 import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
 import static org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_FLTP;
-import static org.bytedeco.ffmpeg.global.avutil.av_free;
 import static org.bytedeco.ffmpeg.global.avutil.av_get_default_channel_layout;
 import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,13 +27,13 @@ import org.bytedeco.ffmpeg.avcodec.AVCodecContext;
 import org.bytedeco.ffmpeg.avcodec.AVCodecParameters;
 import org.bytedeco.ffmpeg.avcodec.AVPacket;
 import org.bytedeco.ffmpeg.avformat.AVFormatContext;
-import org.bytedeco.ffmpeg.avformat.AVIOContext;
 import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVRational;
-import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.javacpp.BytePointer;
+import org.red5.codec.AACAudio;
+import org.red5.codec.AVCVideo;
+import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IVideoStreamCodec;
-import org.red5.io.utils.IOUtils;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IScope;
@@ -420,11 +417,6 @@ public class MuxAdaptor implements IRecordingListener {
 			audioStreamIndex = streamIndex;
 		}
 		
-		IStreamPacket packet = streamPacketQueue.peek();
-		if (packet.getData() == null) {
-			logger.info("Packet data is null in prepare");
-		}
-		
 		prepareMuxerIO();
 		
 	}
@@ -653,15 +645,29 @@ public class MuxAdaptor implements IRecordingListener {
 	private void getDecoderConf() 
 	{
 		if (enableVideo) {
-			IoBuffer videoBuffer = broadcastStream.getCodecInfo().getVideoCodec().getDecoderConfiguration();
-			videoDataConf = new byte[videoBuffer.limit()-5];
-			videoBuffer.position(5).get(videoDataConf);
+			IVideoStreamCodec videoCodec = broadcastStream.getCodecInfo().getVideoCodec();
+			if (videoCodec instanceof AVCVideo) 
+			{
+				IoBuffer videoBuffer = videoCodec.getDecoderConfiguration();
+				videoDataConf = new byte[videoBuffer.limit()-5];
+				videoBuffer.position(5).get(videoDataConf);
+			}
+			else {
+				 logger.warn("Video codec is not AVC(H264) for stream: {}", streamId);
+			}
 		}
 		
 		if (enableAudio) {
-			IoBuffer audioBuffer = broadcastStream.getCodecInfo().getAudioCodec().getDecoderConfiguration();
-			audioDataConf = new byte[audioBuffer.limit()-2];
-			audioBuffer.position(2).get(audioDataConf);
+			 IAudioStreamCodec audioCodec = broadcastStream.getCodecInfo().getAudioCodec();
+			 if (audioCodec instanceof AACAudio) 
+			 {
+				IoBuffer audioBuffer = audioCodec.getDecoderConfiguration();
+				audioDataConf = new byte[audioBuffer.limit()-2];
+				audioBuffer.position(2).get(audioDataConf);
+			 }
+			 else {
+				 logger.warn("Audio codec is not AAC for stream: {}", streamId);
+			 }
 		}
 
 	}
@@ -724,11 +730,16 @@ public class MuxAdaptor implements IRecordingListener {
 					checkStreamsStartTime  = System.currentTimeMillis();
 				}
 				
+
 				if (stopRequestExist) {
 					logger.info("Stop request exists for stream:{}", streamId);
-					//TODO: It's not to good leave in several places
+					broadcastStream.removeStreamListener(MuxAdaptor.this);
+					logger.warn("closing adaptor for {} ", streamId);
+					closeResources();
+					logger.warn("closed adaptor for {}", streamId);
 					isPipeReaderJobRunning.compareAndSet(true, false);
 					return;
+					
 				}
 				
 				enableVideo = broadcastStream.getCodecInfo().hasVideo();
@@ -857,12 +868,13 @@ public class MuxAdaptor implements IRecordingListener {
 				logger.warn("closing adaptor for {} ", streamId);
 				closeResources();
 				logger.warn("closed adaptor for {}", streamId);
-		
 			}
+			
 			
 			isPipeReaderJobRunning.compareAndSet(true, false);
 		}
 	}
+	
 
 	private void measureIngestTime(int pktTimeStamp, long receivedTime) {
 		
@@ -911,7 +923,6 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 	}
 
-	@Deprecated
 	public void writePacket(AVStream stream, AVPacket pkt) {
 
 
@@ -1406,7 +1417,15 @@ public class MuxAdaptor implements IRecordingListener {
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
 		rtmpMuxer.init(scope, streamId, 0);
 			
-		boolean prepared = rtmpMuxer.prepare(inputFormatContext);
+		if (videoDataConf != null) {
+			rtmpMuxer.addStream(getVideoCodecParameters(videoDataConf), TIME_BASE_FOR_MS);
+		}
+
+		if (audioDataConf != null) {
+			rtmpMuxer.addStream(getAudioCodecParameters(audioDataConf), TIME_BASE_FOR_MS);
+		}
+
+		boolean prepared = rtmpMuxer.prepareIO();
 		if (prepared) {
 			addMuxer(rtmpMuxer);
 		}

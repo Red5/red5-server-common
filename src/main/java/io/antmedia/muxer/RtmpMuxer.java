@@ -272,6 +272,11 @@ public class RtmpMuxer extends Muxer {
 			tmpPacket = null;
 		}
 		
+		if (audioPkt != null) {
+			av_packet_free(audioPkt);
+			audioPkt = null;
+		}
+		
 		if (bsfExtractdataContext != null) {
 			av_bsf_free(bsfExtractdataContext);
 			bsfExtractdataContext = null;
@@ -526,6 +531,51 @@ public class RtmpMuxer extends Muxer {
 			av_packet_unref(videoPkt);
 		}
 		
+	}
+	
+	
+	@Override
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null) 
+		{
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			
+			avcodec_parameters_copy(outStream.codecpar(), codecParameters);
+			outStream.time_base(timebase);
+			codecTimeBaseMap.put(outStream.index(), timebase);
+			registeredStreamIndexList.add(outStream.index());
+			result = true;
+		}
+		
+		return result;
+	}
+	
+	@Override
+	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, int timestamp) {
+		
+		if (!isRunning.get()) {
+			if (time2log  % 100 == 0) {
+				logger.warn("Not writing AudioBuffer for {} because Is running:{}", url, isRunning.get());
+				time2log = 0;
+			}
+			time2log++;
+			return;
+		}
+		
+		audioPkt.stream_index(streamIndex);
+		audioPkt.pts(timestamp);
+		audioPkt.dts(timestamp);
+		audioFrame.rewind();
+		audioPkt.flags(audioPkt.flags() | AV_PKT_FLAG_KEY);
+		audioPkt.data(new BytePointer(audioFrame));
+		audioPkt.size(audioFrame.limit());
+		audioPkt.position(0);
+		
+		writePacket(audioPkt, (AVCodecContext)null);
+		
+		av_packet_unref(audioPkt);
 	}
 
 

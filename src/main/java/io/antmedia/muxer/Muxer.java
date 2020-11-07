@@ -1,5 +1,6 @@
 package io.antmedia.muxer;
 
+import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
 import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
 
@@ -20,6 +21,7 @@ import org.bytedeco.ffmpeg.avcodec.AVPacket;
 import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IStreamFilenameGenerator;
 import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
@@ -75,6 +77,10 @@ public abstract class Muxer {
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
 	
 	public static final String TEMP_EXTENSION = ".tmp_extension";
+	
+	protected int time2log = 0;
+	
+	protected AVPacket audioPkt;
 
 	/**
 	 * Bitstream filter name that will be applied to packets
@@ -296,6 +302,9 @@ public abstract class Muxer {
 					} while (file.exists() || tempFile.exists());
 				}
 			}
+			
+			audioPkt = avcodec.av_packet_alloc();
+			av_init_packet(audioPkt);
 
 		}
 	}
