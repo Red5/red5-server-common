@@ -139,6 +139,11 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                         log.trace("Cannot continue decoding");
                         break;
                     }
+                    
+                    if (conn.getStateCode() == RTMP.STATE_DISCONNECTED) {
+                    	log.trace("breaking the loop because connection is disconnected");
+                    	break;
+                    }
                 }
             } catch (Exception ex) {
                 log.warn("Failed to decodeBuffer: pos {}, limit {}, chunk size {}, buffer {}", position, buffer.limit(), conn.getState().getReadChunkSize(), Hex.encodeHexString(Arrays.copyOfRange(buffer.array(), position, buffer.limit())));
