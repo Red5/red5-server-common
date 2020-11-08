@@ -509,7 +509,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 
 	public boolean prepare() throws Exception {
-
+		isRecording = false;
 		inputFormatContext = avformat.avformat_alloc_context();
 		if (inputFormatContext == null) 
 		{
@@ -578,6 +578,8 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.info("Width or height is zero so returning for stream: {}", streamId);
 			return false;
 		}
+		
+		isRecording = true;
 	
 		return prepareMuxers(inputFormatContext);
 	}
@@ -1041,7 +1043,6 @@ public class MuxAdaptor implements IRecordingListener {
 
 	@Override
 	public void start() {
-		isRecording = false;
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 
 
@@ -1054,7 +1055,6 @@ public class MuxAdaptor implements IRecordingListener {
 				if (prepare()) {
 
 					logger.info("after prepare for {}", streamId);
-					isRecording = true;
 
 					packetPollerId = vertx.setPeriodic(10, t-> 
 						vertx.executeBlocking(p-> {
