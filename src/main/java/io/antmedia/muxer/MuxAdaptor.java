@@ -192,6 +192,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private int fps = 0;
 	private int width;
 	private int height;
+	private AVFormatContext streamSourceInputFormatContext;
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
@@ -516,10 +517,9 @@ public class MuxAdaptor implements IRecordingListener {
 
 	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
 
+		this.streamSourceInputFormatContext = inputFormatContext;
 		// Dump information about file onto standard error
 		int streamCount = inputFormatContext.nb_streams();
-		int width = -1;
-		int height = -1;
 		for (int i=0; i < streamCount; i++) 
 		{
 			AVStream stream = inputFormatContext.streams(i);
@@ -528,6 +528,7 @@ public class MuxAdaptor implements IRecordingListener {
 				logger.info("Video format width:{} height:{} for stream: {}", codecpar.width(), codecpar.height(), streamId);
 				width = codecpar.width();
 				height = codecpar.height();
+				
 				
 			}
 			else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
@@ -581,15 +582,19 @@ public class MuxAdaptor implements IRecordingListener {
 	
 	public void addStream2Muxers(AVCodecParameters codecParameters, AVRational rat) 
 	{
-		Iterator<Muxer> iterator = muxerList.iterator();
-		while (iterator.hasNext()) 
-		{
-			Muxer muxer = iterator.next();
-			if (!muxer.addStream(codecParameters, rat)) 
+		synchronized (muxerList) {
+			
+			Iterator<Muxer> iterator = muxerList.iterator();
+			while (iterator.hasNext()) 
 			{
-				iterator.remove();
-				logger.warn("addStream returns false {} for stream: {}", muxer.getFormat(), streamId);
+				Muxer muxer = iterator.next();
+				if (!muxer.addStream(codecParameters, rat)) 
+				{
+					iterator.remove();
+					logger.warn("addStream returns false {} for stream: {}", muxer.getFormat(), streamId);
+				}
 			}
+		
 		}
 		
 		startTime = System.currentTimeMillis();
@@ -597,30 +602,37 @@ public class MuxAdaptor implements IRecordingListener {
 	
 	public void prepareMuxerIO() 
 	{
-		Iterator<Muxer> iterator = muxerList.iterator();
-		while (iterator.hasNext()) 
-		{
-			Muxer muxer = iterator.next();
-			if (!muxer.prepareIO()) 
+		synchronized (muxerList) {
+			
+			Iterator<Muxer> iterator = muxerList.iterator();
+			while (iterator.hasNext()) 
 			{
-				iterator.remove();
-				logger.error("prepareIO returns false {} for stream: {}", muxer.getFormat(), streamId);
+				Muxer muxer = iterator.next();
+				if (!muxer.prepareIO()) 
+				{
+					iterator.remove();
+					logger.error("prepareIO returns false {} for stream: {}", muxer.getFormat(), streamId);
+				}
 			}
 		}
-		
 		startTime = System.currentTimeMillis();
 		
 	}
 	
-	public boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception {
-
-		
+	private boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception 
+	{	
 		Iterator<Muxer> iterator = muxerList.iterator();
-		while (iterator.hasNext()) {
+		while (iterator.hasNext()) 
+		{
 			Muxer muxer = iterator.next();
-			if (!muxer.prepare(inputFormatContext)) {
-				iterator.remove();
-				logger.warn("muxer prepare returns false {}", muxer.getFormat());
+			
+			for (int i = 0; i < inputFormatContext.nb_streams(); i++) 
+			{
+				if (!muxer.addStream(inputFormatContext.streams(i).codecpar(), inputFormatContext.streams(i).time_base())) {
+					iterator.remove();
+					logger.warn("muxer add streams returns false {}", muxer.getFormat());
+					break;
+				}
 			}
 		}
 
@@ -1351,8 +1363,31 @@ public class MuxAdaptor implements IRecordingListener {
 		
 		boolean prepared = false;
 		if (muxer != null) {
-			muxer.init(scope, streamId, 0);
+			prepared = prepareMuxer(muxer);
+			if (!prepared) {
+				logger.error("{} prepare method returned false. Recording is not started for {}", recordType, streamId);
+			}
+		}
+		return prepared;
+	}
+
+
+	private boolean prepareMuxer(Muxer muxer) {
+		boolean prepared;
+		muxer.init(scope, streamId, 0);
 		
+		if (streamSourceInputFormatContext != null) {
+			
+			for (int i = 0; i < streamSourceInputFormatContext.nb_streams(); i++) 
+			{
+				if (!muxer.addStream(streamSourceInputFormatContext.streams(i).codecpar(), streamSourceInputFormatContext.streams(i).time_base())) {
+					logger.warn("muxer add streams returns false {}", muxer.getFormat());
+					break;
+				}
+			}
+			
+		}
+		else {
 			AVCodecParameters videoParameters = getVideoCodecParameters();
 			if (videoParameters != null) {
 				muxer.addStream(videoParameters, TIME_BASE_FOR_MS);
@@ -1362,15 +1397,14 @@ public class MuxAdaptor implements IRecordingListener {
 			if (audioParameters != null) {
 				muxer.addStream(audioParameters, TIME_BASE_FOR_MS);
 			}
-			
-			prepared = muxer.prepareIO();
-			if (prepared) {
-				addMuxer(muxer);
-			}
-			else {
-					logger.error("{} prepare method returned false. Recording is not started for {}", recordType, streamId);
-			}
 		}
+		
+		prepared = muxer.prepareIO();
+
+		if (prepared) {
+			addMuxer(muxer);
+		}
+		
 		return prepared;
 	}
 
@@ -1427,24 +1461,9 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
-		rtmpMuxer.init(scope, streamId, 0);
-		
-		AVCodecParameters videoParameters = getVideoCodecParameters();
-		if (videoParameters != null) {
-			rtmpMuxer.addStream(videoParameters, TIME_BASE_FOR_MS);
-		}
-		
-		AVCodecParameters audioParameters = getAudioCodecParameters();
-		if (audioParameters != null) {
-			rtmpMuxer.addStream(audioParameters, TIME_BASE_FOR_MS);
-		}
-		
 
-		boolean prepared = rtmpMuxer.prepareIO();
-		if (prepared) {
-			addMuxer(rtmpMuxer);
-		}
-		else {
+		boolean prepared = prepareMuxer(rtmpMuxer);
+		if (!prepared) {
 			logger.error("RTMP prepare returned false so that rtmp pushing to {} for {} didn't started ", rtmpUrl, streamId);
 		}
 		return prepared;

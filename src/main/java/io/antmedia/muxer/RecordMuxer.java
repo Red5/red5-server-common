@@ -175,9 +175,11 @@ public abstract class RecordMuxer extends Muxer {
 	{
 		boolean result = false;
 		AVFormatContext outputContext = getOutputFormatContext();
-		if (outputContext != null && isCodecSupported(codecParameters.codec_id())) 
+		if (outputContext != null && isCodecSupported(codecParameters.codec_id()) && 
+				(codecParameters.codec_type() == AVMEDIA_TYPE_AUDIO || codecParameters.codec_type() == AVMEDIA_TYPE_VIDEO) 
+				)
 		{
-			AVStream outStream = avformat_new_stream(outputContext, null);
+			AVStream outStream = avNewStream(outputContext);
 			
 			avcodec_parameters_copy(outStream.codecpar(), codecParameters);
 			outStream.time_base(timebase);
@@ -234,62 +236,6 @@ public abstract class RecordMuxer extends Muxer {
 
 	public AVStream avNewStream(AVFormatContext context) {
 		return avformat_new_stream(context, null);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public synchronized boolean prepare(AVFormatContext inputFormatContext) {
-		AVFormatContext context = getOutputFormatContext();
-
-		int streamIndex = 0;
-		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
-			AVStream inStream = inputFormatContext.streams(i);
-			
-			if (isCodecSupported(inStream.codecpar())) 
-			{
-				int codecType = inStream.codecpar().codec_type();
-				
-				if ( codecType == AVMEDIA_TYPE_VIDEO) 
-				{
-					AVStream outStream = avNewStream(context);
-					videoIndex = streamIndex;
-					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
-
-					if (ret < 0) {
-						logger.error("Cannot get codec parameters for {}", streamId);
-						return false;
-					}
-					logger.info("video codec par extradata size {} codec id: {}", outStream.codecpar().extradata_size(), outStream.codecpar().codec_id());
-					streamIndex++;
-					registeredStreamIndexList.add(i);
-
-					outStream.codecpar().codec_tag(0);
-				}
-				else if (codecType == AVMEDIA_TYPE_AUDIO) 
-				{
-					AVStream outStream = avNewStream(context);
-					audioIndex = streamIndex;
-
-					if(!prepareAudioOutStream(inStream, outStream)) {
-						return false;
-					}
-					
-					streamIndex++;
-					registeredStreamIndexList.add(i);
-					outStream.codecpar().codec_tag(0);
-					
-				}
-				else {
-					logger.error("undefined codec type: {}" , codecType);
-				}
-
-			}
-		}
-
-		prepareIO();
-		return true;
 	}
 	
 	protected boolean prepareAudioOutStream(AVStream inStream, AVStream outStream) {
@@ -387,6 +333,7 @@ public abstract class RecordMuxer extends Muxer {
 		av_packet_unref(videoPkt);
 	}
 	
+	@Override
 	public synchronized void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, long timestamp) {
 		if (!isRunning.get()) {
 			if (time2log  % 100 == 0) {

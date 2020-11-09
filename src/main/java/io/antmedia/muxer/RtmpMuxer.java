@@ -137,39 +137,6 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
-
-		logger.info("preparing rtmp muxer for {}", url);
-		AVFormatContext context = getOutputFormatContext();
-
-		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
-			AVStream inStream = inputFormatContext.streams(i);
-			registeredStreamIndexList.add(i);
-
-			AVStream outStream = avformat_new_stream(context, inStream.codec().codec());
-
-			int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
-			if (ret < 0) {
-				logger.info("Cannot get codec parameters {}", url);
-				return false;
-			}
-
-			outStream.codec().codec_tag(0);
-			outStream.codecpar().codec_tag(0);
-
-			if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-		}
-
-		prepareIO();
-
-		return true;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public  boolean prepareIO() 
 	{
 		/*
@@ -553,7 +520,7 @@ public class RtmpMuxer extends Muxer {
 	}
 	
 	@Override
-	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, int timestamp) {
+	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, long timestamp) {
 		
 		if (!isRunning.get()) {
 			if (time2log  % 100 == 0) {

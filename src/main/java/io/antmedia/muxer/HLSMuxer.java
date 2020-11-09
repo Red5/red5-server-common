@@ -185,89 +185,6 @@ public class HLSMuxer extends Muxer  {
 		return outputFormatContext;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
-
-		AVFormatContext context = getOutputFormatContext();
-
-		int streamIndex = 0;
-		for (int i=0; i < inputFormatContext.nb_streams(); i++) 
-		{
-			AVStream inStream = inputFormatContext.streams(i);
-			if (isCodecSupported(inStream.codecpar().codec_id())) 
-			{
-				registeredStreamIndexList.add(i);
-
-				AVStream outStream = avformat_new_stream(context, null);
-				int codecType = inStream.codecpar().codec_type();
-				if (codecType == AVMEDIA_TYPE_VIDEO) 
-				{
-					videoIndex = streamIndex;
-					AVBitStreamFilter h264bsfc = av_bsf_get_by_name("h264_mp4toannexb");
-					bsfContext = new AVBSFContext(null);
-
-					int ret = av_bsf_alloc(h264bsfc, bsfContext);
-					if (ret < 0) {
-						logger.info("cannot allocate bsf context for {}", file.getName());
-						return false;
-					}
-
-					ret = avcodec_parameters_copy(bsfContext.par_in(), inStream.codecpar());
-					if (ret < 0) {
-						logger.info("cannot copy input codec parameters for {}", file.getName());
-						return false;
-					}
-					bsfContext.time_base_in(inStream.time_base());
-
-					ret = av_bsf_init(bsfContext);
-					if (ret < 0) {
-						logger.info("cannot init bit stream filter context for {}", file.getName());
-						return false;
-					}
-
-					ret = avcodec_parameters_copy(outStream.codecpar(), bsfContext.par_out());
-					if (ret < 0) {
-						logger.info("cannot copy codec parameters to output for {}", file.getName());
-						return false;
-					}
-					videoWidth = outStream.codecpar().width();
-					videoHeight = outStream.codecpar().height();
-					outStream.time_base(bsfContext.time_base_out());
-				}
-				else {
-					audioIndex = streamIndex;
-					int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
-					if (ret < 0) {
-						logger.info("Cannot get codec parameters for {}", file.getName());
-						return false;
-					}
-
-					if (codecType != AVMEDIA_TYPE_AUDIO) {
-						logger.warn("codec type should be audio but it is {}" , codecType);
-
-					}
-
-				}
-				outStream.codecpar().codec_tag(0);
-
-				streamIndex++;
-
-				if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-					outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-			}
-			else {
-				logger.warn("Codec({}) is not supported for stream: {}", inStream.codecpar().codec_id(), file.getName());
-			}
-		}
-
-		prepareIO();
-
-		return true;
-	}
-
 	private boolean isCodecSupported(int codecId) {
 		return (codecId == AV_CODEC_ID_H264 || codecId == AV_CODEC_ID_AAC || codecId == AV_CODEC_ID_MP3);
 	}
@@ -710,7 +627,7 @@ public class HLSMuxer extends Muxer  {
 	}
 	
 	@Override
-	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, int timestamp) {
+	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, long timestamp) {
 		if (!isRunning.get()) {
 			if (time2log  % 100 == 0) {
 				logger.warn("Not writing AudioBuffer for {} because Is running:{}", file.getName(), isRunning.get());

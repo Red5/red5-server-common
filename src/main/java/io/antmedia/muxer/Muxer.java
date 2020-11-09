@@ -133,18 +133,6 @@ public abstract class Muxer {
 			
 		return file;
 	}
-
-	/**
-	 * All in one function, it is great for transmuxing. Just call prepare and
-	 * then write packets.
-	 * 
-	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
-	 * 
-	 * 
-	 * @param inputFormatContext
-	 * @return true if it succeeds, return false if it fails
-	 */
-	public abstract boolean prepare(AVFormatContext inputFormatContext);
 	
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index
@@ -354,9 +342,6 @@ public abstract class Muxer {
 		return false;
 	}
 
-	public void writeAudioBuffer(ByteBuffer byteBuffer, int i, int timestamp) {
-		
-		
-	}
+	public abstract void writeAudioBuffer(ByteBuffer byteBuffer, int i, long timestamp);
 
 }
