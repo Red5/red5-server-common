@@ -528,11 +528,9 @@ public abstract class RecordMuxer extends Muxer {
 		
 		if (stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			streamIndex = videoIndex;
-			System.out.println("video stream index: " + videoIndex);
 		}
 		else if (stream.codecpar().codec_type() == AVMEDIA_TYPE_AUDIO) {
 			streamIndex = audioIndex;
-			System.out.println("audio stream index: " + audioIndex);
 		}
 		else {
 			logger.error("Undefined codec type for stream: {} ", streamId);

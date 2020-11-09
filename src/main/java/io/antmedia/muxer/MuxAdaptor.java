@@ -536,7 +536,7 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 		}
 		
-		if (width == 0 || height == 0) {
+		if (enableVideo && (width == 0 || height == 0)) {
 			logger.info("Width or height is zero so returning for stream: {}", streamId);
 			return false;
 		}
