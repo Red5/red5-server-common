@@ -518,6 +518,7 @@ public class HLSMuxer extends Muxer  {
 				videoWidth = outStream.codecpar().width();
 				videoHeight = outStream.codecpar().height();
 				outStream.time_base(bsfContext.time_base_out());
+				outStream.codecpar().codec_tag(0);
 			}
 			else {
 				audioIndex = outStream.index();
@@ -531,6 +532,7 @@ public class HLSMuxer extends Muxer  {
 					logger.warn("codec type should be audio but it is {}" , codecParameters.codec_type());
 
 				}
+				outStream.codecpar().codec_tag(0);
 			}
 			
 			

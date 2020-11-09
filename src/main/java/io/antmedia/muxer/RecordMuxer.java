@@ -185,6 +185,15 @@ public abstract class RecordMuxer extends Muxer {
 			outStream.time_base(timebase);
 			codecTimeBaseMap.put(outStream.index(), timebase);
 			registeredStreamIndexList.add(outStream.index());
+			outStream.codecpar().codec_tag(0);
+			
+			if (codecParameters.codec_type() == AVMEDIA_TYPE_AUDIO) 
+			{
+				audioIndex = outStream.index();
+			}
+			else {
+				videoIndex = outStream.index();
+			}
 			result = true;
 		}
 		

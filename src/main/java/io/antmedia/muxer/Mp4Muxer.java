@@ -94,8 +94,6 @@ public class Mp4Muxer extends RecordMuxer {
 			AV_CODEC_ID_MPEG2VIDEO   , /* MPEG-2 High */
 			AV_CODEC_ID_MPEG2VIDEO   , /* MPEG-2 422 */
 			AV_CODEC_ID_AAC          , /* MPEG-2 AAC Main */
-			AV_CODEC_ID_AAC          , /* MPEG-2 AAC Low */
-			AV_CODEC_ID_AAC          , /* MPEG-2 AAC SSR */
 			AV_CODEC_ID_MP3          , /* 13818-3 */
 			AV_CODEC_ID_MP2          , /* 11172-3 */
 			AV_CODEC_ID_MPEG1VIDEO   , /* 11172-2 */
