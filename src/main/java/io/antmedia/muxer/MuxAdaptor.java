@@ -190,8 +190,8 @@ public class MuxAdaptor implements IRecordingListener {
 	private long startTimeMs;
 	protected long totalIngestTime;
 	private int fps = 0;
-	private int width;
-	private int height;
+	protected int width;
+	protected int height;
 	private AVFormatContext streamSourceInputFormatContext;
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
@@ -399,7 +399,79 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 	}
 	
+
+	protected AVCodecParameters getAudioCodecParameters() {
+		
+		AVCodecParameters audioCodecParameters = null;
+		if (audioDataConf != null) 
+		{
+			AACConfigParser aacParser = new AACConfigParser(audioDataConf, 0);
+			
+			audioCodecParameters = new AVCodecParameters();
+			audioCodecParameters.sample_rate(aacParser.getSampleRate());
+			audioCodecParameters.channels(aacParser.getChannelCount());
+			audioCodecParameters.channel_layout(av_get_default_channel_layout(aacParser.getChannelCount()));
+			audioCodecParameters.codec_id(AV_CODEC_ID_AAC);
+			audioCodecParameters.codec_type(AVMEDIA_TYPE_AUDIO);
+			
+			if (aacParser.getObjectType() == AudioObjectTypes.AAC_LC) {
+			
+				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_LOW);
+			}
+			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_LTP) {
+			
+				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_LTP);
+			}
+			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_MAIN) {
+				
+				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_MAIN);
+			}
+			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_SSR) {
+				
+				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_SSR);
+			}
+			
+			audioCodecParameters.frame_size(aacParser.getFrameSize());
+			audioCodecParameters.format(AV_SAMPLE_FMT_FLTP);
+			BytePointer extraDataPointer = new BytePointer(audioDataConf);
+			audioCodecParameters.extradata(extraDataPointer);
+			audioCodecParameters.extradata_size(audioDataConf.length);		
+			audioCodecParameters.codec_tag(0);
+		}
+		return audioCodecParameters;
+	}
+
+
+	protected AVCodecParameters getVideoCodecParameters() 
+	{
+		AVCodecParameters videoCodecParameters = null;
+		if (videoDataConf != null) {
+			SpsParser spsParser = new SpsParser(getAnnexbExtradata(videoDataConf), 5);
+			
+			videoCodecParameters = new AVCodecParameters();
+			logger.info("Incoming video width: {} height:{}", spsParser.getWidth(), spsParser.getHeight());
+			width = spsParser.getWidth();
+			height = spsParser.getHeight();
+			videoCodecParameters.width(spsParser.getWidth());
+			videoCodecParameters.height(spsParser.getHeight());
+			videoCodecParameters.codec_id(AV_CODEC_ID_H264);
+			videoCodecParameters.codec_type(AVMEDIA_TYPE_VIDEO);
+			videoCodecParameters.extradata_size(videoDataConf.length);
+			BytePointer extraDataPointer = new BytePointer(videoDataConf);
+			videoCodecParameters.extradata(extraDataPointer);
+			videoCodecParameters.format(AV_PIX_FMT_YUV420P);
+			videoCodecParameters.codec_tag(0);
+		}
+		return videoCodecParameters;
+	}
 	
+	
+	
+	/**
+	 * Prepares the parameters. This method is called in RTMP ingesting
+	 * @return
+	 * @throws Exception
+	 */
 	public boolean prepare() throws Exception {
 		
 		if (enableVideo) {
@@ -449,76 +521,18 @@ public class MuxAdaptor implements IRecordingListener {
 	}
 
 
-	private AVCodecParameters getAudioCodecParameters() {
-		
-		AVCodecParameters audioCodecParameters = null;
-		if (audioDataConf != null) 
-		{
-			AACConfigParser aacParser = new AACConfigParser(audioDataConf, 0);
-			
-			audioCodecParameters = new AVCodecParameters();
-			audioCodecParameters.sample_rate(aacParser.getSampleRate());
-			audioCodecParameters.channels(aacParser.getChannelCount());
-			audioCodecParameters.channel_layout(av_get_default_channel_layout(aacParser.getChannelCount()));
-			audioCodecParameters.codec_id(AV_CODEC_ID_AAC);
-			audioCodecParameters.codec_type(AVMEDIA_TYPE_AUDIO);
-			
-			if (aacParser.getObjectType() == AudioObjectTypes.AAC_LC) {
-			
-				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_LOW);
-			}
-			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_LTP) {
-			
-				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_LTP);
-			}
-			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_MAIN) {
-				
-				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_MAIN);
-			}
-			else if (aacParser.getObjectType() == AudioObjectTypes.AAC_SSR) {
-				
-				audioCodecParameters.profile(AVCodecContext.FF_PROFILE_AAC_SSR);
-			}
-			
-			audioCodecParameters.frame_size(aacParser.getFrameSize());
-			audioCodecParameters.format(AV_SAMPLE_FMT_FLTP);
-			BytePointer extraDataPointer = new BytePointer(audioDataConf);
-			audioCodecParameters.extradata(extraDataPointer);
-			audioCodecParameters.extradata_size(audioDataConf.length);		
-			audioCodecParameters.codec_tag(0);
-		}
-		return audioCodecParameters;
-	}
-
-
-	private AVCodecParameters getVideoCodecParameters() 
-	{
-		AVCodecParameters videoCodecParameters = null;
-		if (videoDataConf != null) {
-			SpsParser spsParser = new SpsParser(getAnnexbExtradata(videoDataConf), 5);
-			
-			videoCodecParameters = new AVCodecParameters();
-			logger.info("Incoming video width: {} height:{}", spsParser.getWidth(), spsParser.getHeight());
-			width = spsParser.getWidth();
-			height = spsParser.getHeight();
-			videoCodecParameters.width(spsParser.getWidth());
-			videoCodecParameters.height(spsParser.getHeight());
-			videoCodecParameters.codec_id(AV_CODEC_ID_H264);
-			videoCodecParameters.codec_type(AVMEDIA_TYPE_VIDEO);
-			videoCodecParameters.extradata_size(videoDataConf.length);
-			BytePointer extraDataPointer = new BytePointer(videoDataConf);
-			videoCodecParameters.extradata(extraDataPointer);
-			videoCodecParameters.format(AV_PIX_FMT_YUV420P);
-			videoCodecParameters.codec_tag(0);
-		}
-		return videoCodecParameters;
-	}
-
-
-	public boolean prepareInternal(AVFormatContext inputFormatContext) throws Exception {
+	/**
+	 * Prepares parameters and muxers. This method is called when pulling stream source
+	 * @param inputFormatContext
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean prepareFromInputFormatContext(AVFormatContext inputFormatContext) throws Exception {
 
 		this.streamSourceInputFormatContext = inputFormatContext;
 		// Dump information about file onto standard error
+		
+		int streamIndex = 0;
 		int streamCount = inputFormatContext.nb_streams();
 		for (int i=0; i < streamCount; i++) 
 		{
@@ -529,10 +543,17 @@ public class MuxAdaptor implements IRecordingListener {
 				width = codecpar.width();
 				height = codecpar.height();
 				
+				addStream2Muxers(codecpar, stream.time_base());
+				videoStreamIndex = streamIndex;
+				streamIndex++;
 				
 			}
 			else if (codecpar.codec_type() == AVMEDIA_TYPE_AUDIO) {
 				logger.info("Audio format sample rate:{} bitrate:{} for stream: {}",codecpar.sample_rate(), codecpar.bit_rate(), streamId);
+				
+				addStream2Muxers(codecpar, stream.time_base());
+				audioStreamIndex = streamIndex;
+				streamIndex++;
 			}
 		}
 		
@@ -541,7 +562,8 @@ public class MuxAdaptor implements IRecordingListener {
 			return false;
 		}
 	
-		return prepareMuxers(inputFormatContext);
+		prepareMuxerIO();
+		return true;
 	}
 	
 	
@@ -617,28 +639,6 @@ public class MuxAdaptor implements IRecordingListener {
 		}
 		startTime = System.currentTimeMillis();
 		
-	}
-	
-	private boolean prepareMuxers(AVFormatContext inputFormatContext) throws Exception 
-	{	
-		Iterator<Muxer> iterator = muxerList.iterator();
-		while (iterator.hasNext()) 
-		{
-			Muxer muxer = iterator.next();
-			
-			for (int i = 0; i < inputFormatContext.nb_streams(); i++) 
-			{
-				if (!muxer.addStream(inputFormatContext.streams(i).codecpar(), inputFormatContext.streams(i).time_base())) {
-					iterator.remove();
-					logger.warn("muxer add streams returns false {}", muxer.getFormat());
-					break;
-				}
-			}
-		}
-
-		startTime = System.currentTimeMillis();
-
-		return true;
 	}
 
 	/**
