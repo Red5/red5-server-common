@@ -35,24 +35,24 @@ public abstract class AbstractStream implements IStream {
     private String name;
 
     /**
-     * Stream audio and video codec information
-     */
-    private IStreamCodecInfo codecInfo = new StreamCodecInfo();
-
-    /**
-     * Stores the streams metadata
-     */
-    private transient AtomicReference<Notify> metaData = new AtomicReference<>();
-
-    /**
      * Stream scope
      */
     private IScope scope;
 
     /**
+     * Stream audio and video codec information
+     */
+    protected IStreamCodecInfo codecInfo = new StreamCodecInfo();
+
+    /**
+     * Stores the streams metadata
+     */
+    protected transient AtomicReference<Notify> metaData = new AtomicReference<>();
+
+    /**
      * Contains {@link PropertyChangeListener}s registered with this stream and following its changes of state.
      */
-    private transient CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
+    protected transient CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
 
     /**
      * Timestamp the stream was created.
