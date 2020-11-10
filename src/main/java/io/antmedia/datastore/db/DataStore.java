@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Iterator;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
@@ -82,7 +83,7 @@ public abstract class DataStore {
 	 * @param orderBy can get "desc" or "asc"
 	 * @return
 	 */
-	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy);
+	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy, String search);
 	
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
 	
@@ -486,6 +487,16 @@ public abstract class DataStore {
 			return vodList.subList(offset, Math.min(offset+size, vodList.size()));
 		}
 		
+	}
+	protected ArrayList<Broadcast> searchOnServer(ArrayList<Broadcast> broadcastList, String search){
+		if(search != null && !search.isEmpty()) {
+			for (Iterator<Broadcast> i = broadcastList.iterator(); i.hasNext(); ) {
+				if (i.next().getName().toLowerCase().contains(search.toLowerCase()))
+					continue;
+				else i.remove();
+			}
+		}
+		return broadcastList;
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
