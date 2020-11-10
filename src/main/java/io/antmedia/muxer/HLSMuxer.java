@@ -101,7 +101,6 @@ public class HLSMuxer extends Muxer  {
 	
 	private Map<Integer, AVRational> codecTimeBaseMap = new HashMap<>();
 	private AVPacket videoPkt;
-	private AVPacket audioPkt;
 
 
 	public HLSMuxer(Vertx vertx, String hlsListSize, String hlsTime, String hlsPlayListType, String hlsFlags) {
@@ -163,9 +162,6 @@ public class HLSMuxer extends Muxer  {
 			
 			videoPkt = avcodec.av_packet_alloc();
 			av_init_packet(videoPkt);
-			
-			audioPkt = avcodec.av_packet_alloc();
-			av_init_packet(audioPkt);
 			
 			isInitialized = true;
 		}
