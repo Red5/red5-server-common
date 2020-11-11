@@ -86,6 +86,7 @@ public class MuxAdaptor implements IRecordingListener {
 	protected volatile boolean enableAudio = false;
 	
 	boolean firstAudioPacketSkipped = false;
+	boolean firstVideoPacketSkipped = false;
 
 	private long packetPollerId = -1;
 
@@ -449,7 +450,6 @@ public class MuxAdaptor implements IRecordingListener {
 			SpsParser spsParser = new SpsParser(getAnnexbExtradata(videoDataConf), 5);
 			
 			videoCodecParameters = new AVCodecParameters();
-			logger.info("Incoming video width: {} height:{}", spsParser.getWidth(), spsParser.getHeight());
 			width = spsParser.getWidth();
 			height = spsParser.getHeight();
 			videoCodecParameters.width(spsParser.getWidth());
@@ -503,6 +503,7 @@ public class MuxAdaptor implements IRecordingListener {
 		int streamIndex = 0;
 		AVCodecParameters codecParameters = getVideoCodecParameters();
 		if (codecParameters != null) {
+			logger.info("Incoming video width: {} height:{}", codecParameters.width(), codecParameters.height());
 			addStream2Muxers(codecParameters, TIME_BASE_FOR_MS);
 			videoStreamIndex = streamIndex;
 			streamIndex++;
@@ -693,6 +694,10 @@ public class MuxAdaptor implements IRecordingListener {
 		
 		if (packet.getDataType() == Constants.TYPE_VIDEO_DATA) 
 		{
+			if (!firstVideoPacketSkipped) {
+				firstVideoPacketSkipped = true;
+				return;
+			}
 			int bodySize = packet.getData().limit();
 			byte frameType = packet.getData().position(0).get();
 			
@@ -883,18 +888,16 @@ public class MuxAdaptor implements IRecordingListener {
 						}
 					}
 					
-					
 				}
 				
-				if (stopRequestExist) {
-					broadcastStream.removeStreamListener(MuxAdaptor.this);
-					logger.warn("closing adaptor for {} ", streamId);
-					closeResources();
-					logger.warn("closed adaptor for {}", streamId);
-					break;
-				}				
-				
 			}
+			
+			if (stopRequestExist) {
+				broadcastStream.removeStreamListener(MuxAdaptor.this);
+				logger.warn("closing adaptor for {} ", streamId);
+				closeResources();
+				logger.warn("closed adaptor for {}", streamId);
+			}	
 			
 			
 			
