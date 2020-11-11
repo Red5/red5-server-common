@@ -190,7 +190,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private AtomicInteger queueSize = new AtomicInteger(0);
 	private long startTimeMs;
 	protected long totalIngestTime;
-	private int fps = 0;
+	protected int fps = 24;
 	protected int width;
 	protected int height;
 	private AVFormatContext streamSourceInputFormatContext;
