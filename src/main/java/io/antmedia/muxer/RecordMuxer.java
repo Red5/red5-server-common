@@ -670,7 +670,7 @@ public abstract class RecordMuxer extends Muxer {
 			//for any other stream like subtitle, etc.
 			int ret = av_write_frame(context, pkt);
 			if (ret < 0 && logger.isWarnEnabled()) {
-				byte[] data = new byte[2048];
+				byte[] data = new byte[64];
 				av_strerror(ret, data, data.length);
 				logger.warn("cannot write frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
 			}
@@ -699,7 +699,7 @@ public abstract class RecordMuxer extends Muxer {
 			{
 				ret = av_write_frame(context, tmpPacket);
 				if (ret < 0 && logger.isWarnEnabled()) {
-					byte[] data = new byte[2048];
+					byte[] data = new byte[64];
 					av_strerror(ret, data, data.length);
 					logger.warn("cannot write video frame to muxer({}) av_bsf_receive_packet. Error is {} ", file.getName(), new String(data, 0, data.length));
 				}
@@ -709,7 +709,7 @@ public abstract class RecordMuxer extends Muxer {
 		else {
 			ret = av_write_frame(context, pkt);
 			if (ret < 0 && logger.isWarnEnabled()) {
-				byte[] data = new byte[2048];
+				byte[] data = new byte[64];
 				av_strerror(ret, data, data.length);
 				logger.warn("cannot write video frame to muxer({}) not audio. Error is {} ", file.getName(), new String(data, 0, data.length));
 			}
@@ -722,7 +722,7 @@ public abstract class RecordMuxer extends Muxer {
 		ret = av_write_frame(context, tmpPacket);
 		if (ret < 0 && logger.isInfoEnabled()) {
 
-			byte[] data = new byte[2048];
+			byte[] data = new byte[64];
 			av_strerror(ret, data, data.length);
 			logger.info("cannot write audio frame to muxer({}). Error is {} ", file.getName(), new String(data, 0, data.length));
 		}
