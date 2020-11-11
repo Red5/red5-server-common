@@ -886,14 +886,16 @@ public class MuxAdaptor implements IRecordingListener {
 					
 				}
 				
+				if (stopRequestExist) {
+					broadcastStream.removeStreamListener(MuxAdaptor.this);
+					logger.warn("closing adaptor for {} ", streamId);
+					closeResources();
+					logger.warn("closed adaptor for {}", streamId);
+					break;
+				}				
+				
 			}
 			
-			if (stopRequestExist) {
-				broadcastStream.removeStreamListener(MuxAdaptor.this);
-				logger.warn("closing adaptor for {} ", streamId);
-				closeResources();
-				logger.warn("closed adaptor for {}", streamId);
-			}
 			
 			
 			isPipeReaderJobRunning.compareAndSet(true, false);
