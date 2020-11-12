@@ -192,7 +192,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private int fps = 0;
 	protected int width;
 	protected int height;
-	private AVFormatContext streamSourceInputFormatContext;
+	protected AVFormatContext streamSourceInputFormatContext;
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 

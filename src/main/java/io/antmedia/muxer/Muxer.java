@@ -342,6 +342,8 @@ public abstract class Muxer {
 		return false;
 	}
 
-	public abstract void writeAudioBuffer(ByteBuffer byteBuffer, int i, long timestamp);
+	public void writeAudioBuffer(ByteBuffer byteBuffer, int i, long timestamp) {
+		//empty implementation
+	}
 
 }
