@@ -179,9 +179,10 @@ public class MuxAdaptor implements IRecordingListener {
 	protected long absoluteTotalIngestTime = 0;
 	
 	/**
-	 * It's defined here because EncoderAdaptor should access it directly to add new streams
+	 * It's defined here because EncoderAdaptor should access it directly to add new streams.
+	 * Don't prefer to access to dashMuxer directly. Access it with getter
 	 */
-	private Muxer dashMuxer = null;
+	protected Muxer dashMuxer = null;
 
 	private long checkStreamsStartTime = -1;
 	private byte[] videoDataConf;
