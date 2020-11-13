@@ -107,13 +107,9 @@ public abstract class RecordMuxer extends Muxer {
 		this.storageClient = storageClient;
 	}
 
-	protected static int[] SUPPORTED_CODECS;
+	protected int[] SUPPORTED_CODECS;
 
-	public boolean isCodecSupported(AVCodecParameters avCodecParameters) {
-		return isCodecSupported(avCodecParameters.codec_id());
-	}
-
-	protected boolean isCodecSupported(int codecId) {
+	public boolean isCodecSupported(int codecId) {
 		for (int i=0; i< SUPPORTED_CODECS.length; i++) {
 			if (codecId == SUPPORTED_CODECS[i]) {
 				return true;
@@ -226,6 +222,9 @@ public abstract class RecordMuxer extends Muxer {
 
 			outStream.codecpar().codec_tag(0);
 			codecTimeBaseMap.put(streamIndex, codecContext.time_base());
+		}
+		else {
+			logger.warn("Codec is not supported muxing to {} for stream:{}", getFileName(), streamId);
 		}
 		return true;
 	}
