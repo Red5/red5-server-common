@@ -694,6 +694,8 @@ public class MuxAdaptor implements IRecordingListener {
 		
 		if (packet.getDataType() == Constants.TYPE_VIDEO_DATA) 
 		{
+			
+			measureIngestTime(packet.getTimestamp(), ((CachedEvent)packet).getReceivedTime());
 			if (!firstVideoPacketSkipped) {
 				firstVideoPacketSkipped = true;
 				return;
@@ -811,7 +813,6 @@ public class MuxAdaptor implements IRecordingListener {
 				
 				queueSize.decrementAndGet();
 				updateQualityParameters(packet.getTimestamp(), TIME_BASE_FOR_MS);
-				measureIngestTime(packet.getTimestamp(), ((CachedEvent)packet).getReceivedTime());
 								
 				if (!firstKeyFrameReceivedChecked && packet.getDataType() == Constants.TYPE_VIDEO_DATA) {
 					
@@ -910,10 +911,13 @@ public class MuxAdaptor implements IRecordingListener {
 		
 			totalIngestedVideoPacketCount++;
 			
-			totalIngestTime += (System.currentTimeMillis() - receivedTime);
+			long currentTime = System.currentTimeMillis();
+			long packetIngestTime =  (currentTime - receivedTime);
+			totalIngestTime += packetIngestTime;
 			
-			absoluteTotalIngestTime  += System.currentTimeMillis() - broadcastStream.getAbsoluteStartTimeMs() - pktTimeStamp;
-		
+			long absolutePacketIngestTime = currentTime - broadcastStream.getAbsoluteStartTimeMs() - pktTimeStamp;
+			
+			absoluteTotalIngestTime += absolutePacketIngestTime;		
 	}
 	
 	public long getAbsoluteTimeMs() {
