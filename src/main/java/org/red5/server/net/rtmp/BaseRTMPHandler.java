@@ -45,6 +45,7 @@ import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
 import org.red5.server.net.rtmp.status.StatusCodes;
+import org.red5.server.so.SharedObjectMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,7 +109,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                         break;
                     case TYPE_FLEX_SHARED_OBJECT:
                     case TYPE_SHARED_OBJECT:
-                    	log.warn("Shared object is not supported anymore");
+                        onSharedObject(conn, channel, header, (SharedObjectMessage) message);
                         break;
                     case TYPE_INVOKE:
                     case TYPE_FLEX_MESSAGE:
@@ -341,5 +342,19 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
     protected void onStreamBytesRead(RTMPConnection conn, Channel channel, Header source, BytesRead streamBytesRead) {
         conn.receivedBytesRead(streamBytesRead.getBytesRead());
     }
+
+    /**
+     * Shared object event handler.
+     * 
+     * @param conn
+     *            Connection
+     * @param channel
+     *            Channel
+     * @param source
+     *            Header
+     * @param message
+     *            Shared object message
+     */
+    protected abstract void onSharedObject(RTMPConnection conn, Channel channel, Header source, SharedObjectMessage message);
 
 }
