@@ -436,7 +436,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				// notify event listeners
 				checkSendNotifications(event);
 				// note this timestamp is set in event/body but not in the associated header
-				/*
+				
 				try {
 					// route to live
 					if (livePipe != null) {
@@ -449,7 +449,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				} catch (IOException err) {
 					stop();
 				}
-				*/
+				
 				// notify listeners about received packet
 				if (rtmpEvent instanceof IStreamPacket) {
 					for (IStreamListener listener : getStreamListeners()) {
