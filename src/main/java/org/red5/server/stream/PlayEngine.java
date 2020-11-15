@@ -383,47 +383,6 @@ public final class PlayEngine implements IFilter, IPushableConsumer, IPipeConnec
 
 		if (sourceType == INPUT_TYPE.NOT_FOUND || sourceType == INPUT_TYPE.LIVE_WAIT) {
 			log.warn("input type not found scope {} item name: {} type: {}", thisScope.getName(), itemName, type);
-
-			/*
-			 * Check if it is in cluster mode. 
-			 * If it is, then create a connection to origin
-			 */
-			if(thisScope.getContext().hasBean("tomcat.cluster")) {
-				DataStore dataStore = ((IDataStoreFactory)thisScope.getContext().getBean(IDataStoreFactory.BEAN_NAME)).getDataStore();
-				Broadcast broadcast = dataStore.get(itemName);
-
-				String hostName = null;
-				if (broadcast != null) {
-					hostName = broadcast.getOriginAdress();
-				}
-
-				if (hostName != null) {
-					RemoteBroadcastStream cbs = (RemoteBroadcastStream) thisScope.getContext().getBean("remoteBroadcastStream");
-					IConnection conn = Red5.getConnectionLocal();
-					if (conn instanceof IStreamCapableConnection) {
-
-						cbs.setName(UUID.randomUUID().toString());
-						cbs.setConnection(null);
-						cbs.setScope(thisScope);
-
-						String url = "rtmp://"+ hostName + "/" + thisScope.getName() + "/" + itemName;
-						log.info("url of the stream in the cluster: {}" , url);
-						cbs.setRemoteStreamUrl(url);
-						cbs.setScheduler(schedulingService);
-
-						boolean result = providerService.registerBroadcastStream(thisScope, itemName, cbs);
-
-						log.warn("Cluster is not null register result: {}" , result);
-						//cbs.setS
-						cbs.start();
-
-						sourceType = providerService.lookupProviderInput(thisScope, itemName, type);					
-					}
-				}
-				else {
-					log.warn("Cluster null for {}", itemName);
-				}
-			}
 		}
 
 
