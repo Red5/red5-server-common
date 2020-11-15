@@ -1,5 +1,9 @@
 package io.antmedia.muxer;
 
+import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
+import static org.bytedeco.ffmpeg.global.avformat.avformat_new_stream;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,6 +21,7 @@ import org.bytedeco.ffmpeg.avcodec.AVPacket;
 import org.bytedeco.ffmpeg.avformat.AVFormatContext;
 import org.bytedeco.ffmpeg.avformat.AVStream;
 import org.bytedeco.ffmpeg.avutil.AVRational;
+import org.bytedeco.ffmpeg.global.avcodec;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.stream.IStreamFilenameGenerator;
 import org.red5.server.api.stream.IStreamFilenameGenerator.GenerationType;
@@ -72,6 +77,10 @@ public abstract class Muxer {
 	protected AtomicBoolean isRunning = new AtomicBoolean(false);
 	
 	public static final String TEMP_EXTENSION = ".tmp_extension";
+	
+	protected int time2log = 0;
+	
+	protected AVPacket audioPkt;
 
 	/**
 	 * Bitstream filter name that will be applied to packets
@@ -124,18 +133,7 @@ public abstract class Muxer {
 			
 		return file;
 	}
-
-	/**
-	 * All in one function, it is great for transmuxing. Just call prepare and
-	 * then write packets.
-	 * 
-	 * Use {@link #writePacket(AVPacket, AVStream)} to write packets
-	 * 
-	 * @param inputFormatContext
-	 * @return true if it succeeds, return false if it fails
-	 */
-	public abstract boolean prepare(AVFormatContext inputFormatContext);
-
+	
 	/**
 	 * Add a new stream with this codec, codecContext and stream Index
 	 * parameters. After adding streams, need to call prepareIO()
@@ -292,6 +290,9 @@ public abstract class Muxer {
 					} while (file.exists() || tempFile.exists());
 				}
 			}
+			
+			audioPkt = avcodec.av_packet_alloc();
+			av_init_packet(audioPkt);
 
 		}
 	}
@@ -334,6 +335,15 @@ public abstract class Muxer {
 	 */
 	public boolean addVideoStream(int width, int height, AVRational videoTimebase, int codecId, int streamIndex, boolean isAVC, AVCodecParameters codecpar) {
 		return false;
+	}
+
+	
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+		return false;
+	}
+
+	public void writeAudioBuffer(ByteBuffer byteBuffer, int i, long timestamp) {
+		//empty implementation
 	}
 
 }
