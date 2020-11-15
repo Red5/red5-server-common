@@ -562,6 +562,8 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.info("Width or height is zero so returning for stream: {}", streamId);
 			return false;
 		}
+		
+		isRecording = true;
 	
 		prepareMuxerIO();
 		return true;
@@ -1023,7 +1025,6 @@ public class MuxAdaptor implements IRecordingListener {
 
 	@Override
 	public void start() {
-		isRecording = false;
 		logger.info("Number of items in the queue while adaptor is being started to prepare is {}", getInputQueueSize());
 		startTimeMs = System.currentTimeMillis();
 
