@@ -36,6 +36,8 @@ import javax.management.StandardMBean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.mina.core.buffer.IoBuffer;
+import org.red5.codec.AACAudio;
+import org.red5.codec.AVCVideo;
 import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IStreamCodecInfo;
 import org.red5.codec.IVideoStreamCodec;
@@ -334,8 +336,18 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					} else if (codecInfo != null) {
 						audioStreamCodec = codecInfo.getAudioCodec();
 					}
-					if (audioStreamCodec != null) {
+					if (audioStreamCodec instanceof AACAudio) {
 						audioStreamCodec.addData(buf);
+					}
+					else {
+						//Dont's support codecs other than AACA
+						log.error("Audio codec is not AAC so stopping connection {}", getPublishedName());
+						stop();
+						IStreamCapableConnection connection = getConnection();
+						if (connection != null) {
+							connection.close();
+						}
+						return;
 					}
 					if (info != null) {
 						info.setHasAudio(true);
@@ -353,8 +365,18 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 					} else if (codecInfo != null) {
 						videoStreamCodec = codecInfo.getVideoCodec();
 					}
-					if (videoStreamCodec != null) {
+					if (videoStreamCodec instanceof AVCVideo) {
 						videoStreamCodec.addData(buf);
+					}
+					else {
+						//don't support codecs other than AVC(264)
+						log.error("Video codec is not AVC so stopping connection {}", getPublishedName());
+						stop();
+						IStreamCapableConnection connection = getConnection();
+						if (connection != null) {
+							connection.close();
+						}
+						return;
 					}
 					if (info != null) {
 						info.setHasVideo(true);
@@ -414,6 +436,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				// notify event listeners
 				checkSendNotifications(event);
 				// note this timestamp is set in event/body but not in the associated header
+				
 				try {
 					// route to live
 					if (livePipe != null) {
@@ -426,6 +449,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				} catch (IOException err) {
 					stop();
 				}
+				
 				// notify listeners about received packet
 				if (rtmpEvent instanceof IStreamPacket) {
 					for (IStreamListener listener : getStreamListeners()) {
