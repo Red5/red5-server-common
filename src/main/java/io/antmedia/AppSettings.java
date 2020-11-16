@@ -229,6 +229,10 @@ public class AppSettings {
 	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
 
 	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
+	
+	private static final String SETTINGS_JWT_SECRET_KEY = "settings.jwtSecretKey";
+	
+	private static final String SETTINGS_JWT_CONTROL_ENABLED = "settings.jwtControlEnabled";
 
 
 	@JsonIgnore
@@ -973,6 +977,18 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
 	private int webRTCViewerLimit = -1;
+	
+	/**
+	 * Application JWT secret key
+	 */
+	@Value( "${"+SETTINGS_JWT_SECRET_KEY+":null}" )
+	private String jwtSecretKey;
+	
+	/**
+	 * Application JWT Control Enabled
+	 */
+	@Value( "${"+SETTINGS_JWT_CONTROL_ENABLED+":false}" )
+	private boolean jwtControlEnabled;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1965,6 +1981,22 @@ public class AppSettings {
 
 	public void setDashExtraWindowSize(String dashExtraWindowSize) {
 		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
+	
+	public String getJwtSecretKey() {
+		return jwtSecretKey;
+	}
+
+	public void setJwtSecretKey(String jwtSecretKey) {
+		this.jwtSecretKey = jwtSecretKey;
+	}
+	
+	public boolean isJwtControlEnabled() {
+		return jwtControlEnabled;
+	}
+
+	public void setJwtControlEnabled(boolean jwtControlEnabled) {
+		this.jwtControlEnabled = jwtControlEnabled;
 	}
 
 }
