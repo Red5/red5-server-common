@@ -491,7 +491,8 @@ public abstract class DataStore {
 	protected ArrayList<Broadcast> searchOnServer(ArrayList<Broadcast> broadcastList, String search){
 		if(search != null && !search.isEmpty()) {
 			for (Iterator<Broadcast> i = broadcastList.iterator(); i.hasNext(); ) {
-				if (i.next().getName().toLowerCase().contains(search.toLowerCase()))
+				Broadcast item = i.next();
+				if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
 					continue;
 				else i.remove();
 			}
