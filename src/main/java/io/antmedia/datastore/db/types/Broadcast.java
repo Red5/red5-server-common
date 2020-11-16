@@ -12,6 +12,7 @@ import dev.morphia.annotations.Entity;
 import dev.morphia.annotations.Field;
 import dev.morphia.annotations.Id;
 import dev.morphia.annotations.Index;
+import dev.morphia.utils.IndexType;
 import dev.morphia.annotations.Indexes;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -19,7 +20,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value="Broadcast", description="The basic broadcast class")
 @Entity(value = "broadcast", noClassnameStored = true)
-@Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")) })
+@Indexes({ @Index(fields = @Field("name")), @Index(fields = @Field("streamId")), @Index(fields = @Field(value = "$**", type = IndexType.TEXT)) })
 public class Broadcast {
 
 
