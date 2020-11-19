@@ -2,6 +2,8 @@ package io.antmedia.datastore.db.types;
 import org.bson.types.ObjectId;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
 import dev.morphia.annotations.Entity;
 import dev.morphia.annotations.Index;
@@ -33,6 +35,7 @@ public class Subscriber {
 	@ApiModelProperty(value = "the subscriber id of the subscriber")
 	private String subscriberId;
 	
+	@JsonIgnore
 	/**
 	 * related streamId with subscriber
 	 */
@@ -80,6 +83,7 @@ public class Subscriber {
 		this.streamId = streamId;
 	}	
 
+	@JsonIgnore
 	public String getB32Secret() {
 		return b32Secret;
 	}

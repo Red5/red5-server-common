@@ -69,6 +69,7 @@ public class AppSettings {
 	public static final String SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED = "settings.publishTokenControlEnabled";
 	public static final String SETTINGS_PLAY_TOKEN_CONTROL_ENABLED = "settings.playTokenControlEnabled";
 	public static final String SETTINGS_TIME_TOKEN_SUBSCRIBER_ONLY = "settings.timeTokenSubscriberOnly";
+	public static final String SETTINGS_TIME_TOKEN_PERIOD = "settings.timeTokenPeriod";
 	public static final String SETTINGS_HLS_PLAY_LIST_TYPE = "settings.hlsPlayListType";
 	public static final String FACEBOOK_CLIENT_ID = "facebook.clientId";
 	public static final String FACEBOOK_CLIENT_SECRET = "facebook.clientSecret";
@@ -409,6 +410,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_TIME_TOKEN_SUBSCRIBER_ONLY+":false}" )
 	private boolean timeTokenSubscriberOnly;	
+	
+	/**
+	 * period for the generated time token 
+	 */
+	@Value( "${"+SETTINGS_TIME_TOKEN_PERIOD+":60}" )
+	private int timeTokenPeriod;	
 	
 	/**
 	 * event or vod
@@ -1997,6 +2004,14 @@ public class AppSettings {
 
 	public void setDashExtraWindowSize(String dashExtraWindowSize) {
 		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
+
+	public int getTimeTokenPeriod() {
+		return timeTokenPeriod;
+	}
+
+	public void setTimeTokenPeriod(int timeTokenPeriod) {
+		this.timeTokenPeriod = timeTokenPeriod;
 	}
 
 }

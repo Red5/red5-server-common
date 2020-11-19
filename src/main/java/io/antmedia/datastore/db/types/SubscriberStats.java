@@ -28,8 +28,20 @@ public class SubscriberStats {
 	 */
 	@ApiModelProperty(value = "list of connection events")
 	@Embedded
-	private List<ConnectionEvent> connectionEvents = new ArrayList<>(); 
-	
+	private List<ConnectionEvent> connectionEvents = new ArrayList<>();
+
+	/**
+	 * average video bitrate for a subscriber
+	 */
+	@ApiModelProperty(value = "average video bitrate for a subscriber")
+	private long avgVideoBitrate;
+
+	/**
+	 * average audio bitrate for a subscriber
+	 */
+	@ApiModelProperty(value = "average audio bitrate for a subscriber")
+	private long avgAudioBitrate; 
+
 	public String getSubscriberId() {
 		return subscriberId;
 	}
@@ -57,6 +69,21 @@ public class SubscriberStats {
 	public void addConnectionEvent(ConnectionEvent connectionEvent) {
 		connectionEvents.add(connectionEvent);
 	}
+
+	public void setAvgVideoBitrate(long avgVideoBitrate) {
+		this.avgVideoBitrate = avgVideoBitrate;
+	}
 	
+	public long getAvgVideoBitrate() {
+		return avgVideoBitrate;
+	}
+
+	public void setAvgAudioBitrate(long avgAudioBitrate) {
+		this.avgAudioBitrate = avgAudioBitrate;
+	}
+	
+	public long getAvgAudioBitrate() {
+		return avgAudioBitrate;
+	}
 	
 }

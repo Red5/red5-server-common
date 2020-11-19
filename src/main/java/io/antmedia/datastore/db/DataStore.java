@@ -253,6 +253,7 @@ public abstract class DataStore {
 			handleConnectionEvent(subscriber, event);
 			
 			addSubscriber(streamId, subscriber);
+			result = true;
 		}
 
 		return result;
@@ -267,6 +268,28 @@ public abstract class DataStore {
 		}
 		subscriber.getStats().addConnectionEvent(event);
 	}	
+	
+	/**
+	 * sets the avarage bitrate of the subscriber in the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @param event - bitrate measurement event
+	 * @return- true if successful else false
+	 */	
+	public boolean updateSubscriberBitrateEvent(String streamId, String subscriberId,
+			long avgVideoBitrate, long avgAudioBitrate) {
+		boolean result = false;
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+		if (subscriber != null) {	
+			subscriber.getStats().setAvgVideoBitrate(avgVideoBitrate);
+			subscriber.getStats().setAvgAudioBitrate(avgAudioBitrate);
+			addSubscriber(streamId, subscriber);
+			result = true;
+		}
+
+		return result;
+	}
+  
 	
 	/**
 	 * sets the connection status of all the subscribers false in the datastore
@@ -733,7 +756,7 @@ public abstract class DataStore {
 	 * @returns total number of WebRTC viewers
 	 */
 	public abstract int getTotalWebRTCViewersCount();
-  
+
 	
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
