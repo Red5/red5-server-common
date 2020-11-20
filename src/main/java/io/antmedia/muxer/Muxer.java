@@ -256,9 +256,9 @@ public abstract class Muxer {
 
 				LocalDateTime ldt =  LocalDateTime.now();
 
-				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+				resourceName = name + "-" + ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss.SSS"));
 				if (logger.isInfoEnabled()) {
-					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss")));
+					logger.info("Date time resource name: {} local date time: {}", resourceName, ldt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss.SSS")));
 				}
 			}
 
