@@ -300,6 +300,7 @@ public class RTMPHandler extends BaseRTMPHandler {
 
                         		if(!systemResult)
                         		{
+                        			log.info("There is not enough resource to rtmp ingest stream: {}", streamId);
                         			Status status = getStatus(NS_FAILED).asStatus();
                         			status.setDescription(HIGH_RESOURCE_USAGE);
                         			channel.sendStatus(status);
