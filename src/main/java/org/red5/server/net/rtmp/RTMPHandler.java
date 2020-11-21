@@ -282,6 +282,11 @@ public class RTMPHandler extends BaseRTMPHandler {
                         	if(streamAction == StreamAction.PUBLISH && conn.getScope().getContext().hasBean(IStatsCollector.BEAN_NAME)) {
                         		String streamId = (String) call.getArguments()[0];
 
+                        		if (streamId.startsWith("/")) {
+                        			streamId = streamId.substring(1);
+                        			call.getArguments()[0] = streamId;
+                        		}
+                 
                         		if(streamId.contains("?") && streamId.contains("=")) {
                         			//this means query parameters (token, hash etc.) are added to URL, so split it
                         			streamId = streamId.split("\\?")[0];
