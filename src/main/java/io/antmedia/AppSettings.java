@@ -1384,6 +1384,7 @@ public class AppSettings {
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
 		aacEncodingEnabled=true;
+		ipFilterEnabled=true;
 	}
 
 	public int getWebRTCPortRangeMax() {
