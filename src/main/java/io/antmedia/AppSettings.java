@@ -230,10 +230,11 @@ public class AppSettings {
 
 	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
 	
-	private static final String SETTINGS_JWT_SECRET_KEY = "settings.jwtSecretKey";
+	public static final String SETTINGS_JWT_SECRET_KEY = "settings.jwtSecretKey";
 	
-	private static final String SETTINGS_JWT_CONTROL_ENABLED = "settings.jwtControlEnabled";
-
+	public static final String SETTINGS_JWT_CONTROL_ENABLED = "settings.jwtControlEnabled";
+	
+	public static final String SETTINGS_IP_FILTER_ENABLED = "settings.ipFilterEnabled";
 
 	@JsonIgnore
 	@NotSaved
@@ -989,6 +990,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_JWT_CONTROL_ENABLED+":false}" )
 	private boolean jwtControlEnabled;
+	
+	/**
+	 * Application IP Filter Enabled
+	 */
+	@Value( "${"+SETTINGS_IP_FILTER_ENABLED+":true}" )
+	private boolean ipFilterEnabled;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1997,6 +2004,14 @@ public class AppSettings {
 
 	public void setJwtControlEnabled(boolean jwtControlEnabled) {
 		this.jwtControlEnabled = jwtControlEnabled;
+	}
+	
+	public boolean isIpFilterEnabled() {
+		return ipFilterEnabled;
+	}
+
+	public void setIpFilterEnabled(boolean ipFilterEnabled) {
+		this.ipFilterEnabled = ipFilterEnabled;
 	}
 
 }
