@@ -49,6 +49,7 @@ public class Subscriber {
 	@Embedded
 	private SubscriberStats stats = new SubscriberStats();
 	
+	@JsonProperty(access = Access.WRITE_ONLY)
 	/**
 	 * secret code of the Subscriber
 	 */
@@ -83,7 +84,6 @@ public class Subscriber {
 		this.streamId = streamId;
 	}	
 
-	@JsonIgnore
 	public String getB32Secret() {
 		return b32Secret;
 	}
