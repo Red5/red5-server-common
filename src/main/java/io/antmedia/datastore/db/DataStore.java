@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Iterator;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
@@ -82,7 +83,7 @@ public abstract class DataStore {
 	 * @param orderBy can get "desc" or "asc"
 	 * @return
 	 */
-	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy);
+	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy, String search);
 	
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
 	
@@ -100,7 +101,7 @@ public abstract class DataStore {
 	 * @param filterStreamId is used for filtering the vod by stream id. If it's null or empty, it's not used
 	 * @return
 	 */
-	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId);
+	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId, String search);
 
 	public abstract boolean removeAllEndpoints(String id);
 
@@ -445,6 +446,18 @@ public abstract class DataStore {
 	public long getLocalLiveBroadcastCount(String hostAddress) {
 		return getActiveBroadcastCount();
 	}
+
+	protected ArrayList<VoD> searchOnServerVod(ArrayList<VoD> broadcastList, String search){
+		if(search != null && !search.isEmpty()) {
+			for (Iterator<VoD> i = broadcastList.iterator(); i.hasNext(); ) {
+				VoD item = i.next();
+				if (item.getVodName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()) || item.getStreamName().toLowerCase().contains(search.toLowerCase()) || item.getVodId().toLowerCase().contains(search.toLowerCase()))
+					continue;
+				else i.remove();
+			}
+		}
+		return broadcastList;
+	}
 	
 	protected List<VoD> sortAndCropVodList(List<VoD> vodList, int offset, int size, String sortBy, String orderBy) {
 		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
@@ -486,6 +499,17 @@ public abstract class DataStore {
 			return vodList.subList(offset, Math.min(offset+size, vodList.size()));
 		}
 		
+	}
+	protected ArrayList<Broadcast> searchOnServer(ArrayList<Broadcast> broadcastList, String search){
+		if(search != null && !search.isEmpty()) {
+			for (Iterator<Broadcast> i = broadcastList.iterator(); i.hasNext(); ) {
+				Broadcast item = i.next();
+				if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
+					continue;
+				else i.remove();
+			}
+		}
+		return broadcastList;
 	}
 	
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
