@@ -1356,6 +1356,7 @@ public class MuxAdaptor implements IRecordingListener {
 			return true;
 		}
 		
+
 		Muxer muxer = null;
 		if(recordType == RecordType.MP4) {
 			Mp4Muxer mp4Muxer = createMp4Muxer();
@@ -1363,9 +1364,7 @@ public class MuxAdaptor implements IRecordingListener {
 			muxer = mp4Muxer;
 		} 
 		else if(recordType == RecordType.WEBM) {
-			WebMMuxer webMMuxer = createWebMMuxer();
-			webMMuxer.setDynamic(true);
-			muxer = webMMuxer;
+			//WebM record is not supported for incoming RTMP streams
 		}
 		else {
 			logger.error("Unrecognized record type: {}", recordType);
