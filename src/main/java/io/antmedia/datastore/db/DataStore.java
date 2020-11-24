@@ -451,9 +451,18 @@ public abstract class DataStore {
 		if(search != null && !search.isEmpty()) {
 			for (Iterator<VoD> i = broadcastList.iterator(); i.hasNext(); ) {
 				VoD item = i.next();
-				if (item.getVodName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()) || item.getStreamName().toLowerCase().contains(search.toLowerCase()) || item.getVodId().toLowerCase().contains(search.toLowerCase()))
-					continue;
-				else i.remove();
+				try {
+					if (item.getVodName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()) || item.getStreamName().toLowerCase().contains(search.toLowerCase()) || item.getVodId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}catch(Exception e){
+					if (item.getVodId() != null){
+						if (item.getVodId().toLowerCase().contains(search.toLowerCase()))
+							continue;
+						else i.remove();
+					}
+					else i.remove();
+				}
 			}
 		}
 		return broadcastList;
@@ -504,9 +513,18 @@ public abstract class DataStore {
 		if(search != null && !search.isEmpty()) {
 			for (Iterator<Broadcast> i = broadcastList.iterator(); i.hasNext(); ) {
 				Broadcast item = i.next();
-				if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
-					continue;
-				else i.remove();
+				try {
+					if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}catch(Exception e){
+					if (item.getStreamId() == null){
+						i.remove();
+					}
+					else if (item.getStreamId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
 			}
 		}
 		return broadcastList;
