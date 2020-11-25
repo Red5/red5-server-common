@@ -101,7 +101,7 @@ public abstract class DataStore {
 	 * @param filterStreamId is used for filtering the vod by stream id. If it's null or empty, it's not used
 	 * @return
 	 */
-	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId);
+	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId, String search);
 
 	public abstract boolean removeAllEndpoints(String id);
 
@@ -446,6 +446,32 @@ public abstract class DataStore {
 	public long getLocalLiveBroadcastCount(String hostAddress) {
 		return getActiveBroadcastCount();
 	}
+
+	protected ArrayList<VoD> searchOnServerVod(ArrayList<VoD> broadcastList, String search){
+		if(search != null && !search.isEmpty()) {
+			for (Iterator<VoD> i = broadcastList.iterator(); i.hasNext(); ) {
+				VoD item = i.next();
+				if(item.getVodName() != null && item.getStreamName() != null && item.getStreamId() != null && item.getVodId() != null) {
+					if (item.getVodName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()) || item.getStreamName().toLowerCase().contains(search.toLowerCase()) || item.getVodId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
+				else if (item.getVodName()!= null && item.getVodId() != null){
+					if (item.getVodName().toLowerCase().contains(search.toLowerCase()) || item.getVodId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
+				else{
+					if (item.getVodId() != null){
+						if (item.getVodId().toLowerCase().contains(search.toLowerCase()))
+							continue;
+						else i.remove();
+					}
+				}
+			}
+		}
+		return broadcastList;
+	}
 	
 	protected List<VoD> sortAndCropVodList(List<VoD> vodList, int offset, int size, String sortBy, String orderBy) {
 		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
@@ -492,9 +518,16 @@ public abstract class DataStore {
 		if(search != null && !search.isEmpty()) {
 			for (Iterator<Broadcast> i = broadcastList.iterator(); i.hasNext(); ) {
 				Broadcast item = i.next();
-				if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
-					continue;
-				else i.remove();
+				if(item.getName() != null && item.getStreamId() != null) {
+					if (item.getName().toLowerCase().contains(search.toLowerCase()) || item.getStreamId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
+				else{
+					if (item.getStreamId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
 			}
 		}
 		return broadcastList;
