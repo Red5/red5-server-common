@@ -59,5 +59,5 @@ public interface IAntMediaStreamHandler {
      *
      * @param inputFormatContext, pkt, streamId
      */
-	public boolean isValidStreamParameters(AVFormatContext inputFormatContext, AVPacket pkt, String streamId);
+	public boolean isValidStreamParameters(int width, int height, int fps, int bitrate, String streamId);
 }

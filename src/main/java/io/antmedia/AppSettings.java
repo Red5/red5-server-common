@@ -1695,28 +1695,12 @@ public class AppSettings {
 		this.rtspPullTransportType = rtspPullTransportType;
 	}
 	
-	public int getMaxFpsAccept() {
-		return maxFpsAccept;
-	}
-
-	public void setMaxFpsAccept(int maxFpsAccept) {
-		this.maxFpsAccept = maxFpsAccept;
-	}
-
 	public int getMaxResolutionAccept() {
 		return maxResolutionAccept;
 	}
 
 	public void setMaxResolutionAccept(int maxResolutionAccept) {
 		this.maxResolutionAccept = maxResolutionAccept;
-	}
-
-	public int getMaxBitrateAccept() {
-		return maxBitrateAccept;
-	}
-
-	public void setMaxBitrateAccept(int maxBitrateAccept) {
-		this.maxBitrateAccept = maxBitrateAccept;
 	}
 
 	public boolean isH264Enabled() {
