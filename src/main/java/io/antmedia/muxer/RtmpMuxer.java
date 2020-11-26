@@ -137,39 +137,6 @@ public class RtmpMuxer extends Muxer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean prepare(AVFormatContext inputFormatContext) {
-
-		logger.info("preparing rtmp muxer for {}", url);
-		AVFormatContext context = getOutputFormatContext();
-
-		for (int i=0; i < inputFormatContext.nb_streams(); i++) {
-			AVStream inStream = inputFormatContext.streams(i);
-			registeredStreamIndexList.add(i);
-
-			AVStream outStream = avformat_new_stream(context, inStream.codec().codec());
-
-			int ret = avcodec_parameters_copy(outStream.codecpar(), inStream.codecpar());
-			if (ret < 0) {
-				logger.info("Cannot get codec parameters {}", url);
-				return false;
-			}
-
-			outStream.codec().codec_tag(0);
-			outStream.codecpar().codec_tag(0);
-
-			if ((context.oformat().flags() & AVFMT_GLOBALHEADER) != 0)
-				outStream.codec().flags( outStream.codec().flags() | AV_CODEC_FLAG_GLOBAL_HEADER);
-		}
-
-		prepareIO();
-
-		return true;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public  boolean prepareIO() 
 	{
 		/*
@@ -270,6 +237,11 @@ public class RtmpMuxer extends Muxer {
 		if (tmpPacket != null) {
 			av_packet_free(tmpPacket);
 			tmpPacket = null;
+		}
+		
+		if (audioPkt != null) {
+			av_packet_free(audioPkt);
+			audioPkt = null;
 		}
 		
 		if (bsfExtractdataContext != null) {
@@ -526,6 +498,51 @@ public class RtmpMuxer extends Muxer {
 			av_packet_unref(videoPkt);
 		}
 		
+	}
+	
+	
+	@Override
+	public boolean addStream(AVCodecParameters codecParameters, AVRational timebase) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null) 
+		{
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			
+			avcodec_parameters_copy(outStream.codecpar(), codecParameters);
+			outStream.time_base(timebase);
+			codecTimeBaseMap.put(outStream.index(), timebase);
+			registeredStreamIndexList.add(outStream.index());
+			result = true;
+		}
+		
+		return result;
+	}
+	
+	@Override
+	public void writeAudioBuffer(ByteBuffer audioFrame, int streamIndex, long timestamp) {
+		
+		if (!isRunning.get()) {
+			if (time2log  % 100 == 0) {
+				logger.warn("Not writing AudioBuffer for {} because Is running:{}", url, isRunning.get());
+				time2log = 0;
+			}
+			time2log++;
+			return;
+		}
+		
+		audioPkt.stream_index(streamIndex);
+		audioPkt.pts(timestamp);
+		audioPkt.dts(timestamp);
+		audioFrame.rewind();
+		audioPkt.flags(audioPkt.flags() | AV_PKT_FLAG_KEY);
+		audioPkt.data(new BytePointer(audioFrame));
+		audioPkt.size(audioFrame.limit());
+		audioPkt.position(0);
+		
+		writePacket(audioPkt, (AVCodecContext)null);
+		
+		av_packet_unref(audioPkt);
 	}
 
 
