@@ -8,7 +8,9 @@ import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_AUDIO;
 import static org.bytedeco.ffmpeg.global.avutil.AVMEDIA_TYPE_VIDEO;
 import static org.bytedeco.ffmpeg.global.avutil.AV_PIX_FMT_YUV420P;
 import static org.bytedeco.ffmpeg.global.avutil.AV_SAMPLE_FMT_FLTP;
+import static org.bytedeco.ffmpeg.global.avutil.av_free;
 import static org.bytedeco.ffmpeg.global.avutil.av_get_default_channel_layout;
+import static org.bytedeco.ffmpeg.global.avutil.av_malloc;
 import static org.bytedeco.ffmpeg.global.avutil.av_rescale_q;
 
 import java.nio.ByteBuffer;
@@ -194,6 +196,10 @@ public class MuxAdaptor implements IRecordingListener {
 	protected int width;
 	protected int height;
 	protected AVFormatContext streamSourceInputFormatContext;
+	private AVCodecParameters videoCodecParameters;
+	private AVCodecParameters audioCodecParameters;
+	private BytePointer audioExtraDataPointer;
+	private BytePointer videoExtraDataPointer;
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
@@ -403,8 +409,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected AVCodecParameters getAudioCodecParameters() {
 		
-		AVCodecParameters audioCodecParameters = null;
-		if (audioDataConf != null) 
+		if (audioDataConf != null && audioCodecParameters == null) 
 		{
 			AACConfigParser aacParser = new AACConfigParser(audioDataConf, 0);
 			
@@ -434,8 +439,9 @@ public class MuxAdaptor implements IRecordingListener {
 			
 			audioCodecParameters.frame_size(aacParser.getFrameSize());
 			audioCodecParameters.format(AV_SAMPLE_FMT_FLTP);
-			BytePointer extraDataPointer = new BytePointer(audioDataConf);
-			audioCodecParameters.extradata(extraDataPointer);
+			audioExtraDataPointer = new BytePointer(av_malloc(audioDataConf.length)).capacity(audioDataConf.length);
+			audioExtraDataPointer.position(0).put(audioDataConf);
+			audioCodecParameters.extradata(audioExtraDataPointer);
 			audioCodecParameters.extradata_size(audioDataConf.length);		
 			audioCodecParameters.codec_tag(0);
 		}
@@ -445,8 +451,7 @@ public class MuxAdaptor implements IRecordingListener {
 
 	protected AVCodecParameters getVideoCodecParameters() 
 	{
-		AVCodecParameters videoCodecParameters = null;
-		if (videoDataConf != null) {
+		if (videoDataConf != null && videoCodecParameters == null) {
 			SpsParser spsParser = new SpsParser(getAnnexbExtradata(videoDataConf), 5);
 			
 			videoCodecParameters = new AVCodecParameters();
@@ -456,9 +461,12 @@ public class MuxAdaptor implements IRecordingListener {
 			videoCodecParameters.height(spsParser.getHeight());
 			videoCodecParameters.codec_id(AV_CODEC_ID_H264);
 			videoCodecParameters.codec_type(AVMEDIA_TYPE_VIDEO);
+			
+			videoExtraDataPointer = new BytePointer(av_malloc(videoDataConf.length)).capacity(videoDataConf.length); 
+			videoExtraDataPointer.position(0).put(videoDataConf);
 			videoCodecParameters.extradata_size(videoDataConf.length);
-			BytePointer extraDataPointer = new BytePointer(videoDataConf);
-			videoCodecParameters.extradata(extraDataPointer);
+			videoCodecParameters.extradata(videoExtraDataPointer);
+			
 			videoCodecParameters.format(AV_PIX_FMT_YUV420P);
 			videoCodecParameters.codec_tag(0);
 		}
@@ -1017,6 +1025,19 @@ public class MuxAdaptor implements IRecordingListener {
 		writeTrailer();
 
 		isRecording = false;
+		
+		
+		if (videoExtraDataPointer != null) {
+			av_free(videoExtraDataPointer.position(0));
+			videoExtraDataPointer.close();
+			videoExtraDataPointer = null;
+		}
+		
+		if (audioExtraDataPointer != null) {
+			av_free(audioExtraDataPointer.position(0));
+			audioExtraDataPointer.close();
+			audioExtraDataPointer = null;
+		}
 
 		changeStreamQualityParameters(this.streamId, null, 0, getInputQueueSize());
 		getStreamHandler().muxAdaptorRemoved(this);
