@@ -230,6 +230,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
 
+	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
+
 
 	@JsonIgnore
 	@NotSaved
@@ -973,6 +975,13 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
 	private int webRTCViewerLimit = -1;
+	
+	
+	/**
+	 * Application level total incoming stream limit
+	 */
+	@Value( "${"+SETTINGS_INGESTING_STREAM_LIMIT+":-1}" )
+	private int ingestingStreamLimit;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1361,6 +1370,7 @@ public class AppSettings {
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
 		aacEncodingEnabled=true;
+		ingestingStreamLimit = -1;
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -1965,6 +1975,14 @@ public class AppSettings {
 
 	public void setDashExtraWindowSize(String dashExtraWindowSize) {
 		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
+
+	public int getIngestingStreamLimit() {
+		return ingestingStreamLimit;
+	}
+
+	public void setIngestingStreamLimit(int ingestingStreamLimit) {
+		this.ingestingStreamLimit = ingestingStreamLimit;
 	}
 
 }
