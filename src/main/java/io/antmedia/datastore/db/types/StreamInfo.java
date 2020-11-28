@@ -37,6 +37,7 @@ public class StreamInfo implements IStreamInfo {
 	private boolean dataChannelEnabled;
 	private VideoCodec videoCodec;
 	private String nodeGroup;
+	private boolean isGlobalHost;
 
 	
 	public StreamInfo(boolean videoEnabled, int height, int width, int videobitrate, boolean audioEnabled, int audiobitrate, int videoRTimebase, int audioRTimebase, VideoCodec codec) {
@@ -185,6 +186,14 @@ public class StreamInfo implements IStreamInfo {
 
 	public void setNodeGroup(String nodeGroup) {
 		this.nodeGroup = nodeGroup;
+	}
+
+	public boolean isGlobalHost() {
+		return isGlobalHost;
+	}
+
+	public void setGlobalHost(boolean isGlobalHost) {
+		this.isGlobalHost = isGlobalHost;
 	}
 
 }
