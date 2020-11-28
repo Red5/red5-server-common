@@ -24,12 +24,12 @@ public abstract class DataStore {
 	//Do not forget to write function descriptions especially if you are adding new functions
 
 	public static final int MAX_ITEM_IN_ONE_LIST = 50;
-	
+
 	private boolean writeStatsToDatastore = true;
-	
+
 	protected volatile boolean available = false;
-	
-	
+
+
 	public abstract String save(Broadcast broadcast);
 
 	/**
@@ -47,7 +47,7 @@ public abstract class DataStore {
 	public abstract VoD getVoD(String id);
 
 	public abstract boolean updateStatus(String id, String status);
-	
+
 	public static final long TOTAL_WEBRTC_VIEWER_COUNT_CACHE_TIME = 5000;
 	protected int totalWebRTCViewerCount = 0;
 	protected long totalWebRTCViewerCountLastUpdateTime = 0;
@@ -75,7 +75,7 @@ public abstract class DataStore {
 
 	/**
 	 * Returns the Broadcast List in order
-	 * 
+	 *
 	 * @param offset the number of items to skip
 	 * @param size batch size
 	 * @param type can get "liveStream" or "ipCamera" or "streamSource" or "VoD" values. Default is getting all broadcast types.
@@ -84,16 +84,18 @@ public abstract class DataStore {
 	 * @return
 	 */
 	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy, String search);
-	
+
+	public abstract List<ConferenceRoom> getConferenceRoomList(int offset, int size, String sortBy, String orderBy, String search);
+
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
-	
+
 	public abstract List<Broadcast> getExternalStreamsList();
 
 	public abstract void close();
 
 	/**
 	 * Returns the VoD List in order
-	 * 
+	 *
 	 * @param offset: the number of items to skip
 	 * @param size: batch size
 	 * @param sortBy can get "name" or "date" values
@@ -148,14 +150,14 @@ public abstract class DataStore {
 	 */
 
 	public abstract boolean revokeTokens (String streamId);
-	
+
 	/**
 	 * Delete specific token
 	 * @param tokenId id of the token
 	 */
 
 	public abstract boolean deleteToken (String tokenId);
-	
+
 	/**
 	 * retrieve specific token
 	 * @param tokenId id of the token
@@ -170,7 +172,7 @@ public abstract class DataStore {
 	 * @return- true if set, false if not
 	 */
 	public abstract boolean setMp4Muxing(String streamId, int enabled);
-	
+
 	/**
 	 * enables or disables WebM muxing for the stream
 	 * @param streamId- id of the stream
@@ -191,21 +193,21 @@ public abstract class DataStore {
 	/**
 	 * Add social endpoint credentials to data store
 	 * Do not add id to the credentials, it will be added by data store
-	 * @param credentials 
+	 * @param credentials
 	 * The credentials that will be stored to datastore
-	 * 
+	 *
 	 * @return SocialEndpointCredentials by settings id of the credentials
 	 * null if it is not saved to datastore
-	 * 
+	 *
 	 */
 	public abstract SocialEndpointCredentials addSocialEndpointCredentials(SocialEndpointCredentials credentials);
 
 	/**
 	 * Get list of social endpoints
-	 * 
+	 *
 	 * @param offset
 	 * @param size
-	 * 
+	 *
 	 * @return list of social endpoints
 	 */
 	public abstract List<SocialEndpointCredentials> getSocialEndpoints(int offset, int size);
@@ -213,7 +215,7 @@ public abstract class DataStore {
 	/**
 	 * Remove social endpoint from data store
 	 * @param id , this is the id of the credential
-	 * 
+	 *
 	 * @return true if it is removed from datastore
 	 * false if it is not removed
 	 */
@@ -221,7 +223,7 @@ public abstract class DataStore {
 
 	/**
 	 * Return social endpoint credential that having the id
-	 * 
+	 *
 	 * @param id the id of the credential to be returns
 	 * @return {@link SocialEndpointCredentials} if there is a matching credential with the id
 	 * <code>null</code> if there is no matching id
@@ -238,7 +240,7 @@ public abstract class DataStore {
 	 * Updates the Broadcast objects fields if it's not null.
 	 * The updated fields are as follows
 	 * name, description, userName, password, IP address, streamUrl
-	
+
 	 * @param broadcast
 	 * @return
 	 */
@@ -297,7 +299,7 @@ public abstract class DataStore {
 
 	protected abstract boolean updateRtmpViewerCountLocal(String streamId, boolean increment);
 
-	
+
 	/**
 	 * Saves the stream info to the db
 	 * @param streamInfo
@@ -332,17 +334,17 @@ public abstract class DataStore {
 	}
 
 	/**
-	 * Creates a conference room with the parameters. 
-	 * The room name is key so if this is called with the same room name 
+	 * Creates a conference room with the parameters.
+	 * The room name is key so if this is called with the same room name
 	 * then new room is overwritten to old one.
-	 * @param room - conference room 
+	 * @param room - conference room
 	 * @return true if successfully created, false if not
 	 */
 	public abstract boolean createConferenceRoom(ConferenceRoom room);
-	
+
 	/**
 	 * Edits previously saved conference room
-	 * @param room - conference room 
+	 * @param room - conference room
 	 * @return true if successfully edited, false if not
 	 */
 	public abstract boolean editConferenceRoom(String roomId, ConferenceRoom room);
@@ -350,17 +352,17 @@ public abstract class DataStore {
 	/**
 	 * Deletes previously saved conference room
 	 * @param roomName- name of the conference room
-	 * @return true if successfully deleted, false if not 
+	 * @return true if successfully deleted, false if not
 	 */
 	public abstract boolean deleteConferenceRoom(String roomId);
-	
+
 	/**
 	 * Retrieves previously saved conference room
 	 * @param roomName- name of the conference room
-	 * @return room - conference room  
+	 * @return room - conference room
 	 */
 	public abstract ConferenceRoom getConferenceRoom(String roomId);
-	
+
 	/**
 	 * Updates the stream fields if it's not null
 	 * @param broadcast
@@ -376,59 +378,59 @@ public abstract class DataStore {
 		if (newBroadcast.getName() != null) {
 			broadcast.setName(newBroadcast.getName());
 		}
-		
+
 		if (newBroadcast.getDescription() != null) {
 			broadcast.setDescription(newBroadcast.getDescription());
 		}
-		
+
 		if (newBroadcast.getUsername() != null) {
 			broadcast.setUsername(newBroadcast.getUsername());
 		}
-		
+
 		if (newBroadcast.getPassword() != null) {
 			broadcast.setPassword(newBroadcast.getPassword());
 		}
-		
+
 		if (newBroadcast.getIpAddr() != null) {
 			broadcast.setIpAddr(newBroadcast.getIpAddr());
 		}
-		
+
 		if (newBroadcast.getStreamUrl() != null) {
 			broadcast.setStreamUrl(newBroadcast.getStreamUrl());
 		}
-		
+
 		if (newBroadcast.getLatitude() != null) {
 			broadcast.setLatitude(newBroadcast.getLatitude());
 		}
-		
+
 		if (newBroadcast.getLongitude() != null) {
 			broadcast.setLongitude(newBroadcast.getLongitude());
 		}
-		
+
 		if (newBroadcast.getAltitude() != null) {
 			broadcast.setAltitude(newBroadcast.getAltitude());
 		}
-		
+
 		if (newBroadcast.getMainTrackStreamId() != null) {
 			broadcast.setMainTrackStreamId(newBroadcast.getMainTrackStreamId());
 		}
-		
+
 		if (newBroadcast.getStartTime() != 0) {
 			broadcast.setStartTime(newBroadcast.getStartTime());
 		}
-		
+
 		if (newBroadcast.getOriginAdress() != null) {
 			broadcast.setOriginAdress(newBroadcast.getOriginAdress());
 		}
-		
+
 		if (newBroadcast.getStatus() != null) {
 			broadcast.setStatus(newBroadcast.getStatus());
 		}
-		
+
 		if (newBroadcast.getAbsoluteStartTimeMs() != 0) {
 			broadcast.setAbsoluteStartTimeMs(newBroadcast.getAbsoluteStartTimeMs());
 		}
-		
+
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
@@ -438,8 +440,8 @@ public abstract class DataStore {
 	}
 
 	/**
-	 * This method returns the local active broadcast count. 
-	 * Mongodb implementation is different because of cluster. 
+	 * This method returns the local active broadcast count.
+	 * Mongodb implementation is different because of cluster.
 	 * Other implementations just return active broadcasts in db
 	 * @return
 	 */
@@ -472,7 +474,7 @@ public abstract class DataStore {
 		}
 		return broadcastList;
 	}
-	
+
 	protected List<VoD> sortAndCropVodList(List<VoD> vodList, int offset, int size, String sortBy, String orderBy) {
 		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
 			Collections.sort(vodList, new Comparator<VoD>() {
@@ -488,7 +490,7 @@ public abstract class DataStore {
 						c1 = new Long(vod1.getCreationDate());
 						c2 = new Long(vod2.getCreationDate());
 					}
-					
+
 					if(orderBy.contentEquals("desc")) {
 						return c2.compareTo(c1);
 					}
@@ -496,23 +498,23 @@ public abstract class DataStore {
 				}
 			});
 		}
-		
+
 		if (size > MAX_ITEM_IN_ONE_LIST) {
 			size = MAX_ITEM_IN_ONE_LIST;
 		}
 		if (offset < 0) {
 			offset = 0;
 		}
-		
+
 		int toIndex =  Math.min(offset+size, vodList.size());
-		if (offset >= toIndex) 
+		if (offset >= toIndex)
 		{
 			return new ArrayList<>();
 		}
 		else {
 			return vodList.subList(offset, Math.min(offset+size, vodList.size()));
 		}
-		
+
 	}
 	protected ArrayList<Broadcast> searchOnServer(ArrayList<Broadcast> broadcastList, String search){
 		if(search != null && !search.isEmpty()) {
@@ -532,18 +534,18 @@ public abstract class DataStore {
 		}
 		return broadcastList;
 	}
-	
+
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) 
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty())
 		{
-			Collections.sort(broadcastList, new Comparator<Broadcast>() 
+			Collections.sort(broadcastList, new Comparator<Broadcast>()
 			{
 				@Override
-				public int compare(Broadcast broadcast1, Broadcast broadcast2) 
+				public int compare(Broadcast broadcast1, Broadcast broadcast2)
 				{
 					Comparable c1 = null;
 					Comparable c2 = null;
-					
+
 					if(sortBy.equals("name")) {
 						c1 = broadcast1.getName().toLowerCase();
 						c2 = broadcast2.getName().toLowerCase();
@@ -556,7 +558,7 @@ public abstract class DataStore {
 						c1 = broadcast1.getStatus();
 						c2 = broadcast2.getStatus();
 					}
-				
+
 					if(orderBy.equals("desc")) {
 						return c2.compareTo(c1);
 					}
@@ -564,21 +566,84 @@ public abstract class DataStore {
 				}
 			});
 		}
-		
+
 		if (size > MAX_ITEM_IN_ONE_LIST) {
 			size = MAX_ITEM_IN_ONE_LIST;
 		}
 		if (offset < 0 ) {
 			offset = 0;
 		}
-		
+
 		int toIndex =  Math.min(offset+size, broadcastList.size());
-		if (offset >= toIndex) 
+		if (offset >= toIndex)
 		{
 			return new ArrayList<>();
 		}
 		else {
 			return broadcastList.subList(offset,toIndex);
+		}
+	}
+
+	protected ArrayList<ConferenceRoom> searchOnServerConferenceRoom(ArrayList<ConferenceRoom> roomList, String search){
+		if(search != null && !search.isEmpty()) {
+			for (Iterator<ConferenceRoom> i = roomList.iterator(); i.hasNext(); ) {
+				ConferenceRoom item = i.next();
+				if(item.getRoomId() != null) {
+					if (item.getRoomId().toLowerCase().contains(search.toLowerCase()))
+						continue;
+					else i.remove();
+				}
+			}
+		}
+		return roomList;
+	}
+
+	protected List<ConferenceRoom> sortAndCropConferenceRoomList(List<ConferenceRoom> roomList, int offset, int size, String sortBy, String orderBy) {
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty())
+		{
+			Collections.sort(roomList, new Comparator<ConferenceRoom>()
+			{
+				@Override
+				public int compare(ConferenceRoom room1, ConferenceRoom room2)
+				{
+					Comparable c1 = null;
+					Comparable c2 = null;
+
+					if(sortBy.equals("roomId")) {
+						c1 = room1.getRoomId().toLowerCase();
+						c2 = room2.getRoomId().toLowerCase();
+					}
+					else if(sortBy.equals("startDate")) {
+						c1 = new Long(room1.getStartDate());
+						c2 = new Long(room2.getStartDate());
+					}
+					else if(sortBy.equals("endDate")) {
+						c1 = new Long(room1.getEndDate());
+						c2 = new Long(room2.getEndDate());
+					}
+
+					if(orderBy.equals("desc")) {
+						return c2.compareTo(c1);
+					}
+					return c1.compareTo(c2);
+				}
+			});
+		}
+
+		if (size > MAX_ITEM_IN_ONE_LIST) {
+			size = MAX_ITEM_IN_ONE_LIST;
+		}
+		if (offset < 0 ) {
+			offset = 0;
+		}
+
+		int toIndex =  Math.min(offset+size, roomList.size());
+		if (offset >= toIndex)
+		{
+			return new ArrayList<>();
+		}
+		else {
+			return roomList.subList(offset,toIndex);
 		}
 	}
 
@@ -588,21 +653,21 @@ public abstract class DataStore {
 	 * @return boolean - success 
 	 */
 	public abstract boolean createP2PConnection(P2PConnection conn);
-	
+
 	/**
 	 * Get the P2PConnection by streamId
 	 * @param streamId - stream id for P2PConnection
 	 * @return P2PConnection - if exist else null 
 	 */
 	public abstract P2PConnection getP2PConnection(String streamId);
-	
+
 	/**
 	 * Deletes a P2PConnection
 	 * @param conn - P2PConnection object
 	 * @return boolean - success 
 	 */
 	public abstract boolean deleteP2PConnection(String streamId);
-	
+
 	/**
 	 * Add a subtrack id to a main track (broadcast)
 	 * @param mainTrackId - main track id
@@ -612,43 +677,43 @@ public abstract class DataStore {
 	public abstract boolean addSubTrack(String mainTrackId, String subTrackId);
 
 
-	/**	
+	/**
 	 * Creates new Playlist	
 	 * @param playlist - Playlist object	
 	 * @return boolean - success 	
-	 */	
-	public abstract boolean createPlaylist(Playlist playlist);	
+	 */
+	public abstract boolean createPlaylist(Playlist playlist);
 
-	/**	
+	/**
 	 * Get the Playlist by playlistId	
 	 * @param playlistId - playlist id for Playlist	
 	 * @return Playlist - if exist else null 	
-	 */	
-	public abstract Playlist getPlaylist(String playlistId);	
+	 */
+	public abstract Playlist getPlaylist(String playlistId);
 
-	/**	
+	/**
 	 * Deletes a Playlist	
 	 * @param playlistId - Playlist object	
 	 * @return boolean - success 	
-	 */	
-	public abstract boolean deletePlaylist(String playlistId);		
+	 */
+	public abstract boolean deletePlaylist(String playlistId);
 
-	/**	
+	/**
 	 * Edits previously saved Playlist	
 	 * @param playlist - Playlist 	
 	 * @return true if successfully edited, false if not	
-	 */	
+	 */
 	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
 
 	/**
 	 * Resets the broadcasts in the database. 
 	 * It sets number of viewers to zero. 
 	 * It also delete the stream if it's zombi stream
-	 * 
+	 *
 	 * @returns total number of operation in the db
 	 */
 	public abstract int resetBroadcasts(String hostAddress);
-	
+
 	/**
 	 * Return if data store is available. DataStore is available if it's initialized and not closed. 
 	 * It's not available if it's closed. 
@@ -657,16 +722,16 @@ public abstract class DataStore {
 	public boolean isAvailable() {
 		return available;
 	}
-  
-	
+
+
 	/**
 	 * This is used to get total number of WebRTC viewers 
-	 * 
+	 *
 	 * @returns total number of WebRTC viewers
 	 */
 	public abstract int getTotalWebRTCViewersCount();
-  
-	
+
+
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
 //**************************************	
