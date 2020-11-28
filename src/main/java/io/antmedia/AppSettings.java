@@ -229,6 +229,12 @@ public class AppSettings {
 	private static final String SETTINGS_CONSTANT_RATE_FACTOR = "settings.constantRateFactor";
 
 	private static final String SETTINGS_WEBRTC_VIEWER_LIMIT = "settings.webRTCViewerLimit";
+	
+	public static final String SETTINGS_JWT_SECRET_KEY = "settings.jwtSecretKey";
+	
+	public static final String SETTINGS_JWT_CONTROL_ENABLED = "settings.jwtControlEnabled";
+	
+	public static final String SETTINGS_IP_FILTER_ENABLED = "settings.ipFilterEnabled";
 
 	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
 
@@ -976,6 +982,23 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
 	private int webRTCViewerLimit = -1;
 	
+	/**
+	 * Application JWT secret key
+	 */
+	@Value( "${"+SETTINGS_JWT_SECRET_KEY+":null}" )
+	private String jwtSecretKey;
+	
+	/**
+	 * Application JWT Control Enabled
+	 */
+	@Value( "${"+SETTINGS_JWT_CONTROL_ENABLED+":false}" )
+	private boolean jwtControlEnabled;
+	
+	/**
+	 * Application IP Filter Enabled
+	 */
+	@Value( "${"+SETTINGS_IP_FILTER_ENABLED+":true}" )
+	private boolean ipFilterEnabled;
 	
 	/**
 	 * Application level total incoming stream limit
@@ -1370,6 +1393,7 @@ public class AppSettings {
 		encoderSettingsString = "";
 		remoteAllowedCIDR = "127.0.0.1";
 		aacEncodingEnabled=true;
+		ipFilterEnabled=true;
 		ingestingStreamLimit = -1;
 	}
 
@@ -1975,6 +1999,30 @@ public class AppSettings {
 
 	public void setDashExtraWindowSize(String dashExtraWindowSize) {
 		this.dashExtraWindowSize = dashExtraWindowSize;
+	}
+	
+	public String getJwtSecretKey() {
+		return jwtSecretKey;
+	}
+
+	public void setJwtSecretKey(String jwtSecretKey) {
+		this.jwtSecretKey = jwtSecretKey;
+	}
+	
+	public boolean isJwtControlEnabled() {
+		return jwtControlEnabled;
+	}
+
+	public void setJwtControlEnabled(boolean jwtControlEnabled) {
+		this.jwtControlEnabled = jwtControlEnabled;
+	}
+	
+	public boolean isIpFilterEnabled() {
+		return ipFilterEnabled;
+	}
+
+	public void setIpFilterEnabled(boolean ipFilterEnabled) {
+		this.ipFilterEnabled = ipFilterEnabled;
 	}
 
 	public int getIngestingStreamLimit() {
