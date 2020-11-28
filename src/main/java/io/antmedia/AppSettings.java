@@ -236,6 +236,9 @@ public class AppSettings {
 	
 	public static final String SETTINGS_IP_FILTER_ENABLED = "settings.ipFilterEnabled";
 
+	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
+
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -996,6 +999,12 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_IP_FILTER_ENABLED+":true}" )
 	private boolean ipFilterEnabled;
+	
+	/**
+	 * Application level total incoming stream limit
+	 */
+	@Value( "${"+SETTINGS_INGESTING_STREAM_LIMIT+":-1}" )
+	private int ingestingStreamLimit;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -1385,6 +1394,7 @@ public class AppSettings {
 		remoteAllowedCIDR = "127.0.0.1";
 		aacEncodingEnabled=true;
 		ipFilterEnabled=true;
+		ingestingStreamLimit = -1;
 	}
 
 	public int getWebRTCPortRangeMax() {
@@ -2013,6 +2023,14 @@ public class AppSettings {
 
 	public void setIpFilterEnabled(boolean ipFilterEnabled) {
 		this.ipFilterEnabled = ipFilterEnabled;
+	}
+
+	public int getIngestingStreamLimit() {
+		return ingestingStreamLimit;
+	}
+
+	public void setIngestingStreamLimit(int ingestingStreamLimit) {
+		this.ingestingStreamLimit = ingestingStreamLimit;
 	}
 
 }
