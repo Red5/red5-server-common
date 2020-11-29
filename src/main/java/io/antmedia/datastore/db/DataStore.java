@@ -9,11 +9,14 @@ import java.util.Iterator;
 
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.ConferenceRoom;
+import io.antmedia.datastore.db.types.ConnectionEvent;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
 import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
+import io.antmedia.datastore.db.types.Subscriber;
+import io.antmedia.datastore.db.types.SubscriberStats;
 import io.antmedia.datastore.db.types.TensorFlowObject;
 import io.antmedia.datastore.db.types.Token;
 import io.antmedia.datastore.db.types.VoD;
@@ -165,6 +168,139 @@ public abstract class DataStore {
 
 	public abstract Token getToken (String tokenId);
 
+	/**
+	 * Lists all subscribers of requested stream
+	 * @param streamId
+	 * @param offset
+	 * @param size
+	 * @return lists of subscribers
+	 */	
+	public abstract List<Subscriber> listAllSubscribers(String streamId, int offset, int size);
+	
+	
+	/**
+	 * Lists all subscriber statistics of requested stream
+	 * @param streamId
+	 * @param offset
+	 * @param size
+	 * @return lists of subscriber statistics
+	 */	
+	public List<SubscriberStats> listAllSubscriberStats(String streamId, int offset, int size) {
+		List<Subscriber> subscribers= listAllSubscribers(streamId, offset, size);
+		List<SubscriberStats> subscriberStats = new ArrayList<>();
+		
+		for(Subscriber subscriber : subscribers) {
+			subscriberStats.add(subscriber.getStats());
+		}
+		
+		return subscriberStats;
+	}
+	
+	/**
+	 * adds subscriber to the datastore for this stream
+	 * @param streamId
+	 * @param subscriber - subscriber to be added
+	 * @return- true if set, false if not
+	 */	
+	public abstract boolean addSubscriber(String streamId, Subscriber subscriber);
+	
+	/**
+	 * deletes subscriber from the datastore for this stream
+	 * @param streamId
+	 * @param subscriberId - id of the subsciber to be deleted
+	 * @return- true if set, false if not
+	 */		
+	public abstract boolean deleteSubscriber(String streamId, String subscriberId);
+	
+	/**
+	 * deletes all subscriber from the datastore for this stream
+	 * @param streamId
+	 * @return- true if set, false if not
+	 */		
+	public abstract boolean revokeSubscribers(String streamId);
+	
+	/**
+	 * gets subscriber from the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subsciber to be deleted
+	 * @return- Subscriber
+	 */	
+	public abstract Subscriber getSubscriber (String streamId, String subscriberId);
+		
+	/**
+	 * gets the connection status of the subscriber from the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @return- true if connected else false
+	 */	
+	public boolean isSubscriberConnected(String streamId, String subscriberId) {
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+	
+		if(subscriber != null) {
+			 return subscriber.isConnected();
+		}
+		return false;
+	}
+	
+	/**
+	 * sets the connection status of the subscriber in the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @param event - connection event which occured for this subscriber
+	 * @return- true if successful else false
+	 */	
+	public boolean addSubscriberConnectionEvent(String streamId, String subscriberId, ConnectionEvent event) {
+		boolean result = false;
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+		if (subscriber != null) {
+			handleConnectionEvent(subscriber, event);
+			
+			addSubscriber(streamId, subscriber);
+			result = true;
+		}
+
+		return result;
+	}
+
+	// helper method used by all datastores
+	protected void handleConnectionEvent(Subscriber subscriber, ConnectionEvent event) {
+		if(ConnectionEvent.CONNECTED_EVENT.equals(event.getEventType())) {
+			subscriber.setConnected(true);
+		} else if(ConnectionEvent.DISCONNECTED_EVENT.equals(event.getEventType())) {
+			subscriber.setConnected(false);
+		}
+		subscriber.getStats().addConnectionEvent(event);
+	}	
+	
+	/**
+	 * sets the avarage bitrate of the subscriber in the datastore
+	 * @param streamId
+	 * @param subscriberId - id of the subscriber 
+	 * @param event - bitrate measurement event
+	 * @return- true if successful else false
+	 */	
+	public boolean updateSubscriberBitrateEvent(String streamId, String subscriberId,
+			long avgVideoBitrate, long avgAudioBitrate) {
+		boolean result = false;
+		Subscriber subscriber = getSubscriber(streamId, subscriberId);
+		if (subscriber != null) {	
+			subscriber.getStats().setAvgVideoBitrate(avgVideoBitrate);
+			subscriber.getStats().setAvgAudioBitrate(avgAudioBitrate);
+			addSubscriber(streamId, subscriber);
+			result = true;
+		}
+
+		return result;
+	}
+  
+	
+	/**
+	 * sets the connection status of all the subscribers false in the datastore
+	 * called after an ungraceful shutdown
+	 * @return- true if successful else false
+	 */	
+	public abstract boolean resetSubscribersConnectedStatus ();	
+	
 	/**
 	 * enables or disables mp4 muxing for the stream
 	 * @param streamId- id of the stream
@@ -730,7 +866,6 @@ public abstract class DataStore {
 	 * @returns total number of WebRTC viewers
 	 */
 	public abstract int getTotalWebRTCViewersCount();
-
 
 //**************************************
 //ATTENTION: Write function descriptions while adding new functions
