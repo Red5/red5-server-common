@@ -66,6 +66,10 @@ public abstract class DataStore {
 
 	public abstract boolean updateDuration(String id, long duration);
 
+	public abstract long getPartialVodNumber(String search);
+
+	public abstract long getPartialBroadcastNumber(String search);
+
 	public abstract boolean addEndpoint(String id, Endpoint endpoint);
 
 	public abstract String addVod(VoD vod);
