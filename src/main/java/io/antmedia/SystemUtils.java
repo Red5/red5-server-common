@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javax.management.MBeanServer;
 
@@ -712,59 +710,6 @@ public class SystemUtils {
 			throw new RuntimeException(exp);
 		}
 		return hotspotMBean;
-	}
-	
-	public static boolean runCreateAppScript(String appName) {
-		return runCreateAppScript(appName, false, null, null, null);
-	}
-	
-	public static boolean runCreateAppScript(String appName, boolean isCluster, 
-			String mongoHost, String mongoUser, String mongoPass) {
-		Path currentRelativePath = Paths.get("");
-		String webappsPath = currentRelativePath.toAbsolutePath().toString();
-		
-		String command = "/bin/bash create_app.sh"
-				+ " -n "+appName
-				+ " -w \"true\""
-				+ " -p "+webappsPath
-				+ " -c "+isCluster;
-		
-		if(isCluster) {
-			command += " -m "+mongoHost
-					+ " -u "+mongoUser
-					+ " -p "+mongoPass;
-		}
-		
-		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
-		pb.inheritIO().redirectOutput(ProcessBuilder.Redirect.INHERIT);
-		pb.inheritIO().redirectError(ProcessBuilder.Redirect.INHERIT);
-		
-		try {
-			pb.start();
-			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-	
-	public static boolean runDeleteAppScript(String appName) {
-		Path currentRelativePath = Paths.get("");
-		String webappsPath = currentRelativePath.toAbsolutePath().toString();
-		
-		String command = "/bin/bash delete_app.sh -n "+appName+" -p "+webappsPath;
-
-		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
-		pb.inheritIO().redirectOutput(ProcessBuilder.Redirect.INHERIT);
-		pb.inheritIO().redirectError(ProcessBuilder.Redirect.INHERIT);
-		
-		try {
-			pb.start();
-			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
-		}
 	}
 	
 }
