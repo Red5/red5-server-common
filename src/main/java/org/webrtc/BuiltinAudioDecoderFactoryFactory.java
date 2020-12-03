@@ -33,7 +33,8 @@ public class BuiltinAudioDecoderFactoryFactory implements AudioDecoderFactoryFac
 	}
 
 
-	@CalledByNative void onAudioPacket(int size, long timestamp) {
+	@CalledByNative 
+	public void onAudioPacket(int size, long timestamp) {
 		byte data[] = new byte[size];
 		buffer.rewind();
 		buffer.get(data, 0, size);
