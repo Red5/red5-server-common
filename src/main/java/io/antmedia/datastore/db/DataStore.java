@@ -613,26 +613,28 @@ public abstract class DataStore {
 
 	protected List<VoD> sortAndCropVodList(List<VoD> vodList, int offset, int size, String sortBy, String orderBy) {
 		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty()) {
-			Collections.sort(vodList, new Comparator<VoD>() {
-				@Override
-				public int compare(VoD vod1, VoD vod2) {
-					Comparable c1 = null;
-					Comparable c2 = null;
-					if(sortBy.contentEquals("name")) {
-						c1 = vod1.getVodName().toLowerCase();
-						c2 = vod2.getVodName().toLowerCase();
+			if(sortBy.contentEquals("date") || sortBy.contentEquals("name")) {
+				Collections.sort(vodList, new Comparator<VoD>() {
+					@Override
+					public int compare(VoD vod1, VoD vod2) {
+						Comparable c1 = null;
+						Comparable c2 = null;
+						if (sortBy.contentEquals("name")) {
+							c1 = vod1.getVodName().toLowerCase();
+							c2 = vod2.getVodName().toLowerCase();
+						} else if (sortBy.contentEquals("date")) {
+							c1 = new Long(vod1.getCreationDate());
+							c2 = new Long(vod2.getCreationDate());
+						}
+						if (orderBy.contentEquals("desc")) {
+							return c2.compareTo(c1);
+						} else if (orderBy != null && !(orderBy.isEmpty())) {
+							//Wrong entry check to not get null pointer.
+						}
+						return c1.compareTo(c2);
 					}
-					else if(sortBy.contentEquals("date")) {
-						c1 = new Long(vod1.getCreationDate());
-						c2 = new Long(vod2.getCreationDate());
-					}
-
-					if(orderBy.contentEquals("desc")) {
-						return c2.compareTo(c1);
-					}
-					return c1.compareTo(c2);
-				}
-			});
+				});
+			}
 		}
 
 		if (size > MAX_ITEM_IN_ONE_LIST) {
@@ -672,35 +674,37 @@ public abstract class DataStore {
 	}
 
 	protected List<Broadcast> sortAndCropBroadcastList(List<Broadcast> broadcastList, int offset, int size, String sortBy, String orderBy) {
-		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty())
+		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty() )
 		{
-			Collections.sort(broadcastList, new Comparator<Broadcast>()
-			{
-				@Override
-				public int compare(Broadcast broadcast1, Broadcast broadcast2)
-				{
-					Comparable c1 = null;
-					Comparable c2 = null;
+			if(sortBy.equals("name") || sortBy.equals("date") || sortBy.equals("status")) {
+				Collections.sort(broadcastList, new Comparator<Broadcast>() {
+					@Override
+					public int compare(Broadcast broadcast1, Broadcast broadcast2) {
+						Comparable c1 = null;
+						Comparable c2 = null;
 
-					if(sortBy.equals("name")) {
-						c1 = broadcast1.getName().toLowerCase();
-						c2 = broadcast2.getName().toLowerCase();
-					}
-					else if(sortBy.equals("date")) {
-						c1 = new Long(broadcast1.getDate());
-						c2 = new Long(broadcast2.getDate());
-					}
-					else if(sortBy.equals("status")) {
-						c1 = broadcast1.getStatus();
-						c2 = broadcast2.getStatus();
-					}
+						if (sortBy.equals("name")) {
+							c1 = broadcast1.getName().toLowerCase();
+							c2 = broadcast2.getName().toLowerCase();
+						} else if (sortBy.equals("date")) {
+							c1 = new Long(broadcast1.getDate());
+							c2 = new Long(broadcast2.getDate());
+						} else if (sortBy.equals("status")) {
+							c1 = broadcast1.getStatus();
+							c2 = broadcast2.getStatus();
+						} else if (sortBy != null && !(sortBy.isEmpty())) {
+							//Wrong entry check to not get null pointer.
+						}
 
-					if(orderBy.equals("desc")) {
-						return c2.compareTo(c1);
+						if (orderBy.equals("desc")) {
+							return c2.compareTo(c1);
+						} else if (orderBy != null && !(orderBy.isEmpty())) {
+							//Wrong entry check to not get null pointer.
+						}
+						return c1.compareTo(c2);
 					}
-					return c1.compareTo(c2);
-				}
-			});
+				});
+			}
 		}
 
 		if (size > MAX_ITEM_IN_ONE_LIST) {
@@ -737,33 +741,35 @@ public abstract class DataStore {
 	protected List<ConferenceRoom> sortAndCropConferenceRoomList(List<ConferenceRoom> roomList, int offset, int size, String sortBy, String orderBy) {
 		if(sortBy != null && orderBy != null && !sortBy.isEmpty() && !orderBy.isEmpty())
 		{
-			Collections.sort(roomList, new Comparator<ConferenceRoom>()
-			{
-				@Override
-				public int compare(ConferenceRoom room1, ConferenceRoom room2)
-				{
-					Comparable c1 = null;
-					Comparable c2 = null;
+			if(sortBy.equals("roomId") || sortBy.equals("startDate") || sortBy.equals("endDate") ) {
+				Collections.sort(roomList, new Comparator<ConferenceRoom>() {
+					@Override
+					public int compare(ConferenceRoom room1, ConferenceRoom room2) {
+						Comparable c1 = null;
+						Comparable c2 = null;
 
-					if(sortBy.equals("roomId")) {
-						c1 = room1.getRoomId().toLowerCase();
-						c2 = room2.getRoomId().toLowerCase();
-					}
-					else if(sortBy.equals("startDate")) {
-						c1 = new Long(room1.getStartDate());
-						c2 = new Long(room2.getStartDate());
-					}
-					else if(sortBy.equals("endDate")) {
-						c1 = new Long(room1.getEndDate());
-						c2 = new Long(room2.getEndDate());
-					}
+						if (sortBy.equals("roomId")) {
+							c1 = room1.getRoomId().toLowerCase();
+							c2 = room2.getRoomId().toLowerCase();
+						} else if (sortBy.equals("startDate")) {
+							c1 = new Long(room1.getStartDate());
+							c2 = new Long(room2.getStartDate());
+						} else if (sortBy.equals("endDate")) {
+							c1 = new Long(room1.getEndDate());
+							c2 = new Long(room2.getEndDate());
+						} else if (sortBy != null && !(sortBy.isEmpty())) {
+							//Wrong entry check to not get null pointer.
+						}
 
-					if(orderBy.equals("desc")) {
-						return c2.compareTo(c1);
+						if (orderBy.equals("desc")) {
+							return c2.compareTo(c1);
+						} else if (orderBy != null && !(orderBy.isEmpty())) {
+							//Wrong entry check to not get null pointer.
+						}
+						return c1.compareTo(c2);
 					}
-					return c1.compareTo(c2);
-				}
-			});
+				});
+			}
 		}
 
 		if (size > MAX_ITEM_IN_ONE_LIST) {
