@@ -66,6 +66,20 @@ public abstract class DataStore {
 
 	public abstract boolean updateDuration(String id, long duration);
 
+	/**
+	 * Returns the number of vods which contains searched string
+	 * @param search is used for searching in vodIds and names of the vods
+	 * @return
+	 */
+	public abstract long getPartialVodNumber(String search);
+
+	/**
+	 * Returns the number of broadcasts which contains searched string
+	 * @param search is used for searching in streamIds and names of the stream
+	 * @return
+	 */
+	public abstract long getPartialBroadcastNumber(String search);
+
 	public abstract boolean addEndpoint(String id, Endpoint endpoint);
 
 	public abstract String addVod(VoD vod);
@@ -84,10 +98,21 @@ public abstract class DataStore {
 	 * @param type can get "liveStream" or "ipCamera" or "streamSource" or "VoD" values. Default is getting all broadcast types.
 	 * @param sortBy can get "name" or "date" or "status" values
 	 * @param orderBy can get "desc" or "asc"
+	 * @param search is used for searching in streamIds and names of the stream
 	 * @return
 	 */
 	public abstract List<Broadcast> getBroadcastList(int offset, int size, String type, String sortBy, String orderBy, String search);
 
+	/**
+	 * Returns the Conference Room List in order
+	 *
+	 * @param offset the number of items to skip
+	 * @param size batch size
+	 * @param sortBy can get "name" or "startDate" or "endDate" values
+	 * @param orderBy can get "desc" or "asc"
+	 * @param search is used for searching in RoomId
+	 * @return
+	 */
 	public abstract List<ConferenceRoom> getConferenceRoomList(int offset, int size, String sortBy, String orderBy, String search);
 
 	public abstract boolean removeEndpoint(String id, Endpoint endpoint, boolean checkRTMPUrl);
@@ -104,6 +129,7 @@ public abstract class DataStore {
 	 * @param sortBy can get "name" or "date" values
 	 * @param orderBy can get "desc" or "asc"
 	 * @param filterStreamId is used for filtering the vod by stream id. If it's null or empty, it's not used
+	 * @param search is used for searching in vodIds and names of the vods.
 	 * @return
 	 */
 	public abstract List<VoD> getVodList(int offset, int size, String sortBy, String orderBy, String filterStreamId, String search);
@@ -585,6 +611,11 @@ public abstract class DataStore {
 		return getActiveBroadcastCount();
 	}
 
+	/**
+	 * Below search methods and sortandcrop methods are used for getting the searched items and sorting and pagination.
+	 * Sorting, search and cropping is available for Broadcasts, VoDs and Conference Rooms.
+	 * They are used by InMemoryDataStore and MapDBStore, Mongodb implements the same functionality inside its own class.
+	 */
 	protected ArrayList<VoD> searchOnServerVod(ArrayList<VoD> broadcastList, String search){
 		if(search != null && !search.isEmpty()) {
 			for (Iterator<VoD> i = broadcastList.iterator(); i.hasNext(); ) {
