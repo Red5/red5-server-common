@@ -1005,7 +1005,7 @@ public class AppSettings {
 	/**
 	 * Application JWT secret key
 	 */
-	@Value( "${"+SETTINGS_JWT_SECRET_KEY+":null}" )
+	@Value( "${"+SETTINGS_JWT_SECRET_KEY+":#{null}}" )
 	private String jwtSecretKey;
 	
 	/**
