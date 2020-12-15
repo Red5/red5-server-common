@@ -996,6 +996,12 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_WEBRTC_VIEWER_LIMIT+":-1}" )
 	private int webRTCViewerLimit = -1;
 	
+	/*
+	 * Set to true when you want to delete an application 
+	 */
+	private boolean toBeDeleted = false;
+
+
 	/**
 	 * Application JWT secret key
 	 */
@@ -1019,7 +1025,7 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_INGESTING_STREAM_LIMIT+":-1}" )
 	private int ingestingStreamLimit;
-
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -2062,6 +2068,14 @@ public class AppSettings {
 
 	public void setTimeTokenPeriod(int timeTokenPeriod) {
 		this.timeTokenPeriod = timeTokenPeriod;
+	}
+
+	public boolean isToBeDeleted() {
+		return toBeDeleted;
+	}
+
+	public void setToBeDeleted(boolean toBeDeleted) {
+		this.toBeDeleted = toBeDeleted;
 	}
 
 }
