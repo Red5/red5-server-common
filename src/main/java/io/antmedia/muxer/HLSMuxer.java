@@ -651,8 +651,8 @@ public class HLSMuxer extends Muxer  {
 	}
 	
 	@Override
-	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
-								 boolean isKeyFrame,long firstFrameTimeStamp) {
+	public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long dts, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp, long pts) {
 		/*
 		 * this control is necessary to prevent server from a native crash 
 		 * in case of initiation and preparation takes long.
@@ -668,8 +668,8 @@ public class HLSMuxer extends Muxer  {
 		}
 		
 		videoPkt.stream_index(streamIndex);
-		videoPkt.pts(timestamp);
-		videoPkt.dts(timestamp);
+		videoPkt.pts(pts);
+		videoPkt.dts(dts);
 		
 		encodedVideoFrame.rewind();
 		if (isKeyFrame) {
