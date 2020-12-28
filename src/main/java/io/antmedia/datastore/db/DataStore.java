@@ -82,6 +82,8 @@ public abstract class DataStore {
 
 	public abstract boolean addEndpoint(String id, Endpoint endpoint);
 
+	public abstract boolean updateEndpointStatus(String url, String id, String status);
+
 	public abstract String addVod(VoD vod);
 
 	public abstract long getBroadcastCount();

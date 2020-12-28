@@ -57,6 +57,7 @@ import io.antmedia.RecordType;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.IDataStoreFactory;
 import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.muxer.parser.AACConfigParser;
 import io.antmedia.muxer.parser.AACConfigParser.AudioObjectTypes;
 import io.antmedia.muxer.parser.SpsParser;
@@ -64,7 +65,7 @@ import io.antmedia.storage.StorageClient;
 import io.vertx.core.Vertx;
 
 
-public class MuxAdaptor implements IRecordingListener {
+public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 
 	
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
@@ -108,6 +109,8 @@ public class MuxAdaptor implements IRecordingListener {
 	protected boolean hlsMuxingEnabled;
 	protected boolean dashMuxingEnabled;
 	protected boolean objectDetectionEnabled;
+
+	protected String RTMPMuxingStatus;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
@@ -135,6 +138,8 @@ public class MuxAdaptor implements IRecordingListener {
 	private String oldQuality;
 	public static final  AVRational TIME_BASE_FOR_MS;
 	private IAntMediaStreamHandler appAdapter;
+
+	private IEndpointListener listener;
 
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
@@ -179,6 +184,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
 	protected long absoluteTotalIngestTime = 0;
+	private String RTMPMuxerStatus = null;
 	
 	/**
 	 * It's defined here because EncoderAdaptor should access it directly to add new streams.
@@ -256,6 +262,8 @@ public class MuxAdaptor implements IRecordingListener {
 	{
 		muxerList.add(muxer);
 	}
+
+
 
 	@Override
 	public boolean init(IConnection conn, String name, boolean isAppend) {
@@ -1405,6 +1413,7 @@ public class MuxAdaptor implements IRecordingListener {
 	private boolean prepareMuxer(Muxer muxer) {
 		boolean prepared;
 		muxer.init(scope, streamId, 0);
+		logger.info("Mux Adaptor called");
 		
 		if (streamSourceInputFormatContext != null) {
 			
@@ -1489,8 +1498,9 @@ public class MuxAdaptor implements IRecordingListener {
 			logger.warn("Start rtmp streaming return false for stream:{} because stream is being prepared", streamId);
 			return false;
 		}
-		
+		logger.warn("RTMP STREAMING STARTING");
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
+		rtmpMuxer.setStatusListener(this);
 
 		boolean prepared = prepareMuxer(rtmpMuxer);
 		if (!prepared) {
@@ -1499,6 +1509,27 @@ public class MuxAdaptor implements IRecordingListener {
 		return prepared;
 	}
 
+	@Override
+	public String getEndpointStatus(String url){
+		Broadcast broadcast = getBroadcast();
+		RtmpMuxer rtmpMuxer = getRtmpMuxer(url);
+		return rtmpMuxer.getStatus();
+	}
+
+	@Override
+	public void setEndpointStatus(String url, String status){
+		Broadcast broadcast = getDataStore().get(this.streamId);
+		this.RTMPMuxingStatus = status;
+		List<Endpoint> endplist = broadcast.getEndPointList();
+		logger.info("RTMPMuxer Status = {} StreamId = {} endpList = {}", status, broadcast.getStreamId(), endplist);
+		/*Endpoint endpoint = new Endpoint();
+		endpoint.setRtmpUrl(url);
+		endpoint.setType("generic");
+		endpoint.setMuxerStatus(status);*/
+		getDataStore().updateEndpointStatus(url, broadcast.getStreamId(), status);
+		logger.info("RTMP Muxer Status is {} ", status);
+
+	}
 
 	public RtmpMuxer getRtmpMuxer(String rtmpUrl) 
 	{
@@ -1518,6 +1549,9 @@ public class MuxAdaptor implements IRecordingListener {
 			}
 		}
 		return rtmpMuxer;
+	}
+	public String getRtmpMuxerStatus(String rtmpUrl){
+		return this.RTMPMuxerStatus;
 	}
 
 	public boolean stopRtmpStreaming(String rtmpUrl) 

@@ -2,10 +2,18 @@ package io.antmedia.datastore.db.types;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.antmedia.muxer.IEndpointListener;
 
 @ApiModel(value="Endpoint", description="The endpoint class, such as Facebook, Twitter or custom RTMP endpoints")
 public class Endpoint 
 {
+
+	//Interface girebilelim, listener interface bi kaç methodu olacak muxer started muxer finished, RTMP end pointlerin init
+	//
+	//TODO:STATUS EKLENECEK
+	@ApiModelProperty(value = "Status of the RTMP muxer, possible values are, started, finished, failed")
+	private String muxerStatus;
+
 	/**
 	 * Service name like facebook, periscope, youtube or generic
 	 * it should match the VideoServiceEndpoint names or it can be generic
@@ -42,13 +50,14 @@ public class Endpoint
 	 * Endpoint service id, this field holds the id of the endpoint
 	 */
 	@ApiModelProperty(value = "the endpoint service id, this field holds the id of the endpoint")
-	private 	String endpointServiceId;
+	private String endpointServiceId;
 	
 	/**
 	 * Stream id in the server
 	 */
 	@ApiModelProperty(value = "the id of the stream in the server")
 	private String serverStreamId;
+
 
 	/**
 	 * Default constructor used in BroadcastRestService.addEndpoint
@@ -65,6 +74,7 @@ public class Endpoint
 		this.type = type;
 		this.endpointServiceId = endpointServiceId;
 		this.serverStreamId = serverStreamId;
+		this.muxerStatus = "notInitialized";
 	}
 	
 	public String getBroadcastId() {
@@ -91,6 +101,9 @@ public class Endpoint
 	public String getName() {
 		return name;
 	}
+
+	public void setMuxerStatus(String status){ this.muxerStatus = status;}
+	public String getMuxerStatus(){ return this.muxerStatus; }
 
 	public void setName(String name) {
 		this.name = name;
