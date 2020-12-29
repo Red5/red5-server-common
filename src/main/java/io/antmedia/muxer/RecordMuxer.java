@@ -13,7 +13,7 @@ import static org.bytedeco.ffmpeg.global.avcodec.*;
 import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
 import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.*;
 import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
@@ -305,7 +305,7 @@ public abstract class RecordMuxer extends Muxer {
 
 
 	@Override
-	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
+	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long dts, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp, long pts) {
 		/*
 		 * this control is necessary to prevent server from a native crash 
 		 * in case of initiation and preparation takes long.
@@ -326,8 +326,8 @@ public abstract class RecordMuxer extends Muxer {
 		*/
 		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
-		videoPkt.pts(timestamp);
-		videoPkt.dts(timestamp);
+		videoPkt.pts(pts);
+		videoPkt.dts(dts);
         if(isKeyFrame) {
             videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
         }
