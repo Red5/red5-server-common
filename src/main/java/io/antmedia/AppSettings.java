@@ -239,7 +239,8 @@ public class AppSettings {
 	public static final String SETTINGS_IP_FILTER_ENABLED = "settings.ipFilterEnabled";
 
 	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
-
+	
+	private static final String SETTINGS_WEBRTC_KEYFRAME_TIME = "settings.webRTCKeyframeTime";
 
 	@JsonIgnore
 	@NotSaved
@@ -1026,6 +1027,13 @@ public class AppSettings {
 	@Value( "${"+SETTINGS_INGESTING_STREAM_LIMIT+":-1}" )
 	private int ingestingStreamLimit;
 	
+	/**
+	 * WebRTC Keyframe Time. Ant Media Server asks key frame for every webRTCKeyframeTime in SFU mode. 
+	 * It's in milliseconds
+	 */
+	@Value( "${"+SETTINGS_WEBRTC_KEYFRAME_TIME+":2000}" )
+	private int webRTCKeyframeTime;
+
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -2076,6 +2084,14 @@ public class AppSettings {
 
 	public void setToBeDeleted(boolean toBeDeleted) {
 		this.toBeDeleted = toBeDeleted;
+	}
+	
+	public int getWebRTCKeyframeTime() {
+		return webRTCKeyframeTime;
+	}
+
+	public void setWebRTCKeyframeTime(int webRTCKeyframeTime) {
+		this.webRTCKeyframeTime = webRTCKeyframeTime;
 	}
 
 }
