@@ -1028,7 +1028,8 @@ public class AppSettings {
 	private int ingestingStreamLimit;
 	
 	/**
-	 * WebRTC Keyframe Time
+	 * WebRTC Keyframe Time. Ant Media Server asks key frame for every webRTCKeyframeTime in SFU mode. 
+	 * It's in milliseconds
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_KEYFRAME_TIME+":2000}" )
 	private int webRTCKeyframeTime;
