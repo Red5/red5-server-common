@@ -82,7 +82,27 @@ public abstract class DataStore {
 
 	public abstract boolean addEndpoint(String id, Endpoint endpoint);
 
+	/**
+	 * Updates the endpoint's status according to RTMP Muxer.
+	 */
 	public abstract boolean updateEndpointStatus(String url, String id, String status);
+
+	//This method is for preventing code duplication in InMemoryDataStore and MapDB
+	public List<Endpoint> updateStatusInEndpointList(List<Endpoint> endplist, String url, String status){
+		Endpoint endp;
+		if(endplist != null){
+			for (int i = 0; i < endplist.size(); i++) {
+				if (endplist.get(i).getRtmpUrl().equals(url)) {
+					endp = endplist.get(i);
+					endplist.remove(i);
+					endp.setMuxerStatus(status);
+					endplist.add(endp);
+					break;
+				}
+			}
+		}
+		return endplist;
+	}
 
 	public abstract String addVod(VoD vod);
 
@@ -320,6 +340,7 @@ public abstract class DataStore {
 
 		return result;
 	}
+
   
 	
 	/**
