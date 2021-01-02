@@ -85,8 +85,7 @@ public abstract class RecordMuxer extends Muxer {
 
 	protected AVPacket videoPkt;
 	protected int rotation;
-//	protected long startTimeInVideoTimebase = 0;
-//	protected long startTimeInAudioTimebase = 0;
+
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
