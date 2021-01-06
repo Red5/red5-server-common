@@ -5,6 +5,7 @@ import java.util.List;
 import org.bson.types.ObjectId;
 
 import dev.morphia.annotations.Embedded;
+import dev.morphia.annotations.Reference;
 import dev.morphia.annotations.Entity;
 import dev.morphia.annotations.Field;
 import dev.morphia.annotations.Id;
@@ -21,12 +22,12 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value="Playlist", description="The playlist in video list object class")	
 public class Playlist {	
 
-	@JsonIgnore	
-	@Id	
+	@JsonIgnore
+	@Id
 	@ApiModelProperty(value = "the db id of the Playlist")	
 	private ObjectId dbId;	
 
-	@ApiModelProperty(value = "the object id of the Playlist")	
+	@ApiModelProperty(value = "the object id of the Playlist")
 	private String playlistId;	
 
 	@ApiModelProperty(value = "the current play index of the Playlist")	
@@ -42,9 +43,9 @@ public class Playlist {
 	@ApiModelProperty(value = "the status of the playlist", allowableValues = "finished, broadcasting, created")	
 	private String playlistStatus;	
 
-	@ApiModelProperty(value = "the list broadcasts of Playlist Items")	
-	@Embedded	
-	private List<Broadcast> broadcastItemList;	
+	@ApiModelProperty(value = "the list broadcasts of Playlist Items")
+	@Reference
+	private List<Broadcast> broadcastItemList;
 
 	@ApiModelProperty(value = "the creation of the Playlist")	
 	private long creationDate;	
