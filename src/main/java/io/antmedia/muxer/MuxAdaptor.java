@@ -36,6 +36,7 @@ import org.red5.codec.AACAudio;
 import org.red5.codec.AVCVideo;
 import org.red5.codec.IAudioStreamCodec;
 import org.red5.codec.IVideoStreamCodec;
+import org.red5.io.flv.impl.FLVReader;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IScope;
@@ -713,6 +714,11 @@ public class MuxAdaptor implements IRecordingListener {
 			int bodySize = packet.getData().limit();
 			byte frameType = packet.getData().position(0).get();
 			
+			//position 1 nalu type
+			//position 2,3,4 composition time offset
+			int compositionTimeOffset = (packet.getData().position(2).get() << 16)  | packet.getData().position(3).getShort();
+			int pts = packet.getTimestamp() + compositionTimeOffset;
+				
 			//we get 5 less bytes because first 5 bytes is related to the video tag. It's not part of the generic packet
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bodySize-5);
 			byteBuffer.put(packet.getData().buf().position(5));
@@ -720,7 +726,7 @@ public class MuxAdaptor implements IRecordingListener {
 			synchronized (muxerList) 
 			{
 				for (Muxer muxer : muxerList) {
-					muxer.writeVideoBuffer(byteBuffer, packet.getTimestamp(), 0, videoStreamIndex, (frameType & 0xF0) == IVideoStreamCodec.FLV_FRAME_KEY, 0);
+					muxer.writeVideoBuffer(byteBuffer, packet.getTimestamp(), 0, videoStreamIndex, (frameType & 0xF0) == IVideoStreamCodec.FLV_FRAME_KEY, 0, pts);
 				}
 			}
 			
@@ -737,8 +743,7 @@ public class MuxAdaptor implements IRecordingListener {
 			//we get 2 less bytes because first 2 bytes is related to the audio tag. It's not part of the generic packet
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bodySize-2);
 			byteBuffer.put(packet.getData().buf().position(2));
-			
-			
+						
 			synchronized (muxerList) 
 			{
 				for (Muxer muxer : muxerList) {
