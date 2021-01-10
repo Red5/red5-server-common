@@ -1051,13 +1051,13 @@ public class AppSettings {
 	 */
 
 	@Value( "${"+SETTINGS_PUBLISH_JWT_CONTROL_ENABLED+":false}" )
-	private int publishJwtControlEnabled;
+	private boolean publishJwtControlEnabled;
 
 	/**
 	 * The settings for enabling jwt token filter mechanism for accessing resources and playing
 	 */
 	@Value( "${"+SETTINGS_PLAY_JWT_CONTROL_ENABLED+":false}" )
-	private int playJwtControlEnabled;
+	private boolean playJwtControlEnabled;
 	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -2127,19 +2127,19 @@ public class AppSettings {
 		this.jwtStreamSecretKey = jwtStreamSecretKey;
 	}
 	
-	public int isPublishJwtControlEnabled() {
+	public boolean isPublishJwtControlEnabled() {
 		return publishJwtControlEnabled;
 	}
 
-	public void setPublishJwtControlEnabled(int publishJwtControlEnabled) {
+	public void setPublishJwtControlEnabled(boolean publishJwtControlEnabled) {
 		this.publishJwtControlEnabled = publishJwtControlEnabled;
 	}
 
-	public int isPlayJwtControlEnabled() {
+	public boolean isPlayJwtControlEnabled() {
 		return playJwtControlEnabled;
 	}
 
-	public void setPlayJwtControlEnabled(int playJwtControlEnabled) {
+	public void setPlayJwtControlEnabled(boolean playJwtControlEnabled) {
 		this.playJwtControlEnabled = playJwtControlEnabled;
 	}
 
