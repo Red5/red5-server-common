@@ -1633,6 +1633,10 @@ public class MuxAdaptor implements IRecordingListener {
 	public void setBufferingFinishTimeMs(long bufferingFinishTimeMs) {
 		this.bufferingFinishTimeMs = bufferingFinishTimeMs;
 	}
+	
+	public LinkedList<PacketTime> getPacketTimeList() {
+		return packetTimeList;
+	}
 }
 
 
