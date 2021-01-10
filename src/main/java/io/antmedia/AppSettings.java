@@ -241,7 +241,13 @@ public class AppSettings {
 	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
 	
 	private static final String SETTINGS_WEBRTC_KEYFRAME_TIME = "settings.webRTCKeyframeTime";
-
+	
+	public static final String SETTINGS_JWT_STREAM_SECRET_KEY = "settings.jwtStreamSecretKey";
+	
+	public static final String SETTINGS_PLAY_JWT_CONTROL_ENABLED = "settings.playJwtControlEnabled";
+	
+	public static final String SETTINGS_PUBLISH_JWT_CONTROL_ENABLED = "settings.publishJwtControlEnabled";
+	
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -1033,7 +1039,26 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_KEYFRAME_TIME+":2000}" )
 	private int webRTCKeyframeTime;
+	
+	/**
+	 * Application JWT stream secret key
+	 */
+	@Value( "${"+SETTINGS_JWT_STREAM_SECRET_KEY+":#{null}}" )
+	private String jwtStreamSecretKey;
+	
+	/**
+	 * The settings for enabling jwt token filter mechanism for accessing resources and publishing
+	 */
 
+	@Value( "${"+SETTINGS_PUBLISH_JWT_CONTROL_ENABLED+":false}" )
+	private int publishJwtControlEnabled;
+
+	/**
+	 * The settings for enabling jwt token filter mechanism for accessing resources and playing
+	 */
+	@Value( "${"+SETTINGS_PLAY_JWT_CONTROL_ENABLED+":false}" )
+	private int playJwtControlEnabled;
+	
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
 	}
@@ -2092,6 +2117,30 @@ public class AppSettings {
 
 	public void setWebRTCKeyframeTime(int webRTCKeyframeTime) {
 		this.webRTCKeyframeTime = webRTCKeyframeTime;
+	}
+	
+	public String getJwtStreamSecretKey() {
+		return jwtStreamSecretKey;
+	}
+
+	public void setJwtStreamSecretKey(String jwtStreamSecretKey) {
+		this.jwtStreamSecretKey = jwtStreamSecretKey;
+	}
+	
+	public int getPublishJwtControlEnabled() {
+		return publishJwtControlEnabled;
+	}
+
+	public void setPublishJwtControlEnabled(int publishJwtControlEnabled) {
+		this.publishJwtControlEnabled = publishJwtControlEnabled;
+	}
+
+	public int getPlayJwtControlEnabled() {
+		return playJwtControlEnabled;
+	}
+
+	public void setPlayJwtControlEnabled(int playJwtControlEnabled) {
+		this.playJwtControlEnabled = playJwtControlEnabled;
 	}
 
 }
