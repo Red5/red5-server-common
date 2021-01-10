@@ -2127,7 +2127,7 @@ public class AppSettings {
 		this.jwtStreamSecretKey = jwtStreamSecretKey;
 	}
 	
-	public int getPublishJwtControlEnabled() {
+	public int isPublishJwtControlEnabled() {
 		return publishJwtControlEnabled;
 	}
 
@@ -2135,7 +2135,7 @@ public class AppSettings {
 		this.publishJwtControlEnabled = publishJwtControlEnabled;
 	}
 
-	public int getPlayJwtControlEnabled() {
+	public int isPlayJwtControlEnabled() {
 		return playJwtControlEnabled;
 	}
 
