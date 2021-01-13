@@ -39,6 +39,9 @@ public class Broadcast {
 	
 	@ApiModelProperty(value = "the status of the stream", allowableValues = "finished, broadcasting,created")
 	private String status;
+	
+	@ApiModelProperty(value = "The status of the playlist. It's usable if type is playlist", allowableValues = "finished, broadcasting,created")
+	private String playListStatus;
 
 	/**
 	 * "liveStream", "ipCamera", "streamSource", "VoD"
@@ -717,5 +720,13 @@ public class Broadcast {
 
 	public void setCurrentPlayIndex(int currentPlayIndex) {
 		this.currentPlayIndex = currentPlayIndex;
+	}
+	
+	public void setPlayListStatus(String playListStatus) {
+		this.playListStatus = playListStatus;
+	}
+	
+	public String getPlayListStatus() {
+		return playListStatus;
 	}
 }
