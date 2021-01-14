@@ -592,6 +592,14 @@ public abstract class DataStore {
 			broadcast.setAbsoluteStartTimeMs(newBroadcast.getAbsoluteStartTimeMs());
 		}
 
+		if (newBroadcast.getPlayListItemList() != null) {
+			broadcast.setPlayListItemList(newBroadcast.getPlayListItemList());
+		}
+		
+		if (newBroadcast.getPlayListStatus() != null) {
+			broadcast.setPlayListStatus(newBroadcast.getPlayListStatus());
+		}
+		
 		broadcast.setCurrentPlayIndex(newBroadcast.getCurrentPlayIndex());
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
