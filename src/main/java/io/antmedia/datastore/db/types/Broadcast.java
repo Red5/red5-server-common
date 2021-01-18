@@ -39,11 +39,14 @@ public class Broadcast {
 	
 	@ApiModelProperty(value = "the status of the stream", allowableValues = "finished, broadcasting,created")
 	private String status;
+	
+	@ApiModelProperty(value = "The status of the playlist. It's usable if type is playlist", allowableValues = "finished, broadcasting,created")
+	private String playListStatus;
 
 	/**
 	 * "liveStream", "ipCamera", "streamSource", "VoD"
 	 */
-	@ApiModelProperty(value = "the type of the stream", allowableValues = "liveStream, ipCamera,streamSource,VoD")
+	@ApiModelProperty(value = "the type of the stream", allowableValues = "liveStream, ipCamera,streamSource,VoD,playlist")
 	private String type;
 
 	/**
@@ -100,6 +103,11 @@ public class Broadcast {
 	@ApiModelProperty(value = "the list of endpoints such as Facebook, Twitter or custom RTMP endpoints  ")
 	@Embedded
 	private List<Endpoint> endPointList;
+	
+	
+	@ApiModelProperty(value = "the list broadcasts of Playlist Items. This list has values when the broadcast type is playlist")
+	@Embedded
+	private List<PlayListItem> playListItemList;
 
 	/**
 	 * is public
@@ -188,6 +196,34 @@ public class Broadcast {
 	@ApiModelProperty(value = "WebM muxing whether enabled or not for the stream, 1 means enabled, -1 means disabled, 0 means no settings for the stream")
 	private int webMEnabled = 0;
 	
+	public static class PlayListItem 
+	{
+		String streamUrl;
+		String type;
+		
+		public PlayListItem() {
+			//need constructor
+		}
+		
+		public PlayListItem(String streamUrl, String type) {
+			this.streamUrl = streamUrl;
+			this.type = type;
+		}
+		
+		public String getStreamUrl() {
+			return streamUrl;
+		}
+		public void setStreamUrl(String streamUrl) {
+			this.streamUrl = streamUrl;
+		}
+		public String getType() {
+			return type;
+		}
+		public void setType(String type) {
+			this.type = type;
+		}
+	}
+	
 
 	public Broadcast() {
 		this.type = "liveStream";
@@ -273,6 +309,12 @@ public class Broadcast {
 	
 	@ApiModelProperty(value = "Number of the allowed maximum HLS viewers for the broadcast")
 	private int hlsViewerLimit = -1;
+
+	/**
+	 * Current playing index for play lists
+	 */
+	@ApiModelProperty(value = "Current playing index for playlist types")
+	private int currentPlayIndex = 0;
 
 	public Broadcast(String status, String name) {
 		this.setStatus(status);
@@ -662,5 +704,29 @@ public class Broadcast {
 
 	public void setHlsViewerLimit(int hlsViewerLimit) {
 		this.hlsViewerLimit = hlsViewerLimit;
+	}
+	
+	public List<PlayListItem> getPlayListItemList() {
+		return playListItemList;
+	}
+	
+	public void setPlayListItemList(List<PlayListItem> playListItemList) {
+		this.playListItemList = playListItemList;
+	}
+
+	public int getCurrentPlayIndex() {
+		return currentPlayIndex ;
+	}
+
+	public void setCurrentPlayIndex(int currentPlayIndex) {
+		this.currentPlayIndex = currentPlayIndex;
+	}
+	
+	public void setPlayListStatus(String playListStatus) {
+		this.playListStatus = playListStatus;
+	}
+	
+	public String getPlayListStatus() {
+		return playListStatus;
 	}
 }
