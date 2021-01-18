@@ -8,9 +8,9 @@ import io.antmedia.muxer.IEndpointListener;
 public class Endpoint 
 {
 
-	//Interface girebilelim, listener interface bi kaç methodu olacak muxer started muxer finished, RTMP end pointlerin init
-	//
-	//TODO:STATUS EKLENECEK
+	/**
+	 * Keeps track of the RTMP endpoint status if it is writing or not
+	 */
 	@ApiModelProperty(value = "Status of the RTMP muxer, possible values are, started, finished, failed")
 	private String muxerStatus;
 

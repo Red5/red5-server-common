@@ -1498,7 +1498,6 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			logger.warn("Start rtmp streaming return false for stream:{} because stream is being prepared", streamId);
 			return false;
 		}
-		logger.warn("RTMP STREAMING STARTING");
 		RtmpMuxer rtmpMuxer = new RtmpMuxer(rtmpUrl);
 		rtmpMuxer.setStatusListener(this);
 
@@ -1522,12 +1521,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 		this.RTMPMuxingStatus = status;
 		List<Endpoint> endplist = broadcast.getEndPointList();
 		logger.info("RTMPMuxer Status = {} StreamId = {} endpList = {}", status, broadcast.getStreamId(), endplist);
-		/*Endpoint endpoint = new Endpoint();
-		endpoint.setRtmpUrl(url);
-		endpoint.setType("generic");
-		endpoint.setMuxerStatus(status);*/
 		getDataStore().updateEndpointStatus(url, broadcast.getStreamId(), status);
-		logger.info("RTMP Muxer Status is {} ", status);
 
 	}
 
