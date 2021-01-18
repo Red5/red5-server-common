@@ -982,7 +982,17 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 			
 			addStreamListener(localMuxAdaptor);
 			this.muxAdaptor = new WeakReference<MuxAdaptor>(localMuxAdaptor);
-			localMuxAdaptor.start();
+			if (!this.muxAdaptor.get().getStreamHandler().isServerShuttingDown()) {
+				localMuxAdaptor.start();
+			}
+			else {
+				log.warn("Server is shutting down and not accepting the connection for stream: {}", publishedName);
+				stop();
+				IStreamCapableConnection connection = getConnection();
+				if (connection != null) {
+					connection.close();
+				}
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();

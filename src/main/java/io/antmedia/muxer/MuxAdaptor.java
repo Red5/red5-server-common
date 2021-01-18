@@ -17,7 +17,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -143,12 +146,10 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
-	protected long elapsedTime;
 	protected static boolean isStreamSource = false;
 
 	private int previewCreatePeriod;
 	private double oldspeed;
-	private long firstPacketTime = -1;
 	private long lastQualityUpdateTime = 0;
 	protected Broadcast broadcast;
 	protected AppSettings appSettings;
@@ -159,6 +160,23 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	private int firstReceivedFrameTimestamp = -1;
 	protected int totalIngestedVideoPacketCount = 0;
 	private long bufferTimeMs = 0;
+	
+	/**
+	 * Packet times in ordered way to calculate streaming health
+	 * Key is the packet ime
+	 * Value is the system time at that moment
+	 * 
+	 */
+	private LinkedList<PacketTime> packetTimeList = new LinkedList<PacketTime>();
+	
+	public static class PacketTime {
+		public final long packetTimeMs;
+		public final long systemTimeMs;
+		public PacketTime(long packetTimeMs, long systemTimeMs) {
+			this.packetTimeMs = packetTimeMs;
+			this.systemTimeMs = systemTimeMs;
+		}
+	}
 
 	protected Vertx vertx;
 
@@ -709,11 +727,12 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	
 	public void writeStreamPacket(IStreamPacket packet) {
 		
-		
+		long dts = packet.getTimestamp() & 0xffffffffL;
 		if (packet.getDataType() == Constants.TYPE_VIDEO_DATA) 
 		{
 			
-			measureIngestTime(packet.getTimestamp(), ((CachedEvent)packet).getReceivedTime());
+		
+			measureIngestTime(dts, ((CachedEvent)packet).getReceivedTime());
 			if (!firstVideoPacketSkipped) {
 				firstVideoPacketSkipped = true;
 				return;
@@ -721,6 +740,11 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			int bodySize = packet.getData().limit();
 			byte frameType = packet.getData().position(0).get();
 			
+			//position 1 nalu type
+			//position 2,3,4 composition time offset
+			int compositionTimeOffset = (packet.getData().position(2).get() << 16)  | packet.getData().position(3).getShort();
+			long pts = dts + compositionTimeOffset;
+				
 			//we get 5 less bytes because first 5 bytes is related to the video tag. It's not part of the generic packet
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bodySize-5);
 			byteBuffer.put(packet.getData().buf().position(5));
@@ -728,7 +752,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			synchronized (muxerList) 
 			{
 				for (Muxer muxer : muxerList) {
-					muxer.writeVideoBuffer(byteBuffer, packet.getTimestamp(), 0, videoStreamIndex, (frameType & 0xF0) == IVideoStreamCodec.FLV_FRAME_KEY, 0);
+					muxer.writeVideoBuffer(byteBuffer, dts, 0, videoStreamIndex, (frameType & 0xF0) == IVideoStreamCodec.FLV_FRAME_KEY, 0, pts);
 				}
 			}
 			
@@ -745,12 +769,11 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			//we get 2 less bytes because first 2 bytes is related to the audio tag. It's not part of the generic packet
 			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bodySize-2);
 			byteBuffer.put(packet.getData().buf().position(2));
-			
-			
+						
 			synchronized (muxerList) 
 			{
 				for (Muxer muxer : muxerList) {
-					muxer.writeAudioBuffer(byteBuffer, audioStreamIndex, packet.getTimestamp());
+					muxer.writeAudioBuffer(byteBuffer, audioStreamIndex, dts);
 				}
 			}
 			
@@ -830,7 +853,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			while ((packet = streamPacketQueue.poll()) != null) {
 				
 				queueSize.decrementAndGet();
-				updateQualityParameters(packet.getTimestamp(), TIME_BASE_FOR_MS);
+				
 								
 				if (!firstKeyFrameReceivedChecked && packet.getDataType() == Constants.TYPE_VIDEO_DATA) {
 					
@@ -852,7 +875,8 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 					}
 				}
 				
-				
+				long dts = packet.getTimestamp() & 0xffffffffL;
+				updateQualityParameters(dts, TIME_BASE_FOR_MS);
 				
 				if (bufferTimeMs == 0) 
 				{
@@ -925,7 +949,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	}
 	
 
-	private void measureIngestTime(int pktTimeStamp, long receivedTime) {
+	private void measureIngestTime(long pktTimeStamp, long receivedTime) {
 		
 			totalIngestedVideoPacketCount++;
 			
@@ -947,21 +971,29 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 
 	private void updateQualityParameters(long pts, AVRational timebase) {
 
-		if (firstPacketTime == -1) {
-			firstPacketTime = av_rescale_q(pts, timebase, TIME_BASE_FOR_MS);
-			logger.info("first packet time original: {} scaled: {}", pts, firstPacketTime);
-		}
-
-		long currentTime = System.currentTimeMillis();
+		
 		long packetTime = av_rescale_q(pts, timebase, TIME_BASE_FOR_MS);
+		packetTimeList.add(new PacketTime(packetTime, System.currentTimeMillis()));
+		
+		
+		if (packetTimeList.size() > 300) {
+			//limit the size. 
+			packetTimeList.remove(0);
+		}
+				
+		PacketTime firstPacket = packetTimeList.getFirst();
+		PacketTime lastPacket = packetTimeList.getLast();
+		
+		long elapsedTime = lastPacket.systemTimeMs - firstPacket.systemTimeMs;
+		long packetTimeDiff = lastPacket.packetTimeMs - firstPacket.packetTimeMs;
 
-		elapsedTime = currentTime - startTime;
-
+		
 		double speed = 0L;
-		if (elapsedTime > 0) {
-			speed = (double) (packetTime - firstPacketTime) / elapsedTime;
+		if (elapsedTime > 0) 
+		{
+			speed = (double) packetTimeDiff / elapsedTime;
 			if (logger.isWarnEnabled() && Double.isNaN(speed)) {
-				logger.warn("speed is NaN, packetTime: {}, first packetTime: {}, elapsedTime:{}", packetTime, firstPacketTime, elapsedTime);
+				logger.warn("speed is NaN, packetTime: {}, first item packetTime: {}, elapsedTime:{}", packetTime, firstPacket.packetTimeMs, elapsedTime);
 			}
 		}
 		changeStreamQualityParameters(this.streamId, null, speed, getInputQueueSize());
@@ -1314,10 +1346,6 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 		this.streamId = streamId;
 	}
 
-	public long getFirstPacketTime() {
-		return firstPacketTime;
-	}
-
 	public StorageClient getStorageClient() {
 		return storageClient;
 	}
@@ -1632,6 +1660,10 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	
 	public void setBufferingFinishTimeMs(long bufferingFinishTimeMs) {
 		this.bufferingFinishTimeMs = bufferingFinishTimeMs;
+	}
+	
+	public LinkedList<PacketTime> getPacketTimeList() {
+		return packetTimeList;
 	}
 }
 

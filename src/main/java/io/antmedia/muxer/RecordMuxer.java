@@ -13,7 +13,7 @@ import static org.bytedeco.ffmpeg.global.avcodec.*;
 import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
 import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
+import static org.bytedeco.ffmpeg.global.avformat.*;
 import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
@@ -85,8 +85,7 @@ public abstract class RecordMuxer extends Muxer {
 
 	protected AVPacket videoPkt;
 	protected int rotation;
-	protected long startTimeInVideoTimebase = 0;
-	protected long startTimeInAudioTimebase = 0;
+
 	/**
 	 * By default first video key frame should be checked
 	 * and below flag should be set to true
@@ -305,7 +304,7 @@ public abstract class RecordMuxer extends Muxer {
 
 
 	@Override
-	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp) {
+	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long dts, int frameRotation, int streamIndex,boolean isKeyFrame,long firstFrameTimeStamp, long pts) {
 		/*
 		 * this control is necessary to prevent server from a native crash 
 		 * in case of initiation and preparation takes long.
@@ -326,8 +325,8 @@ public abstract class RecordMuxer extends Muxer {
 		*/
 		this.rotation = frameRotation;
 		videoPkt.stream_index(streamIndex);
-		videoPkt.pts(timestamp);
-		videoPkt.dts(timestamp);
+		videoPkt.pts(pts);
+		videoPkt.dts(dts);
         if(isKeyFrame) {
             videoPkt.flags(videoPkt.flags() | AV_PKT_FLAG_KEY);
         }
@@ -511,7 +510,7 @@ public abstract class RecordMuxer extends Muxer {
 		if (!firstKeyFrameReceivedChecked && stream.codecpar().codec_type() == AVMEDIA_TYPE_VIDEO) {
 			//we set start time here because we start recording with key frame and drop the other
 			//setting here improves synch between audio and video
-			setVideoStartTime(pkt.pts());
+			//setVideoStartTime(pkt.pts());
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
@@ -554,11 +553,6 @@ public abstract class RecordMuxer extends Muxer {
 		pkt.stream_index(index);
 	}
 
-	private void setVideoStartTime(long time) {
-		if (startTimeInVideoTimebase == 0) {
-			startTimeInVideoTimebase = time;
-		}
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -583,7 +577,6 @@ public abstract class RecordMuxer extends Muxer {
 			int keyFrame = pkt.flags() & AV_PKT_FLAG_KEY;
 			//we set start time here because we start recording with key frame and drop the other
 			//setting here improves synch between audio and video
-			setVideoStartTime(pkt.pts());
 			if (keyFrame == 1) {
 				firstKeyFrameReceivedChecked = true;
 				logger.warn("First key frame received for stream: {}", streamId);
@@ -630,11 +623,9 @@ public abstract class RecordMuxer extends Muxer {
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) 
 		{
-			if (startTimeInAudioTimebase == 0) {
-				startTimeInAudioTimebase = pkt.pts();
-			}
-			pkt.pts(av_rescale_q_rnd(pkt.pts() - startTimeInAudioTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts() - startTimeInAudioTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+
+			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			
 			
 			int ret = av_packet_ref(tmpPacket , pkt);
@@ -650,8 +641,8 @@ public abstract class RecordMuxer extends Muxer {
 		{
 			// we don't set startTimeInVideoTimebase here because we only start with key frame and we drop all frames 
 			// until the first key frame
-			pkt.pts(av_rescale_q_rnd(pkt.pts() - startTimeInVideoTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts() - startTimeInVideoTimebase, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			
 			
 			int ret = av_packet_ref(tmpPacket , pkt);

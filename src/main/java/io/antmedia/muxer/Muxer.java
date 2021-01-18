@@ -313,12 +313,13 @@ public abstract class Muxer {
      * Write encoded video buffer to muxer
      *
      * @param buffer
-     * @param timestamp
+     * @param dts decoding timestamp
      * @param streamIndex
      * @param isKeyFrame
+     * @param pts presentation timestamp
      */
-    public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
-								 boolean isKeyFrame,long firstFrameTimeStamp) {
+    public void writeVideoBuffer(ByteBuffer encodedVideoFrame, long dts, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp, long pts) {
     }
 	
 	/**

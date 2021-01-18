@@ -12,7 +12,6 @@ import io.antmedia.datastore.db.types.ConferenceRoom;
 import io.antmedia.datastore.db.types.ConnectionEvent;
 import io.antmedia.datastore.db.types.Endpoint;
 import io.antmedia.datastore.db.types.P2PConnection;
-import io.antmedia.datastore.db.types.Playlist;
 import io.antmedia.datastore.db.types.SocialEndpointCredentials;
 import io.antmedia.datastore.db.types.StreamInfo;
 import io.antmedia.datastore.db.types.Subscriber;
@@ -616,6 +615,15 @@ public abstract class DataStore {
 			broadcast.setAbsoluteStartTimeMs(newBroadcast.getAbsoluteStartTimeMs());
 		}
 
+		if (newBroadcast.getPlayListItemList() != null) {
+			broadcast.setPlayListItemList(newBroadcast.getPlayListItemList());
+		}
+		
+		if (newBroadcast.getPlayListStatus() != null) {
+			broadcast.setPlayListStatus(newBroadcast.getPlayListStatus());
+		}
+		
+		broadcast.setCurrentPlayIndex(newBroadcast.getCurrentPlayIndex());
 		broadcast.setReceivedBytes(newBroadcast.getReceivedBytes());
 		broadcast.setDuration(newBroadcast.getDuration());
 		broadcast.setBitrate(newBroadcast.getBitrate());
@@ -871,35 +879,6 @@ public abstract class DataStore {
 	 * @return boolean - success 
 	 */
 	public abstract boolean addSubTrack(String mainTrackId, String subTrackId);
-
-
-	/**
-	 * Creates new Playlist	
-	 * @param playlist - Playlist object	
-	 * @return boolean - success 	
-	 */
-	public abstract boolean createPlaylist(Playlist playlist);
-
-	/**
-	 * Get the Playlist by playlistId	
-	 * @param playlistId - playlist id for Playlist	
-	 * @return Playlist - if exist else null 	
-	 */
-	public abstract Playlist getPlaylist(String playlistId);
-
-	/**
-	 * Deletes a Playlist	
-	 * @param playlistId - Playlist object	
-	 * @return boolean - success 	
-	 */
-	public abstract boolean deletePlaylist(String playlistId);
-
-	/**
-	 * Edits previously saved Playlist	
-	 * @param playlist - Playlist 	
-	 * @return true if successfully edited, false if not	
-	 */
-	public abstract boolean editPlaylist(String playlistId, Playlist playlist);
 
 	/**
 	 * Resets the broadcasts in the database. 

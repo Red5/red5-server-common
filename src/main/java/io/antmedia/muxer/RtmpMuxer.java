@@ -503,8 +503,8 @@ public class RtmpMuxer extends Muxer {
 	boolean keyFrameReceived = false;
 
 	@Override
-	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long timestamp, int frameRotation, int streamIndex,
-								 boolean isKeyFrame,long firstFrameTimeStamp) 
+	public synchronized void writeVideoBuffer(ByteBuffer encodedVideoFrame, long dts, int frameRotation, int streamIndex,
+								 boolean isKeyFrame,long firstFrameTimeStamp, long pts) 
 	{
 		
 		if (!isRunning.get() || !registeredStreamIndexList.contains(streamIndex)) {
@@ -522,8 +522,8 @@ public class RtmpMuxer extends Muxer {
 		
 		if (keyFrameReceived) {
 			videoPkt.stream_index(streamIndex);
-			videoPkt.pts(timestamp);
-			videoPkt.dts(timestamp);
+			videoPkt.pts(pts);
+			videoPkt.dts(dts);
 			
 			encodedVideoFrame.rewind();
 			if (isKeyFrame) {

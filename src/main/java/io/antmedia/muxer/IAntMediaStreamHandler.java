@@ -2,9 +2,6 @@ package io.antmedia.muxer;
 
 import java.io.File;
 
-import org.bytedeco.ffmpeg.avcodec.AVPacket;
-import org.bytedeco.ffmpeg.avformat.AVFormatContext;
-
 public interface IAntMediaStreamHandler {
 	
 	public static final String VERTX_BEAN_NAME = "vertxCore";
@@ -60,4 +57,10 @@ public interface IAntMediaStreamHandler {
      * @param inputFormatContext, pkt, streamId
      */
 	public boolean isValidStreamParameters(int width, int height, int fps, int bitrate, String streamId);
+	
+	/**
+	 * 
+	 * @return true if server is shutting down
+	 */
+	public boolean isServerShuttingDown();
 }
