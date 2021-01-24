@@ -242,6 +242,14 @@ public class AppSettings {
 	
 	private static final String SETTINGS_WEBRTC_KEYFRAME_TIME = "settings.webRTCKeyframeTime";
 
+	private static final String SETTINGS_DASH_ENABLE_LOW_LATENCY = "settings.dash.llEnabled";
+
+	private static final String SETTINGS_HLS_ENABLE_LOW_LATENCY = "settings.dash.llHlsEnabled";
+
+	private static final String SETTINGS_HLS_ENABLED_VIA_DASH_LOW_LATENCY = "settings.dash.hlsEnabled";
+
+	private static final String SETTINGS_USE_TIMELINE_DASH_MUXING = "settings.dash.useTimeline";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -333,6 +341,30 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_DASH_EXTRA_WINDOW_SIZE+":5}" )
 	private String dashExtraWindowSize;
+	
+	/**
+	 * Enable low latency dash. This settings is effective if dash is enabled
+	 */
+	@Value( "${"+SETTINGS_DASH_ENABLE_LOW_LATENCY+":true}" )
+	private boolean lLDashEnabled;
+	
+	/**
+	 * Enable low latency hls via dash muxer. LLHLS is effective if dash is enabled.
+	 */
+	@Value( "${"+SETTINGS_HLS_ENABLE_LOW_LATENCY+":false}" )
+	private boolean lLHLSEnabled;
+	
+	/**
+	 * Enable hls through DASH muxer. LLHLS is effective if dash is enabled.
+	 */
+	@Value( "${"+SETTINGS_HLS_ENABLED_VIA_DASH_LOW_LATENCY+":false}" )
+	private boolean hlsEnabledViaDash;
+	
+	/**
+	 * Use timeline in dash muxing.
+	 */
+	@Value( "${"+SETTINGS_USE_TIMELINE_DASH_MUXING+":false}" )
+	private boolean useTimelineDashMuxing;
 	
 	/**
 	 * Enable/disable webrtc 
@@ -2093,5 +2125,41 @@ public class AppSettings {
 	public void setWebRTCKeyframeTime(int webRTCKeyframeTime) {
 		this.webRTCKeyframeTime = webRTCKeyframeTime;
 	}
+
+	public boolean islLDashEnabled() {
+		return lLDashEnabled;
+	}
+
+	public void setlLDashEnabled(boolean lLDashEnabled) {
+		this.lLDashEnabled = lLDashEnabled;
+	}
+
+	public boolean islLHLSEnabled() {
+		return lLHLSEnabled;
+	}
+
+	public void setlLHLSEnabled(boolean lLHLSEnabled) {
+		this.lLHLSEnabled = lLHLSEnabled;
+	}
+
+	public boolean isHlsEnabledViaDash() {
+		return hlsEnabledViaDash;
+	}
+
+	public void setHlsEnabledViaDash(boolean hlsEnabledViaDash) {
+		this.hlsEnabledViaDash = hlsEnabledViaDash;
+	}
+
+	public boolean isUseTimelineDashMuxing() {
+		return useTimelineDashMuxing;
+	}
+
+	public void setUseTimelineDashMuxing(boolean useTimelineDashMuxing) {
+		this.useTimelineDashMuxing = useTimelineDashMuxing;
+	}
+
+	
+
+	
 
 }

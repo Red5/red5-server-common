@@ -364,7 +364,10 @@ public class MuxAdaptor implements IRecordingListener {
 
 				dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
 					.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit, !appSettings.getEncoderSettings().isEmpty(),
-							appSettings.getDashWindowSize(), appSettings.getDashExtraWindowSize());
+							appSettings.getDashWindowSize(), appSettings.getDashExtraWindowSize(), appSettings.islLDashEnabled(), appSettings.islLHLSEnabled(),
+							appSettings.isHlsEnabledViaDash(), appSettings.isUseTimelineDashMuxing());
+				
+				
 			}
 			catch (ClassNotFoundException e) {
 				logger.info("DashMuxer class not found for stream:{}", streamId);
