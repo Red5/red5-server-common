@@ -313,7 +313,7 @@ public class AppSettings {
 	 * Segments are a property of DASH. A segment is the minimal download unit.
 	 *  
 	 */
-	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":2}" )
+	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":6}" )
 	private String dashSegDuration;
 	
 	/**
