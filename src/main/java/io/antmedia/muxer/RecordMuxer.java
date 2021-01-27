@@ -429,7 +429,7 @@ public abstract class RecordMuxer extends Muxer {
 				ApplicationContext appCtx = context.getApplicationContext();
 				Object bean = appCtx.getBean("web.handler");
 				if (bean instanceof IAntMediaStreamHandler) {
-					((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDuration(f), resolution);
+					((IAntMediaStreamHandler)bean).muxingFinished(streamId, f, getDurationInMs(f,streamId), resolution);
 				}
 
 				if (storageClient != null) {
@@ -470,7 +470,7 @@ public abstract class RecordMuxer extends Muxer {
 		logger.info("{} is ready", file.getName());
 	}
 	
-	public long getDuration(File f) {
+	public static long getDurationInMs(File f, String streamId) {
 		AVFormatContext inputFormatContext = avformat.avformat_alloc_context();
 		int ret;
 		if (avformat_open_input(inputFormatContext, f.getAbsolutePath(), null, (AVDictionary)null) < 0) {
@@ -481,7 +481,7 @@ public abstract class RecordMuxer extends Muxer {
 
 		ret = avformat_find_stream_info(inputFormatContext, (AVDictionary)null);
 		if (ret < 0) {
-			logger.info("Could not find stream informatio for stream: {}", streamId);
+			logger.info("Could not find stream information for stream: {}", streamId);
 			avformat_close_input(inputFormatContext);
 			return -1L;
 		}
