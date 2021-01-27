@@ -250,6 +250,8 @@ public class AppSettings {
 
 	private static final String SETTINGS_USE_TIMELINE_DASH_MUXING = "settings.dash.useTimeline";
 
+	private static final String SETTINGS_DASH_HTTP_STREAMING = "settings.dash.httpStreaming";
+
 	@JsonIgnore
 	@NotSaved
 	private List<NetMask> allowedCIDRList = new ArrayList<>();
@@ -1065,6 +1067,16 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_KEYFRAME_TIME+":2000}" )
 	private int webRTCKeyframeTime;
+
+	/**
+	 * Use http streaming in Low Latency Dash. 
+	 * If it's true, it sends files through http
+	 * If it's false, it writes files to disk directly
+	 * 
+	 * In order to have Low Latency http streaming should be used
+	 */
+	@Value( "${"+SETTINGS_DASH_HTTP_STREAMING+":true}" )
+	private boolean dashHttpStreaming;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -2157,6 +2169,15 @@ public class AppSettings {
 	public void setUseTimelineDashMuxing(boolean useTimelineDashMuxing) {
 		this.useTimelineDashMuxing = useTimelineDashMuxing;
 	}
+
+	public boolean isDashHttpStreaming() {
+		return dashHttpStreaming;
+	}
+
+	public void setDashHttpStreaming(boolean dashHttpStreaming) {
+		this.dashHttpStreaming = dashHttpStreaming;
+	}
+
 
 	
 

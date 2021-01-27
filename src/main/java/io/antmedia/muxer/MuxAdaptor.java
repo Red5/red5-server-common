@@ -365,7 +365,7 @@ public class MuxAdaptor implements IRecordingListener {
 				dashMuxer = (Muxer) dashMuxerClass.getConstructors()[0]
 					.newInstance(vertx, dashFragmentDuration, dashSegDuration, targetLatency, deleteDASHFilesOnExit, !appSettings.getEncoderSettings().isEmpty(),
 							appSettings.getDashWindowSize(), appSettings.getDashExtraWindowSize(), appSettings.islLDashEnabled(), appSettings.islLHLSEnabled(),
-							appSettings.isHlsEnabledViaDash(), appSettings.isUseTimelineDashMuxing());
+							appSettings.isHlsEnabledViaDash(), appSettings.isUseTimelineDashMuxing(), appSettings.isDashHttpStreaming());
 				
 				
 			}
