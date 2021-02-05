@@ -700,6 +700,12 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
                 return (IScope) child;
             }
             log.warn("Requested scope: {} is not of IScope type: {}", name, child.getClass().getName());
+            
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace(); 
+            for(StackTraceElement st : stackTrace){
+            	 log.warn(st.toString());
+            }
+
         }
         return null;
     }
