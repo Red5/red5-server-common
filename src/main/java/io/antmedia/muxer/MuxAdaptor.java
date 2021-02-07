@@ -1551,20 +1551,15 @@ public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 		
 		if (endpointStatusUpdaterTimer.get() == -1) 
 		{
-			
-			endpointStatusUpdaterTimer.set(vertx.setTimer(3000, h -> 
+			long timerId = vertx.setTimer(3000, h -> 
 			{
 				endpointStatusUpdaterTimer.set(-1l);
-				
 				try {
 					//update broadcast object
 					broadcast = getDataStore().get(broadcast.getStreamId());
-					
-					
 					for (Iterator iterator = broadcast.getEndPointList().iterator(); iterator.hasNext();) 
 					{
 						Endpoint endpoint = (Endpoint) iterator.next();
-						
 						String statusUpdate = endpointStatusUpdateMap.getValueOrDefault(endpoint.getRtmpUrl(), null);
 						if (statusUpdate != null) {
 							endpoint.setStatus(statusUpdate);
@@ -1573,16 +1568,16 @@ public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 							logger.warn("Endpoint is not found to update its status to {} for rtmp url:{}", statusUpdate, endpoint.getRtmpUrl());
 						}
 					}
-					
 					endpointStatusUpdateMap.clear();
 					
 					getDataStore().updateBroadcastFields(broadcast.getStreamId(), broadcast);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(ExceptionUtils.getStackTrace(e));
 				}
-			}));
+			});
+			
+			endpointStatusUpdaterTimer.set(timerId);
 		}
-		
 
 	}
 
