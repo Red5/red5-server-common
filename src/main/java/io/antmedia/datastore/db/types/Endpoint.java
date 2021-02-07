@@ -64,10 +64,12 @@ public class Endpoint
 	 * Default constructor used in BroadcastRestService.addEndpoint
 	 */
 	public Endpoint() {
+		this.status = IAntMediaStreamHandler.BROADCAST_STATUS_CREATED;
 
 	}
 		
 	public Endpoint(String broadcastId, String streamId, String name, String rtmpUrl, String type, String endpointServiceId, String serverStreamId) {
+		this();
 		this.broadcastId = broadcastId;
 		this.streamId = streamId;
 		this.rtmpUrl = rtmpUrl;
@@ -75,7 +77,6 @@ public class Endpoint
 		this.type = type;
 		this.endpointServiceId = endpointServiceId;
 		this.serverStreamId = serverStreamId;
-		this.status = IAntMediaStreamHandler.BROADCAST_STATUS_CREATED;
 	}
 	
 	public String getBroadcastId() {
