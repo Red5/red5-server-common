@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Iterator;
 
 import io.antmedia.datastore.db.types.Broadcast;
@@ -30,6 +34,8 @@ public abstract class DataStore {
 	private boolean writeStatsToDatastore = true;
 
 	protected volatile boolean available = false;
+	
+	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
 
 
 	public abstract String save(Broadcast broadcast);
@@ -317,6 +323,7 @@ public abstract class DataStore {
 
 		return result;
 	}
+
   
 	
 	/**
@@ -598,6 +605,10 @@ public abstract class DataStore {
 		
 		if (newBroadcast.getPlayListStatus() != null) {
 			broadcast.setPlayListStatus(newBroadcast.getPlayListStatus());
+		}
+		
+		if (newBroadcast.getEndPointList() != null) {
+			broadcast.setEndPointList(newBroadcast.getEndPointList());
 		}
 		
 		broadcast.setCurrentPlayIndex(newBroadcast.getCurrentPlayIndex());
