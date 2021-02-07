@@ -274,10 +274,15 @@ public class RtmpMuxer extends Muxer {
 			av_bsf_free(bsfExtractdataContext);
 			bsfExtractdataContext = null;
 		}
-		if (allocatedExtraDataPointer != null) {
-			avutil.av_free(allocatedExtraDataPointer);
-			allocatedExtraDataPointer = null;
-		}
+		
+		/**
+		 *  Don't free the allocatedExtraDataPointer because it's internally deallocated
+		 * 
+	     * if (allocatedExtraDataPointer != null) {
+		 *	avutil.av_free(allocatedExtraDataPointer);
+		 *	allocatedExtraDataPointer = null;
+		 * }
+		 */
 
 		//allocatedExtraDataPointer is freed when the context is closing
 		avformat_free_context(outputFormatContext);
