@@ -2,7 +2,8 @@ package io.antmedia.datastore.db.types;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import io.antmedia.muxer.IEndpointListener;
+import io.antmedia.muxer.IAntMediaStreamHandler;
+import io.antmedia.muxer.IEndpointStatusListener;
 
 @ApiModel(value="Endpoint", description="The endpoint class, such as Facebook, Twitter or custom RTMP endpoints")
 public class Endpoint 
@@ -12,7 +13,7 @@ public class Endpoint
 	 * Keeps track of the RTMP endpoint status if it is writing or not
 	 */
 	@ApiModelProperty(value = "Status of the RTMP muxer, possible values are, started, finished, failed")
-	private String muxerStatus;
+	private String status;
 
 	/**
 	 * Service name like facebook, periscope, youtube or generic
@@ -74,7 +75,7 @@ public class Endpoint
 		this.type = type;
 		this.endpointServiceId = endpointServiceId;
 		this.serverStreamId = serverStreamId;
-		this.muxerStatus = "notInitialized";
+		this.status = IAntMediaStreamHandler.BROADCAST_STATUS_CREATED;
 	}
 	
 	public String getBroadcastId() {
@@ -102,8 +103,6 @@ public class Endpoint
 		return name;
 	}
 
-	public void setMuxerStatus(String status){ this.muxerStatus = status;}
-	public String getMuxerStatus(){ return this.muxerStatus; }
 
 	public void setName(String name) {
 		this.name = name;
@@ -130,6 +129,14 @@ public class Endpoint
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 }

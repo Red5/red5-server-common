@@ -21,10 +21,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -66,9 +68,10 @@ import io.antmedia.muxer.parser.AACConfigParser.AudioObjectTypes;
 import io.antmedia.muxer.parser.SpsParser;
 import io.antmedia.storage.StorageClient;
 import io.vertx.core.Vertx;
+import net.sf.ehcache.util.concurrent.ConcurrentHashMap;
 
 
-public class MuxAdaptor implements IRecordingListener, IEndpointListener {
+public class MuxAdaptor implements IRecordingListener, IEndpointStatusListener {
 
 	
 	public static final String ADAPTIVE_SUFFIX = "_adaptive";
@@ -113,7 +116,6 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	protected boolean dashMuxingEnabled;
 	protected boolean objectDetectionEnabled;
 
-	protected String RTMPMuxingStatus;
 	protected boolean webRTCEnabled = false;
 	protected StorageClient storageClient;
 	protected String hlsTime;
@@ -141,8 +143,6 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	private String oldQuality;
 	public static final  AVRational TIME_BASE_FOR_MS;
 	private IAntMediaStreamHandler appAdapter;
-
-	private IEndpointListener listener;
 
 	private String mp4Filtername;
 	protected List<EncoderSettings> encoderSettingsList;
@@ -201,9 +201,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	private volatile long lastPacketTimeMsInQueue = 0;
 	private volatile long firstPacketReadyToSentTimeMs = 0;
 	protected String dataChannelWebHookURL = null;
-	protected long absoluteTotalIngestTime = 0;
-	private String RTMPMuxerStatus = null;
-	
+	protected long absoluteTotalIngestTime = 0;	
 	/**
 	 * It's defined here because EncoderAdaptor should access it directly to add new streams.
 	 * Don't prefer to access to dashMuxer directly. Access it with getter
@@ -224,6 +222,8 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	private AVCodecParameters audioCodecParameters;
 	private BytePointer audioExtraDataPointer;
 	private BytePointer videoExtraDataPointer;
+	private AtomicLong endpointStatusUpdaterTimer = new AtomicLong(-1l);
+	private ConcurrentHashMap<String, String> endpointStatusUpdateMap = new ConcurrentHashMap<>();
 	
 	private static final int COUNT_TO_LOG_BUFFER = 500;
 
@@ -1444,7 +1444,7 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	private boolean prepareMuxer(Muxer muxer) {
 		boolean prepared;
 		muxer.init(scope, streamId, 0);
-		logger.info("Mux Adaptor called");
+		logger.info("prepareMuxer for stream:{} muxer:{}", streamId, muxer.getClass().getSimpleName());
 		
 		if (streamSourceInputFormatContext != null) {
 			
@@ -1540,19 +1540,49 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 	}
 
 	@Override
-	public String getEndpointStatus(String url){
-		Broadcast broadcast = getBroadcast();
-		RtmpMuxer rtmpMuxer = getRtmpMuxer(url);
-		return rtmpMuxer.getStatus();
-	}
-
-	@Override
-	public void setEndpointStatus(String url, String status){
-		Broadcast broadcast = getDataStore().get(this.streamId);
-		this.RTMPMuxingStatus = status;
-		List<Endpoint> endplist = broadcast.getEndPointList();
-		logger.info("RTMPMuxer Status = {} StreamId = {} endpList = {}", status, broadcast.getStreamId(), endplist);
-		getDataStore().updateEndpointStatus(url, broadcast.getStreamId(), status);
+	public void endpointStatusUpdated(String url, String status)
+	{
+		logger.info("Endpoint status updated to {}  for streamId: {} for url: {}", status, broadcast.getStreamId(), url);
+		
+		/**
+		 * Below code snippet updates the database at max 3 seconds interval
+		 */
+		endpointStatusUpdateMap.put(url, status);
+		
+		if (endpointStatusUpdaterTimer.get() == -1) 
+		{
+			
+			endpointStatusUpdaterTimer.set(vertx.setTimer(3000, h -> 
+			{
+				endpointStatusUpdaterTimer.set(-1l);
+				
+				try {
+					//update broadcast object
+					broadcast = getDataStore().get(broadcast.getStreamId());
+					
+					
+					for (Iterator iterator = broadcast.getEndPointList().iterator(); iterator.hasNext();) 
+					{
+						Endpoint endpoint = (Endpoint) iterator.next();
+						
+						String statusUpdate = endpointStatusUpdateMap.getValueOrDefault(endpoint.getRtmpUrl(), null);
+						if (statusUpdate != null) {
+							endpoint.setStatus(statusUpdate);
+						}
+						else {
+							logger.warn("Endpoint is not found to update its status to {} for rtmp url:{}", statusUpdate, endpoint.getRtmpUrl());
+						}
+					}
+					
+					endpointStatusUpdateMap.clear();
+					
+					getDataStore().updateBroadcastFields(broadcast.getStreamId(), broadcast);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}));
+		}
+		
 
 	}
 
@@ -1574,9 +1604,6 @@ public class MuxAdaptor implements IRecordingListener, IEndpointListener {
 			}
 		}
 		return rtmpMuxer;
-	}
-	public String getRtmpMuxerStatus(String rtmpUrl){
-		return this.RTMPMuxerStatus;
 	}
 
 	public boolean stopRtmpStreaming(String rtmpUrl) 
