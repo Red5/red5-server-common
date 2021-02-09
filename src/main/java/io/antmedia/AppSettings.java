@@ -241,6 +241,22 @@ public class AppSettings {
 	private static final String SETTINGS_INGESTING_STREAM_LIMIT = "settings.ingestingStreamLimit";
 	
 	private static final String SETTINGS_WEBRTC_KEYFRAME_TIME = "settings.webRTCKeyframeTime";
+	
+	public static final String SETTINGS_JWT_STREAM_SECRET_KEY = "settings.jwtStreamSecretKey";
+	
+	public static final String SETTINGS_PLAY_JWT_CONTROL_ENABLED = "settings.playJwtControlEnabled";
+	
+	public static final String SETTINGS_PUBLISH_JWT_CONTROL_ENABLED = "settings.publishJwtControlEnabled";
+	
+	private static final String SETTINGS_DASH_ENABLE_LOW_LATENCY = "settings.dash.llEnabled";
+
+	private static final String SETTINGS_HLS_ENABLE_LOW_LATENCY = "settings.dash.llHlsEnabled";
+
+	private static final String SETTINGS_HLS_ENABLED_VIA_DASH_LOW_LATENCY = "settings.dash.hlsEnabled";
+
+	private static final String SETTINGS_USE_TIMELINE_DASH_MUXING = "settings.dash.useTimeline";
+
+	private static final String SETTINGS_DASH_HTTP_STREAMING = "settings.dash.httpStreaming";
 
 	@JsonIgnore
 	@NotSaved
@@ -305,7 +321,7 @@ public class AppSettings {
 	 * Segments are a property of DASH. A segment is the minimal download unit.
 	 *  
 	 */
-	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":2}" )
+	@Value( "${"+SETTINGS_DASH_SEG_DURATION+":6}" )
 	private String dashSegDuration;
 	
 	/**
@@ -333,6 +349,30 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_DASH_EXTRA_WINDOW_SIZE+":5}" )
 	private String dashExtraWindowSize;
+	
+	/**
+	 * Enable low latency dash. This settings is effective if dash is enabled
+	 */
+	@Value( "${"+SETTINGS_DASH_ENABLE_LOW_LATENCY+":true}" )
+	private boolean lLDashEnabled;
+	
+	/**
+	 * Enable low latency hls via dash muxer. LLHLS is effective if dash is enabled.
+	 */
+	@Value( "${"+SETTINGS_HLS_ENABLE_LOW_LATENCY+":false}" )
+	private boolean lLHLSEnabled;
+	
+	/**
+	 * Enable hls through DASH muxer. LLHLS is effective if dash is enabled.
+	 */
+	@Value( "${"+SETTINGS_HLS_ENABLED_VIA_DASH_LOW_LATENCY+":false}" )
+	private boolean hlsEnabledViaDash;
+	
+	/**
+	 * Use timeline in dash muxing.
+	 */
+	@Value( "${"+SETTINGS_USE_TIMELINE_DASH_MUXING+":false}" )
+	private boolean useTimelineDashMuxing;
 	
 	/**
 	 * Enable/disable webrtc 
@@ -1033,6 +1073,34 @@ public class AppSettings {
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_KEYFRAME_TIME+":2000}" )
 	private int webRTCKeyframeTime;
+	
+	/**
+	 * Application JWT stream secret key
+	 */
+	@Value( "${"+SETTINGS_JWT_STREAM_SECRET_KEY+":#{null}}" )
+	private String jwtStreamSecretKey;
+	
+	/**
+	 * The settings for enabling jwt token filter mechanism for accessing resources and publishing
+	 */
+	@Value( "${"+SETTINGS_PUBLISH_JWT_CONTROL_ENABLED+":false}" )
+	private boolean publishJwtControlEnabled;
+
+	/**
+	 * The settings for enabling jwt token filter mechanism for accessing resources and playing
+	 */
+	@Value( "${"+SETTINGS_PLAY_JWT_CONTROL_ENABLED+":false}" )
+	private boolean playJwtControlEnabled;
+	
+	/**
+	 * Use http streaming in Low Latency Dash. 
+	 * If it's true, it sends files through http
+	 * If it's false, it writes files to disk directly
+	 * 
+	 * In order to have Low Latency http streaming should be used
+	 */
+	@Value( "${"+SETTINGS_DASH_HTTP_STREAMING+":true}" )
+	private boolean dashHttpStreaming;
 
 	public boolean isWriteStatsToDatastore() {
 		return writeStatsToDatastore;
@@ -2093,5 +2161,74 @@ public class AppSettings {
 	public void setWebRTCKeyframeTime(int webRTCKeyframeTime) {
 		this.webRTCKeyframeTime = webRTCKeyframeTime;
 	}
+	
+	public String getJwtStreamSecretKey() {
+		return jwtStreamSecretKey;
+	}
+
+	public void setJwtStreamSecretKey(String jwtStreamSecretKey) {
+		this.jwtStreamSecretKey = jwtStreamSecretKey;
+	}
+	
+	public boolean isPublishJwtControlEnabled() {
+		return publishJwtControlEnabled;
+	}
+
+	public void setPublishJwtControlEnabled(boolean publishJwtControlEnabled) {
+		this.publishJwtControlEnabled = publishJwtControlEnabled;
+	}
+
+	public boolean isPlayJwtControlEnabled() {
+		return playJwtControlEnabled;
+	}
+
+	public void setPlayJwtControlEnabled(boolean playJwtControlEnabled) {
+		this.playJwtControlEnabled = playJwtControlEnabled;
+	}
+
+	public boolean islLDashEnabled() {
+		return lLDashEnabled;
+	}
+
+	public void setlLDashEnabled(boolean lLDashEnabled) {
+		this.lLDashEnabled = lLDashEnabled;
+	}
+
+	public boolean islLHLSEnabled() {
+		return lLHLSEnabled;
+	}
+
+	public void setlLHLSEnabled(boolean lLHLSEnabled) {
+		this.lLHLSEnabled = lLHLSEnabled;
+	}
+
+	public boolean isHlsEnabledViaDash() {
+		return hlsEnabledViaDash;
+	}
+
+	public void setHlsEnabledViaDash(boolean hlsEnabledViaDash) {
+		this.hlsEnabledViaDash = hlsEnabledViaDash;
+	}
+
+	public boolean isUseTimelineDashMuxing() {
+		return useTimelineDashMuxing;
+	}
+
+	public void setUseTimelineDashMuxing(boolean useTimelineDashMuxing) {
+		this.useTimelineDashMuxing = useTimelineDashMuxing;
+	}
+
+	public boolean isDashHttpStreaming() {
+		return dashHttpStreaming;
+	}
+
+	public void setDashHttpStreaming(boolean dashHttpStreaming) {
+		this.dashHttpStreaming = dashHttpStreaming;
+	}
+
+
+	
+
+	
 
 }

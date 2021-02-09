@@ -328,13 +328,13 @@ public class Broadcast {
 		this.type = "liveStream";
 	}
 
-	public Broadcast(String name, String ipAddr, String username, String password, String rtspUrl, String type) {
+	public Broadcast(String name, String ipAddr, String username, String password, String streamUrl, String type) {
 
 		this.name = name;
 		this.ipAddr = ipAddr;
 		this.username = username;
 		this.password = password;
-		this.streamUrl = rtspUrl;
+		this.streamUrl = streamUrl;
 		this.type = type;
 	}
 
