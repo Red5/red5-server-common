@@ -164,6 +164,28 @@ public abstract class RecordMuxer extends Muxer {
 
 		return result;
 	}
+	
+	public boolean addAudioStream(int sampleRate, int channelLayout, int streamIndex) {
+		boolean result = false;
+		AVFormatContext outputContext = getOutputFormatContext();
+		if (outputContext != null && isCodecSupported(AV_CODEC_ID_OPUS))
+		{
+			registeredStreamIndexList.add(streamIndex);
+			AVStream outStream = avformat_new_stream(outputContext, null);
+			outStream.codecpar().sample_rate(sampleRate);
+			outStream.codecpar().channel_layout(channelLayout);
+			outStream.codecpar().codec_id(AV_CODEC_ID_OPUS);
+			outStream.codecpar().codec_type(AVMEDIA_TYPE_AUDIO);
+			outStream.codecpar().codec_tag(0);
+			
+			AVRational timeBase = new AVRational();
+			timeBase.num(1).den(1000);
+			codecTimeBaseMap.put(streamIndex, timeBase);
+			result = true;
+		}
+
+		return result;
+	}
 
 	@Override
 	public synchronized boolean addStream(AVCodecParameters codecParameters, AVRational timebase) 
