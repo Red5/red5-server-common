@@ -338,7 +338,7 @@ public abstract class Muxer {
 		return false;
 	}
 
-	public boolean addAudioStream(int sampleRate, int channelLayout, int streamIndex) {
+	public boolean addAudioStream(int sampleRate, int channelLayout, int codecId, int streamIndex) {
 		return false;
 	}
 	
