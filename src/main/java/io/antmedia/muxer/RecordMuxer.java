@@ -1,6 +1,7 @@
 package io.antmedia.muxer;
 
 
+import static org.bytedeco.ffmpeg.global.avcodec.AV_CODEC_ID_OPUS;
 import static org.bytedeco.ffmpeg.global.avcodec.AV_PKT_FLAG_KEY;
 import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_free;
 import static org.bytedeco.ffmpeg.global.avcodec.av_bsf_receive_packet;
@@ -9,11 +10,11 @@ import static org.bytedeco.ffmpeg.global.avcodec.av_init_packet;
 import static org.bytedeco.ffmpeg.global.avcodec.av_packet_free;
 import static org.bytedeco.ffmpeg.global.avcodec.av_packet_ref;
 import static org.bytedeco.ffmpeg.global.avcodec.av_packet_unref;
-import static org.bytedeco.ffmpeg.global.avcodec.*;
+import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_copy;
 import static org.bytedeco.ffmpeg.global.avcodec.avcodec_parameters_from_context;
 import static org.bytedeco.ffmpeg.global.avformat.AVFMT_NOFILE;
 import static org.bytedeco.ffmpeg.global.avformat.AVIO_FLAG_WRITE;
-import static org.bytedeco.ffmpeg.global.avformat.*;
+import static org.bytedeco.ffmpeg.global.avformat.av_write_frame;
 import static org.bytedeco.ffmpeg.global.avformat.av_write_trailer;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_alloc_output_context2;
 import static org.bytedeco.ffmpeg.global.avformat.avformat_close_input;
@@ -165,16 +166,16 @@ public abstract class RecordMuxer extends Muxer {
 		return result;
 	}
 	
-	public boolean addAudioStream(int sampleRate, int channelLayout, int streamIndex) {
+	public boolean addAudioStream(int sampleRate, int channelLayout, int codecId, int streamIndex) {
 		boolean result = false;
 		AVFormatContext outputContext = getOutputFormatContext();
-		if (outputContext != null && isCodecSupported(AV_CODEC_ID_OPUS))
+		if (outputContext != null && isCodecSupported(codecId))
 		{
 			registeredStreamIndexList.add(streamIndex);
 			AVStream outStream = avformat_new_stream(outputContext, null);
 			outStream.codecpar().sample_rate(sampleRate);
 			outStream.codecpar().channel_layout(channelLayout);
-			outStream.codecpar().codec_id(AV_CODEC_ID_OPUS);
+			outStream.codecpar().codec_id(codecId);
 			outStream.codecpar().codec_type(AVMEDIA_TYPE_AUDIO);
 			outStream.codecpar().codec_tag(0);
 			
