@@ -1010,7 +1010,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
 				if (endPointList != null && !endPointList.isEmpty()) 
 				{
 					for (Endpoint endpoint : endPointList) {
-						muxAdaptor.addMuxer(new RtmpMuxer(endpoint.getRtmpUrl()));
+						RtmpMuxer rtmpMuxer = new RtmpMuxer(endpoint.getRtmpUrl());
+						rtmpMuxer.setStatusListener(muxAdaptor);
+						muxAdaptor.addMuxer(rtmpMuxer);
 					}
 				}
 			}
