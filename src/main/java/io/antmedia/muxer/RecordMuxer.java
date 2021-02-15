@@ -110,6 +110,8 @@ public abstract class RecordMuxer extends Muxer {
 	protected int[] SUPPORTED_CODECS;
 	private long firstAudioPts = -1;
 	private long firstVideoPts = -1;
+	private long firstAudioDts = -1;
+	private long firstVideoDts = -1;
 
 
 	public boolean isCodecSupported(int codecId) {
@@ -649,11 +651,12 @@ public abstract class RecordMuxer extends Muxer {
 
 		if (codecType == AVMEDIA_TYPE_AUDIO) 
 		{
-			if(firstAudioPts == -1) {
+			if(firstAudioPts == -1 || firstAudioDts == -1) {
 				firstAudioPts = pkt.pts();
+				firstAudioDts = pkt.dts();
 			}
 			pkt.pts(av_rescale_q_rnd(pkt.pts() - firstAudioPts, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts() - firstAudioPts, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts() - firstAudioDts , inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			
 			
 			int ret = av_packet_ref(tmpPacket , pkt);
@@ -667,13 +670,14 @@ public abstract class RecordMuxer extends Muxer {
 		}
 		else if (codecType == AVMEDIA_TYPE_VIDEO) 
 		{
-			if(firstVideoPts == -1) {
+			if(firstVideoPts == -1 || firstVideoDts == -1) {
 				firstVideoPts = pkt.pts();
+				firstVideoDts = pkt.dts();
 			}
 			// we don't set startTimeInVideoTimebase here because we only start with key frame and we drop all frames 
 			// until the first key frame
-			pkt.pts(av_rescale_q_rnd(pkt.pts() - firstVideoPts, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-			pkt.dts(av_rescale_q_rnd(pkt.dts() - firstVideoPts, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.pts(av_rescale_q_rnd(pkt.pts() - firstVideoPts , inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+			pkt.dts(av_rescale_q_rnd(pkt.dts() - firstVideoDts, inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 			
 			
 			int ret = av_packet_ref(tmpPacket , pkt);
