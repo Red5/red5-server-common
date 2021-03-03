@@ -185,7 +185,10 @@ public abstract class RecordMuxer extends Muxer {
 			outStream.codecpar().codec_tag(0);
 			
 			AVRational timeBase = new AVRational();
-			timeBase.num(1).den(1000);
+			////////////////////////
+			//TODO: This is a workaround solution. Adding sampleRate as timebase may not be correct. This method is only called by OpusForwarder
+			/////////////////////////
+			timeBase.num(1).den(sampleRate);
 			codecTimeBaseMap.put(streamIndex, timeBase);
 			result = true;
 		}
