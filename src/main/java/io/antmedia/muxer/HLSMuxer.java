@@ -234,11 +234,12 @@ public class HLSMuxer extends Muxer  {
 		}
 		
 		int ret;
+		logger.info("HLS Muxer pre-values DTS = " + pkt.dts() + " PTS = " + pkt.pts() + " Packet toString = " + pkt.toString());
 		pkt.pts(av_rescale_q_rnd(pkt.pts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.dts(av_rescale_q_rnd(pkt.dts(), inputTimebase, outputTimebase, AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 		pkt.duration(av_rescale_q(pkt.duration(), inputTimebase, outputTimebase));
 		pkt.pos(-1);
-		
+		logger.info("HLS Muxer after-values DTS = " + pkt.dts() + " PTS = " + pkt.pts());
 
 		if (codecType ==  AVMEDIA_TYPE_VIDEO) 
 		{
