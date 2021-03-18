@@ -31,7 +31,9 @@ import dev.morphia.annotations.NotSaved;
  * 
  * If default values are not as expected, this is the signal that server is not started correctly for any 
  * reason. Don't patch it with null-check or similar things. Take a look at why server is not started correctly
- * 
+ * These settings are set for each applications and stored in the file <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties.
+ *
+ *
  * @author mekya
  *
  */
@@ -275,7 +277,8 @@ public class AppSettings {
     private String remoteAllowedCIDR;
 
 	/**
-	 * Enable/Disable mp4 recording
+	 * It's mandatory. If it is set true then a .mp4 file is created into <APP_DIR>/streams directory.
+	 * Default value is false.
 	 */
 	@Value( "${"+SETTINGS_MP4_MUXING_ENABLED+":false}" )
 	private boolean mp4MuxingEnabled;
@@ -287,31 +290,40 @@ public class AppSettings {
 	private boolean webMMuxingEnabled;
 	
 	/**
-	 * Add date time to the name of mp4 recordings
+	 * It's mandatory. Date and time are added to created .mp4 file name. Default value is false.
 	 */
 	@Value( "${"+SETTINGS_ADD_DATE_TIME_TO_MP4_FILE_NAME+":false}" )
 	private boolean addDateTimeToMp4FileName;
 	
 	/**
 	 * Enable/disable hls recording
+	 *  If it is set true then HLS files are created into <APP_DIR>/streams and HLS playing is enabled.
+	 *  Default value is true.
 	 */
 	@Value( "${"+SETTINGS_HLS_MUXING_ENABLED+":true}" )
 	private boolean hlsMuxingEnabled;
 	
 	/**
 	 * Encoder settings in comma separated format
+	 * This must be set for adaptive streaming.
+	 * If it is empty SFU mode will be active in WebRTCAppEE.
+	 * video height, video bitrate, and audio bitrate are set as an example.
+	 * Ex. 480,300000,96000,360,200000,64000.
 	 */
 	@Value( "${"+SETTINGS_ENCODER_SETTINGS_STRING+"}" )
 	private String encoderSettingsString;
 	
 	/**
 	 * Number of segments(chunks) in m3u8 files
+	 * Set the maximum number of playlist entries. If 0 the list file will contain all the segments.
 	 */
 	@Value( "${"+SETTINGS_HLS_LIST_SIZE+":#{null}}" )
 	private String hlsListSize;
 	
 	/**
-	 * Duration of segments in m3u8 files 
+	 * Duration of segments in m3u8 files
+	 * Target segment length in seconds.
+	 * Segment will be cut on the next key frame after this time has passed.
 	 */
 	@Value( "${"+SETTINGS_HLS_TIME+":#{null}}" )
 	private String hlsTime;
@@ -375,7 +387,8 @@ public class AppSettings {
 	private boolean useTimelineDashMuxing;
 	
 	/**
-	 * Enable/disable webrtc 
+	 * Enable/disable webrtc
+	 * It's mandatory. If it is set true then WebRTC playing is enabled. Default value is false
 	 */
 	@Value( "${"+SETTINGS_WEBRTC_ENABLED+":true}" )
 	private boolean webRTCEnabled;
@@ -391,8 +404,10 @@ public class AppSettings {
 	private boolean useOriginalWebRTCEnabled;
 
 	/**
+	 * It's mandatory.
 	 * If this value is true, hls files(m3u8 and ts files) are deleted after the broadcasting
 	 * has finished.
+	 * Default value is true.
 	 */
 	@Value( "${"+SETTINGS_DELETE_HLS_FILES_ON_ENDED+":true}" )
 	private boolean deleteHLSFilesOnEnded = true;
@@ -406,30 +421,42 @@ public class AppSettings {
 
 	/**
 	 * The secret string used for creating hash based tokens
+	 * The key that used in hash generation for hash-based access control.
 	 */
 	@Value( "${"+TOKEN_HASH_SECRET+":''}" )
 	private String tokenHashSecret;
 
 	/**
+	 * It's mandatory.
+	 * If it is set true then hash based access control enabled for publishing.
 	 * enable hash control as token for publishing operations using shared secret
+	 * Default value is false.
 	 */
 	@Value( "${"+SETTINGS_HASH_CONTROL_PUBLISH_ENABLED+":false}" )
 	private boolean hashControlPublishEnabled;
 
 	/**
+	 * It's mandatory.
+	 * If it is set true then hash based access control enabled for playing.
 	 * enable hash control as token for playing operations using shared secret
+	 * Default value is false.
 	 */
 	@Value( "${"+SETTINGS_HASH_CONTROL_PLAY_ENABLED+":false}" )
 	private boolean hashControlPlayEnabled;
 
 	/**
 	 * The URL for action callback
+	 *  You must set this to subscribe some event notifications.
+	 *  For details check: https://antmedia.io/webhook-integration/
 	 */
 	@Value( "${"+SETTINGS_LISTENER_HOOK_URL+":}" )
 	private String listenerHookURL;
 
 	/**
 	 * The control for publishers
+	 * It's mandatory.
+	 * If it is set true you cannot start publishing unless you add the stream id to the database.
+	 * You can add stream id by REST API. Default value is false.
 	 */
 	@Value( "${"+SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE+":false}" )
 	private boolean acceptOnlyStreamsInDataStore;
@@ -442,6 +469,8 @@ public class AppSettings {
 
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 * It's mandatory.
+	 * Check for details: https://antmedia.io/secure-video-streaming/. Default value is false.
 	 */
 	
 	@Value("#{'${"+ SETTINGS_PUBLISH_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}") 
@@ -450,6 +479,8 @@ public class AppSettings {
 	// https://stackoverflow.com/questions/49653241/can-multiple-property-names-be-specified-in-springs-value-annotation
 	/**
 	 * The settings for enabling one-time token control mechanism for accessing resources and publishing
+	 * It's mandatory. This enables token control.
+	 * Check for details: https://antmedia.io/secure-video-streaming/. Default value is false.
 	 */
 	@Value("#{'${"+ SETTINGS_PLAY_TOKEN_CONTROL_ENABLED +":${" + SETTINGS_TOKEN_CONTROL_ENABLED +":false}}'}")
 	private boolean playTokenControlEnabled ;
@@ -467,49 +498,56 @@ public class AppSettings {
 	private int timeTokenPeriod;	
 	
 	/**
-	 * event or vod
+	 * It can be event: or vod. Check HLS documentation for EXT-X-PLAYLIST-TYPE.
+	 *
 	 */
 	@Value( "${"+SETTINGS_HLS_PLAY_LIST_TYPE+":#{null}}" )
 	private String hlsPlayListType;
 
 	/**
 	 * Facebook client id
+	 * This is client id provided by Facebook to broadcast streams to Facebook.
 	 */
 	@Value( "${"+FACEBOOK_CLIENT_ID+"}" )
 	private String facebookClientId;
 
 	/**
 	 * Facebook client secret
+	 * Secret key for the Facebook client id.
 	 */
 	@Value( "${"+FACEBOOK_CLIENT_SECRET+"}" )
 	private String facebookClientSecret;
 
 	/**
 	 * Periscope app client id
+	 * This is client id provided by Periscope to broadcast streams to Periscope.
 	 */
 	@Value( "${"+PERISCOPE_CLIENT_ID+"}" )
 	private String  periscopeClientId;
 
 	/**
 	 * Periscope app client secret
+	 * Secret key for the Periscope client id.
 	 */
 	@Value( "${"+PERISCOPE_CLIENT_SECRET+"}" )
 	private String  periscopeClientSecret;
 
 	/**
 	 * Youtube client id
+	 * This is client id provided by YouTube to broadcast streams to YouTube.
 	 */
 	@Value( "${"+YOUTUBE_CLIENT_ID+"}" )
 	private String youtubeClientId;
 
 	/**
-	 * Youtube client secret
+	 * Youtube client secret for youtube client id
 	 */
 	@Value( "${"+YOUTUBE_CLIENT_SECRET+"}" )
 	private String youtubeClientSecret;
 
 	/**
 	 * The path for manually saved used VoDs
+	 * Determines the directory to store VOD files.
 	 */
 	@Value( "${"+SETTINGS_VOD_FOLDER+"}" )
 	private String vodFolder;
@@ -576,6 +614,9 @@ public class AppSettings {
 	 * 
 	 * you can add + separated more options like below
 	 * settings.hlsflags=+program_date_time+round_durations+append_list
+	 *
+	 * Separate with + or -.
+	 * Check for details: https://ffmpeg.org/ffmpeg-formats.html#Options-6
 	 * 
 	 */
 	@Value( "${" + SETTINGS_HLS_FLAGS + ":delete_segments}")
