@@ -24,15 +24,21 @@ import dev.morphia.annotations.NotSaved;
 /**
  * Application Settings for each application running in Ant Media Server.
  * Each setting should have a default value with @Value annotation. Otherwise it breaks compatibility 
- * 
+ *
  * For naming please use the following convention
  * start with "settings" put dot(.) and related parameter.
  * like settings.hlsTime
  * 
  * If default values are not as expected, this is the signal that server is not started correctly for any 
  * reason. Don't patch it with null-check or similar things. Take a look at why server is not started correctly
- * These settings are set for each applications and stored in the file <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties.
  *
+ *
+ * These settings are set for each applications and stored in the file <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties.
+ * Click on any field to see its default value.
+ *
+ * Example: click on 	aacEncodingEnabled --> The line @Value("${settings.aacEncodingEnabled:true}") means that
+ * its default value is true and it can be changed from the file  <AMS_DIR>/webapps/<AppName>/WEB_INF/red5-web.properties
+ * Be careful about the type of the field. For this case its boolean.
  *
  * @author mekya
  *
