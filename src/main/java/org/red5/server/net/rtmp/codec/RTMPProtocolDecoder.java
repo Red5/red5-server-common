@@ -183,7 +183,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 case RTMP.STATE_DISCONNECTING:
                 case RTMP.STATE_DISCONNECTED:
                     // throw away any remaining input data:
-                    in.clear();
+                    //in.clear();
                     return null;
                 default:
                     throw new IllegalStateException("Invalid RTMP state: " + connectionState);
@@ -242,8 +242,8 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 log.trace("Header was null or empty - chh: {}", chunkHeader);
             }
             // clear / compact the input and close the channel
-            in.clear();
-            in.compact();
+            //in.clear();
+            //in.compact();
             // send a NetStream.Failed message
             StreamService.sendNetStreamStatus(conn, StatusCodes.NS_FAILED, "Bad data on channel: " + channelId, "no-name", Status.ERROR, conn.getStreamIdForChannelId(channelId));
             // close the channel on which the issue occurred, until we find a way to exclude the current data

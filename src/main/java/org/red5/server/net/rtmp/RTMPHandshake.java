@@ -150,7 +150,7 @@ public abstract class RTMPHandshake implements IHandshake {
         setHandshakeType(handshakeType);
         // whether or not to use later handshake version
         fp9Handshake = "true".equals(System.getProperty("use.fp9.handshake", "true"));
-        log.trace("Use fp9 handshake? {}", fp9Handshake);
+        //log.trace("Use fp9 handshake? {}", fp9Handshake);
         // create our handshake bytes
         createHandshakeBytes();
         // instance a buffer to handle fragmenting

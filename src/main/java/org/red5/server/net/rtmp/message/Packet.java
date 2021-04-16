@@ -239,14 +239,16 @@ public class Packet implements Externalizable {
     public String toString() {
         StringBuilder sb = new StringBuilder("Packet [");
         if (header != null) {
-            sb.append("[header data type=" + header.getDataType() + ", channel=" + header.getChannelId() + ", timer=" + header.getTimer() + "]");
+            sb.append("[");
+            sb.append(header.toString());
+            sb.append("]");
         } else {
-            sb.append("[header=null]");
+            sb.append("[Header=null]");
         }
         if (message != null) {
-            sb.append(", [message timestamp=" + message.getTimestamp() + "]");
+            sb.append(", [Message timestamp=" + message.getTimestamp() + "]");
         } else {
-            sb.append(", [message=null]");
+            sb.append(", [Message=null]");
         }
         sb.append("]");
         return sb.toString();

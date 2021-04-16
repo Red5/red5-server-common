@@ -330,11 +330,14 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
                 try {
                     acquired = lock.tryAcquire(10, TimeUnit.MILLISECONDS);
                     if (acquired) {
-                        if (log.isTraceEnabled()) {
-                            log.trace("Writing message");
+                        // attempt write if not closing
+                        if (!ioSession.isClosing()) {
+                            if (log.isTraceEnabled()) {
+                                log.trace("Writing message");
+                            }
+                            writingMessage(out);
+                            ioSession.write(out);
                         }
-                        writingMessage(out);
-                        ioSession.write(out);
                         break;
                     }
                 } catch (InterruptedException e) {

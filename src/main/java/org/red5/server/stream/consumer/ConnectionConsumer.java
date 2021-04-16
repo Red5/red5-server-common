@@ -7,6 +7,7 @@
 
 package org.red5.server.stream.consumer;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.mina.core.buffer.IoBuffer;
@@ -133,17 +134,21 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             int eventTime = msg.getTimestamp();
             log.debug("Message timestamp: {}", eventTime);
             if (eventTime < 0) {
-                eventTime += Integer.MIN_VALUE;
+                //eventTime += Integer.MIN_VALUE;
+                //log.debug("Message has negative timestamp, applying {} offset: {}", Integer.MIN_VALUE, eventTime);
+                // everyone seems to prefer positive timestamps
+                eventTime += (eventTime * -1);
+                log.debug("Message has negative timestamp, flipping it to positive: {}", Integer.MIN_VALUE, eventTime);
                 msg.setTimestamp(eventTime);
-                log.debug("Message has negative timestamp, applying {} offset: {}", Integer.MIN_VALUE, eventTime);
             }
             // get the data type
             byte dataType = msg.getDataType();
             if (log.isTraceEnabled()) {
                 log.trace("Data type: {} source type: {}", dataType, ((BaseEvent) msg).getSourceType());
             }
-            // create a new header for the consumer
-            final Header header = new Header();
+            // create a new header for the consumer if the message.body doesnt already have one
+            final Header header = Optional.ofNullable(msg.getHeader()).orElse(new Header());
+            // XXX sets the timerbase, but should we do this if there's already a timerbase?
             header.setTimerBase(eventTime);
             // data buffer
             IoBuffer buf = null;

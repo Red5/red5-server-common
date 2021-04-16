@@ -248,7 +248,8 @@ public class Header implements Constants, Cloneable, Externalizable {
         if (isEmpty()) {
             return "empty";
         } else {
-            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataType + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extended=" + extended + "]";
+            String dataTypeStr = (dataType > 0 && dataType < 23) ? Constants.DataType.values()[dataType].name() : Constants.DataType.TYPE_INVALID.name();
+            return "Header [streamId=" + streamId + ", channelId=" + channelId + ", dataType=" + dataTypeStr + ", timerBase=" + timerBase + ", timerDelta=" + timerDelta + ", size=" + size + ", extended=" + extended + "]";
         }
     }
 

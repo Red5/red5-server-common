@@ -199,4 +199,33 @@ public interface Constants {
      */
     public static final byte SO_DELETE_ATTRIBUTE = 0x0A;
 
+    /**
+     * Easier way to use the types without needing to look them up.
+     */
+    static enum DataType {
+        TYPE_INVALID, // 0 Invalid
+        TYPE_CHUNK_SIZE, // 1 Chunk size
+        TYPE_ABORT, // 2 Abort
+        TYPE_BYTES_READ, // 3 Acknowledgement
+        TYPE_PING, // 4 Ping / control
+        TYPE_SERVER_BANDWIDTH, // 5 Window Acknowledgement Size
+        TYPE_CLIENT_BANDWIDTH, // 6 Set Peer Bandwidth
+        TYPE_EDGE_ORIGIN, // 7 
+        TYPE_AUDIO_DATA, // 8 Audio
+        TYPE_VIDEO_DATA, // 9 Video
+        TYPE_UNK_0A, // 0x0a 10
+        TYPE_UNK_0B, // 0x0b 11
+        TYPE_UNK_0C, // 0x0c 12
+        TYPE_UNK_0D, // 0x0d 13
+        TYPE_UNK_0E, // 0x0e 14
+        TYPE_FLEX_STREAM_SEND, // 0x0f 15 AMF3 data message
+        TYPE_FLEX_SHARED_OBJECT, // 0x10 16 AMF3 shared object
+        TYPE_FLEX_MESSAGE, // 0x11 17 AMF3 command message
+        TYPE_NOTIFY, // 0x12 18 AMF0 data message
+        TYPE_SHARED_OBJECT, // 0x13 19 AMF0 shared object
+        TYPE_INVOKE, // 0x14 20 AMF0 command message
+        TYPE_UNK_15, // 0x15 21
+        TYPE_AGGREGATE, // 0x16 22 Aggregate data
+    }
+
 }

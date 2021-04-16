@@ -18,9 +18,8 @@
     </appender>
     <root level="TRACE">
         <appender-ref ref="CONSOLE" />
-        <!-- <appender-ref ref="FILE" /> -->
+        <appender-ref ref="FILE" />
     </root>
     <!-- <logger name="org.springframework" level="INFO" /> <logger name="org.apache" 
         level="INFO" /> -->
-    <logger name="org.quartz" level="OFF" />
 </configuration>

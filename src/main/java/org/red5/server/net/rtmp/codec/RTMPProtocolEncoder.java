@@ -405,7 +405,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
         byte headerType = getHeaderType(header, lastHeader);
         RTMPUtils.encodeHeaderByte(buf, headerType, header.getChannelId());
         if (log.isTraceEnabled()) {
-            log.trace("{} lastHeader: {}", Header.HeaderType.values()[headerType], lastHeader);
+            log.trace("encodeHeader: {} lastHeader: {}", Header.HeaderType.values()[headerType], lastHeader);
         }
         /*
          * Timestamps in RTMP are given as an integer number of milliseconds relative to an unspecified epoch. Typically, each stream will start with a timestamp of 0, but this is not
@@ -485,7 +485,7 @@ public class RTMPProtocolEncoder implements Constants, IEventEncoder {
             default:
                 break;
         }
-        log.trace("Encoded chunk {} {}", Header.HeaderType.values()[headerType], header);
+        //log.trace("Encoded chunk {} {}", Header.HeaderType.values()[headerType], header);
     }
 
     /**
