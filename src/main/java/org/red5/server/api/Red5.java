@@ -66,6 +66,11 @@ public final class Red5 {
      * Server capabilities
      */
     public static final Integer CAPABILITIES = Integer.valueOf(33);
+    
+    /**
+     * Since 128 is way too small, we'll use 1024 by default when publish or play are called.
+     */
+    public static int targetChunkSize = 1024;
 
     /**
      * Data version for NetStatusEvents
@@ -249,6 +254,25 @@ public final class Red5 {
             instance = new Red5();
         }
         return instance;
+    }
+
+    /**
+     * Sets the target chunk size to use for publish and play invocations. Default is 1024 which is much greater
+     * than the original default of 128.
+     * 
+     * @param targetChunkSize the chunk size to use
+     */
+    public static void setTargetChunkSize(int targetChunkSize) {
+        Red5.targetChunkSize = targetChunkSize;
+    }
+
+    /**
+     * Returns the target chunk size.
+     * 
+     * @return targetChunkSize
+     */
+    public static int getTargetChunkSize() {
+        return targetChunkSize;
     }
 
 }
