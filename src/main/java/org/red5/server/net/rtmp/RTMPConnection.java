@@ -85,9 +85,9 @@ import org.springframework.util.concurrent.ListenableFutureTask;
 public abstract class RTMPConnection extends BaseConnection implements IStreamCapableConnection, IServiceCapableConnection, IReceivedMessageTaskQueueListener {
 
     private static Logger log = LoggerFactory.getLogger(RTMPConnection.class);
-    
+
     protected static boolean isTrace = log.isTraceEnabled();
-    
+
     protected static boolean isDebug = log.isDebugEnabled();
 
     public static final String RTMP_SESSION_ID = "rtmp.sessionid";

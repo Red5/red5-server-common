@@ -66,7 +66,7 @@ public final class Red5 {
      * Server capabilities
      */
     public static final Integer CAPABILITIES = Integer.valueOf(33);
-    
+
     /**
      * Since 128 is way too small, we'll use 1024 by default when publish or play are called.
      */
