@@ -55,12 +55,12 @@ public final class Red5 {
     /**
      * Server version with revision
      */
-    public static final String VERSION = "Red5 Server 1.2.6";
+    public static final String VERSION = "Red5 Server 1.2.9";
 
     /**
      * Server version for fmsVer requests
      */
-    public static final String FMS_VERSION = "RED5/1,2,6,0";
+    public static final String FMS_VERSION = "RED5/1,2,9,0";
 
     /**
      * Server capabilities
@@ -68,9 +68,9 @@ public final class Red5 {
     public static final Integer CAPABILITIES = Integer.valueOf(33);
 
     /**
-     * Since 128 is way too small, we'll use 1024 by default when publish or play are called.
+     * Since 128 is the default when publish or play are called; changing this may cause unexpected issues.
      */
-    public static int targetChunkSize = 1024;
+    public static int targetChunkSize = 128;
 
     /**
      * Data version for NetStatusEvents
