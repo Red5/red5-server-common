@@ -522,7 +522,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                 conn.pingReceived(ping);
                 break;
             default:
-                log.warn("Unhandled ping: {}", ping);
+                log.debug("Unhandled ping: {}", ping);
         }
     }
 
