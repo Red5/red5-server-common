@@ -534,11 +534,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                         log.debug("Keep alive scheduled for {}", sessionId);
                     }
                 } catch (Exception e) {
-                    log.error("Error creating keep alive job for {}", sessionId, e);
+                    log.warn("Error creating keep alive job for {}", sessionId, e);
                 }
             }
         } else {
-            log.error("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
+            // reducing from error to debug as its not all that important of a message these days to have such promotion
+            log.debug("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
         }
     }
 
