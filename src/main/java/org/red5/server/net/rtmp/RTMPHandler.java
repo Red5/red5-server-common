@@ -539,13 +539,9 @@ public class RTMPHandler extends BaseRTMPHandler implements DisposableBean {
                 conn.pingReceived(ping);
                 break;
             default:
-<<<<<<< HEAD
                 if (isDebug) {
                     log.warn("Unhandled ping: {}", ping);
                 }
-=======
-                log.debug("Unhandled ping: {}", ping);
->>>>>>> f78354776c35ad921077113bd88a00cdd7e951d8
         }
     }
 
