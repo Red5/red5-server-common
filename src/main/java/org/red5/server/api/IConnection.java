@@ -30,14 +30,14 @@ public interface IConnection extends ICoreObject, ICastingAttributeStore {
      * Encoding type.
      */
     public static enum Encoding {
-        AMF0, AMF3, WEBSOCKET, SOCKETIO, RTP, SRTP, BLOB, RAW
+        AMF0, AMF3, WEBSOCKET, SOCKETIO, RTP, SRTP, BLOB, RAW, RTSP, SRT, MPEGTS, DATACHANNEL
     };
 
     /**
      * Duty type.
      */
     public static enum Duty {
-        UNDEFINED, PUBLISHER, SUBSCRIBER, PROXY, REMOTING, SENDRECV, SENDONLY, RECVONLY
+        UNDEFINED, PUBLISHER, SUBSCRIBER, PROXY, REMOTING, SENDRECV, SENDONLY, RECVONLY, HEARTBEAT
     };
 
     /**

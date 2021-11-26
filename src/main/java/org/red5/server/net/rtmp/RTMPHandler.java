@@ -8,6 +8,7 @@
 package org.red5.server.net.rtmp;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.red5.io.object.StreamAction;
@@ -53,13 +54,18 @@ import org.red5.server.so.SharedObjectService;
 import org.red5.server.stream.StreamService;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
  * RTMP events handler.
  */
-public class RTMPHandler extends BaseRTMPHandler {
+public class RTMPHandler extends BaseRTMPHandler implements DisposableBean {
 
     protected static Logger log = Red5LoggerFactory.getLogger(RTMPHandler.class);
+
+    protected static boolean isTrace = log.isTraceEnabled();
+
+    protected static boolean isDebug = log.isDebugEnabled();
 
     /**
      * Status object service.
@@ -80,6 +86,17 @@ public class RTMPHandler extends BaseRTMPHandler {
      * Whether or not to dispatch stream actions to the current scope.
      */
     private boolean dispatchStreamActions;
+
+    @Override
+    public void destroy() throws Exception {
+        log.info("Shutting down handling");
+        if (!recvDispatchExecutor.isTerminated()) {
+            List<Runnable> waiters = recvDispatchExecutor.shutdownNow();
+            if (isDebug) {
+                log.debug("Tasks waiting at shutdown: {}", waiters);
+            }
+        }
+    }
 
     /**
      * Setter for server object.
@@ -197,7 +214,7 @@ public class RTMPHandler extends BaseRTMPHandler {
     private boolean invokeCall(RTMPConnection conn, IServiceCall call, Object service) {
         final IScope scope = conn.getScope();
         final IContext context = scope.getContext();
-        if (log.isTraceEnabled()) {
+        if (isTrace) {
             log.trace("Scope: {} context: {} service: {}", scope, context, service);
         }
         return context.getServiceInvoker().invoke(call, service);
@@ -212,7 +229,7 @@ public class RTMPHandler extends BaseRTMPHandler {
         final int transId = command.getTransactionId();
         // get the call
         final IServiceCall call = command.getCall();
-        if (log.isTraceEnabled()) {
+        if (isTrace) {
             log.trace("call: {}", call);
         }
         // get the method name
@@ -229,7 +246,7 @@ public class RTMPHandler extends BaseRTMPHandler {
             // If this is not a service call then handle connection...
             if (call.getServiceName() == null) {
                 StreamAction streamAction = StreamAction.getEnum(action);
-                if (log.isDebugEnabled()) {
+                if (isDebug) {
                     log.debug("Stream action: {}", streamAction.toString());
                 }
                 // TODO change this to an application scope parameter and / or change to the listener pattern
@@ -313,7 +330,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                         // TODO optimize this to use Scope instead of Context
                         scope = context.resolveScope(global, path);
                         if (scope != null) {
-                            if (log.isDebugEnabled()) {
+                            if (isDebug) {
                                 log.debug("Connecting to: {}", scope.getName());
                                 log.debug("Conn {}, scope {}, call {} args {}", new Object[] { conn, scope, call, call.getArguments() });
                             }
@@ -448,7 +465,7 @@ public class RTMPHandler extends BaseRTMPHandler {
             conn.close();
         }
         if (command instanceof Invoke) {
-            if (log.isDebugEnabled()) {
+            if (isDebug) {
                 log.debug("Command type Invoke");
             }
             if ((source.getStreamId().intValue() != 0) && (call.getStatus() == Call.STATUS_SUCCESS_VOID || call.getStatus() == Call.STATUS_SUCCESS_NULL)) {
@@ -481,7 +498,7 @@ public class RTMPHandler extends BaseRTMPHandler {
                     conn.getIoSession().closeOnFlush(); //must wait until flush to close as we just wrote asynchronously to the stream
                 }
             }
-        } else if (log.isDebugEnabled()) {
+        } else if (isDebug) {
             log.debug("Command type: {}", command.getClass().getName());
         }
     }
@@ -522,7 +539,9 @@ public class RTMPHandler extends BaseRTMPHandler {
                 conn.pingReceived(ping);
                 break;
             default:
-                log.warn("Unhandled ping: {}", ping);
+                if (isDebug) {
+                    log.warn("Unhandled ping: {}", ping);
+                }
         }
     }
 
@@ -552,7 +571,7 @@ public class RTMPHandler extends BaseRTMPHandler {
     /** {@inheritDoc} */
     @Override
     protected void onSharedObject(RTMPConnection conn, Channel channel, Header source, SharedObjectMessage message) {
-        if (log.isDebugEnabled()) {
+        if (isDebug) {
             log.debug("onSharedObject - conn: {} channel: {} so message: {}", new Object[] { conn.getSessionId(), channel.getId(), message });
         }
         final IScope scope = conn.getScope();

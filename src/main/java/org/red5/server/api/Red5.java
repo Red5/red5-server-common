@@ -55,12 +55,12 @@ public final class Red5 {
     /**
      * Server version with revision
      */
-    public static final String VERSION = "Red5 Server 1.2.6";
+    public static final String VERSION = "Red5 Server 1.2.9";
 
     /**
      * Server version for fmsVer requests
      */
-    public static final String FMS_VERSION = "RED5/1,2,6,0";
+    public static final String FMS_VERSION = "RED5/1,2,9,0";
 
     /**
      * Server capabilities
@@ -68,9 +68,10 @@ public final class Red5 {
     public static final Integer CAPABILITIES = Integer.valueOf(33);
 
     /**
-     * Since 128 is way too small, we'll use 1024 by default when publish or play are called.
+     * Target for ChunkSize messaging in RTMP. Defaulting to 128 which is the original FMS setting, until modifying this is more
+     * throughly tested.
      */
-    public static int targetChunkSize = 1024;
+    public static int targetChunkSize = 128;
 
     /**
      * Data version for NetStatusEvents
@@ -257,8 +258,7 @@ public final class Red5 {
     }
 
     /**
-     * Sets the target chunk size to use for publish and play invocations. Default is 1024 which is much greater
-     * than the original default of 128.
+     * Sets the target chunk size to use for publish and play invocations. Default is 128.
      * 
      * @param targetChunkSize the chunk size to use
      */

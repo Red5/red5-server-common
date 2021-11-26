@@ -20,7 +20,7 @@ public interface IRTMPHandler {
      * @param conn
      *            Connection
      */
-    public void connectionOpened(RTMPConnection conn);
+    void connectionOpened(RTMPConnection conn);
 
     /**
      * Message received.
@@ -32,7 +32,7 @@ public interface IRTMPHandler {
      * @throws Exception
      *             on exception
      */
-    public void messageReceived(RTMPConnection conn, Packet packet) throws Exception;
+    void messageReceived(RTMPConnection conn, Packet packet) throws Exception;
 
     /**
      * Message sent.
@@ -42,7 +42,7 @@ public interface IRTMPHandler {
      * @param packet
      *            RTMP message
      */
-    public void messageSent(RTMPConnection conn, Packet packet);
+    void messageSent(RTMPConnection conn, Packet packet);
 
     /**
      * Connection closed.
@@ -50,6 +50,6 @@ public interface IRTMPHandler {
      * @param conn
      *            Connection
      */
-    public void connectionClosed(RTMPConnection conn);
+    void connectionClosed(RTMPConnection conn);
 
 }

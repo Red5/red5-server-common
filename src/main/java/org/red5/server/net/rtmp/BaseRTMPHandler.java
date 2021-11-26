@@ -10,6 +10,8 @@ package org.red5.server.net.rtmp;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.mina.core.session.IoSession;
 import org.red5.io.object.StreamAction;
@@ -47,9 +49,16 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 
     private static Logger log = LoggerFactory.getLogger(BaseRTMPHandler.class);
 
+    private static boolean isTrace = log.isTraceEnabled();
+
+    private static boolean isDebug = log.isDebugEnabled();
+
+    // single thread pool for handling receive
+    protected final static ExecutorService recvDispatchExecutor = Executors.newCachedThreadPool();
+
     /** {@inheritDoc} */
     public void connectionOpened(RTMPConnection conn) {
-        if (log.isTraceEnabled()) {
+        if (isTrace) {
             log.trace("connectionOpened - conn: {} state: {}", conn, conn.getState());
         }
         conn.open();
@@ -61,14 +70,13 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
     public void messageReceived(RTMPConnection conn, Packet packet) throws Exception {
         log.trace("messageReceived connection: {}", conn.getSessionId());
         if (conn != null) {
-            IRTMPEvent message = null;
+            final IRTMPEvent message = packet.getMessage();
             try {
-                message = packet.getMessage();
                 final Header header = packet.getHeader();
                 final Number streamId = header.getStreamId();
                 final Channel channel = conn.getChannel(header.getChannelId());
                 final IClientStream stream = conn.getStreamById(streamId);
-                if (log.isTraceEnabled()) {
+                if (isTrace) {
                     log.trace("Message received - header: {}", header);
                 }
                 // set stream id on the connection
@@ -79,7 +87,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                 message.setSource(conn);
                 // process based on data type
                 final byte headerDataType = header.getDataType();
-                if (log.isTraceEnabled()) {
+                if (isTrace) {
                     log.trace("Header / message data type: {}", headerDataType);
                 }
                 switch (headerDataType) {
@@ -93,7 +101,15 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                         // NOTE: If we respond to "publish" with "NetStream.Publish.BadName",
                         // the client sends a few stream packets before stopping. We need to ignore them
                         if (stream != null) {
-                            ((IEventDispatcher) stream).dispatchEvent(message);
+                            recvDispatchExecutor.submit(() -> {
+                                try {
+                                    Thread.currentThread().setName(String.format("RTMPRecvDispatch@%s", conn.getSessionId()));
+                                    ((IEventDispatcher) stream).dispatchEvent(message);
+                                    message.release();
+                                } catch (Exception e) {
+                                    log.warn("Exception on Media dispatch", e);
+                                }
+                            });
                         }
                         break;
                     case TYPE_FLEX_SHARED_OBJECT:
@@ -106,7 +122,6 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                         IPendingServiceCall call = ((Invoke) message).getCall();
                         if (message.getHeader().getStreamId().intValue() != 0 && call.getServiceName() == null && StreamAction.PUBLISH.equals(call.getServiceMethodName())) {
                             if (stream != null) {
-                                // Only dispatch if stream really was created
                                 ((IEventDispatcher) stream).dispatchEvent(message);
                             }
                         }
@@ -116,7 +131,15 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                     case TYPE_FLEX_STREAM_SEND:
                         if (((Notify) message).getData() != null && stream != null) {
                             // Stream metadata
-                            ((IEventDispatcher) stream).dispatchEvent(message);
+                            recvDispatchExecutor.submit(() -> {
+                                try {
+                                    Thread.currentThread().setName(String.format("RTMPRecvDispatch@%s", conn.getSessionId()));
+                                    ((IEventDispatcher) stream).dispatchEvent(message);
+                                    message.release();
+                                } catch (Exception e) {
+                                    log.warn("Exception on Notify dispatch", e);
+                                }
+                            });
                         } else {
                             onCommand(conn, channel, header, (Notify) message);
                         }
@@ -146,10 +169,6 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                 }
             } catch (Throwable t) {
                 log.error("Exception", t);
-            }
-            // XXX this may be causing 'missing' data if previous methods are not making copies before buffering etc..
-            if (message != null) {
-                message.release();
             }
         }
     }
@@ -195,7 +214,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
      * @return Hostname from that URL
      */
     protected String getHostname(String url) {
-        if (log.isDebugEnabled()) {
+        if (isDebug) {
             log.debug("getHostname - url: {}", url);
         }
         String[] parts = url.split("/");

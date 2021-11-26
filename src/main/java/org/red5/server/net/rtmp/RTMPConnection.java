@@ -18,6 +18,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -86,9 +90,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
     private static Logger log = LoggerFactory.getLogger(RTMPConnection.class);
 
-    protected static boolean isTrace = log.isTraceEnabled();
+    private static boolean isTrace = log.isTraceEnabled();
 
-    protected static boolean isDebug = log.isDebugEnabled();
+    private static boolean isDebug = log.isDebugEnabled();
 
     public static final String RTMP_SESSION_ID = "rtmp.sessionid";
 
@@ -210,29 +214,29 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Hash map that stores pending calls and ids as pairs.
      */
-    private transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
+    protected transient ConcurrentMap<Integer, IPendingServiceCall> pendingCalls = new ConcurrentHashMap<>(pendingCallsInitalCapacity, 0.75f, pendingCallsConcurrencyLevel);
 
     /**
      * Deferred results set.
      * 
      * @see org.red5.server.net.rtmp.DeferredResult
      */
-    private transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<>();
+    protected transient CopyOnWriteArraySet<DeferredResult> deferredResults = new CopyOnWriteArraySet<>();
 
     /**
      * Last ping round trip time
      */
-    private AtomicInteger lastPingRoundTripTime = new AtomicInteger(-1);
+    protected AtomicInteger lastPingRoundTripTime = new AtomicInteger(-1);
 
     /**
      * Timestamp when last ping command was sent.
      */
-    private AtomicLong lastPingSentOn = new AtomicLong(0);
+    protected AtomicLong lastPingSentOn = new AtomicLong(0);
 
     /**
      * Timestamp when last ping result was received.
      */
-    private AtomicLong lastPongReceivedOn = new AtomicLong(0);
+    protected AtomicLong lastPongReceivedOn = new AtomicLong(0);
 
     /**
      * RTMP events handler
@@ -242,7 +246,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Ping interval in ms to detect dead clients.
      */
-    private volatile int pingInterval = 5000;
+    protected volatile int pingInterval = 5000;
 
     /**
      * Maximum time in ms after which a client is disconnected because of inactivity.
@@ -262,12 +266,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Number of bytes the client reported to have received.
      */
-    private AtomicLong clientBytesRead = new AtomicLong(0L);
+    protected AtomicLong clientBytesRead = new AtomicLong(0L);
 
     /**
      * Map for pending video packets keyed by stream id.
      */
-    private transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<>(1, 0.9f, 1);
+    protected transient ConcurrentMap<Number, AtomicInteger> pendingVideos = new ConcurrentHashMap<>(1, 0.9f, 1);
 
     /**
      * Number of (NetStream) streams used.
@@ -336,12 +340,12 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Closing flag
      */
-    private final AtomicBoolean closing = new AtomicBoolean(false);
+    protected final AtomicBoolean closing = new AtomicBoolean(false);
 
     /**
      * Packet sequence number
      */
-    private final AtomicLong packetSequence = new AtomicLong();
+    protected final AtomicLong packetSequence = new AtomicLong();
 
     /**
      * Specify the size of queue that will trigger audio packet dropping, disabled if it's 0
@@ -356,12 +360,27 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Wait for handshake task.
      */
-    private ScheduledFuture<?> waitForHandshakeTask;
+    protected ScheduledFuture<?> waitForHandshakeTask;
 
     /**
      * Keep alive task.
      */
-    private ScheduledFuture<?> keepAliveTask;
+    protected ScheduledFuture<?> keepAliveTask;
+
+    /**
+     * Executor for received RTMP messages.
+     */
+    protected transient ExecutorService receivedPacketExecutor = Executors.newSingleThreadExecutor();
+
+    /**
+     * Future which takes packets from the queue and passes them to the handler.
+     */
+    protected transient Future<?> receivedPacketFuture;
+
+    /**
+     * Queue for received RTMP packets.
+     */
+    protected LinkedTransferQueue<Packet> receivedPacketQueue = new LinkedTransferQueue<>();
 
     /**
      * Creates anonymous RTMP connection without scope.
@@ -500,7 +519,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
             try {
                 waitForHandshakeTask = scheduler.schedule(new WaitForHandshakeTask(), new Date(System.currentTimeMillis() + maxHandshakeTimeout));
             } catch (TaskRejectedException e) {
-                log.error("WaitForHandshake task was rejected for {}", sessionId, e);
+                if (isDebug) {
+                    log.warn("WaitForHandshake task was rejected for {}", sessionId, e);
+                }
             }
         }
     }
@@ -538,7 +559,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 }
             }
         } else {
-            log.error("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
+            log.debug("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
         }
     }
 
@@ -1102,9 +1123,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * Update number of bytes to read next value.
      */
     protected void updateBytesRead() {
-        if (isTrace) {
-            log.trace("updateBytesRead");
-        }
+        //if (isTrace) {
+        //    log.trace("updateBytesRead");
+        //}
         long bytesRead = getReadBytes();
         if (bytesRead >= nextBytesRead) {
             BytesRead sbr = new BytesRead((int) (bytesRead % Integer.MAX_VALUE));
@@ -1312,9 +1333,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * Increases number of read messages by one. Updates number of bytes read.
      */
     public void messageReceived() {
-        if (isTrace) {
-            log.trace("messageReceived");
-        }
+        //if (isTrace) {
+        //    log.trace("messageReceived");
+        //}
         readMessages.incrementAndGet();
         // trigger generation of BytesRead messages
         updateBytesRead();
@@ -1369,9 +1390,9 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      *            incoming message packet
      */
     public void handleMessageReceived(Packet packet) {
-        if (isTrace) {
-            log.trace("handleMessageReceived - {}", sessionId);
-        }
+        //if (isTrace) {
+        //    log.trace("handleMessageReceived - {}", sessionId);
+        //}
         // set the packet expiration time if maxHandlingTimeout is not disabled (set to 0)
         if (maxHandlingTimeout > 0) {
             packet.setExpirationTime(System.currentTimeMillis() + maxHandlingTimeout);
@@ -1432,12 +1453,34 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                     }
             }
         } else {
-            log.trace("Executor is null on {} state: {}", sessionId, RTMP.states[getStateCode()]);
-            // pass message to the handler
-            try {
-                handler.messageReceived(this, packet);
-            } catch (Exception e) {
-                log.error("Error processing received message {} state: {}", sessionId, RTMP.states[getStateCode()], e);
+            //if (isTrace) {
+            //    log.trace("Executor is null on {} state: {}", sessionId, RTMP.states[getStateCode()]);
+            //}
+            // queue the packet
+            receivedPacketQueue.offer(packet);
+            // create the future for processing the queue as needed
+            if (receivedPacketFuture == null) {
+                final RTMPConnection conn = this;
+                receivedPacketFuture = receivedPacketExecutor.submit(() -> {
+                    Thread.currentThread().setName(String.format("RTMPRecv@%s", sessionId));
+                    do {
+                        try {
+                            // DTS appears to be off only by < 10ms
+                            Packet p = receivedPacketQueue.take();
+                            if (p != null) {
+                                if (isTrace) {
+                                    log.trace("Handle received packet: {}", p);
+                                }
+                                // pass message to the handler where any sorting or delays would need to be injected
+                                handler.messageReceived(conn, p);
+                            }
+                        } catch (Exception e) {
+                            log.error("Error processing received message {} state: {}", sessionId, RTMP.states[getStateCode()], e);
+                        }
+                    } while (!isClosed());
+                    receivedPacketFuture = null;
+                    receivedPacketQueue.clear();
+                });
             }
         }
     }
