@@ -175,7 +175,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Whether or not to register with JMX.
      */
-    private boolean registerJMX = true;
+    protected boolean registerJMX = true;
 
     /**
      * Check and send notification if necessary

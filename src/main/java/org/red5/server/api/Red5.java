@@ -68,8 +68,12 @@ public final class Red5 {
     public static final Integer CAPABILITIES = Integer.valueOf(33);
 
     /**
+    <<<<<<< HEAD
      * Target for ChunkSize messaging in RTMP. Defaulting to 128 which is the original FMS setting, until modifying this is more
      * throughly tested.
+    =======
+     * Since 128 is the default when publish or play are called; changing this may cause unexpected issues.
+    >>>>>>> f78354776c35ad921077113bd88a00cdd7e951d8
      */
     public static int targetChunkSize = 128;
 
