@@ -48,6 +48,8 @@ import org.slf4j.LoggerFactory;
  * Base class for all RTMP handlers.
  * 
  * @author The Red5 Project
+ * @author Andy Shaules
+ * @author Paul Gregoire
  */
 public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, StatusCodes {
 
@@ -80,7 +82,6 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                 final Number streamId = header.getStreamId();
                 final Channel channel = conn.getChannel(header.getChannelId());
                 final IClientStream stream = conn.getStreamById(streamId);
-
                 if (isTrace) {
                     log.trace("Message received - header: {}", header);
                 }
@@ -104,25 +105,14 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                         // log.trace("Marking message as originating from a Live source");
                         message.setSourceType(Constants.SOURCE_TYPE_LIVE);
                         // NOTE: If we respond to "publish" with "NetStream.Publish.BadName",
-                        // the client sends a few stream packets before stopping. We need to ignore them
+                        // the client sends a few stream packets before stopping; we need to ignore them.
                         if (stream != null) {
-
                             EnsuresPacketExecutionOrder epeo = (EnsuresPacketExecutionOrder) conn.getAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME);
                             if (epeo == null && stream != null) {
                                 epeo = new EnsuresPacketExecutionOrder((ClientBroadcastStream) stream, conn);
                                 conn.setAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME, epeo);
                             }
                             epeo.addPacket(message);
-
-                            //                            recvDispatchExecutor.submit(() -> {
-                            //                                try {
-                            //                                    Thread.currentThread().setName(String.format("RTMPRecvDispatch@%s", conn.getSessionId()));
-                            //                                    ((IEventDispatcher) stream).dispatchEvent(message);
-                            //                                    message.release();
-                            //                                } catch (Exception e) {
-                            //                                    log.warn("Exception on Media dispatch", e);
-                            //                                }
-                            //                            });
                         }
                         break;
                     case TYPE_FLEX_SHARED_OBJECT:
@@ -150,7 +140,6 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                                 conn.setAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME, epeo);
                             }
                             epeo.addPacket(message);
-
                         } else {
                             onCommand(conn, channel, header, (Notify) message);
                         }
@@ -377,26 +366,24 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 
     /**
      * Class ensures a stream's event dispatching occurs on only one core at any one time. Eliminates thread racing internal to ClientBroadcastStream 
-     * and keeps all incoming events in order. 
-     * @author Andy Shaules
-     *
+     * and keeps all incoming events in order.
      */
     private static class EnsuresPacketExecutionOrder implements Runnable {
 
         public final static String ATTRIBUTE_NAME = "EnsuresPacketExecutionOrder";
 
-        public LinkedBlockingQueue<IRTMPEvent> events = new LinkedBlockingQueue<IRTMPEvent>();
+        private LinkedBlockingQueue<IRTMPEvent> events = new LinkedBlockingQueue<>();
 
-        public AtomicBoolean state = new AtomicBoolean();
+        private AtomicBoolean state = new AtomicBoolean();
 
-        public ClientBroadcastStream stream;
+        private final ClientBroadcastStream stream;
 
-        private RTMPConnection conn;
+        private final RTMPConnection conn;
 
         private int iter;
 
-        public EnsuresPacketExecutionOrder(ClientBroadcastStream str, RTMPConnection conn) {
-            stream = str;
+        public EnsuresPacketExecutionOrder(ClientBroadcastStream stream, RTMPConnection conn) {
+            this.stream = stream;
             this.conn = conn;
         }
 
@@ -405,38 +392,36 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
          * @param packet
          */
         public void addPacket(IRTMPEvent packet) {
-
             events.offer(packet);
-
             if (state.compareAndSet(false, true)) {
                 recvDispatchExecutor.submit(this);
             }
         }
 
         public void run() {
-
-            //use int to identify different thread instance.
+            // use int to identify different thread instance
             Thread.currentThread().setName(String.format("RTMPRecvDispatch@%s-%d", conn.getSessionId(), iter++));
             iter &= 7;
-            //Always set connection local on dispatch threads.            
+            // always set connection local on dispatch threads
             Red5.setConnectionLocal(conn);
-
-            //We were created for a reason. Grab the event.
+            // we were created for a reason, grab the event
             IRTMPEvent message = events.poll();
-            //null check incase queue was drained before we woke.
+            // null check just in case queue was drained before we woke
             if (message != null) {
+                // dispatch to stream
                 stream.dispatchEvent(message);
+                // release / clean up
                 message.release();
             }
-            //set null before resubmit.
+            // set null before resubmit
             Red5.setConnectionLocal(null);
-            //Resubmit for another go if we have more.
+            // resubmit for another go if we have more
             if (!events.isEmpty()) {
                 recvDispatchExecutor.submit(this);
             } else {
                 state.set(false);
             }
-            //resubmitting rather than looping until empty plays nice with other threads.
+            // resubmitting rather than looping until empty plays nice with other threads
         }
     }
 
