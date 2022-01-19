@@ -185,31 +185,31 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * 
      * @see org.red5.server.net.rtmp.Channel
      */
-    private transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
+    protected transient ConcurrentMap<Integer, Channel> channels = new ConcurrentHashMap<>(channelsInitalCapacity, 0.9f, channelsConcurrencyLevel);
 
     /**
      * Queues of tasks for every channel
      *
      * @see org.red5.server.net.rtmp.ReceivedMessageTaskQueue
      */
-    private final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByStreams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
+    protected final transient ConcurrentMap<Integer, ReceivedMessageTaskQueue> tasksByStreams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Client streams
      * 
      * @see org.red5.server.api.stream.IClientStream
      */
-    private transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
+    protected transient ConcurrentMap<Number, IClientStream> streams = new ConcurrentHashMap<>(streamsInitalCapacity, 0.9f, streamsConcurrencyLevel);
 
     /**
      * Reserved stream ids. Stream id's directly relate to individual NetStream instances.
      */
-    private transient Set<Number> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Number, Boolean>(reservedStreamsInitalCapacity, 0.9f, reservedStreamsConcurrencyLevel));
+    protected transient Set<Number> reservedStreams = Collections.newSetFromMap(new ConcurrentHashMap<Number, Boolean>(reservedStreamsInitalCapacity, 0.9f, reservedStreamsConcurrencyLevel));
 
     /**
      * Transaction identifier for remote commands.
      */
-    private AtomicInteger transactionId = new AtomicInteger(1);
+    protected AtomicInteger transactionId = new AtomicInteger(1);
 
     /**
      * Hash map that stores pending calls and ids as pairs.
@@ -335,7 +335,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     /**
      * Timestamp generator
      */
-    private final AtomicInteger timer = new AtomicInteger(0);
+    protected final AtomicInteger timer = new AtomicInteger(0);
 
     /**
      * Closing flag
@@ -559,8 +559,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 }
             }
         } else {
-            // reducing from error to debug as its not all that important of a message these days to have such promotion
-            log.debug("startRoundTripMeasurement cannot be executed due to missing scheduler. This can happen if a connection drops before handshake is complete");
+            // reducing from error to trace as its not all that important of a message these days to have such promotion
+            log.trace("startRoundTripMeasurement not enabled. If RTMP, can occur when lost before handshake is complete");
         }
     }
 

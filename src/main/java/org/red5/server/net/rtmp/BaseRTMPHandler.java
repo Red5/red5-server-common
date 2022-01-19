@@ -40,7 +40,6 @@ import org.red5.server.net.rtmp.message.Header;
 import org.red5.server.net.rtmp.message.Packet;
 import org.red5.server.net.rtmp.status.StatusCodes;
 import org.red5.server.so.SharedObjectMessage;
-import org.red5.server.stream.ClientBroadcastStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +108,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                         if (stream != null) {
                             EnsuresPacketExecutionOrder epeo = (EnsuresPacketExecutionOrder) conn.getAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME);
                             if (epeo == null && stream != null) {
-                                epeo = new EnsuresPacketExecutionOrder((ClientBroadcastStream) stream, conn);
+                                epeo = new EnsuresPacketExecutionOrder((IEventDispatcher) stream, conn);
                                 conn.setAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME, epeo);
                             }
                             epeo.addPacket(message);
@@ -136,7 +135,7 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
                             // Stream metadata
                             EnsuresPacketExecutionOrder epeo = (EnsuresPacketExecutionOrder) conn.getAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME);
                             if (epeo == null) {
-                                epeo = new EnsuresPacketExecutionOrder((ClientBroadcastStream) stream, conn);
+                                epeo = new EnsuresPacketExecutionOrder((IEventDispatcher) stream, conn);
                                 conn.setAttribute(EnsuresPacketExecutionOrder.ATTRIBUTE_NAME, epeo);
                             }
                             epeo.addPacket(message);
@@ -376,13 +375,13 @@ public abstract class BaseRTMPHandler implements IRTMPHandler, Constants, Status
 
         private AtomicBoolean state = new AtomicBoolean();
 
-        private final ClientBroadcastStream stream;
+        private final IEventDispatcher stream;
 
         private final RTMPConnection conn;
 
         private int iter;
 
-        public EnsuresPacketExecutionOrder(ClientBroadcastStream stream, RTMPConnection conn) {
+        public EnsuresPacketExecutionOrder(IEventDispatcher stream, RTMPConnection conn) {
             this.stream = stream;
             this.conn = conn;
         }
