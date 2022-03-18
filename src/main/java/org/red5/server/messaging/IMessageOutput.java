@@ -29,7 +29,7 @@ public interface IMessageOutput {
     void pushMessage(IMessage message) throws IOException;
 
     /**
-     * Connect to a provider. Note that params passed has nothing to deal with NetConnection.connect in client-side Flex/Flash RIA.
+     * Connect to a provider. Note that params passed has nothing to do with NetConnection.connect in client-side Flex/Flash RIA.
      * 
      * @param provider
      *            Provider

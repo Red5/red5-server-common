@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +76,7 @@ import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
+import org.terracotta.statistics.jsr166e.ThreadLocalRandom;
 
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
@@ -178,12 +180,22 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     protected boolean registerJMX = true;
 
     /**
+     * Stream name aliases for the entire server instance.
+     */
+    protected static CopyOnWriteArraySet<String> localAliases = new CopyOnWriteArraySet<>();
+
+    /**
+     * Stream name aliases for this instance.
+     */
+    protected CopyOnWriteArraySet<String> aliases;
+
+    /**
      * Check and send notification if necessary
      * 
      * @param event
      *            Event
      */
-    private void checkSendNotifications(IEvent event) {
+    protected void checkSendNotifications(IEvent event) {
         IEventListener source = event.getSource();
         sendStartNotifications(source);
     }
@@ -221,6 +233,11 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             // deregister with jmx
             unregisterJMX();
             setState(StreamState.CLOSED);
+            // clear our aliases and from local registry
+            if (aliases != null) {
+                localAliases.removeAll(aliases);
+                aliases.clear();
+            }
         }
     }
 
@@ -404,7 +421,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      *            Name that used for publishing. Set at client side when begin to broadcast with NetStream#publish.
      */
     public void setPublishedName(String name) {
-        //log.debug("setPublishedName: {}", name);
+        log.debug("setPublishedName: {}", name);
         // a publish name of "false" is a special case, used when stopping a stream
         if (StringUtils.isNotEmpty(name) && !"false".equals(name)) {
             this.publishedName = name;
@@ -475,7 +492,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Notifies handler on stream broadcast close
      */
-    private void notifyBroadcastClose() {
+    protected void notifyBroadcastClose() {
         final IStreamAwareScopeHandler handler = getStreamAwareHandler();
         if (handler != null) {
             try {
@@ -489,7 +506,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Notifies handler on stream recording stop
      */
-    private void notifyRecordingStop() {
+    protected void notifyRecordingStop() {
         IStreamAwareScopeHandler handler = getStreamAwareHandler();
         if (handler != null) {
             try {
@@ -503,7 +520,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Notifies handler on stream broadcast start
      */
-    private void notifyBroadcastStart() {
+    protected void notifyBroadcastStart() {
         IStreamAwareScopeHandler handler = getStreamAwareHandler();
         if (handler != null) {
             try {
@@ -540,7 +557,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Send OOB control message with chunk size
      */
-    private void notifyChunkSize() {
+    protected void notifyChunkSize() {
         if (chunkSize > 0 && livePipe != null) {
             OOBControlMessage setChunkSize = new OOBControlMessage();
             setChunkSize.setTarget("ConnectionConsumer");
@@ -721,7 +738,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Sends publish start notifications
      */
-    private void sendPublishStartNotify() {
+    protected void sendPublishStartNotify() {
         Status publishStatus = new Status(StatusCodes.NS_PUBLISH_START);
         publishStatus.setClientid(getStreamId());
         publishStatus.setDetails(getPublishedName());
@@ -735,7 +752,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Sends publish stop notifications
      */
-    private void sendPublishStopNotify() {
+    protected void sendPublishStopNotify() {
         Status stopStatus = new Status(StatusCodes.NS_UNPUBLISHED_SUCCESS);
         stopStatus.setClientid(getStreamId());
         stopStatus.setDetails(getPublishedName());
@@ -749,7 +766,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Sends record failed notifications
      */
-    private void sendRecordFailedNotify(String reason) {
+    protected void sendRecordFailedNotify(String reason) {
         Status failedStatus = new Status(StatusCodes.NS_RECORD_FAILED);
         failedStatus.setLevel(Status.ERROR);
         failedStatus.setClientid(getStreamId());
@@ -764,7 +781,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Sends record start notifications
      */
-    private void sendRecordStartNotify() {
+    protected void sendRecordStartNotify() {
         Status recordStatus = new Status(StatusCodes.NS_RECORD_START);
         recordStatus.setClientid(getStreamId());
         recordStatus.setDetails(getPublishedName());
@@ -777,7 +794,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     /**
      * Sends record stop notifications
      */
-    private void sendRecordStopNotify() {
+    protected void sendRecordStopNotify() {
         Status stopStatus = new Status(StatusCodes.NS_RECORD_STOP);
         stopStatus.setClientid(getStreamId());
         stopStatus.setDetails(getPublishedName());
@@ -805,7 +822,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         }
     }
 
-    private void sendStartNotifications(IEventListener source) {
+    protected void sendStartNotifications(IEventListener source) {
         if (sendStartNotification) {
             // notify handler that stream starts recording/publishing
             sendStartNotification = false;
@@ -945,7 +962,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             // register with jmx
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             try {
-                ObjectName oName = new ObjectName(String.format("org.red5.server:type=ClientBroadcastStream,scope=%s,publishedName=%s", getScope().getName(), publishedName));
+                // replace any colons with pipes as they are invalid characters for jmx object names
+                ObjectName oName = new ObjectName(String.format("org.red5.server:type=ClientBroadcastStream,scope=%s,publishedName=%s", getScope().getName(), publishedName.replaceAll(":", "|")));
                 mbs.registerMBean(new StandardMBean(this, ClientBroadcastStreamMXBean.class, true), oName);
             } catch (InstanceAlreadyExistsException e) {
                 log.debug("Instance already registered", e);
@@ -960,13 +978,67 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             if (StringUtils.isNotEmpty(publishedName) && !"false".equals(publishedName)) {
                 MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
                 try {
-                    ObjectName oName = new ObjectName(String.format("org.red5.server:type=ClientBroadcastStream,scope=%s,publishedName=%s", getScope().getName(), publishedName));
+                    // replace any colons with pipes as they are invalid characters for jmx object names
+                    ObjectName oName = new ObjectName(String.format("org.red5.server:type=ClientBroadcastStream,scope=%s,publishedName=%s", getScope().getName(), publishedName.replaceAll(":", "|")));
                     mbs.unregisterMBean(oName);
                 } catch (Exception e) {
                     log.warn("Exception unregistering", e);
                 }
             }
         }
+    }
+
+    @Override
+    public boolean addAlias(String alias) {
+        log.debug("Adding alias: {}", alias);
+        if (aliases == null) {
+            aliases = new CopyOnWriteArraySet<>();
+        }
+        // check local registry first then attempt the add
+        if (!localAliases.contains(alias) && aliases.add(alias)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasAlias() {
+        if (aliases != null && !aliases.isEmpty()) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public String getAlias() {
+        String alias = null;
+        if (hasAlias()) {
+            int bound = aliases.size();
+            if (bound > 1) {
+                int index = ThreadLocalRandom.current().nextInt(bound);
+                alias = aliases.stream().skip(index - 1).findFirst().get();
+            } else {
+                alias = aliases.stream().findFirst().get();
+            }
+            log.debug("Returning alias: {}", alias);
+        }
+        return alias;
+    }
+
+    @Override
+    public boolean containsAlias(String alias) {
+        if (aliases != null && !aliases.isEmpty()) {
+            return aliases.contains(alias);
+        }
+        return false;
+    }
+
+    @Override
+    public Set<String> getAliases() {
+        if (aliases != null) {
+            return aliases;
+        }
+        return Collections.emptySet();
     }
 
 }

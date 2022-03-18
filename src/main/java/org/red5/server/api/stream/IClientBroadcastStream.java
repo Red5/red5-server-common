@@ -8,6 +8,8 @@
 package org.red5.server.api.stream;
 
 import java.util.Map;
+import java.util.Set;
+
 import org.red5.server.api.statistics.IClientBroadcastStreamStatistics;
 
 /**
@@ -22,14 +24,14 @@ public interface IClientBroadcastStream extends IClientStream, IBroadcastStream 
     /**
      * Notify client that stream is ready for publishing.
      */
-    public void startPublishing();
+    void startPublishing();
 
     /**
      * Return statistics about the stream.
      * 
      * @return statistics
      */
-    public IClientBroadcastStreamStatistics getStatistics();
+    IClientBroadcastStreamStatistics getStatistics();
 
     /**
      * Sets streaming parameters as supplied by the publishing application.
@@ -37,13 +39,50 @@ public interface IClientBroadcastStream extends IClientStream, IBroadcastStream 
      * @param params
      *            parameter map
      */
-    public void setParameters(Map<String, String> params);
+    void setParameters(Map<String, String> params);
 
     /**
      * Returns streaming parameters.
      * 
      * @return parameters
      */
-    public Map<String, String> getParameters();
+    Map<String, String> getParameters();
+
+    /**
+     * Adds a stream name alias.
+     * 
+     * @param alias
+     * @return true if added to the aliases, false otherwise
+     */
+    boolean addAlias(String alias);
+
+    /**
+     * Returns whether or not an alias for this stream exists.
+     * 
+     * @return true if an alias has been added and false otherwise
+     */
+    boolean hasAlias();
+
+    /**
+     * Returns an alias.
+     * 
+     * @return alias if at least one exists or null when there are none
+     */
+    String getAlias();
+
+    /**
+     * Returns whether or not a given alias exists.
+     * 
+     * @param alias
+     * @return true if found and false otherwise
+     */
+    boolean containsAlias(String alias);
+
+    /**
+     * Returns all the aliases.
+     * 
+     * @return all aliases for this instance or an empty set
+     */
+    Set<String> getAliases();
 
 }

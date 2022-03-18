@@ -42,7 +42,7 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
     /**
      * Default playlist controller
      */
-    private IPlaylistController defaultController;
+    private IPlaylistController defaultController = new SimplePlaylistController();
 
     /**
      * Playlist items
@@ -122,7 +122,6 @@ public class PlaylistSubscriberStream extends AbstractClientStream implements IP
 
     /** Constructs a new PlaylistSubscriberStream. */
     public PlaylistSubscriberStream() {
-        defaultController = new SimplePlaylistController();
     }
 
     /**

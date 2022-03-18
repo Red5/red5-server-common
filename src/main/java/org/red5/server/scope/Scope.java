@@ -46,6 +46,7 @@ import org.red5.server.api.scope.IScopeHandler;
 import org.red5.server.api.scope.ScopeType;
 import org.red5.server.api.statistics.IScopeStatistics;
 import org.red5.server.api.statistics.support.StatisticsCounter;
+import org.red5.server.api.stream.IClientBroadcastStream;
 import org.red5.server.exception.ScopeException;
 import org.red5.server.jmx.mxbeans.ScopeMXBean;
 import org.slf4j.Logger;
@@ -481,7 +482,23 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
      */
     public Set<String> getBasicScopeNames(ScopeType type) {
         if (type != null) {
-            return children.stream().filter(child -> child.getType().equals(type)).map(IBasicScope::getName).collect(Collectors.toSet());
+            // if its broadcast type then also check aliases
+            if (type == ScopeType.BROADCAST) {
+                final Set<String> broadcastNames = new HashSet<>();
+                Set<IBasicScope> broadcastScopes = children.stream().filter(child -> child.getType().equals(type)).collect(Collectors.toSet());
+                broadcastScopes.forEach(bs -> {
+                    // add the streams name
+                    broadcastNames.add(bs.getName());
+                    // add any aliases
+                    IClientBroadcastStream stream = ((IBroadcastScope) bs).getClientBroadcastStream();
+                    if (stream != null && stream.hasAlias()) {
+                        broadcastNames.addAll(stream.getAliases());
+                    }
+                });
+                return broadcastNames;
+            } else {
+                return children.stream().filter(child -> child.getType().equals(type)).map(IBasicScope::getName).collect(Collectors.toSet());
+            }
         }
         return getScopeNames();
     }
@@ -1418,7 +1435,12 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
             if (ScopeType.UNDEFINED.equals(type)) {
                 scope = stream().filter(child -> name.equals(child.getName())).findFirst();
             } else {
-                scope = stream().filter(child -> child.getType().equals(type) && name.equals(child.getName())).findFirst();
+                // if its broadcast type then allow an alias match in addition to the name match
+                if (type == ScopeType.BROADCAST) {
+                    scope = stream().filter(child -> child.getType().equals(type) && (name.equals(child.getName()) || ((IBroadcastScope) child).getClientBroadcastStream().containsAlias(name))).findFirst();
+                } else {
+                    scope = stream().filter(child -> child.getType().equals(type) && name.equals(child.getName())).findFirst();
+                }
             }
             if (scope.isPresent()) {
                 return scope.get();

@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.red5.io.utils.ObjectMap;
 import org.red5.server.BaseConnection;
@@ -49,6 +51,16 @@ import org.slf4j.LoggerFactory;
 public class StreamService implements IStreamService {
 
     private static Logger log = LoggerFactory.getLogger(StreamService.class);
+
+    /**
+     * Whether or not to strip file / media type prefixing.
+     */
+    protected boolean stripTypePrefix = true;
+
+    /**
+     * Whether or not to enable stream name aliasing.
+     */
+    protected boolean nameAliasingEnabled = true;
 
     /**
      * Use to determine playback type.
@@ -614,7 +626,7 @@ public class StreamService implements IStreamService {
         Map<String, String> params = null;
         if (name != null && name.contains("?")) {
             // read and utilize the query string values
-            params = new HashMap<String, String>();
+            params = new HashMap<>();
             String tmp = name;
             // check if we start with '?' or not
             if (name.charAt(0) != '?') {
@@ -632,7 +644,12 @@ public class StreamService implements IStreamService {
             // grab the streams name
             name = name.substring(0, name.indexOf("?"));
         }
-        log.debug("publish called with name {} and mode {}", name, mode);
+        log.debug("publish called with name: {} and mode: {}", name, mode);
+        // if stripping prefixes, do so here
+        if (stripTypePrefix) {
+            name = name.replaceAll("(mp4\\:|f4v\\:)", "");
+            log.debug("publish name (updated): {}", name);
+        }
         IConnection conn = Red5.getConnectionLocal();
         if (conn instanceof IStreamCapableConnection) {
             IScope scope = conn.getScope();
@@ -678,6 +695,20 @@ public class StreamService implements IStreamService {
                 // set stream parameters if they exist
                 if (params != null) {
                     bs.setParameters(params);
+                }
+                if (nameAliasingEnabled) {
+                    // if aliasing, check for requested aliases before generating random names
+                    if (params != null && params.containsKey("aliases")) {
+                        // comma separated
+                        Stream.of(params.get("aliases").split(",")).forEach(alias -> bs.addAlias(alias));
+                    } else {
+                        // generate some random alpha/num aliases; based on cpu count x2
+                        int aliasCount = Runtime.getRuntime().availableProcessors() * 2;
+                        for (int i = 0; i < aliasCount; i++) {
+                            // generate 8-16 long aliases
+                            bs.addAlias(RandomStringUtils.randomAlphanumeric(8, 16));
+                        }
+                    }
                 }
                 IContext context = conn.getScope().getContext();
                 IProviderService providerService = (IProviderService) context.getBean(IProviderService.BEAN_NAME);
@@ -835,6 +866,14 @@ public class StreamService implements IStreamService {
         } else {
             throw new RuntimeException("Connection is not RTMPConnection: " + conn);
         }
+    }
+
+    public void setStripTypePrefix(boolean stripTypePrefix) {
+        this.stripTypePrefix = stripTypePrefix;
+    }
+
+    public void setNameAliasingEnabled(boolean nameAliasingEnabled) {
+        this.nameAliasingEnabled = nameAliasingEnabled;
     }
 
 }
