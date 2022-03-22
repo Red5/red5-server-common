@@ -30,6 +30,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.bouncycastle.crypto.engines.BlowfishEngine;
+import org.bouncycastle.crypto.engines.XTEAEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.BigIntegers;
@@ -39,8 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Generates and validates the RTMP handshake response for Flash Players. Client versions equal to or greater than Flash 9,0,124,0 require
- * a nonzero value as the fifth byte of the handshake request.
+ * Generates and validates the RTMP handshake response for Flash Players. Client versions equal to or greater than Flash 9,0,124,0 require a
+ * nonzero value as the fifth byte of the handshake request.
  * 
  * @author Jacinto Shy II (jacinto.m.shy@ieee.org)
  * @author Steven Zimmer (stevenlzimmer@gmail.com)
@@ -51,7 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class RTMPHandshake implements IHandshake {
 
-    protected Logger log = LoggerFactory.getLogger(RTMPHandshake.class);
+    protected Logger log = LoggerFactory.getLogger(getClass());
 
     public final static String[] HANDSHAKE_TYPES = { "Undefined0", "Undefined1", "Undefined2", "RTMP", "Undefined4", "Undefined5", "RTMPE", "Undefined7", "RTMPE XTEA", "RTMPE BLOWFISH" };
 
@@ -72,10 +73,23 @@ public abstract class RTMPHandshake implements IHandshake {
             (byte) 0x5c, (byte) 0xb6, (byte) 0xf4, (byte) 0x06, (byte) 0xb7, (byte) 0xed, (byte) 0xee, (byte) 0x38, (byte) 0x6b, (byte) 0xfb, (byte) 0x5a, (byte) 0x89, (byte) 0x9f, (byte) 0xa5, (byte) 0xae, (byte) 0x9f, (byte) 0x24, (byte) 0x11, (byte) 0x7c, (byte) 0x4b, (byte) 0x1f, (byte) 0xe6, (byte) 0x49, (byte) 0x28, (byte) 0x66, (byte) 0x51, (byte) 0xec, (byte) 0xe6, (byte) 0x53, (byte) 0x81, (byte) 0xff,
             (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
-    /** XTEA keys for RTMPE (RTMP type 0x08) - 16 x 4 */
-    protected static final int[][] XTEA_KEYS = { { 0xbff034b2, 0x11d9081f, 0xccdfb795, 0x748de732 }, { 0x086a5eb6, 0x1743090e, 0x6ef05ab8, 0xfe5a39e2 }, { 0x7b10956f, 0x76ce0521, 0x2388a73a, 0x440149a1 }, { 0xa943f317, 0xebf11bb2, 0xa691a5ee, 0x17f36339 }, { 0x7a30e00a, 0xb529e22c, 0xa087aea5, 0xc0cb79ac }, { 0xbdce0c23, 0x2febdeff, 0x1cfaae16, 0x1123239d }, { 0x55dd3f7b, 0x77e7e62e, 0x9bb8c499, 0xc9481ee4 },
-            { 0x407bb6b4, 0x71e89136, 0xa7aebf55, 0xca33b839 }, { 0xfcf6bdc3, 0xb63c3697, 0x7ce4f825, 0x04d959b2 }, { 0x28e091fd, 0x41954c4c, 0x7fb7db00, 0xe3a066f8 }, { 0x57845b76, 0x4f251b03, 0x46d45bcd, 0xa2c30d29 }, { 0x0acceef8, 0xda55b546, 0x03473452, 0x5863713b }, { 0xb82075dc, 0xa75f1fee, 0xd84268e8, 0xa72a44cc }, { 0x07cf6e9e, 0xa16d7b25, 0x9fa7ae6c, 0xd92f5629 },
-            { 0xfeb1eae4, 0x8c8c3ce1, 0x4e0064a7, 0x6a387c2a }, { 0x893a9427, 0xcc3013a2, 0xf106385b, 0xa829f927 } };
+    /** XTEA keys for RTMPE (RTMP type 0x08) - 16 x 16 (little endian) */
+    protected static final byte[][] XTEA_KEYS = { { (byte) 0xb2, (byte) 0x34, (byte) 0xf0, (byte) 0xbf, (byte) 0x1f, (byte) 0x08, (byte) 0xd9, (byte) 0x11, (byte) 0x95, (byte) 0xb7, (byte) 0xdf, (byte) 0xcc, (byte) 0x32, (byte) 0xe7, (byte) 0x8d, (byte) 0x74 },
+            { (byte) 0xb6, (byte) 0x5e, (byte) 0x6a, (byte) 0x08, (byte) 0x0e, (byte) 0x09, (byte) 0x43, (byte) 0x17, (byte) 0xb8, (byte) 0x5a, (byte) 0xf0, (byte) 0x6e, (byte) 0xe2, (byte) 0x39, (byte) 0x5a, (byte) 0xfe },
+            { (byte) 0x6f, (byte) 0x95, (byte) 0x10, (byte) 0x7b, (byte) 0x21, (byte) 0x05, (byte) 0xce, (byte) 0x76, (byte) 0x3a, (byte) 0xa7, (byte) 0x88, (byte) 0x23, (byte) 0xa1, (byte) 0x49, (byte) 0x01, (byte) 0x44 },
+            { (byte) 0x17, (byte) 0xf3, (byte) 0x43, (byte) 0xa9, (byte) 0xb2, (byte) 0x1b, (byte) 0xf1, (byte) 0xeb, (byte) 0xee, (byte) 0xa5, (byte) 0x91, (byte) 0xa6, (byte) 0x39, (byte) 0x63, (byte) 0xf3, (byte) 0x17 },
+            { (byte) 0x0a, (byte) 0xe0, (byte) 0x30, (byte) 0x7a, (byte) 0x2c, (byte) 0xe2, (byte) 0x29, (byte) 0xb5, (byte) 0xa5, (byte) 0xae, (byte) 0x87, (byte) 0xa0, (byte) 0xac, (byte) 0x79, (byte) 0xcb, (byte) 0xc0 },
+            { (byte) 0x23, (byte) 0x0c, (byte) 0xce, (byte) 0xbd, (byte) 0xff, (byte) 0xde, (byte) 0xeb, (byte) 0x2f, (byte) 0x16, (byte) 0xae, (byte) 0xfa, (byte) 0x1c, (byte) 0x9d, (byte) 0x23, (byte) 0x23, (byte) 0x11 },
+            { (byte) 0x7b, (byte) 0x3f, (byte) 0xdd, (byte) 0x55, (byte) 0x2e, (byte) 0xe6, (byte) 0xe7, (byte) 0x77, (byte) 0x99, (byte) 0xc4, (byte) 0xb8, (byte) 0x9b, (byte) 0xe4, (byte) 0x1e, (byte) 0x48, (byte) 0xc9 },
+            { (byte) 0xb4, (byte) 0xb6, (byte) 0x7b, (byte) 0x40, (byte) 0x36, (byte) 0x91, (byte) 0xe8, (byte) 0x71, (byte) 0x55, (byte) 0xbf, (byte) 0xae, (byte) 0xa7, (byte) 0x39, (byte) 0xb8, (byte) 0x33, (byte) 0xca },
+            { (byte) 0xc3, (byte) 0xbd, (byte) 0xf6, (byte) 0xfc, (byte) 0x97, (byte) 0x36, (byte) 0x3c, (byte) 0xb6, (byte) 0x25, (byte) 0xf8, (byte) 0xe4, (byte) 0x7c, (byte) 0xb2, (byte) 0x59, (byte) 0xd9, (byte) 0x04 },
+            { (byte) 0xfd, (byte) 0x91, (byte) 0xe0, (byte) 0x28, (byte) 0x4c, (byte) 0x4c, (byte) 0x95, (byte) 0x41, (byte) 0x00, (byte) 0xdb, (byte) 0xb7, (byte) 0x7f, (byte) 0xf8, (byte) 0x66, (byte) 0xa0, (byte) 0xe3 },
+            { (byte) 0x76, (byte) 0x5b, (byte) 0x84, (byte) 0x57, (byte) 0x03, (byte) 0x1b, (byte) 0x25, (byte) 0x4f, (byte) 0xcd, (byte) 0x5b, (byte) 0xd4, (byte) 0x46, (byte) 0x29, (byte) 0x0d, (byte) 0xc3, (byte) 0xa2 },
+            { (byte) 0xf8, (byte) 0xee, (byte) 0xcc, (byte) 0x0a, (byte) 0x46, (byte) 0xb5, (byte) 0x55, (byte) 0xda, (byte) 0x52, (byte) 0x34, (byte) 0x47, (byte) 0x03, (byte) 0x3b, (byte) 0x71, (byte) 0x63, (byte) 0x58 },
+            { (byte) 0xdc, (byte) 0x75, (byte) 0x20, (byte) 0xb8, (byte) 0xee, (byte) 0x1f, (byte) 0x5f, (byte) 0xa7, (byte) 0xe8, (byte) 0x68, (byte) 0x42, (byte) 0xd8, (byte) 0xcc, (byte) 0x44, (byte) 0x2a, (byte) 0xa7 },
+            { (byte) 0x9e, (byte) 0x6e, (byte) 0xcf, (byte) 0x07, (byte) 0x25, (byte) 0x7b, (byte) 0x6d, (byte) 0xa1, (byte) 0x6c, (byte) 0xae, (byte) 0xa7, (byte) 0x9f, (byte) 0x29, (byte) 0x56, (byte) 0x2f, (byte) 0xd9 },
+            { (byte) 0xe4, (byte) 0xea, (byte) 0xb1, (byte) 0xfe, (byte) 0xe1, (byte) 0x3c, (byte) 0x8c, (byte) 0x8c, (byte) 0xa7, (byte) 0x64, (byte) 0x00, (byte) 0x4e, (byte) 0x2a, (byte) 0x7c, (byte) 0x38, (byte) 0x6a },
+            { (byte) 0x27, (byte) 0x94, (byte) 0x3a, (byte) 0x89, (byte) 0xa2, (byte) 0x13, (byte) 0x30, (byte) 0xcc, (byte) 0x5b, (byte) 0x38, (byte) 0x06, (byte) 0xf1, (byte) 0x27, (byte) 0xf9, (byte) 0x29, (byte) 0xa8 } };
 
     /** Blowfish keys for RTMPE (RTMP type 0x09) - 16 x 24 */
     protected static final byte[][] BLOWFISH_KEYS = { { (byte) 0x79, (byte) 0x34, (byte) 0x77, (byte) 0x4c, (byte) 0x67, (byte) 0xd1, (byte) 0x38, (byte) 0x3a, (byte) 0xdf, (byte) 0xb3, (byte) 0x56, (byte) 0xbe, (byte) 0x8b, (byte) 0x7b, (byte) 0xd0, (byte) 0x24, (byte) 0x38, (byte) 0xe0, (byte) 0x73, (byte) 0x58, (byte) 0x41, (byte) 0x5d, (byte) 0x69, (byte) 0x67 },
@@ -110,6 +124,12 @@ public abstract class RTMPHandshake implements IHandshake {
     protected Cipher cipherOut;
 
     protected Cipher cipherIn;
+
+    // handles encrypt and / or decrypt using Xtea
+    protected XTEAEngine xtea;
+
+    // handles encrypt and / or decrypt using Blowfish
+    protected BlowfishEngine blowfish;
 
     protected byte handshakeType;
 
@@ -161,7 +181,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Prepare the ciphers.
      * 
-     * @param sharedSecret shared secret byte sequence
+     * @param sharedSecret
+     *            shared secret byte sequence
      */
     protected void initRC4Encryption(byte[] sharedSecret) {
         log.debug("Shared secret: {}", Hex.encodeHexString(sharedSecret));
@@ -191,6 +212,16 @@ public abstract class RTMPHandshake implements IHandshake {
         }
     }
 
+    protected void initXteaEncryption(int keyId) {
+        xtea = new XTEAEngine();
+        xtea.init(true, new KeyParameter(XTEA_KEYS[keyId]));
+    }
+
+    protected void initBlowfishEncryption(int keyId) {
+        blowfish = new BlowfishEngine();
+        blowfish.init(true, new KeyParameter(BLOWFISH_KEYS[keyId]));
+    }
+
     /**
      * Creates a Diffie-Hellman key pair.
      * 
@@ -215,7 +246,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the public key for a given key pair.
      * 
-     * @param keyPair key pair
+     * @param keyPair
+     *            key pair
      * @return public key
      */
     protected byte[] getPublicKey(KeyPair keyPair) {
@@ -230,8 +262,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param publicKeyBytes public key bytes
-     * @param agreement key agreement
+     * @param publicKeyBytes
+     *            public key bytes
+     * @param agreement
+     *            key agreement
      * @return shared secret bytes if client used a supported validation scheme
      */
     protected byte[] getSharedSecret(byte[] publicKeyBytes, KeyAgreement agreement) {
@@ -257,7 +291,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Determines the validation scheme for given input.
      * 
-     * @param handshake handshake byte sequence
+     * @param handshake
+     *            handshake byte sequence
      * @return true if its a supported validation scheme, false if unsupported
      */
     public abstract boolean validate(byte[] handshake);
@@ -265,13 +300,20 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Calculates the digest given the its offset in the handshake data.
      * 
-     * @param digestPos digest position
-     * @param handshakeMessage handshake message
-     * @param handshakeOffset handshake message offset
-     * @param key contains the key
-     * @param keyLen the length of the key
-     * @param digest contains the calculated digest
-     * @param digestOffset digest offset
+     * @param digestPos
+     *            digest position
+     * @param handshakeMessage
+     *            handshake message
+     * @param handshakeOffset
+     *            handshake message offset
+     * @param key
+     *            contains the key
+     * @param keyLen
+     *            the length of the key
+     * @param digest
+     *            contains the calculated digest
+     * @param digestOffset
+     *            digest offset
      */
     public void calculateDigest(int digestPos, byte[] handshakeMessage, int handshakeOffset, byte[] key, int keyLen, byte[] digest, int digestOffset) {
         if (log.isTraceEnabled()) {
@@ -290,10 +332,14 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Verifies the digest.
      * 
-     * @param digestPos digest position
-     * @param handshakeMessage handshake message
-     * @param key contains the key
-     * @param keyLen the length of the key
+     * @param digestPos
+     *            digest position
+     * @param handshakeMessage
+     *            handshake message
+     * @param key
+     *            contains the key
+     * @param keyLen
+     *            the length of the key
      * @return true if valid and false otherwise
      */
     public boolean verifyDigest(int digestPos, byte[] handshakeMessage, byte[] key, int keyLen) {
@@ -311,13 +357,20 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Calculates an HMAC SHA256 hash into the digest at the given offset.
      * 
-     * @param message incoming bytes
-     * @param messageOffset message offset
-     * @param messageLen message length
-     * @param key incoming key bytes
-     * @param keyLen the length of the key
-     * @param digest contains the calculated digest
-     * @param digestOffset digest offset
+     * @param message
+     *            incoming bytes
+     * @param messageOffset
+     *            message offset
+     * @param messageLen
+     *            message length
+     * @param key
+     *            incoming key bytes
+     * @param keyLen
+     *            the length of the key
+     * @param digest
+     *            contains the calculated digest
+     * @param digestOffset
+     *            digest offset
      */
     public void calculateHMAC_SHA256(byte[] message, int messageOffset, int messageLen, byte[] key, int keyLen, byte[] digest, int digestOffset) {
         if (log.isTraceEnabled()) {
@@ -346,9 +399,12 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Calculates the swf verification token.
      * 
-     * @param handshakeMessage servers handshake bytes
-     * @param swfHash hash of swf
-     * @param swfSize size of swf
+     * @param handshakeMessage
+     *            servers handshake bytes
+     * @param swfHash
+     *            hash of swf
+     * @param swfSize
+     *            size of swf
      */
     public void calculateSwfVerification(byte[] handshakeMessage, byte[] swfHash, int swfSize) {
         // SHA256 HMAC hash of decompressed SWF, key are the last 32 bytes of the server handshake
@@ -372,9 +428,12 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the DH offset from an array of bytes.
      * 
-     * @param algorithm validation algorithm
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param algorithm
+     *            validation algorithm
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return DH offset
      */
     public int getDHOffset(int algorithm, byte[] handshake, int bufferOffset) {
@@ -390,8 +449,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the DH byte offset.
      * 
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return dh offset
      */
     protected int getDHOffset1(byte[] handshake, int bufferOffset) {
@@ -413,8 +474,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the DH byte offset.
      * 
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return dh offset
      */
     protected int getDHOffset2(byte[] handshake, int bufferOffset) {
@@ -436,9 +499,12 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns the digest offset using current validation scheme.
      * 
-     * @param algorithm validation algorithm
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param algorithm
+     *            validation algorithm
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return digest offset
      */
     public int getDigestOffset(int algorithm, byte[] handshake, int bufferOffset) {
@@ -454,8 +520,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns a digest byte offset.
      * 
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return digest offset
      */
     protected int getDigestOffset1(byte[] handshake, int bufferOffset) {
@@ -477,8 +545,10 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Returns a digest byte offset.
      * 
-     * @param handshake handshake sequence
-     * @param bufferOffset buffer offset
+     * @param handshake
+     *            handshake sequence
+     * @param bufferOffset
+     *            buffer offset
      * @return digest offset
      */
     protected int getDigestOffset2(byte[] handshake, int bufferOffset) {
@@ -500,14 +570,17 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * RTMPE type 8 uses XTEA on the regular signature http://en.wikipedia.org/wiki/XTEA
      * 
-     * @param array array to get signature
-     * @param offset offset to start from
-     * @param keyid ID of XTEA key
+     * @param array
+     *            array to get signature
+     * @param offset
+     *            offset to start from
+     * @param keyid
+     *            index of XTEA key
      */
-    public final static void getXteaSignature(byte[] array, int offset, int keyid) {
+    public void getXteaSignature(byte[] array, int offset, int keyId) {
         int num_rounds = 32;
         int v0, v1, sum = 0, delta = 0x9E3779B9;
-        int[] k = XTEA_KEYS[keyid];
+        byte[] k = XTEA_KEYS[keyId];
         v0 = ByteBuffer.wrap(array, offset, 4).getInt();
         v1 = ByteBuffer.wrap(array, offset + 4, 4).getInt();
         for (int i = 0; i < num_rounds; i++) {
@@ -528,23 +601,27 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * RTMPE type 9 uses Blowfish on the regular signature http://en.wikipedia.org/wiki/Blowfish_(cipher)
      * 
-     * @param array array to get signature
-     * @param offset offset to start from
-     * @param keyid ID of XTEA key
+     * @param array
+     *            array to get signature
+     * @param offset
+     *            offset to start from
+     * @param keyId
+     *            index of Blowfish key
      */
-    public final static void getBlowfishSignature(byte[] array, int offset, int keyid) {
-        BlowfishEngine bf = new BlowfishEngine();
-        // need to use little endian
-        bf.init(true, new KeyParameter(BLOWFISH_KEYS[keyid]));
+    public void getBlowfishSignature(byte[] array, int offset, int keyId) {
+        if (blowfish == null) {
+            initBlowfishEncryption(keyId);
+        }
         byte[] output = new byte[8];
-        bf.processBlock(array, offset, output, 0);
+        blowfish.processBlock(array, offset, output, 0);
         System.arraycopy(output, 0, array, offset, 8);
     }
 
     /**
      * Returns whether or not a given handshake type is valid.
      * 
-     * @param handshakeType the type of handshake
+     * @param handshakeType
+     *            the type of handshake
      * @return true if valid and supported, false otherwise
      */
     public final static boolean validHandshakeType(byte handshakeType) {
@@ -577,7 +654,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Sets the handshake type. Currently only two types are supported, plain and encrypted.
      * 
-     * @param handshakeType handshake type
+     * @param handshakeType
+     *            handshake type
      */
     public void setHandshakeType(byte handshakeType) {
         if (log.isTraceEnabled()) {
@@ -638,7 +716,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Add a byte array to the buffer.
      * 
-     * @param in incoming bytes
+     * @param in
+     *            incoming bytes
      */
     public void addBuffer(byte[] in) {
         buffer.put(in);
@@ -647,7 +726,8 @@ public abstract class RTMPHandshake implements IHandshake {
     /**
      * Add a IoBuffer to the buffer.
      * 
-     * @param in incoming IoBuffer
+     * @param in
+     *            incoming IoBuffer
      */
     public void addBuffer(IoBuffer in) {
         byte[] tmp = new byte[in.remaining()];

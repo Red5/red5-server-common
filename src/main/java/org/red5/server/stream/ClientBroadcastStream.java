@@ -185,7 +185,12 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
     protected static CopyOnWriteArraySet<String> localAliases = new CopyOnWriteArraySet<>();
 
     /**
-     * Stream name aliases for this instance.
+     * Publish alias for the stream name.
+     */
+    protected String nameAlias;
+
+    /**
+     * Subscribe aliases for this instance.
      */
     protected CopyOnWriteArraySet<String> aliases;
 
@@ -237,6 +242,11 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             if (aliases != null) {
                 localAliases.removeAll(aliases);
                 aliases.clear();
+            }
+            // remove publish alias
+            if (nameAlias != null) {
+                localAliases.remove(nameAlias);
+                nameAlias = null;
             }
         }
     }
@@ -1039,6 +1049,26 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             return aliases;
         }
         return Collections.emptySet();
+    }
+
+    @Override
+    public void setNameAlias(String nameAlias) {
+        // remove any existing registration
+        if (this.nameAlias != null && nameAlias != null) {
+            localAliases.remove(this.nameAlias);
+        }
+        // this will overwrite any existing value
+        this.nameAlias = nameAlias;
+    }
+
+    @Override
+    public String getNameAlias() {
+        return nameAlias;
+    }
+
+    @Override
+    public boolean aliasRegistered(String alias) {
+        return localAliases.contains(alias);
     }
 
 }

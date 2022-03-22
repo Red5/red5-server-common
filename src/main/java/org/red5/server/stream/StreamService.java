@@ -679,9 +679,17 @@ public class StreamService implements IStreamService {
                 return;
             }
             IClientStream stream = streamConn.getStreamById(streamId);
-            if (stream != null && !(stream instanceof IClientBroadcastStream)) {
-                log.error("Stream not found or is not instance of IClientBroadcastStream, name: {}, streamId: {}", name, streamId);
-                return;
+            if (stream != null) {
+                if (!(stream instanceof IClientBroadcastStream)) {
+                    log.error("Stream not found or is not instance of IClientBroadcastStream, name: {}, streamId: {}", name, streamId);
+                    return;
+                }
+                // verify that the name is not in-use for aliasing
+                if (nameAliasingEnabled && ((IClientBroadcastStream) stream).aliasRegistered(name)) {
+                    sendNSFailed(streamConn, StatusCodes.NS_PUBLISH_BADNAME, "You are not allowed to publish the stream, alias exists.", name, streamId);
+                    log.error("Bad name {} (alias in-use)", name);
+                    return;
+                }
             }
             boolean created = false;
             if (stream == null) {
@@ -697,7 +705,7 @@ public class StreamService implements IStreamService {
                     bs.setParameters(params);
                 }
                 if (nameAliasingEnabled) {
-                    // if aliasing, check for requested aliases before generating random names
+                    // if aliasing, check for requested subscribe-side aliases before generating random names
                     if (params != null && params.containsKey("aliases")) {
                         // comma separated
                         Stream.of(params.get("aliases").split(",")).forEach(alias -> bs.addAlias(alias));
@@ -708,6 +716,10 @@ public class StreamService implements IStreamService {
                             // generate 8-16 long aliases
                             bs.addAlias(RandomStringUtils.randomAlphanumeric(8, 16));
                         }
+                    }
+                    // if aliasing, check for publish-side alias
+                    if (params != null && params.containsKey("nameAlias")) {
+                        bs.setNameAlias(params.get("nameAlias"));
                     }
                 }
                 IContext context = conn.getScope().getContext();
