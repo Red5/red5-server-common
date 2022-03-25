@@ -9,7 +9,7 @@ package org.red5.server.stream;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.red5.codec.IStreamCodecInfo;
@@ -52,7 +52,7 @@ public abstract class AbstractStream implements IStream {
     /**
      * Contains {@link PropertyChangeListener}s registered with this stream and following its changes of state.
      */
-    protected transient CopyOnWriteArrayList<PropertyChangeListener> stateListeners = new CopyOnWriteArrayList<>();
+    protected transient CopyOnWriteArraySet<PropertyChangeListener> stateListeners = new CopyOnWriteArraySet<>();
 
     /**
      * Timestamp the stream was created.
@@ -91,9 +91,7 @@ public abstract class AbstractStream implements IStream {
      *            the listener to register
      */
     public void addStateChangeListener(PropertyChangeListener listener) {
-        if (!stateListeners.contains(listener)) {
-            stateListeners.add(listener);
-        }
+        stateListeners.add(listener);
     }
 
     /**

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -76,7 +77,6 @@ import org.red5.server.stream.message.StatusMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
-import org.terracotta.statistics.jsr166e.ThreadLocalRandom;
 
 /**
  * Represents live stream broadcasted from client. As Flash Media Server, Red5 supports recording mode for live streams, that is,
@@ -1026,7 +1026,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             int bound = aliases.size();
             if (bound > 1) {
                 int index = ThreadLocalRandom.current().nextInt(bound);
-                alias = aliases.stream().skip(index - 1).findFirst().get();
+                alias = aliases.stream().skip(index).findFirst().get();
             } else {
                 alias = aliases.stream().findFirst().get();
             }

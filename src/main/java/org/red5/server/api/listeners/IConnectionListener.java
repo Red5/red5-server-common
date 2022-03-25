@@ -7,15 +7,19 @@
 
 package org.red5.server.api.listeners;
 
+import java.beans.PropertyChangeListener;
+
 import org.red5.server.api.IConnection;
 
 /**
- * Interface for listeners to connection events.
+ * Interface for listeners to connection events and property changes.
  * 
  * @author The Red5 Project
  * @author Joachim Bauch (bauch@struktur.de)
+ * @author Paul Gregoire (mondain@gmail.com)
+ * 
  */
-public interface IConnectionListener {
+public interface IConnectionListener extends PropertyChangeListener {
 
     /**
      * A new connection was established.

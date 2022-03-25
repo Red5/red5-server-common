@@ -8,12 +8,12 @@
 package org.red5.server;
 
 import java.beans.ConstructorProperties;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -122,7 +122,7 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
     /**
      * Listeners
      */
-    protected transient CopyOnWriteArrayList<IConnectionListener> connectionListeners = new CopyOnWriteArrayList<>();
+    protected transient CopyOnWriteArraySet<IConnectionListener> connectionListeners = new CopyOnWriteArraySet<>();
 
     /**
      * Used to protect mulit-threaded operations on write
@@ -199,12 +199,21 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 
     /** {@inheritDoc} */
     public void addListener(IConnectionListener listener) {
-        this.connectionListeners.add(listener);
+        connectionListeners.add(listener);
     }
 
     /** {@inheritDoc} */
     public void removeListener(IConnectionListener listener) {
-        this.connectionListeners.remove(listener);
+        connectionListeners.remove(listener);
+    }
+
+    /**
+     * Notifies listeners of a property change.
+     * 
+     * @param evt PropertyChangeEvent containing details
+     */
+    public void notifyPropertyChanged(PropertyChangeEvent evt) {
+        connectionListeners.forEach(listener -> listener.propertyChange(evt));
     }
 
     /**

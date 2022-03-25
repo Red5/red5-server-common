@@ -8,6 +8,7 @@
 package org.red5.server.net.rtmp;
 
 import java.beans.ConstructorProperties;
+import java.beans.PropertyChangeEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -425,11 +426,18 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         return state.getState();
     }
 
-    public void setStateCode(byte code) {
+    public void setStateCode(byte stateCode) {
         if (isTrace) {
-            log.trace("setStateCode: {} - {}", code, RTMP.states[code]);
+            log.trace("setStateCode: {} - {}", stateCode, RTMP.states[stateCode]);
         }
-        state.setState(code);
+        // get current state
+        final byte prevState = state.getState();
+        // set new state
+        state.setState(stateCode);
+        // inform any listeners if new > prev; prevent miss-fires
+        if (stateCode > prevState) {
+            notifyPropertyChanged(new PropertyChangeEvent(this, "ConnectionState", prevState, stateCode));
+        }
     }
 
     public IoSession getIoSession() {
