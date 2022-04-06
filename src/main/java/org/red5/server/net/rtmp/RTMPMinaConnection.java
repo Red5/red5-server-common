@@ -13,6 +13,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,11 +82,15 @@ public class RTMPMinaConnection extends RTMPConnection implements RTMPMinaConnec
         log.debug("Connect scope: {}", newScope);
         boolean success = super.connect(newScope, params);
         if (success) {
-            final Channel two = getChannel(2);
-            // tell the flash player how fast we want data and how fast we shall send it
-            two.write(new ServerBW(defaultServerBandwidth));
-            // second param is the limit type (0=hard,1=soft,2=dynamic)
-            two.write(new ClientBW(defaultClientBandwidth, (byte) limitType));
+            // get control channel if available
+            Optional<Channel> opt = Optional.ofNullable(getChannel(2));
+            if (opt.isPresent()) {
+                Channel channel = opt.get();
+                // tell the flash player how fast we want data and how fast we shall send it
+                channel.write(new ServerBW(defaultServerBandwidth));
+                // second param is the limit type (0=hard,1=soft,2=dynamic)
+                channel.write(new ClientBW(defaultClientBandwidth, (byte) limitType));
+            }
             // if the client is null for some reason, skip the jmx registration
             if (client != null) {
                 // perform bandwidth detection

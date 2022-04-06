@@ -10,6 +10,7 @@ package org.red5.server.stream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -37,7 +38,6 @@ import org.red5.server.api.stream.ISubscriberStream;
 import org.red5.server.api.stream.OperationNotSupportedException;
 import org.red5.server.api.stream.support.DynamicPlayItem;
 import org.red5.server.api.stream.support.SimplePlayItem;
-import org.red5.server.net.rtmp.Channel;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.status.Status;
 import org.red5.server.net.rtmp.status.StatusCodes;
@@ -873,8 +873,7 @@ public class StreamService implements IStreamService {
             s.setLevel(status);
             // get the channel
             RTMPConnection rtmpConn = (RTMPConnection) conn;
-            Channel channel = rtmpConn.getChannel(rtmpConn.getChannelIdForStreamId(streamId));
-            channel.sendStatus(s);
+            Optional.ofNullable(rtmpConn.getChannel(rtmpConn.getChannelIdForStreamId(streamId))).ifPresent(c -> c.sendStatus(s));
         } else {
             throw new RuntimeException("Connection is not RTMPConnection: " + conn);
         }

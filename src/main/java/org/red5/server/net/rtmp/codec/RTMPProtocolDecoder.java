@@ -253,7 +253,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
         int size = header.getSize();
         if (size > MAX_PACKET_SIZE) {
             // Reject packets that are too big, to protect against OOM when decoding has failed in some way
-            log.warn("Packet size exceeded. size={}, max={}, connId={}", header.getSize(), MAX_PACKET_SIZE, conn.getSessionId());
+            log.warn("Packet size exceeded. size={}, max={}, connId={}", size, MAX_PACKET_SIZE, conn.getSessionId());
             // send a NetStream.Failed message
             StreamService.sendNetStreamStatus(conn, StatusCodes.NS_FAILED, "Data exceeded maximum allowed by " + (size - MAX_PACKET_SIZE) + " bytes", "no-name", Status.ERROR, conn.getStreamIdForChannelId(channelId));
             throw new ProtocolException(String.format("Packet size exceeded. size: %s", header.getSize()));

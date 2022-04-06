@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -98,6 +99,8 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     public static final String RTMP_SESSION_ID = "rtmp.sessionid";
 
     public static final String RTMP_HANDSHAKE = "rtmp.handshake";
+
+    public static final String RTMP_BUFFER = "rtmp.buffer";
 
     public static final String RTMP_CONN_MANAGER = "rtmp.connection.manager";
 
@@ -426,6 +429,11 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         return state.getState();
     }
 
+    /**
+     * Sets the state by code and fires property chanage notifications.
+     * 
+     * @param stateCode
+     */
     public void setStateCode(byte stateCode) {
         if (isTrace) {
             log.trace("setStateCode: {} - {}", stateCode, RTMP.states[stateCode]);
@@ -442,6 +450,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
     public IoSession getIoSession() {
         return null;
+    }
+
+    public void setEncrypted(boolean encrypted) {
+        state.setEncrypted(encrypted);
+    }
+
+    public boolean isEncrypted() {
+        return state.isEncrypted();
     }
 
     /**
@@ -467,10 +483,14 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
 
     /** {@inheritDoc} */
     public void setBandwidth(int mbits) {
-        // tell the flash player how fast we want data and how fast we shall send it
-        getChannel(2).write(new ServerBW(mbits));
-        // second param is the limit type (0=hard,1=soft,2=dynamic)
-        getChannel(2).write(new ClientBW(mbits, (byte) limitType));
+        Optional<Channel> opt = Optional.ofNullable(getChannel(2));
+        if (opt.isPresent()) {
+            Channel channel = opt.get();
+            // tell the flash player how fast we want data and how fast we shall send it
+            channel.write(new ServerBW(mbits));
+            // second param is the limit type (0=hard,1=soft,2=dynamic)
+            channel.write(new ClientBW(mbits, (byte) limitType));
+        }
     }
 
     /**
@@ -648,9 +668,15 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      * @return Channel by id
      */
     public Channel getChannel(int channelId) {
-        Channel channel = channels.putIfAbsent(channelId, new Channel(this, channelId));
-        if (channel == null) {
-            channel = channels.get(channelId);
+        Channel channel = null;
+        // prevent channel retrieve prior to fully connected state
+        if (state.getState() > RTMP.STATE_HANDSHAKE) {
+            channel = channels.putIfAbsent(channelId, new Channel(this, channelId));
+            if (channel == null) {
+                channel = channels.get(channelId);
+            }
+        } else {
+            log.warn("Channel {} requested before connected", channelId);
         }
         return channel;
     }
@@ -1013,6 +1039,10 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 // dump memory stats
                 log.trace("Memory at close - free: {}K total: {}K", Runtime.getRuntime().freeMemory() / 1024, Runtime.getRuntime().totalMemory() / 1024);
             }
+            // reset / stop decoder state
+            if (decoderState != null) {
+                decoderState.stopDecoding();
+            }
         } else if (isDebug) {
             log.debug("Already closing..");
         }
@@ -1109,7 +1139,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
      *            Ping event context
      */
     public void ping(Ping ping) {
-        getChannel(2).write(ping);
+        Optional.ofNullable(getChannel(2)).ifPresent(channel -> channel.write(ping));
     }
 
     /**
@@ -1205,7 +1235,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
                 // inform the server we'll be expecting larger chunk sizes
                 ChunkSize chunkSizeMessage = new ChunkSize(chunkSize);
                 log.debug("Sending chunksize: {}", chunkSizeMessage);
-                getChannel(2).write(chunkSizeMessage);
+                Optional.ofNullable(getChannel(2)).ifPresent(c -> c.write(chunkSizeMessage));
             }
         }
         // We need to use Invoke for all calls to the client
@@ -1251,7 +1281,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
     public void notify(IServiceCall call, int channel) {
         Notify notify = new Notify();
         notify.setCall(call);
-        getChannel(channel).write(notify);
+        Optional.ofNullable(getChannel(channel)).ifPresent(c -> c.write(notify));
     }
 
     /** {@inheritDoc} */
@@ -1629,11 +1659,7 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         syncMessage.addEvents(events);
         try {
             // get the channel for so updates
-            Channel channel = getChannel(3);
-            if (isTrace) {
-                log.trace("Send to channel: {}", channel);
-            }
-            channel.write(syncMessage);
+            Optional.ofNullable(getChannel(3)).ifPresent(c -> c.write(syncMessage));
         } catch (Exception e) {
             log.warn("Exception sending shared object", e);
         }

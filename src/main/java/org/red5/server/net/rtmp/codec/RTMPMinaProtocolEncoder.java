@@ -9,7 +9,6 @@ package org.red5.server.net.rtmp.codec;
 
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
-import java.util.concurrent.Semaphore;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
@@ -38,59 +37,57 @@ public class RTMPMinaProtocolEncoder extends ProtocolEncoderAdapter {
         // get the connection from the session
         String sessionId = (String) session.getAttribute(RTMPConnection.RTMP_SESSION_ID);
         log.trace("Session id: {}", sessionId);
-        @SuppressWarnings("unchecked")
-        IConnectionManager<RTMPConnection> connManager = (IConnectionManager<RTMPConnection>) ((WeakReference<?>) session.getAttribute(RTMPConnection.RTMP_CONN_MANAGER)).get();
-        RTMPConnection conn = (RTMPConnection) connManager.getConnectionBySessionId(sessionId);
-        if (conn != null) {
-            // look for and compare the connection local; set it from the session
-            RTMPConnection localConn = (RTMPConnection) Red5.getConnectionLocal();
-            if (!conn.equals(localConn)) {
-                if (localConn != null) {
-                    log.debug("Connection local ({}) didn't match io session ({})", localConn.getSessionId(), sessionId);
-                }
-                // replace conn with the one from the session id lookup
-                Red5.setConnectionLocal(conn);
-            }
-            Boolean interrupted = false;
-            Semaphore lock = conn.getEncoderLock();
-            try {
-                // acquire the encoder lock
-                //log.trace("Encoder lock acquiring.. {}", conn.getSessionId());
-                lock.acquire();
-                log.trace("Encoder lock acquired {}", conn.getSessionId());
-                // get the buffer
-                final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
-                if (buf != null) {
-                    int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
-                    log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
-                    if (buf.remaining() <= targetChunkSize * 2) {
-                        log.trace("Writing output data");
-                        out.write(buf);
-                    } else {
-                        int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
-                        log.trace("Wrote {} chunks", sentChunks);
+        // no encode if there is a handshake present
+        if (!session.containsAttribute(RTMPConnection.RTMP_HANDSHAKE)) {
+            @SuppressWarnings("unchecked")
+            IConnectionManager<RTMPConnection> connManager = (IConnectionManager<RTMPConnection>) ((WeakReference<?>) session.getAttribute(RTMPConnection.RTMP_CONN_MANAGER)).get();
+            RTMPConnection conn = (RTMPConnection) connManager.getConnectionBySessionId(sessionId);
+            if (conn != null) {
+                // look for and compare the connection local; set it from the session
+                RTMPConnection localConn = (RTMPConnection) Red5.getConnectionLocal();
+                if (!conn.equals(localConn)) {
+                    if (localConn != null) {
+                        log.debug("Connection local ({}) didn't match io session ({})", localConn.getSessionId(), sessionId);
                     }
-                } else {
-                    log.trace("Response buffer was null after encoding");
+                    // replace conn with the one from the session id lookup
+                    Red5.setConnectionLocal(conn);
                 }
-            } catch (InterruptedException ex) {
-                log.error("InterruptedException during encode", ex);
-                interrupted = true;
-            } catch (Exception ex) {
-                log.error("Exception during encode", ex);
-            } finally {
-                log.trace("Encoder lock releasing.. {}", conn.getSessionId());
-                lock.release();
-                if (interrupted && log.isInfoEnabled()) {
-                    log.info("Released lock after interruption. session {}, permits {}", conn.getSessionId(), lock.availablePermits());
+                Boolean interrupted = false;
+                try {
+                    // get the buffer
+                    final IoBuffer buf = message instanceof IoBuffer ? (IoBuffer) message : encoder.encode(message);
+                    if (buf != null) {
+                        int requestedWriteChunkSize = conn.getState().getWriteChunkSize();
+                        log.trace("Requested chunk size: {} target chunk size: {}", requestedWriteChunkSize, targetChunkSize);
+                        if (buf.remaining() <= targetChunkSize * 2) {
+                            log.trace("Writing output data");
+                            out.write(buf);
+                        } else {
+                            int sentChunks = Chunker.chunkAndWrite(out, buf, requestedWriteChunkSize, targetChunkSize);
+                            log.trace("Wrote {} chunks", sentChunks);
+                        }
+                    } else {
+                        log.trace("Response buffer was null after encoding");
+                    }
+                } catch (InterruptedException ex) {
+                    log.error("InterruptedException during encode", ex);
+                    interrupted = true;
+                } catch (Exception ex) {
+                    log.error("Exception during encode", ex);
+                } finally {
+                    if (interrupted) {
+                        log.info("Released lock after interruption. session {}", conn.getSessionId());
+                    }
                 }
-            }
-            // set connection local back to previous value
-            if (localConn != null) {
-                Red5.setConnectionLocal(localConn);
+                // set connection local back to previous value
+                if (localConn != null) {
+                    Red5.setConnectionLocal(localConn);
+                }
+            } else {
+                log.debug("Connection is no longer available for encoding, may have been closed already");
             }
         } else {
-            log.debug("Connection is no longer available for encoding, may have been closed already");
+            log.debug("No-op due to handshake presence");
         }
     }
 

@@ -7,25 +7,23 @@
 
 package org.red5.server.net.protocol;
 
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+
 /**
  * Represents current decode state of the protocol.
  */
 public class RTMPDecodeState {
 
-    /**
-     * Decoding finished successfully state constant.
-     */
-    public static byte DECODER_OK = 0x00;
+    // decoder state enum; use index when byte value required
+    private enum State {
+        OK, // Decoding finished successfully
+        CONTINUE, // Decoding continues
+        BUFFER, // Decoder is buffering
+        DESTROYED; // Decoding is no longer required
+    }
 
-    /**
-     * Decoding continues state constant.
-     */
-    public static byte DECODER_CONTINUE = 0x01;
-
-    /**
-     * Decoder is buffering state constant.
-     */
-    public static byte DECODER_BUFFER = 0x02;
+    // atomic updater the current amount buffered
+    private final static AtomicIntegerFieldUpdater<RTMPDecodeState> amountUpdater = AtomicIntegerFieldUpdater.newUpdater(RTMPDecodeState.class, "decoderBufferAmount");
 
     /**
      * Session id to which this decoding state belongs.
@@ -35,17 +33,12 @@ public class RTMPDecodeState {
     /**
      * Classes like the RTMP state object will extend this marker interface.
      */
-    private int decoderBufferAmount;
+    private volatile int decoderBufferAmount;
 
     /**
      * Current decoder state, decoder is stopped by default.
      */
-    private byte decoderState = DECODER_OK;
-
-    /**
-     * Names for the states.
-     */
-    private static final String[] names = new String[] { "Ok", "Continue", "Buffer" };
+    private volatile State decoderState = State.OK;
 
     public RTMPDecodeState(String sessionId) {
         this.sessionId = sessionId;
@@ -66,15 +59,16 @@ public class RTMPDecodeState {
      * @param amount Buffer decoding amount
      */
     public void bufferDecoding(int amount) {
-        decoderState = DECODER_BUFFER;
-        decoderBufferAmount = amount;
+        if (amountUpdater.addAndGet(this, amount) > 0) {
+            decoderState = State.BUFFER;
+        }
     }
 
     /**
      * Set decoding state as "needed to be continued".
      */
     public void continueDecoding() {
-        decoderState = DECODER_CONTINUE;
+        decoderState = State.CONTINUE;
     }
 
     /**
@@ -91,8 +85,13 @@ public class RTMPDecodeState {
      * Starts decoding. Sets state to "ready" and clears buffer amount.
      */
     public void startDecoding() {
-        decoderState = DECODER_OK;
-        decoderBufferAmount = 0;
+        amountUpdater.set(this, 0);
+        decoderState = State.OK;
+    }
+
+    public void stopDecoding() {
+        amountUpdater.lazySet(this, 0);
+        decoderState = State.DESTROYED;
     }
 
     /**
@@ -101,7 +100,7 @@ public class RTMPDecodeState {
      * @return true if decoding has finished, false otherwise
      */
     public boolean hasDecodedObject() {
-        return (decoderState == DECODER_OK);
+        return (decoderState == State.OK);
     }
 
     /**
@@ -110,7 +109,7 @@ public class RTMPDecodeState {
      * @return true if decoding can be continued, false otherwise
      */
     public boolean canContinueDecoding() {
-        return (decoderState != DECODER_BUFFER);
+        return (decoderState != State.BUFFER && decoderState != State.DESTROYED);
     }
 
     /**
@@ -126,7 +125,7 @@ public class RTMPDecodeState {
      */
     @Override
     public String toString() {
-        return "RTMPDecodeState [sessionId=" + sessionId + ", decoderState=" + names[decoderState] + ", decoderBufferAmount=" + decoderBufferAmount + "]";
+        return "RTMPDecodeState [sessionId=" + sessionId + ", decoderState=" + decoderState + ", decoderBufferAmount=" + decoderBufferAmount + "]";
     }
 
 }

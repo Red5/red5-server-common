@@ -28,7 +28,6 @@ import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.mina.core.buffer.IoBuffer;
 import org.bouncycastle.crypto.engines.BlowfishEngine;
 import org.bouncycastle.crypto.engines.XTEAEngine;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -153,9 +152,6 @@ public abstract class RTMPHandshake implements IHandshake {
     // start as an fp of at least version 9.0.115.0
     protected boolean fp9Handshake = true;
 
-    // buffer for incoming data
-    protected IoBuffer buffer;
-
     static {
         // add bouncycastle security provider
         Security.addProvider(new BouncyCastleProvider());
@@ -173,9 +169,6 @@ public abstract class RTMPHandshake implements IHandshake {
         //log.trace("Use fp9 handshake? {}", fp9Handshake);
         // create our handshake bytes
         createHandshakeBytes();
-        // instance a buffer to handle fragmenting
-        buffer = IoBuffer.allocate(Constants.HANDSHAKE_SIZE);
-        buffer.setAutoExpand(true);
     }
 
     /**
@@ -702,65 +695,6 @@ public abstract class RTMPHandshake implements IHandshake {
      */
     public byte[] getSwfVerificationBytes() {
         return swfVerificationBytes;
-    }
-
-    /**
-     * Returns the buffer size.
-     * 
-     * @return buffer remaining
-     */
-    public int getBufferSize() {
-        return buffer.limit() - buffer.remaining();
-    }
-
-    /**
-     * Add a byte array to the buffer.
-     * 
-     * @param in
-     *            incoming bytes
-     */
-    public void addBuffer(byte[] in) {
-        buffer.put(in);
-    }
-
-    /**
-     * Add a IoBuffer to the buffer.
-     * 
-     * @param in
-     *            incoming IoBuffer
-     */
-    public void addBuffer(IoBuffer in) {
-        byte[] tmp = new byte[in.remaining()];
-        in.get(tmp);
-        if (log.isDebugEnabled()) {
-            log.debug("addBuffer - pos: {} limit: {} remain: {}", buffer.position(), buffer.limit(), buffer.remaining());
-        }
-        if (buffer.remaining() == 0) {
-            buffer.clear();
-        }
-        buffer.put(tmp);
-    }
-
-    /**
-     * Returns buffered IoBuffer itself.
-     * 
-     * @return IoBuffer
-     */
-    public IoBuffer getBufferAsIoBuffer() {
-        return buffer.flip();
-    }
-
-    /**
-     * Returns buffered byte array.
-     * 
-     * @return bytes
-     */
-    public byte[] getBuffer() {
-        buffer.flip();
-        byte[] tmp = new byte[buffer.remaining()];
-        buffer.get(tmp);
-        buffer.clear();
-        return tmp;
     }
 
 }

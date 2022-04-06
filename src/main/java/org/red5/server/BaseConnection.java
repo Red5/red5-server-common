@@ -199,12 +199,16 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
 
     /** {@inheritDoc} */
     public void addListener(IConnectionListener listener) {
-        connectionListeners.add(listener);
+        if (connectionListeners != null) {
+            connectionListeners.add(listener);
+        }
     }
 
     /** {@inheritDoc} */
     public void removeListener(IConnectionListener listener) {
-        connectionListeners.remove(listener);
+        if (connectionListeners != null) {
+            connectionListeners.remove(listener);
+        }
     }
 
     /**
@@ -213,7 +217,9 @@ public abstract class BaseConnection extends AttributeStore implements IConnecti
      * @param evt PropertyChangeEvent containing details
      */
     public void notifyPropertyChanged(PropertyChangeEvent evt) {
-        connectionListeners.forEach(listener -> listener.propertyChange(evt));
+        if (connectionListeners != null) {
+            connectionListeners.forEach(listener -> listener.propertyChange(evt));
+        }
     }
 
     /**
