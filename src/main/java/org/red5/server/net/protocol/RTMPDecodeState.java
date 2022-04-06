@@ -7,8 +7,6 @@
 
 package org.red5.server.net.protocol;
 
-import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-
 /**
  * Represents current decode state of the protocol.
  */
@@ -21,9 +19,6 @@ public class RTMPDecodeState {
         BUFFER, // Decoder is buffering
         DESTROYED; // Decoding is no longer required
     }
-
-    // atomic updater the current amount buffered
-    private final static AtomicIntegerFieldUpdater<RTMPDecodeState> amountUpdater = AtomicIntegerFieldUpdater.newUpdater(RTMPDecodeState.class, "decoderBufferAmount");
 
     /**
      * Session id to which this decoding state belongs.
@@ -54,14 +49,13 @@ public class RTMPDecodeState {
     }
 
     /**
-     * Specifies buffer decoding amount
+     * Specifies buffer decoding amount needed.
      * 
      * @param amount Buffer decoding amount
      */
     public void bufferDecoding(int amount) {
-        if (amountUpdater.addAndGet(this, amount) > 0) {
-            decoderState = State.BUFFER;
-        }
+        decoderState = State.BUFFER;
+        decoderBufferAmount = amount;
     }
 
     /**
@@ -85,12 +79,11 @@ public class RTMPDecodeState {
      * Starts decoding. Sets state to "ready" and clears buffer amount.
      */
     public void startDecoding() {
-        amountUpdater.set(this, 0);
         decoderState = State.OK;
+        decoderBufferAmount = 0;
     }
 
     public void stopDecoding() {
-        amountUpdater.lazySet(this, 0);
         decoderState = State.DESTROYED;
     }
 
