@@ -45,6 +45,10 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
 
     private static final Logger log = LoggerFactory.getLogger(ConnectionConsumer.class);
 
+    private static final boolean isTrace = log.isTraceEnabled();
+
+    private static final boolean isDebug = log.isDebugEnabled();
+
     /**
      * Connection consumer class name
      */
@@ -122,8 +126,12 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
         if (message instanceof ResetMessage) {
             //ignore
         } else if (message instanceof StatusMessage) {
-            StatusMessage statusMsg = (StatusMessage) message;
-            data.sendStatus(statusMsg.getBody());
+            if (data != null) {
+                StatusMessage statusMsg = (StatusMessage) message;
+                data.sendStatus(statusMsg.getBody());
+            } else {
+                log.warn("Channel data is null");
+            }
         } else if (message instanceof RTMPMessage) {
             // make sure chunk size has been sent
             sendChunkSize();
@@ -143,7 +151,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             }
             // get the data type
             byte dataType = msg.getDataType();
-            if (log.isTraceEnabled()) {
+            if (isTrace) {
                 log.trace("Data type: {} source type: {}", dataType, ((BaseEvent) msg).getSourceType());
             }
             // create a new header for the consumer if the message.body doesnt already have one
@@ -155,7 +163,11 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             switch (dataType) {
                 case Constants.TYPE_AGGREGATE:
                     //log.trace("Aggregate data");
-                    data.write(msg);
+                    if (data != null) {
+                        data.write(msg);
+                    } else {
+                        log.warn("Channel data is null, aggregate data was not written");
+                    }
                     break;
                 case Constants.TYPE_AUDIO_DATA:
                     //log.trace("Audio data");
@@ -190,28 +202,35 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     conn.ping(ping);
                     break;
                 case Constants.TYPE_STREAM_METADATA:
-                    if (log.isTraceEnabled()) {
+                    if (isTrace) {
                         log.trace("Meta data: {}", (Notify) msg);
                     }
-                    //Notify notify = new Notify(((Notify) msg).getData().asReadOnlyBuffer());
-                    Notify notify = (Notify) msg;
-                    notify.setHeader(header);
-                    notify.setTimestamp(header.getTimer());
-                    data.write(notify);
+                    if (data != null) {
+                        Notify notify = (Notify) msg;
+                        notify.setHeader(header);
+                        notify.setTimestamp(header.getTimer());
+                        data.write(notify);
+                    } else {
+                        log.warn("Channel data is null, metadata was not written");
+                    }
                     break;
                 case Constants.TYPE_FLEX_STREAM_SEND:
-                    //if (log.isTraceEnabled()) {
+                    //if (isTrace) {
                     //log.trace("Flex stream send: {}", (Notify) msg);
                     //}
-                    FlexStreamSend send = null;
-                    if (msg instanceof FlexStreamSend) {
-                        send = (FlexStreamSend) msg;
+                    if (data != null) {
+                        FlexStreamSend send = null;
+                        if (msg instanceof FlexStreamSend) {
+                            send = (FlexStreamSend) msg;
+                        } else {
+                            send = new FlexStreamSend(((Notify) msg).getData().asReadOnlyBuffer());
+                        }
+                        send.setHeader(header);
+                        send.setTimestamp(header.getTimer());
+                        data.write(send);
                     } else {
-                        send = new FlexStreamSend(((Notify) msg).getData().asReadOnlyBuffer());
+                        log.warn("Channel data is null, flex stream data was not written");
                     }
-                    send.setHeader(header);
-                    send.setTimestamp(header.getTimer());
-                    data.write(send);
                     break;
                 case Constants.TYPE_BYTES_READ:
                     //log.trace("Bytes read");
@@ -222,11 +241,15 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                     break;
                 default:
                     //log.trace("Default: {}", dataType);
-                    data.write(msg);
+                    if (data != null) {
+                        data.write(msg);
+                    } else {
+                        log.warn("Channel data is null, data type: {} was not written", dataType);
+                    }
             }
         } else {
             log.debug("Unhandled push message: {}", message);
-            if (log.isTraceEnabled()) {
+            if (isTrace) {
                 Class<? extends IMessage> clazz = message.getClass();
                 log.trace("Class info - name: {} declaring: {} enclosing: {}", new Object[] { clazz.getName(), clazz.getDeclaringClass(), clazz.getEnclosingClass() });
             }
@@ -236,6 +259,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
     /** {@inheritDoc} */
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
         if (event.getType().equals(PipeConnectionEvent.EventType.PROVIDER_DISCONNECT)) {
+            log.debug("Provider disconnected");
             closeChannels();
         }
     }
@@ -287,9 +311,15 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
      * Close all the channels
      */
     private void closeChannels() {
-        conn.closeChannel(video.getId());
-        conn.closeChannel(audio.getId());
-        conn.closeChannel(data.getId());
+        if (video != null) {
+            conn.closeChannel(video.getId());
+        }
+        if (audio != null) {
+            conn.closeChannel(audio.getId());
+        }
+        if (data != null) {
+            conn.closeChannel(data.getId());
+        }
     }
 
 }
