@@ -58,9 +58,9 @@ public class StreamService implements IStreamService {
     protected boolean stripTypePrefix = true;
 
     /**
-     * Whether or not to enable stream name aliasing.
+     * Whether or not to enable stream name aliasing; defaulted to disabled.
      */
-    protected boolean nameAliasingEnabled = true;
+    protected boolean nameAliasingEnabled;
 
     /**
      * Use to determine playback type.
@@ -710,11 +710,16 @@ public class StreamService implements IStreamService {
                         // comma separated
                         Stream.of(params.get("aliases").split(",")).forEach(alias -> bs.addAlias(alias));
                     } else {
-                        // generate some random alpha/num aliases; based on cpu count x2
-                        int aliasCount = Runtime.getRuntime().availableProcessors() * 2;
-                        for (int i = 0; i < aliasCount; i++) {
-                            // generate 8-16 long aliases
-                            bs.addAlias(RandomStringUtils.randomAlphanumeric(8, 16));
+                        // XXX this was used during testing or via means which didn't easily pass parameters it remains
+                        // as an example, but will be blocked via the logger to prevent extra configuration options.
+                        if (log.isDebugEnabled()) {
+                            log.debug("Randomly generated playback aliases will be generated due to this class log setting");
+                            // generate some random alpha/num aliases; based on cpu count x2
+                            int aliasCount = Runtime.getRuntime().availableProcessors() * 2;
+                            for (int i = 0; i < aliasCount; i++) {
+                                // generate 8-16 long aliases
+                                bs.addAlias(RandomStringUtils.randomAlphanumeric(8, 16));
+                            }
                         }
                     }
                     // if aliasing, check for publish-side alias
