@@ -156,8 +156,9 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
             }
             // create a new header for the consumer if the message.body doesnt already have one
             final Header header = Optional.ofNullable(msg.getHeader()).orElse(new Header());
-            // XXX sets the timerbase, but should we do this if there's already a timerbase?
-            header.setTimerBase(eventTime);
+            
+            // 'setTimer' clears timer delta and sets timer base with current resolved value. Removes residual timing artifacts from any previous network transmission.
+            header.setTimer(eventTime);
             // data buffer
             IoBuffer buf = null;
             switch (dataType) {
@@ -190,7 +191,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                         videoData.setHeader(header);
                         videoData.setTimestamp(header.getTimer());
                         videoData.setSourceType(((VideoData) msg).getSourceType());
-                        video.write(videoData);
+                        video.write(videoData);                        
                     } else {
                         log.warn("Video data was not found");
                     }
@@ -247,7 +248,7 @@ public class ConnectionConsumer implements IPushableConsumer, IPipeConnectionLis
                         log.warn("Channel data is null, data type: {} was not written", dataType);
                     }
             }
-        } else {
+        } else if(isDebug){
             log.debug("Unhandled push message: {}", message);
             if (isTrace) {
                 Class<? extends IMessage> clazz = message.getClass();
